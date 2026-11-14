@@ -1,0 +1,18 @@
+# Dependencias y entornos
+node_modules/
+.venv/
+
+# Salidas de build y de pruebas
+web/dist/
+web/coverage/
+web/src/data/graphql/generated/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+__pycache__/
+*.egg-info/
+
+# Editor y sistema
+.DS_Store
+.idea/
+.vscode/

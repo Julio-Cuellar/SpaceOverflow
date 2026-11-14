@@ -1,0 +1,16 @@
+query Dashboard($habitatId: ID!) {
+  dashboard(habitatId: $habitatId) {
+    habitatId
+    globalSeverity
+    vitals {
+      key
+      label
+      value
+      unit
+      domain
+      severity
+      evidenceState
+      origin
+    }
+  }
+}
