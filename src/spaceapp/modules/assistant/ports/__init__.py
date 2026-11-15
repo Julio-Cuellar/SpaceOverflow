@@ -87,7 +87,8 @@ class AssistantOrchestrator(Protocol):
     Lanza `OrchestratorError` si falla. `available` es False si no está configurado.
     """
 
-    available: bool
+    @property
+    def available(self) -> bool: ...
 
     def answer(
         self, turn_id: UUID, conversation_id: UUID, question: str, alerts: Sequence[str]
