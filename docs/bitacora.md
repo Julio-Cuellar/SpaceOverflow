@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 02:30.
+> Última actualización: 15 de noviembre de 2026, 02:45.
 
 ## Cómo se mantiene esta bitácora
 
@@ -36,7 +36,7 @@
 | Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F4 y F5 terminadas** (con pendientes menores: DataLoaders, límite de costo y lo que depende de Tripulación). Hitos I3 e I5 cubiertos del lado de A. El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
 | Pruebas | **662 pasan y 19 se omiten** (las omitidas son de Dev B), 96,84 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
 | Artefacto interactivo | Versión 4 publicada: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8 |
-| Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. Commits locales **sin subir**: fusiones B-015 y B-016, F5 (`9bed3c0`), 5.4 (`81686a1`) y F4 |
+| Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. **Subida a GitHub** (B-021): fusiones B-015 y B-016, F5, 5.4 y F4. Falta el PR hacia `testing` |
 | Siguiente bloque propuesto | F9 (Dockerfile, compose completo y migraciones al arrancar) para la entrega al jurado. Después F10 y F11 (P1) |
 
 ---
@@ -336,6 +336,11 @@
 - **PRs** (API pública de GitHub; `gh` no está instalado): #1 cerrado, y #2, #3 y #4 fusionados. No hay PRs abiertos.
 - **Pendiente de lo propuesto al usuario:** subir `dev-A`, abrir el PR hacia `testing`, revisar el CI real y hacer F9. Nuevo: el backend de F10 y F11 (de Dev A) es lo que espera la interfaz que Dev B ya hizo.
 - **Decisión que registró Dev B** (bitácora E18): n8n es obligatorio para el asistente. Eso responde la pregunta abierta 2 de la sección 2.3; falta que el usuario la confirme.
+
+### B-021 · Push de `dev-A` a GitHub
+- **Qué (pedido del usuario):** `git push origin dev-A` (`9fb8bfe..1db03f4`). Subieron los 22 commits: las fusiones B-015 y B-016 (con los commits de Dev B que traen), F5 (`9bed3c0`), 5.4 (`81686a1`), F4 (`286024c`) y la bitácora B-020 (`1db03f4`). Después se subió este registro.
+- **Verificación:** `git rev-list --left-right --count dev-A...origin/dev-A` → `0 0`.
+- **Pendiente:** abrir el PR `dev-A → testing` (`gh` no está instalado: se crea desde la web), que Dev B abra el suyo `dev-B → testing` y revisar el CI de GitHub.
 
 ---
 
