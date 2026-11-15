@@ -152,12 +152,17 @@ class ConfirmUtterance:
         consulting = replace(confirmed, status=transition(confirmed.status, TurnEvent.CONSULT))
         self._utterances.update(consulting)
         try:
-            result = self._ask(utterance.conversation_id, text)
+            result = self._ask(utterance.conversation_id, text, turn_id=utterance.id)
         except Exception:
             self._utterances.update(
                 replace(consulting, status=transition(consulting.status, TurnEvent.FAILED))
             )
             raise
-        event = TurnEvent.NO_INFO if result.outcome is AskOutcome.NO_INFO else TurnEvent.ANSWERED
+        if result.outcome is AskOutcome.NO_INFO:
+            event = TurnEvent.NO_INFO
+        elif result.degraded:
+            event = TurnEvent.FALLBACK_ANSWERED
+        else:
+            event = TurnEvent.ANSWERED
         self._utterances.update(replace(consulting, status=transition(consulting.status, event)))
         return result

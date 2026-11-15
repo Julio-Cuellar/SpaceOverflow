@@ -79,3 +79,16 @@ class UtteranceRepository(Protocol):
         ...
 
     def update(self, utterance: Utterance) -> None: ...
+
+
+class AssistantOrchestrator(Protocol):
+    """Quien responde con herramientas (n8n). Devuelve solo texto: las citas las pone el backend.
+
+    Lanza `OrchestratorError` si falla. `available` es False si no está configurado.
+    """
+
+    available: bool
+
+    def answer(
+        self, turn_id: UUID, conversation_id: UUID, question: str, alerts: Sequence[str]
+    ) -> str: ...

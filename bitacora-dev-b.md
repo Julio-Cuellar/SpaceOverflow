@@ -650,3 +650,15 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 - **Cambio de comportamiento a conocer:** confirmar mientras la transcripción aún corre (`RECEIVED` o `TRANSCRIBING`) ahora es una transición inválida; antes se admitía. La interfaz deberá esperar al estado `NO_TRANSCRIPT` o `TRANSCRIBED`.
 - **Verificación (Python 3.12):** ruff, formato, mypy estricto (142 archivos) e import-linter limpios; **598 pruebas pasan**, 19 omitidas, cobertura 97,20 %.
 - **Límite:** el estado vive en memoria. El tiempo máximo en `CONSULTING` (invariante 3 del plan) se aplicará con el límite del orquestador en la fase 2, no aquí.
+
+### E18 · Fase 2: orquestador n8n con fallback (TDD)
+
+- **RED observado:** `No module named '...application.retrieval_log'` y `'...adapters.outbound.n8n'` (tres archivos de pruebas nuevos no podían importar nada).
+- **Diseño:** el backend llama al webhook del agente con `{turn_id, conversation_id, question, alerts}` y recibe **solo** `{"text": ...}`. Las **citas no las dicta el modelo**: las herramientas del agente (fase 3) vuelven a este backend, que anota lo recuperado en un `RetrievalLog` por turno; las citas de la respuesta son esas. El identificador del turno hace de credencial de un solo uso: solo un turno abierto acepta llamadas de herramientas, y se cierra al terminar o al agotar el tiempo, así que un resultado tardío no llega a ninguna respuesta.
+- **Qué se hizo:** puerto `AssistantOrchestrator`; `OrchestratorError`; `application/retrieval_log.py` (`RetrievalLog`, `passage_id`, `TurnClosedError`); `adapters/outbound/n8n.py` (`N8nOrchestrator`, HTTP con tiempo límite, valida que la respuesta sea JSON con un `text` no vacío); `AskAssistant` acepta `orchestrator`, `retrievals` y `orchestrator_timeout_s` y devuelve `degraded` en el resultado.
+- **Política:** si el orquestador falla, tarda más del límite o **contesta sin haber recuperado ningún pasaje**, su texto no se entrega: responde la plantilla local con los pasajes (`degraded=True`), o «No tengo esa información…» si no hay ninguno. Sin orquestador o no disponible, el asistente funciona como antes.
+- **Máquina de estados:** una respuesta del orquestador cierra el turno en `ANSWERED`; una degradada, en `TEMPLATE_ANSWER`; un error en la consulta, en `FAILED` (y el error se propaga).
+- **Pruebas con HTTP real:** `fake_n8n.py` levanta un servidor HTTP local; el adaptador se prueba contra él (404/500/502, JSON inválido, texto ausente o vacío, timeout y conexión rechazada), sin mocks de `urllib`.
+- **Sin RED:** las 3 pruebas de la máquina de estados con el orquestador (`ANSWERED`, `TEMPLATE_ANSWER`, `FAILED`) se añadieron después de escribir la correspondencia de eventos y pasaron a la primera.
+- **Verificación (Python 3.12):** ruff, formato, mypy estricto (144 archivos) e import-linter limpios; **632 pruebas pasan**, 19 omitidas, cobertura 97,40 %.
+- **Límites:** el tiempo por defecto del orquestador (30 s) es una suposición hasta medir Ollama (fase 4). Un hilo que se pasa del límite sigue corriendo hasta terminar (no se puede cancelar una llamada HTTP bloqueada); su resultado se descarta.

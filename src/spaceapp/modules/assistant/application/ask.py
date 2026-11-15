@@ -12,12 +12,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
-from uuid import UUID
+from uuid import UUID, uuid4
 
+from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
 from spaceapp.modules.assistant.contracts import AnswerReady
 from spaceapp.modules.assistant.domain.model import AskOutcome
 from spaceapp.modules.assistant.ports import (
     ActiveAlerts,
+    AssistantOrchestrator,
     ConversationRepository,
     EventPublisher,
     LlmGateway,
@@ -38,8 +40,10 @@ class AskResult:
     outcome: AskOutcome
     text: str
     citations: tuple[CitationDTO, ...]
-    composed_by: str  # "llm" o "plantilla"
+    composed_by: str  # "n8n", "llm" o "plantilla"
     utterance_id: UUID | None = None
+    # True si había orquestador pero no sirvió (caído, lento o sin pasajes) y se respondió sin él.
+    degraded: bool = False
 
 
 def source_label(citation: CitationDTO) -> str:
@@ -65,6 +69,9 @@ class AskAssistant:
         publisher: EventPublisher,
         timeout_s: float = TIMEOUT_S,
         k: int = TOP_K,
+        orchestrator: AssistantOrchestrator | None = None,
+        retrievals: RetrievalLog | None = None,
+        orchestrator_timeout_s: float = 30.0,
     ) -> None:
         self._passages = passages
         self._llm = llm
@@ -73,26 +80,44 @@ class AskAssistant:
         self._publisher = publisher
         self._timeout_s = timeout_s
         self._k = k
+        self._orchestrator = orchestrator
+        self._retrievals = retrievals
+        self._orchestrator_timeout_s = orchestrator_timeout_s
 
     def __call__(
         self,
         conversation_id: UUID,
         text: str,
         on_token: Callable[[str], None] | None = None,
+        turn_id: UUID | None = None,
     ) -> AskResult:
         question = text.strip()
         if not question:
             return AskResult(AskOutcome.EMPTY_QUESTION, "", (), "plantilla")
 
         self._conversations.add(conversation_id, "crew", question, ())
-        found = tuple(self._passages.search(question, self._k))
 
-        if not found:
-            answer = AskResult(AskOutcome.NO_INFO, NO_INFO_TEXT, (), "plantilla")
+        via = None
+        degraded = False
+        if (
+            self._orchestrator is not None
+            and self._orchestrator.available
+            and self._retrievals is not None
+        ):
+            via = self._via_orchestrator(turn_id or uuid4(), conversation_id, question)
+            degraded = via is None
+
+        if via is not None:
+            body, cited = via
+            answer = AskResult(AskOutcome.ANSWERED, body, cited, "n8n")
         else:
-            alerts = self._alerts.titles()
-            body, composed_by = self._compose(question, found, alerts, on_token)
-            answer = AskResult(AskOutcome.ANSWERED, body, found, composed_by)
+            found = tuple(self._passages.search(question, self._k))
+            if not found:
+                answer = AskResult(AskOutcome.NO_INFO, NO_INFO_TEXT, (), "plantilla")
+            else:
+                alerts = self._alerts.titles()
+                body, composed_by = self._compose(question, found, alerts, on_token)
+                answer = AskResult(AskOutcome.ANSWERED, body, found, composed_by, degraded=degraded)
 
         utterance_id = self._conversations.add(
             conversation_id, "assistant", answer.text, answer.citations
@@ -104,6 +129,33 @@ class AskAssistant:
             )
         )
         return answer
+
+    def _via_orchestrator(
+        self, turn_id: UUID, conversation_id: UUID, question: str
+    ) -> tuple[str, tuple[CitationDTO, ...]] | None:
+        """Texto del agente y las citas de lo que recuperó, o `None` si no hay que fiarse de él.
+
+        No se fía si falla, tarda más del límite o contesta sin haber recuperado ningún pasaje:
+        un texto sin fuente no se entrega, aunque suene bien.
+        """
+        assert self._orchestrator is not None and self._retrievals is not None
+        self._retrievals.open(turn_id)
+        executor = ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(
+            self._orchestrator.answer, turn_id, conversation_id, question, self._alerts.titles()
+        )
+        try:
+            composed = future.result(timeout=self._orchestrator_timeout_s).strip()
+            cited = tuple(self._retrievals.retrieved(turn_id))
+        except Exception:  # caído, lento o con una respuesta inválida: se responde sin él
+            return None
+        finally:
+            self._retrievals.close(turn_id)
+            executor.shutdown(wait=False, cancel_futures=True)
+        if not composed or not cited:
+            return None
+        sources = "Fuentes: " + "; ".join(source_label(p) for p in cited)
+        return f"{composed}\n\n{sources}", cited
 
     def _compose(
         self,

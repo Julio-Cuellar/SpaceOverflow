@@ -253,3 +253,58 @@ def test_an_answered_turn_cannot_be_discarded(tmp_path: Path) -> None:
 
     with pytest.raises(InvalidTransitionError):
         rig.confirm.discard(utterance_id)
+
+
+def _rig_with_orchestrator(tmp_path: Path, *, fail: bool, search: bool = True):  # type: ignore[no-untyped-def]
+    from test_ask_with_orchestrator import FakeAgent, FakeAlerts
+
+    from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
+
+    rig = Rig(tmp_path)
+    log = RetrievalLog()
+    rig.ask = AskAssistant(
+        passages=KnowledgeQuery(DemoKnowledgeSource.from_file(DEMO_CATALOG)),
+        llm=NullLlmGateway(),
+        conversations=rig.conversations,
+        alerts=FakeAlerts(),
+        publisher=rig.publisher,
+        orchestrator=FakeAgent(log, fail=fail, search=search),
+        retrievals=log,
+    )
+    rig.confirm = ConfirmUtterance(utterances=rig.utterances, ask=rig.ask)
+    return rig
+
+
+def test_an_answer_by_the_orchestrator_closes_the_turn_as_answered(tmp_path: Path) -> None:
+    rig = _rig_with_orchestrator(tmp_path, fail=False)
+
+    rig.confirm.confirm_text(CONVERSATION, "¿Por qué me duele la cabeza?")
+
+    [turn] = rig.utterances.all()
+    assert turn.status is UtteranceStatus.ANSWERED
+
+
+def test_a_failing_orchestrator_closes_the_turn_as_a_template_answer(tmp_path: Path) -> None:
+    rig = _rig_with_orchestrator(tmp_path, fail=True)
+
+    result = rig.confirm.confirm_text(CONVERSATION, "¿Por qué me duele la cabeza?")
+
+    assert result.outcome is AskOutcome.ANSWERED
+    [turn] = rig.utterances.all()
+    assert turn.status is UtteranceStatus.TEMPLATE_ANSWER
+
+
+def test_an_error_while_consulting_leaves_the_turn_failed_and_is_not_hidden(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+
+    def boom(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("el índice no está")
+
+    rig.ask = boom  # type: ignore[assignment]
+    rig.confirm = ConfirmUtterance(utterances=rig.utterances, ask=rig.ask)
+
+    with pytest.raises(RuntimeError, match="el índice no está"):
+        rig.confirm.confirm_text(CONVERSATION, "¿Por qué me duele la cabeza?")
+
+    [turn] = rig.utterances.all()
+    assert turn.status is UtteranceStatus.FAILED
