@@ -11,7 +11,7 @@ Convierte cada alerta en una **recomendación de plantilla con cita**, sin depen
 ## Cómo funciona
 
 - Caso de uso `HandleAlertRaised`: idempotente por `(consumidor, event_id)`; una regla desconocida lanza `UnknownRuleError` **sin** marcar el evento, para que el reintento pueda procesarlo.
-- Fuente `DemoKnowledgeSource` lee `data/knowledge/demo_catalog.json` (8 reglas, 15 acciones, 3 pasajes). Toda recomendación dice «dato de demostración, no de NASA».
+- Fuente `DemoKnowledgeSource` lee `data/knowledge/demo_catalog.json` (25 reglas, una por cada regla de Monitoreo de `rules/catalog/monitoring.json`; 17 acciones; 3 pasajes). `tests/knowledge/test_rule_coverage.py` cruza ambos catálogos: toda regla que Monitoreo puede levantar tiene recomendación, incluye la acción que Monitoreo nombra y ninguna cita dice más evidencia que la regla. Toda recomendación dice «dato de demostración, no de NASA».
 - Búsqueda de pasajes: términos sin acentos ni mayúsculas, umbral mínimo de relevancia; sin pasaje devuelve lista vacía.
 
 ## Pruebas

@@ -25,18 +25,3 @@ def test_every_citation_uses_a_known_evidence_state(demo_source: DemoKnowledgeSo
     for rule_key in demo_source.rule_keys():
         for citation in demo_source.guidance_for(rule_key).citations:
             assert citation.evidence_state.value in allowed, rule_key
-
-
-def test_the_catalog_covers_the_rules_of_the_plan(demo_source: DemoKnowledgeSource) -> None:
-    expected = {
-        "env-co2-1h",
-        "env-pio2",
-        "env-ptotal",
-        "env-dpdt",
-        "env-n2",
-        "env-rh",
-        "env-t",
-        "env-tendencia",
-    }
-
-    assert expected <= set(demo_source.rule_keys())
