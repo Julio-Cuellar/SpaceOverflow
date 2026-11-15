@@ -22,6 +22,20 @@ REPLAYABLE_TYPES = (
 )
 TRANSLATED_TYPES = ("telemetry.readings_recorded", *REPLAYABLE_TYPES)
 
+# Tipo de mensaje del servidor -> topic al que pertenece (contracts/ws-messages.schema.json).
+SERVER_TYPES: dict[str, str] = {
+    "telemetry.tick": "telemetry",
+    "scenario.changed": "telemetry",
+    "alert.raised": "alerts",
+    "alert.updated": "alerts",
+    "alert.resolved": "alerts",
+    "recommendation.ready": "alerts",
+    "recommendation.enriched": "alerts",
+    "assistant.answer": "assistant",
+}
+# Respuestas del servidor en el topic `system`. No llevan `seq` ni se reenvían.
+SYSTEM_TYPES = ("subscribed", "pong", "ping", "resumed", "error")
+
 
 @dataclass(frozen=True)
 class WsMessage:

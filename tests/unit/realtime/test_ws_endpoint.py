@@ -131,3 +131,17 @@ def test_resume_without_a_replay_source_is_an_error() -> None:
     with TestClient(app) as client, client.websocket_connect("/ws") as ws:
         ws.send_json({"type": "resume", "after_outbox_id": 0})
         assert ws.receive_json()["type"] == "error"
+
+
+def test_an_idle_connection_gets_a_server_ping() -> None:
+    app = FastAPI()
+    app.include_router(build_router(Hub(), None, ping_interval=0.05))
+    with TestClient(app) as client, client.websocket_connect("/ws") as ws:
+        got = ws.receive_json()
+        assert (got["topic"], got["type"], got["seq"]) == ("system", "ping", None)
+
+
+def test_the_default_server_ping_is_every_15_seconds() -> None:
+    from spaceapp.modules.realtime.adapters.inbound.ws import PING_INTERVAL_S
+
+    assert PING_INTERVAL_S == 15

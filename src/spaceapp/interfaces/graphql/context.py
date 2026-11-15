@@ -13,6 +13,7 @@ from spaceapp.modules.knowledge.facade import KnowledgeQuery
 from spaceapp.modules.monitoring.application.acknowledge_alert import AckResult
 from spaceapp.modules.monitoring.facade import ActiveAlertsQuery, AlertReadQuery, RuleQuery
 from spaceapp.modules.telemetry.facade import TelemetryViews
+from spaceapp.platform.outbox import OutboxStats
 
 
 @dataclass(frozen=True)
@@ -24,6 +25,8 @@ class Services:
     knowledge: KnowledgeQuery
     recommendation_for: Callable[[UUID], Recommendation | None]
     acknowledge: Callable[[UUID, str | None], Awaitable[AckResult]]
+    # Solo en los perfiles de desarrollo; en `jurado` es None y la consulta devuelve null.
+    outbox_stats: Callable[[], Awaitable[OutboxStats]] | None = None
 
 
 class Context(BaseContext):

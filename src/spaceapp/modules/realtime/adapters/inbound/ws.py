@@ -15,6 +15,8 @@ from spaceapp.modules.realtime.domain.messages import system_message
 from spaceapp.modules.realtime.ports import OutboxReplay
 
 RESUME_LIMIT = 1000
+# Sin mensajes durante este tiempo el servidor envía `ping` para mantener viva la conexión.
+PING_INTERVAL_S = 15
 
 
 def _now() -> str:
@@ -62,7 +64,9 @@ async def _handle(client: Client, raw: str, replay: OutboxReplay | None) -> None
             _error(client, f"tipo de mensaje desconocido: {kind!r}")
 
 
-def build_router(hub: Hub, replay: OutboxReplay | None) -> APIRouter:
+def build_router(
+    hub: Hub, replay: OutboxReplay | None, *, ping_interval: float = PING_INTERVAL_S
+) -> APIRouter:
     router = APIRouter()
 
     @router.websocket("/ws")
@@ -72,7 +76,11 @@ def build_router(hub: Hub, replay: OutboxReplay | None) -> APIRouter:
 
         async def sender() -> None:
             while True:
-                for message in await client.queue.get():
+                try:
+                    batch = await asyncio.wait_for(client.queue.get(), ping_interval)
+                except TimeoutError:
+                    batch = [system_message("ping", {}, _now())]
+                for message in batch:
                     await ws.send_json(message.as_json())
 
         send_task = asyncio.create_task(sender())

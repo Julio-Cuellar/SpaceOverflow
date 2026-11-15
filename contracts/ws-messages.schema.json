@@ -1,0 +1,528 @@
+{
+  "$defs": {
+    "ClientMessage": {
+      "oneOf": [
+        {
+          "properties": {
+            "topics": {
+              "items": {
+                "enum": [
+                  "telemetry",
+                  "alerts",
+                  "assistant"
+                ]
+              },
+              "type": "array"
+            },
+            "type": {
+              "enum": [
+                "subscribe",
+                "unsubscribe"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "topics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "ts": {},
+            "type": {
+              "enum": [
+                "ping"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "after_outbox_id": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": {
+              "enum": [
+                "resume"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "after_outbox_id"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ServerMessage": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "telemetry.tick"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "metric": {
+                    "type": "string"
+                  },
+                  "sensor_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "ts": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "sensor_id",
+                  "metric",
+                  "value",
+                  "ts"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "telemetry"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "scenario.changed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "enum": [
+                      "started",
+                      "stopped"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "state"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "telemetry"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "alert.raised"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "cause_hint": {
+                    "enum": [
+                      "AMBIENTE",
+                      "CUERPO",
+                      "INDETERMINADO",
+                      null
+                    ]
+                  },
+                  "evidence": {
+                    "type": "object"
+                  },
+                  "rule_key": {
+                    "type": "string"
+                  },
+                  "severity": {
+                    "enum": [
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "rule_key",
+                  "severity"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "alert.updated"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "acknowledged"
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "alert.resolved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "duration_s": {
+                    "type": "integer"
+                  },
+                  "resolved_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "resolved"
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "recommendation.ready"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "action_keys": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "citations": {
+                    "items": {
+                      "properties": {
+                        "document_code": {
+                          "type": "string"
+                        },
+                        "evidence_state": {
+                          "enum": [
+                            "VERIFICADO",
+                            "TB",
+                            "DEMO",
+                            "NO_VERIFICADO"
+                          ]
+                        },
+                        "excerpt": {
+                          "type": "string"
+                        },
+                        "page": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "requirement_ref": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "document_code",
+                        "excerpt",
+                        "evidence_state"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "composed_by": {
+                    "const": "template"
+                  },
+                  "recommendation_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "recommendation_id",
+                  "action_keys",
+                  "citations",
+                  "composed_by"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "recommendation.enriched"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "composed_by": {
+                    "const": "llm"
+                  },
+                  "recommendation_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "recommendation_id",
+                  "text",
+                  "composed_by"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "assistant.answer"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "citations": {
+                    "items": {
+                      "properties": {
+                        "document_code": {
+                          "type": "string"
+                        },
+                        "evidence_state": {
+                          "enum": [
+                            "VERIFICADO",
+                            "TB",
+                            "DEMO",
+                            "NO_VERIFICADO"
+                          ]
+                        },
+                        "excerpt": {
+                          "type": "string"
+                        },
+                        "page": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "requirement_ref": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "document_code",
+                        "excerpt",
+                        "evidence_state"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "utterance_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "utterance_id",
+                  "text",
+                  "citations"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "assistant"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        },
+        "seq": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "topic": {
+          "enum": [
+            "telemetry",
+            "alerts",
+            "assistant",
+            "system"
+          ]
+        },
+        "type": {
+          "enum": [
+            "telemetry.tick",
+            "scenario.changed",
+            "alert.raised",
+            "alert.updated",
+            "alert.resolved",
+            "recommendation.ready",
+            "recommendation.enriched",
+            "assistant.answer",
+            "subscribed",
+            "pong",
+            "ping",
+            "resumed",
+            "error"
+          ]
+        }
+      },
+      "required": [
+        "seq",
+        "topic",
+        "type",
+        "at",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "ws-messages.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Un solo canal de push. El servidor envía ServerMessage; el cliente, ClientMessage. `seq` es el id del outbox cuando el mensaje nace de un evento (se reenvía con `resume`); es null en los ticks y en el topic `system`. Con la cola llena se descartan ticks, nunca alertas. Sin mensajes durante 15 s el servidor envía `ping`.",
+  "title": "Mensajes de /ws"
+}

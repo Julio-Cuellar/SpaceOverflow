@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 14 de noviembre de 2026, 23:30.
+> Última actualización: 15 de noviembre de 2026, 00:30.
 
 ## Cómo se mantiene esta bitácora
 
@@ -33,11 +33,11 @@
 | Reparto en dos desarrolladores | Redactado (sección 16 del plan) y detallado para Dev B |
 | Plan detallado de Dev A | `docs/tareas-dev-a.md` (F0 y F1 marcadas como hechas) |
 | Generador del plan y del artefacto | En el repositorio (`tools/docgen/`), con prueba que verifica que reproduce el documento |
-| Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F5 casi terminada**: GraphQL con las consultas de Monitoreo, Telemetría y Conocimiento, gateway `/ws` y prueba de extremo a extremo. F4 sin empezar. El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
-| Pruebas | **604 pasan y 19 se omiten** (las omitidas son de Dev B), 96,96 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
+| Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F5 terminada** salvo lo que depende de F4 y de Tripulación: GraphQL, gateway `/ws`, contratos exportados y operación del outbox. F4 en curso. El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
+| Pruebas | **623 pasan y 19 se omiten** (las omitidas son de Dev B), 97,04 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
 | Artefacto interactivo | Versión 4 publicada: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8 |
-| Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. Dos fusiones **solo en local** (B-015 y B-016). El trabajo de F5 está **sin commit** |
-| Siguiente bloque propuesto | Terminar F5 (5.4, contratos exportados) y hacer F4 (nave, zonas e incidencias), con su GraphQL. Cierra I3 e I5 |
+| Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. Commits locales **sin subir**: fusiones B-015 y B-016, F5 (`9bed3c0`) y 5.4 |
+| Siguiente bloque propuesto | F4 (nave, zonas e incidencias) con su GraphQL y sus mensajes WebSocket. Cierra I3 e I5 |
 
 ---
 
@@ -289,6 +289,22 @@
 - **Pendiente de F5:** 5.4 (exportar `schema.graphql`, OpenAPI y `ws-messages.schema.json`, R8, `outboxStats` y limpieza de eventos de más de 24 h), `ping` del servidor cada 15 s, topics `habitat` y `crew`, DataLoaders y límite de costo, y las consultas de Tripulación.
 - **Contrato con Dev B:** el esquema real incluye todo `contracts/schema.graphql` (lo comprueba `test_contract_superset.py`). Un cambio en ese archivo compartido necesita la revisión de Dev B.
 
+### B-018 · F5, tarea 5.4: contratos exportados y operación del outbox
+- **Commit previo:** el usuario pidió commit de B-017. Quedó en `9bed3c0` sobre `dev-A`, **sin subir**.
+- **Qué:**
+  - **Contratos para Dev B:** `python -m spaceapp.interfaces.contracts_export` escribe `contracts/schema.generated.graphql` (esquema completo), `contracts/openapi.json` (con el perfil `dev1`, para que salga R8) y `contracts/ws-messages.schema.json` (la ruta que ya cita `web/src/data/ws/types.ts`). Con `--check` falla si algo cambió. Una prueba exige que los archivos publicados coincidan con el código.
+  - **El borrador `contracts/schema.graphql` de Dev B no se toca.** El usuario no contestó si se reemplazaba, así que se tomó la opción que no pisa nada. La prueba de subconjunto sigue vigente.
+  - **R8** `POST /api/v1/admin/outbox/{id}:replay`: un evento `dead` vuelve a `pending` con cero intentos y se avisa al relay. Responde 404 si no existe y 409 si no está muerto. Solo en `dev1` y `dev2`.
+  - **`outboxStats`** en GraphQL: pendientes, muertos y antigüedad del más viejo. En `jurado` devuelve null.
+  - **Limpieza:** el relay borra cada 10 min los eventos `done` de más de 24 h (`purge_done`). Los muertos y los pendientes no se tocan. El inbox no se limpia: si se limpiara, reencolar un muerto viejo repetiría consumidores que ya lo procesaron.
+  - **`ping` del servidor** en `/ws` tras 15 s sin mensajes.
+  - **Catálogo de mensajes:** `SERVER_TYPES` (tipo → topic) y `SYSTEM_TYPES` en el dominio de realtime. Las pruebas exigen que cada evento traducido produzca un tipo publicado en su topic y que todo tipo publicado tenga un evento que lo produzca.
+- **Archivos nuevos:** `src/spaceapp/platform/outbox/admin.py`, `src/spaceapp/interfaces/rest/admin.py`, `src/spaceapp/interfaces/contracts_export.py`, `src/spaceapp/modules/realtime/adapters/inbound/ws_schema.py`, los tres archivos de `contracts/`, `tests/integration/test_outbox_admin.py`, `tests/unit/realtime/test_ws_schema.py` y `tests/unit/test_contracts_export.py`.
+- **Archivos cambiados:** `platform/outbox/{__init__,relay}.py`, `realtime/domain/messages.py`, `realtime/adapters/inbound/ws.py`, `interfaces/graphql/{context,schema}.py`, `main.py` y `tests/unit/realtime/test_ws_endpoint.py`.
+- **TDD:** cada parte empezó en RED (`cannot import name 'purge_done'`, falta `ping_interval`, falta `ws_schema` y falta `contracts_export`). Una prueba miraba `app.routes`, pero esta versión de FastAPI no aplana los routers incluidos. Se cambió por las rutas del OpenAPI.
+- **Verificación** (`scripts/check.sh`): ruff sin errores, mypy estricto sin errores en 154 archivos, 4 contratos de arquitectura cumplidos, **623 pruebas** (19 omitidas, de Dev B) y 97,04 % de cobertura.
+- **Pendiente de F5** (depende de otras fases): consultas de Tripulación (`crewMember`, `recordBaseline`, `setConsent`), topics `habitat` (F4) y `crew`, DataLoaders y límite de costo.
+
 ---
 
 ## 4. Archivos del proyecto por área
@@ -304,6 +320,7 @@
 | Generador del plan y del artefacto | `tools/docgen/` | Asistente (movido desde el *scratchpad*) |
 | Backend de Dev A (Bloques 1 y 2) | `src/`, `tests/`, `migrations/`, `docker/`, `scripts/`, `rules/`, `data/` | Asistente |
 | GraphQL compuesto (F5) | `src/spaceapp/interfaces/graphql/` | Asistente |
+| Contratos generados para Dev B | `contracts/schema.generated.graphql`, `contracts/openapi.json`, `contracts/ws-messages.schema.json` | Asistente (generados) |
 | Informes de evidencia TDD | `docs/tdd/f0-f1.tdd.md`, `docs/tdd/f2-f3.tdd.md` | Asistente |
 
 ---
@@ -397,9 +414,9 @@ Las pruebas de integración necesitan Docker en marcha (`systemctl --user start 
 
 ## 9. Próximos pasos
 
-1. **Terminar F5 (5.4) y hacer F4:** exportar los contratos para Dev B. Después, plano e incidencias (tickets automáticos desde las alertas por zona, catálogo de 61 tipos, estado de color de cada zona) con su GraphQL y sus mensajes WebSocket. Cierra I3 e I5.
+1. **F4:** plano e incidencias (tickets automáticos desde las alertas por zona, catálogo de 61 tipos, estado de color de cada zona) con su GraphQL y sus mensajes WebSocket. Cierra I3 e I5.
 2. **Subir `dev-A`** (dos fusiones locales y F5) cuando el usuario lo pida, directo o por PR hacia `testing`.
 3. **Revisión de contratos por Dev B (I0):** `contracts.py` de cada módulo, `event_registry.py` y el bus en memoria.
 4. **Republicar el artefacto** para reflejar el modelo de datos actual (decisión del usuario).
 5. **Decisiones pendientes** de la sección 2.3.
-6. **Commit de F5** cuando el usuario lo pida.
+6. **Avisar a Dev B** de los contratos generados y de que `schema.graphql` sigue siendo su borrador.

@@ -367,14 +367,14 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
   - Strawberry montado en FastAPI. Cada módulo aporta su fragmento (`graphql.py`) y A los compone en `interfaces/graphql/schema.py`. Los resolvers de B (Conocimiento y Asistente) se registran sin que A los escriba.
   - Consultas y mutaciones de A: `dashboard`, `readings`, `alerts`, `alert`, `rules`, `zoneReadings`, `crewMember`, `acknowledgeAlert`, `recordBaseline`, `setConsent`, y las de nave de F4.
   - Resultados tipados con `union`. Límite de profundidad y de costo. DataLoaders contra N+1.
-- [~] **5.2 Gateway `/ws` (1,5 h)** · *hecho salvo dos puntos (B-017): los topics son `telemetry`, `alerts` y `assistant` (no `habitat` ni `crew`) y el servidor no envía `ping` cada 15 s, solo responde con `pong`*
+- [~] **5.2 Gateway `/ws` (1,5 h)** · *hecho (B-017 y B-018). Diferencia: los topics son `telemetry`, `alerts` y `assistant`, los que ya usa la interfaz de B; `habitat` llega con F4 y `crew` con Tripulación*
   - Un endpoint con `subscribe` y `unsubscribe` por topic (`habitat`, `crew`, `alerts`, `assistant`).
   - Traduce los eventos del bus a los 14 mensajes del plan (tabla en la sección 5.3). `seq` es el `id` del outbox cuando el mensaje nace de un evento.
   - **`resume { after_outbox_id }`:** reenvía desde `outbox_event` (retención de 24 h).
   - `ping` y `pong` cada 15 s.
   - **Presión inversa:** cola de 500 mensajes por cliente. Se descartan primero los `telemetry.tick`. **Las alertas no se descartan.**
 - [x] **5.3 Ticks coalescidos (0,25 h):** *(B-017: la cola de cada cliente se queda con el último tick por zona y métrica)* `telemetry.tick` a 1 Hz como máximo por zona y sensor, a partir de `readings_recorded`.
-- [ ] **5.4 Contratos publicados y operación (0,5 h):** exportar `schema.graphql`, el OpenAPI y `ws-messages.schema.json` para que B genere tipos y mocks. Ruta de reencolado `POST /api/v1/admin/outbox/{id}:replay` (R8) y `outboxStats` (solo perfiles de desarrollo). Limpieza de eventos `done` con más de 24 h.
+- [x] **5.4 Contratos publicados y operación (0,5 h):** *(B-018: `contracts/schema.generated.graphql`, `openapi.json` y `ws-messages.schema.json` con `python -m spaceapp.interfaces.contracts_export`; el borrador `schema.graphql` de B no se toca)* exportar `schema.graphql`, el OpenAPI y `ws-messages.schema.json` para que B genere tipos y mocks. Ruta de reencolado `POST /api/v1/admin/outbox/{id}:replay` (R8) y `outboxStats` (solo perfiles de desarrollo). Limpieza de eventos `done` con más de 24 h.
 - [x] **5.5 Prueba de extremo a extremo (0,25 h):** *(B-017: `tests/integration/test_end_to_end.py`, latencia medida de 47 a 73 ms)* escenario → alerta por WebSocket en menos de 1 s → reconocer por GraphQL.
 
 **Criterios de aceptación**

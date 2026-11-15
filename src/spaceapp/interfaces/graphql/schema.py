@@ -259,6 +259,13 @@ AcknowledgeAlertResult = Annotated[
 # --- Telemetría ----------------------------------------------------------------------------
 
 
+@strawberry.type(name="OutboxStats")
+class OutboxStatsType:
+    pending: int
+    dead: int
+    oldest_pending_age_s: float | None
+
+
 @strawberry.type
 class ReadingPoint:
     ts: datetime
@@ -385,6 +392,17 @@ class Query:
             )
             for s in series
         ]
+
+    # Estado del outbox. Solo en perfiles de desarrollo; en `jurado` devuelve null.
+    @strawberry.field
+    async def outbox_stats(self, info: GqlInfo) -> OutboxStatsType | None:
+        read = info.context.services.outbox_stats
+        if read is None:
+            return None
+        stats = await read()
+        return OutboxStatsType(
+            pending=stats.pending, dead=stats.dead, oldest_pending_age_s=stats.oldest_pending_age_s
+        )
 
     @strawberry.field
     def knowledge_search(self, info: GqlInfo, query: str, k: int = 5) -> list[CitationType]:

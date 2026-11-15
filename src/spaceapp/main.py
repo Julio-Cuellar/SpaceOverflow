@@ -16,6 +16,7 @@ from strawberry.fastapi import GraphQLRouter
 
 from spaceapp.interfaces.graphql.context import Context, Services
 from spaceapp.interfaces.graphql.schema import schema
+from spaceapp.interfaces.rest.admin import build_router as admin_router
 from spaceapp.modules.knowledge.adapters.inbound.events import register_knowledge
 from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowledgeSource
 from spaceapp.modules.knowledge.adapters.outbound.memory import (
@@ -50,7 +51,10 @@ from spaceapp.platform.bus import SubscriptionRegistry
 from spaceapp.platform.config import Settings
 from spaceapp.platform.db import make_engine, make_session_factory
 from spaceapp.platform.ids import stable_uuid
-from spaceapp.platform.outbox import OutboxRelay, outbox_stats
+from spaceapp.platform.outbox import OutboxRelay, OutboxStats, outbox_stats
+from spaceapp.platform.profiles import Profile
+
+DEV_PROFILES = (Profile.DEV1, Profile.DEV2)
 
 # Hasta que haya selección de perfil, las acciones se firman con un tripulante de demostración.
 DEMO_CREW_MEMBER = stable_uuid("crew", "demo")
@@ -123,6 +127,10 @@ def build_services(
             session_factory, SqlAlertRepository, alert_id, DEMO_CREW_MEMBER, note=note
         )
 
+    async def read_outbox_stats() -> OutboxStats:
+        async with session_factory() as session:
+            return await outbox_stats(session)
+
     return Services(
         alerts=AlertReadQuery(session_factory),
         active_alerts=ActiveAlertsQuery(session_factory),
@@ -131,6 +139,7 @@ def build_services(
         knowledge=KnowledgeQuery(knowledge.source),
         recommendation_for=knowledge.recommendation_for,
         acknowledge=acknowledge,
+        outbox_stats=read_outbox_stats if settings.profile in DEV_PROFILES else None,
     )
 
 
@@ -217,6 +226,8 @@ def create_app(
 
     app.include_router(GraphQLRouter(schema, context_getter=graphql_context), prefix="/graphql")
     app.include_router(ws_router(app.state.hub, _AppReplay(app)))
+    if settings.profile in DEV_PROFILES:
+        app.include_router(admin_router(lambda: app.state.session_factory))
 
     @app.get("/health")
     async def health() -> dict[str, str]:
