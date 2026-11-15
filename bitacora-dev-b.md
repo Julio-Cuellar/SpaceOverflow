@@ -380,7 +380,7 @@ En el caso de uso, 2 pruebas fallaron por un error **de mi prueba**: comparaba `
 
 **Cómo se probó la lectura de PDF sin descargar nada:** `tests/knowledge/pdf_helpers.py` arma un PDF mínimo válido (con tabla de referencias cruzadas) y `pypdf` lo lee de vuelta.
 
-**Un hueco que se encontró y se cerró bien:** al evaluar el glosario, una prueba falló porque la pregunta sobre capacidad aeróbica no recibía ninguna traducción. Al ver el detalle, otras pasaban solo por una traducción incidental (por ejemplo «astronauta» → `crew`, sin traducir «densidad ósea»). No se añadió lo mínimo para que pasara: se añadieron 14 entradas con los términos reales (`aerobic capacity`, `bone density`, `partial pressure`, `rate of change`, etc.).
+**Un hueco que se encontró y se cerró bien:** al evaluar el glosario, una prueba falló porque la pregunta sobre capacidad aeróbica no recibía ninguna traducción. Al ver el detalle, otras pasaban solo por una traducción incidental (por ejemplo «astronauta» → `crew`, sin traducir «densidad ósea»). No se añadió lo mínimo para que pasara: se añadieron 13 entradas y la forma «vibrar» con los términos reales (`aerobic capacity`, `bone density`, `partial pressure`, `rate of change`, etc.).
 
 **Garantías de F12 y su evidencia**
 
@@ -396,7 +396,7 @@ En el caso de uso, 2 pruebas fallaron por un error **de mi prueba**: comparaba `
 
 **Decisiones y limitaciones de F12**
 
-1. **El idioma era un problema que el plan no previó.** Los documentos de NASA están en inglés y las preguntas en español; una búsqueda por términos no encontraría «headache» desde «dolor de cabeza». Solución provisoria: un **glosario español-inglés** (`data/knowledge/glossary_es_en.json`, 41 entradas) que expande la pregunta. Es una solución limitada: un término que no esté en el glosario no se encuentra. La solución de fondo es un modelo de embeddings multilingüe, que es la decisión pendiente n.º 5. **El glosario está pendiente de revisión del equipo.**
+1. **El idioma era un problema que el plan no previó.** Los documentos de NASA están en inglés y las preguntas en español; una búsqueda por términos no encontraría «headache» desde «dolor de cabeza». Solución provisoria: un **glosario español-inglés** (`data/knowledge/glossary_es_en.json`, 40 entradas) que expande la pregunta. Es una solución limitada: un término que no esté en el glosario no se encuentra. La solución de fondo es un modelo de embeddings multilingüe, que es la decisión pendiente n.º 5. **El glosario está pendiente de revisión del equipo.**
 2. **El puntaje pondera por rareza** (`ln(1 + (N+1)/df)`) y exige un mínimo de 1,0: una palabra que está en casi todos los fragmentos no basta para devolver un pasaje.
 3. **Posible inconsistencia de evidencia, para decidir.** El RAG toma el estado de evidencia del tipo de documento: todos los Technical Brief salen como `TB`. Pero el catálogo de demostración marca el pasaje de hipoxia de TB-003 como `VERIFICADO`, siguiendo el documento de contexto. No lo cambié porque esa clasificación es del equipo. Cuando se ingieran los PDFs reales, el mismo texto saldría como `TB`.
 4. **Las preguntas de evaluación son hipótesis.** Los documentos esperados salen del documento de contexto, no de haber leído los PDFs. Hay que afinarlas tras la primera ingesta real. Son 16 dentro de alcance y 2 fuera.
