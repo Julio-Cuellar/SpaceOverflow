@@ -30,8 +30,48 @@ describe("React mission console", () => {
         .filter((el) => el.className === "crew-card"),
     ).toHaveLength(4);
     expect(
-      screen.queryByRole("link", { name: /My crew workspace/ }),
+      screen.getByRole("link", { name: /Astronaut portal/ }),
+    ).toHaveAttribute("href", "/dashboard-tripulation");
+  });
+  it("brands the console as SYRA and spells out the name", async () => {
+    render(<ConsoleApp initialPath="/" />);
+    const sidebar = await screen.findByRole("complementary");
+    expect(within(sidebar).getByText("SYRA")).toBeVisible();
+    expect(
+      within(sidebar).getByText("Spaceflight sYstem for Remote Assessment"),
+    ).toBeVisible();
+    expect(screen.queryByText(/odyssey/i)).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(document.title).toBe("SYRA · Mission overview"),
+    );
+  });
+  it("brands the crew workspace as SYRA too", async () => {
+    render(<ConsoleApp initialPath="/dashboard-tripulation" />);
+    await screen.findByRole("heading", { name: "Hello, A. Garcia." });
+    expect(screen.getByText("SYRA")).toBeVisible();
+    expect(screen.queryByText(/odyssey/i)).not.toBeInTheDocument();
+    expect(document.title).toBe("SYRA · My crew workspace");
+  });
+  it("moves from mission control to the astronaut portal and back", async () => {
+    const user = userEvent.setup();
+    render(<ConsoleApp initialPath="/" />);
+    await user.click(
+      await screen.findByRole("link", { name: /Astronaut portal/ }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Hello, A. Garcia." }),
+    ).toBeVisible();
+    // The workspace stays standalone: no mission navigation, only a way back.
+    expect(
+      screen.queryByRole("navigation", { name: "Mission navigation" }),
     ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: /Mission control/ }));
+    expect(
+      await screen.findByRole("heading", { name: "Mission overview" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("navigation", { name: "Mission navigation" }),
+    ).toBeVisible();
   });
   it("shows only the current astronaut in the standalone workspace", async () => {
     render(<ConsoleApp initialPath="/dashboard-tripulation" />);
