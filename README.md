@@ -30,4 +30,20 @@ curl -X POST localhost:8000/api/v1/sim/scenarios/co2_slow:start -H 'content-type
 `SPACEAPP_RULE_WINDOW_SCALE` shortens the rule windows (1 h real) for the demo. With 1.0 the values from the
 standard are used. Scenarios: `co2_slow`, `pressure_leak`, `humidity_high`, `o2_failure`, `heat`.
 
+## Web console against the real backend
+
+```bash
+scripts/dev-backend.sh               # PostgreSQL (port 5434), migrations and the API on :8002 with the simulator
+cd web && npm run dev:backend        # the console reads the API instead of the labeled demo data
+```
+
+`npm run dev:backend` uses `web/.env.backend` (`VITE_DATA_MODE=backend`). The browser only talks to the Vite
+origin, which proxies `/graphql`, `/ws` and `/api` to `SPACEAPP_API_PROXY` (default `http://127.0.0.1:8002`) and
+the assistant routes to `SPACEAPP_ASSISTANT_PROXY` (`:8000`, `python -m spaceapp.devtools.assistant_server`), so
+CORS is not needed. Another API port: `SPACEAPP_API_PORT=8010 scripts/dev-backend.sh` and
+`SPACEAPP_API_PROXY=http://127.0.0.1:8010 npm run dev:backend`. `npm run dev` keeps the demo mode.
+
+With the real backend, consent, baseline and "Sync now" are refused (`NOT_AVAILABLE`) until the backend has them,
+and Ground templates show no zone or recurrence.
+
 Test evidence: `docs/tdd/f0-f1.tdd.md` and `docs/tdd/f2-f3.tdd.md`.

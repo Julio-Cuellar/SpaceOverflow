@@ -1029,3 +1029,17 @@ Without downloading anything: the real model and the library were not installed 
 **Console adjusted to Dev A's schema (follow-up of E34):** the 7 failing contract tests were real gaps, now closed in `web/src/console/data/operations.ts`: `composedBy` and the `zoneCode`/`recurrence` of templates are no longer requested; `ship` is read by `habitatId`, `code`, `kind` and `canvas` (JSON) and the adapter maps them to the `id` and `canvas` the screens use (it refuses a ship without a drawing size); `setGroundLink` takes `Float!` and has no `GroundError` branch, as in the schema. `setConsent`, `recordBaseline` and `syncGroundLinkNow` do not exist in Dev A's backend: they moved to `pendingMutations` (validated against `frontend-integration.graphql`), the demo gateway still simulates them and the real backend refuses them with `NOT_AVAILABLE` without sending a request. **Consequence for the screens:** with the real backend the Ground templates show no zone or recurrence, and consent, baseline and "Sync now" do not work until Dev A adds them.
 
 **GREEN:** 849 Python tests passed (19 skipped, integration excluded); `ruff`, `ruff format`, strict `mypy`, `import-linter` clean. Web: `tsc`, `eslint` and `vite build` clean; 305 tests pass (after the console adjustment).
+
+## E35 · The console reads the real backend (15 Nov 2026)
+
+**Goal:** consume Dev A's backend from the web console.
+
+**What was already there:** the console has a backend adapter (`VITE_DATA_MODE=backend`) and Vite proxies `/graphql`, `/ws` and `/api`. After E34 its operations match Dev A's exported schema, so no code change was needed in the adapter.
+
+**What was added:** `scripts/dev-backend.sh` (PostgreSQL on 5434, the six module migrations, API with relay and simulator), `web/.env.backend` and `npm run dev:backend`, and `vite.config.ts` now reads the proxy targets from the mode's env file (`loadEnv`), not only from the process environment. README section "Web console against the real backend". A preview entry `web-backend` (port 5180, API on 8010) was added to `.claude/launch.json`.
+
+**Verified against a live API (fresh database, current code):** the eight queries of the console answer with no errors; in the browser the overview, ship, tasks and Ground pages load with "Connected" and no console errors; completing a task from the UI changed the count to "1 of 9 complete"; starting `co2_slow` in the lab raised `env-trend-co2` end to end (simulator, rules, recommendation, WebSocket, screen), labeled DEMO; "Acknowledge alert" showed "Change confirmed by the backend".
+
+**Port conflicts found on this machine:** 5433 belongs to another project's PostgreSQL (hence 5434), and an older API (`jurado` profile, code from before the merge) was already listening on 8002 and was left untouched: restart it to use the merged code.
+
+**Not verified:** the assistant tab and voice against the real services (this run used no assistant server), Ground publish/cancel flows, incidents reported from the UI, and load: the overview issued about 80 GraphQL requests in a few seconds while the simulator streamed readings.
