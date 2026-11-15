@@ -14,18 +14,23 @@ from uuid import UUID, uuid4
 
 from spaceapp.modules.assistant.application.ask import AskAssistant, AskOutcome, AskResult
 from spaceapp.modules.assistant.domain.voice import (
+    CONFIRMED_OR_LATER,
     AlreadyConfirmedError,
+    InvalidTransitionError,
+    TurnEvent,
     UnknownUtteranceError,
     UnsupportedAudioError,
     Utterance,
     UtteranceStatus,
     audio_extension,
+    transition,
 )
 from spaceapp.modules.assistant.ports import AudioStore, SpeechToText, UtteranceRepository
 
 __all__ = [
     "AlreadyConfirmedError",
     "ConfirmUtterance",
+    "InvalidTransitionError",
     "SubmitAudio",
     "UnknownUtteranceError",
     "UnsupportedAudioError",
@@ -66,25 +71,35 @@ class SubmitAudio:
         utterance = self._utterances.get(utterance_id)
         if utterance.status is not UtteranceStatus.RECEIVED:
             return utterance
-        done = self._transcribe(utterance)
+        working = replace(utterance, status=transition(utterance.status, TurnEvent.TRANSCRIBE))
+        self._utterances.update(working)
+        done = self._transcribe(working)
         self._utterances.update(done)
         return done
 
     def _transcribe(self, utterance: Utterance) -> Utterance:
         if not self._stt.available:
-            return replace(utterance, status=UtteranceStatus.NO_TRANSCRIPT, reason=NO_MODEL)
+            return self._no_transcript(utterance, NO_MODEL)
         try:
             audio = _read(utterance.audio_path)
             transcript = self._stt.transcribe(audio, _content_type(utterance.audio_path))
         except Exception:  # el modelo puede fallar por muchas causas; la voz nunca es obligatoria
-            return replace(utterance, status=UtteranceStatus.NO_TRANSCRIPT, reason=FAILED)
+            return self._no_transcript(utterance, FAILED)
         if transcript is None or not transcript.text.strip():
-            return replace(utterance, status=UtteranceStatus.NO_TRANSCRIPT, reason=NO_SPEECH)
+            return self._no_transcript(utterance, NO_SPEECH)
         return replace(
             utterance,
-            status=UtteranceStatus.TRANSCRIBED,
+            status=transition(utterance.status, TurnEvent.TRANSCRIPT_READY),
             text=transcript.text,
             confidence=transcript.confidence,
+        )
+
+    @staticmethod
+    def _no_transcript(utterance: Utterance, reason: str) -> Utterance:
+        return replace(
+            utterance,
+            status=transition(utterance.status, TurnEvent.TRANSCRIPT_FAILED),
+            reason=reason,
         )
 
 
@@ -105,13 +120,44 @@ class ConfirmUtterance:
         self._ask = ask
 
     def confirm(self, utterance_id: UUID, text: str) -> AskResult:
-        """Pregunta al asistente con el texto que la tripulación confirmó (editado o escrito)."""
+        """Confirma el texto (editado o escrito) y consulta. Se confirma una sola vez."""
         utterance = self._utterances.get(utterance_id)
-        if utterance.status is UtteranceStatus.CONFIRMED:
+        if utterance.status in CONFIRMED_OR_LATER:
             raise AlreadyConfirmedError(str(utterance_id))
-        result = self._ask(utterance.conversation_id, text)
-        if result.outcome is not AskOutcome.EMPTY_QUESTION:
+        if not text.strip():
+            # Nada que confirmar: no hay transición y la intervención sigue esperando.
+            return self._ask(utterance.conversation_id, text)
+        return self._consult(utterance, text.strip())
+
+    def confirm_text(self, conversation_id: UUID, text: str) -> AskResult:
+        """Pregunta escrita: pasa por la misma máquina de estados que la de voz."""
+        if not text.strip():
+            return self._ask(conversation_id, text)
+        utterance = Utterance(
+            id=uuid4(), conversation_id=conversation_id, status=UtteranceStatus.TYPED
+        )
+        self._utterances.add(utterance)
+        return self._consult(utterance, text.strip())
+
+    def discard(self, utterance_id: UUID) -> Utterance:
+        utterance = self._utterances.get(utterance_id)
+        discarded = replace(utterance, status=transition(utterance.status, TurnEvent.DISCARD))
+        self._utterances.update(discarded)
+        return discarded
+
+    def _consult(self, utterance: Utterance, text: str) -> AskResult:
+        confirmed = replace(
+            utterance, status=transition(utterance.status, TurnEvent.CONFIRM), text=text
+        )
+        consulting = replace(confirmed, status=transition(confirmed.status, TurnEvent.CONSULT))
+        self._utterances.update(consulting)
+        try:
+            result = self._ask(utterance.conversation_id, text)
+        except Exception:
             self._utterances.update(
-                replace(utterance, status=UtteranceStatus.CONFIRMED, text=text.strip())
+                replace(consulting, status=transition(consulting.status, TurnEvent.FAILED))
             )
+            raise
+        event = TurnEvent.NO_INFO if result.outcome is AskOutcome.NO_INFO else TurnEvent.ANSWERED
+        self._utterances.update(replace(consulting, status=transition(consulting.status, event)))
         return result

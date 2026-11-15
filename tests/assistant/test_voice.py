@@ -23,7 +23,11 @@ from spaceapp.modules.assistant.application.voice import (
     UnknownUtteranceError,
     UnsupportedAudioError,
 )
-from spaceapp.modules.assistant.domain.voice import Transcript, UtteranceStatus
+from spaceapp.modules.assistant.domain.voice import (
+    InvalidTransitionError,
+    Transcript,
+    UtteranceStatus,
+)
 from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowledgeSource
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
@@ -135,7 +139,7 @@ def test_confirming_asks_the_assistant_with_the_text_the_crew_edited(tmp_path: P
     assert result.outcome is AskOutcome.ANSWERED
     [question, _answer] = rig.conversations.messages(CONVERSATION)
     assert question.text == "¿Por qué me duele la cabeza?"
-    assert rig.utterances.get(utterance_id).status is UtteranceStatus.CONFIRMED
+    assert rig.utterances.get(utterance_id).status is UtteranceStatus.ANSWERED
 
 
 def test_an_utterance_cannot_be_confirmed_twice(tmp_path: Path) -> None:
@@ -195,3 +199,57 @@ def test_audio_without_speech_gives_no_transcript(tmp_path: Path) -> None:
     utterance = rig.submit.transcribe(utterance_id)
 
     assert utterance.status is UtteranceStatus.NO_TRANSCRIPT
+
+
+def test_a_question_without_a_passage_closes_the_turn_as_no_info(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+    utterance_id = rig.submit.submit(CONVERSATION, AUDIO, "audio/wav")
+    rig.submit.transcribe(utterance_id)
+
+    result = rig.confirm.confirm(utterance_id, "¿Cuál es la capital de Francia?")
+
+    assert result.outcome is AskOutcome.NO_INFO
+    assert rig.utterances.get(utterance_id).status is UtteranceStatus.NO_INFO
+
+
+def test_a_typed_question_goes_through_the_same_state_machine(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+
+    result = rig.confirm.confirm_text(CONVERSATION, "¿Por qué me duele la cabeza?")
+
+    assert result.outcome is AskOutcome.ANSWERED
+    [only] = rig.utterances.all()
+    assert only.status is UtteranceStatus.ANSWERED
+    assert only.text == "¿Por qué me duele la cabeza?"
+
+
+def test_an_empty_typed_question_creates_no_turn(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+
+    result = rig.confirm.confirm_text(CONVERSATION, "   ")
+
+    assert result.outcome is AskOutcome.EMPTY_QUESTION
+    assert rig.utterances.all() == []
+
+
+def test_the_crew_can_discard_a_transcript_and_then_cannot_confirm_it(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+    utterance_id = rig.submit.submit(CONVERSATION, AUDIO, "audio/wav")
+    rig.submit.transcribe(utterance_id)
+
+    rig.confirm.discard(utterance_id)
+
+    assert rig.utterances.get(utterance_id).status is UtteranceStatus.DISCARDED
+    with pytest.raises(InvalidTransitionError):
+        rig.confirm.confirm(utterance_id, "¿Por qué me duele la cabeza?")
+    assert rig.publisher.events == []
+
+
+def test_an_answered_turn_cannot_be_discarded(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+    utterance_id = rig.submit.submit(CONVERSATION, AUDIO, "audio/wav")
+    rig.submit.transcribe(utterance_id)
+    rig.confirm.confirm(utterance_id, "¿Por qué me duele la cabeza?")
+
+    with pytest.raises(InvalidTransitionError):
+        rig.confirm.discard(utterance_id)

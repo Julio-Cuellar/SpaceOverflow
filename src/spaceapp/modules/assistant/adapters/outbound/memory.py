@@ -59,3 +59,6 @@ class InMemoryUtterances:
     def update(self, utterance: Utterance) -> None:
         self.get(utterance.id)
         self._items[utterance.id] = utterance
+
+    def all(self) -> list[Utterance]:
+        return list(self._items.values())

@@ -16,10 +16,70 @@ _EXTENSIONS = {
 
 
 class UtteranceStatus(StrEnum):
-    RECEIVED = "RECEIVED"
-    TRANSCRIBED = "TRANSCRIBED"
-    NO_TRANSCRIPT = "NO_TRANSCRIPT"
-    CONFIRMED = "CONFIRMED"
+    """Estados de una intervención, por voz o por texto (máquina de estados del asistente)."""
+
+    TYPED = "TYPED"  # ESCRITA: texto tecleado, listo para confirmar
+    RECEIVED = "RECEIVED"  # RECIBIDA: audio guardado
+    TRANSCRIBING = "TRANSCRIBING"  # TRANSCRIBIENDO
+    TRANSCRIBED = "TRANSCRIBED"  # TRANSCRITA: texto editable a la espera de confirmar
+    NO_TRANSCRIPT = "NO_TRANSCRIPT"  # SIN_TRANSCRIPCION: sin modelo, fallo o sin habla
+    CONFIRMED = "CONFIRMED"  # CONFIRMADA
+    CONSULTING = "CONSULTING"  # CONSULTANDO: el orquestador trabaja
+    ANSWERED = "ANSWERED"  # RESPONDIDA: con pasajes y citas
+    NO_INFO = "NO_INFO"  # SIN_INFORMACION: ningún pasaje respalda
+    TEMPLATE_ANSWER = "TEMPLATE_ANSWER"  # RESPUESTA_DE_PLANTILLA: el orquestador no pudo
+    FAILED = "FAILED"  # FALLIDA: ni siquiera la plantilla
+    DISCARDED = "DISCARDED"  # DESCARTADA
+
+
+class TurnEvent(StrEnum):
+    TRANSCRIBE = "TRANSCRIBE"
+    TRANSCRIPT_READY = "TRANSCRIPT_READY"
+    TRANSCRIPT_FAILED = "TRANSCRIPT_FAILED"
+    CONFIRM = "CONFIRM"
+    DISCARD = "DISCARD"
+    CONSULT = "CONSULT"
+    ANSWERED = "ANSWERED"
+    NO_INFO = "NO_INFO"
+    FALLBACK_ANSWERED = "FALLBACK_ANSWERED"
+    FAILED = "FAILED"
+
+
+_S = UtteranceStatus
+_E = TurnEvent
+_READY_FOR_CREW = (_S.TYPED, _S.TRANSCRIBED, _S.NO_TRANSCRIPT)
+
+# Única fuente de verdad de las transiciones. Lo que no está aquí no puede ocurrir.
+TRANSITIONS: dict[tuple[UtteranceStatus, TurnEvent], UtteranceStatus] = {
+    (_S.RECEIVED, _E.TRANSCRIBE): _S.TRANSCRIBING,
+    (_S.TRANSCRIBING, _E.TRANSCRIPT_READY): _S.TRANSCRIBED,
+    (_S.TRANSCRIBING, _E.TRANSCRIPT_FAILED): _S.NO_TRANSCRIPT,
+    **{(state, _E.CONFIRM): _S.CONFIRMED for state in _READY_FOR_CREW},
+    **{(state, _E.DISCARD): _S.DISCARDED for state in _READY_FOR_CREW},
+    (_S.CONFIRMED, _E.CONSULT): _S.CONSULTING,
+    (_S.CONSULTING, _E.ANSWERED): _S.ANSWERED,
+    (_S.CONSULTING, _E.NO_INFO): _S.NO_INFO,
+    (_S.CONSULTING, _E.FALLBACK_ANSWERED): _S.TEMPLATE_ANSWER,
+    (_S.CONSULTING, _E.FAILED): _S.FAILED,
+}
+
+INITIAL_STATES = frozenset({_S.RECEIVED, _S.TYPED})
+TERMINAL_STATES = frozenset({_S.ANSWERED, _S.NO_INFO, _S.TEMPLATE_ANSWER, _S.FAILED, _S.DISCARDED})
+# Estados en los que la pregunta ya se confirmó: no se vuelve a preguntar.
+CONFIRMED_OR_LATER = frozenset(
+    {_S.CONFIRMED, _S.CONSULTING, _S.ANSWERED, _S.NO_INFO, _S.TEMPLATE_ANSWER, _S.FAILED}
+)
+
+
+class InvalidTransitionError(RuntimeError):
+    """El evento no es válido en el estado actual. El estado no cambia."""
+
+
+def transition(state: UtteranceStatus, event: TurnEvent) -> UtteranceStatus:
+    try:
+        return TRANSITIONS[(state, event)]
+    except KeyError:
+        raise InvalidTransitionError(f"{event} no es válido en el estado {state}") from None
 
 
 class UnsupportedAudioError(ValueError):
