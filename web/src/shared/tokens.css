@@ -1,0 +1,59 @@
+/* Colores semánticos. Oscuro por defecto para la cabina; claro con prefers-color-scheme o data-theme. */
+:root {
+  --bg: #0b1320;
+  --fg: #e6edf7;
+  --muted: #9fb0c6;
+  --surface: #13213a;
+  --sev-normal: #3ccf7a;
+  --sev-atencion: #f2b233;
+  --sev-alerta: #ff6b4a;
+  --sev-critico: #e04cc4;
+  --focus: #7cc4ff;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #f5f8fc;
+    --fg: #0b1320;
+    --muted: #4a5a70;
+    --surface: #ffffff;
+    --sev-normal: #137a3e;
+    --sev-atencion: #8a5a00;
+    --sev-alerta: #b33a1e;
+    --sev-critico: #8c1f7e;
+    --focus: #0b5cad;
+  }
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f8fc;
+  --fg: #0b1320;
+  --muted: #4a5a70;
+  --surface: #ffffff;
+  --sev-normal: #137a3e;
+  --sev-atencion: #8a5a00;
+  --sev-alerta: #b33a1e;
+  --sev-critico: #8c1f7e;
+  --focus: #0b5cad;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+}
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border-bottom: 2px solid var(--sev-atencion);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}

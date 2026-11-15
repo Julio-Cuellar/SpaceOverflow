@@ -1,0 +1,144 @@
+/* Disposición de los paneles. Colores en tokens.css. Objetivos táctiles de 48 px (plan, sección 13.2). */
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+
+section {
+  margin: 1rem 0;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: var(--fg);
+}
+
+button {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0 1rem;
+  border: 2px solid var(--muted);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+select,
+input,
+textarea {
+  min-height: 48px;
+  padding: 0.5rem;
+  border: 2px solid var(--muted);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+[role='tablist'] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+[role='tab'][aria-selected='true'] {
+  border-color: var(--focus);
+  font-weight: 700;
+}
+
+.vitals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.vital-card {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.vital-card h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.vital-card .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.sev-pill {
+  font-weight: 700;
+}
+
+.evidence-badge {
+  display: inline-block;
+  margin: 0.25rem 0.5rem 0 0;
+  padding: 0 0.4rem;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+svg [role='button'] {
+  cursor: pointer;
+}
+
+/* Asistente: las líneas de la respuesta se respetan, y los enlaces de fuentes se leen en ambos temas. */
+.answer-text {
+  white-space: pre-line;
+}
+
+a {
+  color: var(--focus);
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.125rem 0.625rem;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  font-size: 0.875rem;
+}
+
+form label {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+}
+
+form textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 96px;
+  margin-bottom: 0.5rem;
+}
+
+/* El plano no se encoge por debajo de 480 px: se desplaza dentro de su panel (plan, sección 7.7). */
+.ship-plan {
+  overflow-x: auto;
+}
+
+.ship-plan > svg {
+  max-width: none;
+  min-width: 480px;
+}
+
+/* Las etiquetas del plano caben en su zona a este tamaño (unidades del viewBox). */
+svg text {
+  font-size: 11px;
+}
