@@ -31,4 +31,4 @@ Opciones: `--template`, `--page`, `--out-md` y `--out-html`.
 ## Origen
 
 Estos archivos vivían en una carpeta temporal de la sesión de trabajo. Desde la entrada B-011 de
-`docs/bitacora.md` la fuente está aquí.
+`bitacora-dev-a.md` la fuente está aquí.

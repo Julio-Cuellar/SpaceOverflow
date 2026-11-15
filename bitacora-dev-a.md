@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 06:30.
+> Última actualización: 15 de noviembre de 2026, 06:45.
 
 ## Cómo se mantiene esta bitácora
 
@@ -173,7 +173,7 @@
 
 ### B-010 · Esta bitácora
 - **Qué:** registro completo de lo hecho en la sesión, con cambios fuera del repositorio, errores y pendientes.
-- **Archivos:** `docs/bitacora.md` (nuevo).
+- **Archivos:** `bitacora-dev-a.md` (nuevo).
 
 ### B-011 · Generador del plan dentro del repositorio
 - **Qué:** se movió la fuente del plan y del artefacto (antes en una carpeta temporal de la sesión) a `tools/docgen/`. Se le dio una línea de comandos y una prueba que garantiza que reproduce el documento.
@@ -402,6 +402,13 @@
 - **Orden recomendado al fusionar:** primero `dev-A`, luego `dev-B`, y revisar el CI de `testing` entre uno y otro.
 - **Pendiente:** que el usuario abra y fusione los PRs desde la web, o inicie sesión en el navegador integrado o conecte la extensión de Chrome para que el asistente lo haga.
 
+### B-027 · La bitácora de Dev A pasa a `bitacora-dev-a.md`
+- **Pedido del usuario:** llevarla con otro nombre para que no haya conflicto al fusionar.
+- **Qué:** `docs/bitacora.md` se movió con `git mv` a **`bitacora-dev-a.md`** en la raíz, igual que la de Dev B (`bitacora-dev-b.md`). Cada desarrollador escribe solo en la suya. Se actualizaron las referencias en `docs/tareas-dev-a.md` y `tools/docgen/README.md`.
+- **Efecto en los PRs:** `testing` tenía el archivo viejo (de los PRs anteriores) y nadie más lo cambió. El PR lo borra sin conflicto, y el archivo nuevo no existe en ninguna otra rama. `dev-B` no toca `docs/bitacora.md`, así que la fusión sigue limpia.
+- **Los PRs y esta bitácora:** el cambio está en `dev-A`. Si el PR `dev-A → testing` ya está abierto, hay que subir antes estos commits.
+- **Copia de respaldo:** `~/Documentos/space_apps/bitacora-dev-a.md` (antes `space_apps/docs/bitacora.md`).
+
 ---
 
 ## 4. Archivos del proyecto por área
@@ -412,7 +419,7 @@
 | Plan de arquitectura | `docs/plan-arquitectura.md` | Asistente (generado) |
 | Tareas de Dev B | `docs/tareas-dev-b.md` | Asistente |
 | Informe TDD F0 y F1 | `docs/tdd/f0-f1.tdd.md` | Asistente |
-| Bitácora | `docs/bitacora.md` | Asistente |
+| Bitácora | `bitacora-dev-a.md` | Asistente |
 | Tareas de Dev A | `docs/tareas-dev-a.md` | Asistente |
 | Generador del plan y del artefacto | `tools/docgen/` | Asistente (movido desde el *scratchpad*) |
 | Backend de Dev A (Bloques 1 y 2) | `src/`, `tests/`, `migrations/`, `docker/`, `scripts/`, `rules/`, `data/` | Asistente |

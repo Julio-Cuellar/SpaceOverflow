@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Documento de trabajo para **Dev A**. Deriva de [`plan-arquitectura.md`](plan-arquitectura.md) (secciones 5 a 8, 10, 13 y 16) y de [`spaceapps-health-monitor-context.md`](spaceapps-health-monitor-context.md). Es el equivalente de [`tareas-dev-b.md`](tareas-dev-b.md).
-> Historial y estado: [`bitacora.md`](bitacora.md). Evidencia de las pruebas ya hechas: [`tdd/f0-f1.tdd.md`](tdd/f0-f1.tdd.md).
+> Historial y estado: [`bitacora-dev-a.md`](../bitacora-dev-a.md). Evidencia de las pruebas ya hechas: [`tdd/f0-f1.tdd.md`](tdd/f0-f1.tdd.md).
 > Las horas son de trabajo por persona, no de reloj.
 
 ---
@@ -662,7 +662,7 @@ Una fase de A está **hecha** cuando:
 - [ ] Funciona sin internet y sin enlace con Tierra.
 - [ ] Si toca un contrato, B lo revisó antes.
 - [ ] Hay un informe de evidencia en `docs/tdd/` del bloque.
-- [ ] La entrada correspondiente está en `docs/bitacora.md`.
+- [ ] La entrada correspondiente está en `bitacora-dev-a.md`.
 
 ---
 
@@ -751,5 +751,5 @@ No se deciden sin consultar. Mientras tanto se usa el supuesto indicado.
 
 - [ ] README corto por módulo
 - [ ] Informe de evidencia de cada bloque en `docs/tdd/`
-- [ ] Entrada de cada bloque en `docs/bitacora.md`
+- [ ] Entrada de cada bloque en `bitacora-dev-a.md`
 - [ ] Prueba final en otra computadora, sin internet, con el perfil `jurado`
