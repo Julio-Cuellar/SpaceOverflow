@@ -493,3 +493,14 @@ El umbral del plan (80 %) **no se cumple** y el comando de evaluación sale con 
 **Decisión:** el índice queda **sin** el Handbook (2 086 fragmentos). Incluirlo es opt-in. Reevaluar cuando haya embeddings, o ponderar por documento.
 
 **Corrección:** en el informe anterior las preguntas fuera de alcance se dieron como «0 de 6» por conjunto; son 2, 1 y 3 casos (6 entre los tres). README y bitácora corregidos.
+
+## E12 · Integración con la rama de Dev A (15 nov 2026)
+
+Rama de trabajo `integration/a-b`, cortada de `dev-B` (ec2e298). Etiqueta local de respaldo `backup/dev-B-pre-integracion`. Decisiones que se tomaron por defecto al ejecutar el plan, a falta de respuesta explícita: D1 reglas nuevas solo con las 15 acciones existentes y `DEMO` salvo cita verificada; D2 Python `>=3.12,<3.13` como A; D3 PR nuevo hacia `testing`; D4 no se edita `main.py` de A, se le pide la llamada a `register_knowledge`.
+
+### Fase 0 · Base medida (sin tocar código)
+
+- **Descarga autorizada por el usuario:** `uv` 0.13.8 (pip, en un entorno aparte fuera del repositorio) y Python 3.12.16 (lo descarga uv), más las dependencias de A (`uv sync`). Nada de esto se versiona.
+- **Pruebas de A, en una copia de `origin/dev-A` (9fb8bfe):** 293 pasan en 79 s con Python 3.12 y Docker (testcontainers con `pgvector/pgvector:pg16`). Coincide con lo que dice su bitácora.
+- **Pruebas mías en `dev-B`:** 120 de Python y 123 de la web pasan.
+- **Lo leído de A:** los handlers son `handler(envelope, ctx)`; se publica con `ctx.publish(EventEnvelope.from_payload(payload, aggregate_type, aggregate_id, partition_key, correlation_id, causation_id))`; Monitoreo usa `aggregate_type="alert"`, `aggregate_id=alert_id`, `partition_key="habitat:<id>"` y `causation_id` = evento causante. Su prueba de contratos (`tests/contract/test_event_contracts.py`) tiene una lista fija de 22 eventos y una muestra por evento.
