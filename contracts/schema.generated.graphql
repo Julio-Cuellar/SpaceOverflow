@@ -72,11 +72,92 @@ enum DataOrigin {
 """Date with time (isoformat)"""
 scalar DateTime
 
+enum Detection {
+  AUTO
+  MANUAL
+}
+
 enum EvidenceState {
   VERIFICADO
   TB
   DEMO
   NO_VERIFICADO
+}
+
+type Incident {
+  id: ID!
+  habitatId: ID!
+  zoneId: ID!
+  typeKey: String!
+  source: IncidentSource!
+  sourceAlertId: ID
+  title: String!
+  description: String!
+  severity: Severity!
+  status: IncidentStatus!
+  openedAt: DateTime!
+  acknowledgedAt: DateTime
+  resolvedAt: DateTime
+  valuesNormal: Boolean!
+  type: IncidentType
+  updates: [IncidentUpdate!]!
+}
+
+type IncidentConnection {
+  nodes: [Incident!]!
+  pageInfo: PageInfo!
+}
+
+type IncidentError {
+  code: IncidentErrorCode!
+  message: String!
+}
+
+enum IncidentErrorCode {
+  NOT_FOUND
+  ALREADY_RESOLVED
+  ACTIVE_ALERTS
+  UNKNOWN_ZONE
+  UNKNOWN_TYPE
+  INVALID_SEVERITY
+}
+
+type IncidentPayload {
+  incident: Incident!
+  alreadyDone: Boolean!
+}
+
+union IncidentResult = IncidentPayload | IncidentError
+
+enum IncidentSource {
+  ALERTA
+  MANUAL
+}
+
+enum IncidentStatus {
+  ABIERTA
+  RECONOCIDA
+  RESUELTA
+}
+
+type IncidentType {
+  key: String!
+  category: String!
+  categoryName: String!
+  name: String!
+  detection: Detection!
+  ruleKeys: [String!]!
+  defaultSeverity: Severity!
+  evidenceState: EvidenceState!
+  typicalZones: [String!]!
+  suggestedActions: [String!]!
+}
+
+type IncidentUpdate {
+  kind: String!
+  note: String
+  authorId: ID
+  at: DateTime!
 }
 
 """
@@ -86,6 +167,9 @@ scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads
 
 type Mutation {
   acknowledgeAlert(id: ID!, note: String = null): AcknowledgeAlertResult!
+  reportIncident(zoneId: ID!, typeKey: String!, description: String = null, severity: Severity = null): IncidentResult!
+  acknowledgeIncident(id: ID!): IncidentResult!
+  resolveIncident(id: ID!, note: String = null): IncidentResult!
 }
 
 type OutboxStats {
@@ -107,6 +191,10 @@ type Query {
   zoneReadings(zoneId: ID!, metrics: [String!]!, from: DateTime!, to: DateTime!, resolution: Resolution! = MINUTE): [ReadingSeries!]!
   outboxStats: OutboxStats
   knowledgeSearch(query: String!, k: Int! = 5): [Citation!]!
+  ship(habitatId: ID = null): Ship
+  incidents(first: Int! = 20, after: String = null, status: IncidentStatus = null, zoneId: ID = null): IncidentConnection!
+  incident(id: ID!): Incident
+  incidentTypes(category: String = null): [IncidentType!]!
 }
 
 type ReadingPoint {
@@ -155,6 +243,15 @@ enum Severity {
   CRITICO
 }
 
+type Ship {
+  habitatId: ID!
+  code: String!
+  name: String!
+  kind: String!
+  canvas: JSON
+  zones: [Zone!]!
+}
+
 type Vital {
   key: String!
   label: String!
@@ -165,4 +262,22 @@ type Vital {
   evidenceState: EvidenceState!
   origin: DataOrigin!
   zoneId: ID
+}
+
+type Zone {
+  id: ID!
+  code: String!
+  name: String!
+  kind: String!
+  deck: Int!
+  layout: ZoneLayout!
+  status: Severity!
+  openIncidents: Int!
+}
+
+type ZoneLayout {
+  x: Float!
+  y: Float!
+  w: Float!
+  h: Float!
 }

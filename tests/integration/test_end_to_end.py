@@ -56,7 +56,7 @@ async def test_a_co2_scenario_reaches_a_websocket_client_and_is_acknowledged_by_
         seed=7,
     )
     with TestClient(create_app(settings)) as client, client.websocket_connect("/ws") as ws:
-        ws.send_json({"type": "unsubscribe", "topics": ["telemetry", "assistant"]})
+        ws.send_json({"type": "unsubscribe", "topics": ["telemetry", "assistant", "habitat"]})
         assert (await _receive(ws))["data"]["topics"] == ["alerts"]
 
         def wait_for_alert() -> tuple[dict[str, Any], datetime]:
@@ -102,6 +102,21 @@ async def test_a_co2_scenario_reaches_a_websocket_client_and_is_acknowledged_by_
             pass
         assert message["data"]["alert_id"] == raised["data"]["alert_id"]
         assert message["data"]["status"] == "acknowledged"
+
+        # Un cliente que se suscribe tarde recupera el ticket y el color de la zona con `resume`.
+        ws.send_json({"type": "subscribe", "topics": ["habitat"]})
+        while (await _receive(ws))["type"] != "subscribed":
+            pass
+        ws.send_json({"type": "resume", "after_outbox_id": 0})
+        replayed: list[dict[str, Any]] = []
+        while (message := await _receive(ws))["type"] != "resumed":
+            replayed.append(message)
+        seqs = [m["seq"] for m in replayed]
+        assert seqs == sorted(seqs) and len(seqs) == len(set(seqs)), "en orden y sin duplicados"
+        habitat = {m["type"]: m["data"] for m in replayed if m["topic"] == "habitat"}
+        assert habitat["incident.opened"]["severity"] == "ALERTA"
+        assert habitat["zone.status"]["status"] == "ALERTA"
+        assert habitat["zone.status"]["zone_id"] == raised["data"]["zone_id"]
 
     # Desde que Monitoreo crea el evento hasta que llega al cliente (relay, outbox y gateway).
     print(f"latencia de la alerta {latency:.3f} s; tick más lento {slowest_tick:.3f} s")

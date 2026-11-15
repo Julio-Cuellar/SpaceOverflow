@@ -17,6 +17,15 @@ from strawberry.fastapi import GraphQLRouter
 from spaceapp.interfaces.graphql.context import Context, Services
 from spaceapp.interfaces.graphql.schema import schema
 from spaceapp.interfaces.rest.admin import build_router as admin_router
+from spaceapp.modules.facility.adapters.inbound.events import register_facility
+from spaceapp.modules.facility.adapters.outbound.json_data import (
+    load_catalog as load_incident_types,
+)
+from spaceapp.modules.facility.adapters.outbound.json_data import load_plan
+from spaceapp.modules.facility.adapters.outbound.sql import SqlFacilityRepository
+from spaceapp.modules.facility.application.service import FacilityService
+from spaceapp.modules.facility.facade import IncidentQuery, ShipQuery
+from spaceapp.modules.facility.ports import ActiveAlertsSource, ZoneAlert
 from spaceapp.modules.knowledge.adapters.inbound.events import register_knowledge
 from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowledgeSource
 from spaceapp.modules.knowledge.adapters.outbound.memory import (
@@ -92,14 +101,42 @@ def build_knowledge(settings: Settings) -> KnowledgeWiring:
     return KnowledgeWiring(source, recommendations, handler)
 
 
+def _active_alerts(session_factory: async_sessionmaker[AsyncSession]) -> ActiveAlertsSource:
+    query = ActiveAlertsQuery(session_factory)
+
+    async def read(habitat_id: UUID) -> list[ZoneAlert]:
+        return [
+            ZoneAlert(a.alert_id, a.zone_id, a.rule_key, a.severity, a.raised_at)
+            for a in await query.list(habitat_id=habitat_id)
+            if a.zone_id is not None
+        ]
+
+    return read
+
+
+def build_facility(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> FacilityService:
+    return FacilityService(
+        load_plan(settings.facility_plan_path),
+        load_incident_types(settings.incident_types_path),
+        session_factory,
+        SqlFacilityRepository,
+        _active_alerts(session_factory),
+    )
+
+
 def build_registry(
     settings: Settings,
     catalog: RuleCatalog,
     knowledge: KnowledgeWiring | None = None,
     hub: Hub | None = None,
+    facility: FacilityService | None = None,
 ) -> SubscriptionRegistry:
     registry = SubscriptionRegistry()
     register_knowledge(registry, (knowledge or build_knowledge(settings)).handler)
+    if facility is not None:
+        register_facility(registry, facility)
     if hub is not None:
         register_realtime(registry, RealtimeEvents(hub, seq_of))
     register_telemetry(registry, RecomputeRollup(SqlTelemetryRepository))
@@ -121,6 +158,7 @@ def build_services(
     session_factory: async_sessionmaker[AsyncSession],
     catalog: RuleCatalog,
     knowledge: KnowledgeWiring,
+    facility: FacilityService | None = None,
 ) -> Services:
     async def acknowledge(alert_id: UUID, note: str | None) -> AckResult:
         return await acknowledge_alert(
@@ -139,6 +177,10 @@ def build_services(
         knowledge=KnowledgeQuery(knowledge.source),
         recommendation_for=knowledge.recommendation_for,
         acknowledge=acknowledge,
+        facility=facility or build_facility(settings, session_factory),
+        ship=ShipQuery(session_factory),
+        incidents=IncidentQuery(session_factory),
+        crew_member=DEMO_CREW_MEMBER,
         outbox_stats=read_outbox_stats if settings.profile in DEV_PROFILES else None,
     )
 
@@ -146,10 +188,21 @@ def build_services(
 def get_services(app: FastAPI) -> Services:
     if app.state.services is None:
         app.state.services = build_services(
-            app.state.settings, app.state.session_factory, app.state.catalog, app.state.knowledge
+            app.state.settings,
+            app.state.session_factory,
+            app.state.catalog,
+            app.state.knowledge,
+            get_facility(app),
         )
     services: Services = app.state.services
     return services
+
+
+def get_facility(app: FastAPI) -> FacilityService:
+    if app.state.facility is None:
+        app.state.facility = build_facility(app.state.settings, app.state.session_factory)
+    facility: FacilityService = app.state.facility
+    return facility
 
 
 class _AppReplay:
@@ -192,7 +245,13 @@ def create_app(
         if settings.relay_enabled:
             relay = OutboxRelay(
                 app.state.session_factory,
-                build_registry(settings, app.state.catalog, app.state.knowledge, app.state.hub),
+                build_registry(
+                    settings,
+                    app.state.catalog,
+                    app.state.knowledge,
+                    app.state.hub,
+                    get_facility(app),
+                ),
                 listen_dsn=settings.database_url.replace("+asyncpg", ""),
             )
             app.state.relay_task = asyncio.create_task(relay.run_forever(stop))
@@ -216,6 +275,7 @@ def create_app(
     app.state.knowledge = build_knowledge(settings)
     app.state.hub = Hub()
     app.state.services = None
+    app.state.facility = None
     app.state.sim = None
     app.state.relay_task = app.state.simulator_task = None
     app.include_router(monitoring_router(app.state.catalog))

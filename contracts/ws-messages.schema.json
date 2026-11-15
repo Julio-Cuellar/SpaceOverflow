@@ -9,7 +9,8 @@
                 "enum": [
                   "telemetry",
                   "alerts",
-                  "assistant"
+                  "assistant",
+                  "habitat"
                 ]
               },
               "type": "array"
@@ -469,6 +470,200 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "incident.opened"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "incident_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "severity": {
+                    "enum": [
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "source": {
+                    "enum": [
+                      "ALERTA",
+                      "MANUAL"
+                    ]
+                  },
+                  "status": {
+                    "const": "ABIERTA"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "incident_id",
+                  "zone_id",
+                  "severity",
+                  "title",
+                  "description",
+                  "source",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "incident.updated"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "incident_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "severity": {
+                    "enum": [
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "ABIERTA",
+                      "RECONOCIDA",
+                      "RESUELTA"
+                    ]
+                  }
+                },
+                "required": [
+                  "incident_id",
+                  "severity",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "incident.resolved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "incident_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "resolved_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "RESUELTA"
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "incident_id",
+                  "zone_id",
+                  "resolved_at",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "zone.status"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "open_incidents": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "status": {
+                    "enum": [
+                      "NORMAL",
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "zone_id",
+                  "status",
+                  "open_incidents"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
         }
       ],
       "properties": {
@@ -490,6 +685,7 @@
             "telemetry",
             "alerts",
             "assistant",
+            "habitat",
             "system"
           ]
         },
@@ -503,6 +699,10 @@
             "recommendation.ready",
             "recommendation.enriched",
             "assistant.answer",
+            "incident.opened",
+            "incident.updated",
+            "incident.resolved",
+            "zone.status",
             "subscribed",
             "pong",
             "ping",

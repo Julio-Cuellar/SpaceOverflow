@@ -9,6 +9,7 @@ from spaceapp.modules.realtime.domain.messages import SERVER_TYPES, SYSTEM_TYPES
 _UUID = {"type": "string", "format": "uuid"}
 _TIME = {"type": "string", "format": "date-time"}
 _SEVERITY = {"enum": ["ATENCION", "ALERTA", "CRITICO"]}
+_INCIDENT_STATUS = {"enum": ["ABIERTA", "RECONOCIDA", "RESUELTA"]}
 _CITATION = {
     "type": "object",
     "required": ["document_code", "excerpt", "evidence_state"],
@@ -71,6 +72,36 @@ _DATA: dict[str, dict[str, Any]] = {
         recommendation_id=_UUID,
         text={"type": "string"},
         composed_by={"const": "llm"},
+    ),
+    "incident.opened": _obj(
+        ["incident_id", "zone_id", "severity", "title", "description", "source", "status"],
+        incident_id=_UUID,
+        zone_id=_UUID,
+        severity=_SEVERITY,
+        title={"type": "string"},
+        description={"type": "string"},
+        source={"enum": ["ALERTA", "MANUAL"]},
+        status={"const": "ABIERTA"},
+    ),
+    "incident.updated": _obj(
+        ["incident_id", "severity", "status"],
+        incident_id=_UUID,
+        severity=_SEVERITY,
+        status=_INCIDENT_STATUS,
+        note={"type": ["string", "null"]},
+    ),
+    "incident.resolved": _obj(
+        ["incident_id", "zone_id", "resolved_at", "status"],
+        incident_id=_UUID,
+        zone_id=_UUID,
+        resolved_at=_TIME,
+        status={"const": "RESUELTA"},
+    ),
+    "zone.status": _obj(
+        ["zone_id", "status", "open_incidents"],
+        zone_id=_UUID,
+        status={"enum": ["NORMAL", "ATENCION", "ALERTA", "CRITICO"]},
+        open_incidents={"type": "integer", "minimum": 0},
     ),
     "assistant.answer": _obj(
         ["utterance_id", "text", "citations"],

@@ -8,6 +8,8 @@ from uuid import UUID
 
 from strawberry.fastapi import BaseContext
 
+from spaceapp.modules.facility.application.service import FacilityService
+from spaceapp.modules.facility.facade import IncidentQuery, ShipQuery
 from spaceapp.modules.knowledge.domain.model import Recommendation
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 from spaceapp.modules.monitoring.application.acknowledge_alert import AckResult
@@ -25,6 +27,11 @@ class Services:
     knowledge: KnowledgeQuery
     recommendation_for: Callable[[UUID], Recommendation | None]
     acknowledge: Callable[[UUID, str | None], Awaitable[AckResult]]
+    facility: FacilityService
+    ship: ShipQuery
+    incidents: IncidentQuery
+    # Quién firma las acciones hasta que exista la selección de perfil.
+    crew_member: UUID
     # Solo en los perfiles de desarrollo; en `jurado` es None y la consulta devuelve null.
     outbox_stats: Callable[[], Awaitable[OutboxStats]] | None = None
 

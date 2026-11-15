@@ -331,17 +331,17 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **4.1 Esquema `facility` (0,75 h):** `habitat`, `zone` (con `layout` JSON y `status`), `incident_type`, `incident`, `incident_update`. Migración propia. Un ticket automático por zona activa (`source_alert_id` como referencia blanda).
-- [ ] **4.2 Plano en JSON (0,5 h):** el plano de las 10 zonas (ingeniería, soporte vital, laboratorio, enfermería, puente, esclusa, almacén, gimnasio, cocina y dormitorios) como dato en `data/facility/`. **Cambiar de nave a base lunar es cambiar datos, no código.** Todo `DEMO`.
-- [ ] **4.3 Catálogo de tipos de incidencia (0,75 h):** 61 tipos en 12 categorías como datos versionados (el catálogo está en `tools/docgen/data.py`). Cargador con validación. Prueba: toda clave de regla de un tipo `AUTO` existe en el catálogo de reglas, o está en una lista explícita de reglas pendientes.
-- [ ] **4.4 Handlers de alerta (1,5 h)**
+- [x] **4.1 Esquema `facility` (0,75 h):** *(B-019. Diferencia: no hay tabla `incident_type`, el catálogo vive en memoria como el plano; sí hay `zone_alert`, una proyección de las alertas activas por zona)* `habitat`, `zone` (con `layout` JSON y `status`), `incident_type`, `incident`, `incident_update`. Migración propia. Un ticket automático por zona activa (`source_alert_id` como referencia blanda).
+- [x] **4.2 Plano en JSON (0,5 h):** *(B-019: `data/facility/plan.json`, con la geometría del artefacto)* el plano de las 10 zonas (ingeniería, soporte vital, laboratorio, enfermería, puente, esclusa, almacén, gimnasio, cocina y dormitorios) como dato en `data/facility/`. **Cambiar de nave a base lunar es cambiar datos, no código.** Todo `DEMO`.
+- [x] **4.3 Catálogo de tipos de incidencia (0,75 h):** *(B-019: `data/facility/incident_types.json`, con claves de regla exactas y 20 reglas pendientes)* 61 tipos en 12 categorías como datos versionados (el catálogo está en `tools/docgen/data.py`). Cargador con validación. Prueba: toda clave de regla de un tipo `AUTO` existe en el catálogo de reglas, o está en una lista explícita de reglas pendientes.
+- [x] **4.4 Handlers de alerta (1,5 h)** *(B-019)*
   - `alert_raised` con severidad Alerta o mayor abre un ticket automático por zona. La tendencia (severidad Atención) **no** abre ticket.
   - Un ticket abierto por zona: si llegan más alertas se actualiza su descripción y, si sube la severidad, se publica `incident_updated`.
   - `alert_resolved` marca «valores normales, puede cerrarse». **El ticket no se cierra solo.**
   - Un ticket automático no puede resolverse mientras haya alertas activas en su zona. Un ticket manual sí.
   - Reporte manual (`reportIncident`) por categoría y tipo, con severidad y acciones por defecto.
-- [ ] **4.5 Estado de color de cada zona (0,5 h):** máximo entre las alertas activas y los tickets abiertos. Se recalcula al arrancar con `ActiveAlertsQuery`. Publica `zone_status_changed` solo si cambia.
-- [ ] **4.6 GraphQL (1 h):** consultas y mutaciones con resultados tipados (`union` de éxito y errores, sin excepciones para errores esperados), paginación por cursor y DataLoaders.
+- [x] **4.5 Estado de color de cada zona (0,5 h):** *(B-019: se reconstruye la primera vez que el proceso lo necesita)* máximo entre las alertas activas y los tickets abiertos. Se recalcula al arrancar con `ActiveAlertsQuery`. Publica `zone_status_changed` solo si cambia.
+- [~] **4.6 GraphQL (1 h):** *(B-019: todo salvo los DataLoaders; `updates` de cada ticket hace una consulta)* consultas y mutaciones con resultados tipados (`union` de éxito y errores, sin excepciones para errores esperados), paginación por cursor y DataLoaders.
 
 **Criterios de aceptación**
 

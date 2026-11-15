@@ -7,7 +7,7 @@ from typing import Any
 
 from spaceapp.platform.events import EventEnvelope
 
-TOPICS = ("telemetry", "alerts", "assistant")
+TOPICS = ("telemetry", "alerts", "assistant", "habitat")
 
 # Eventos que producen mensajes con `seq` (id del outbox) y se pueden reenviar con `resume`.
 # Las lecturas no: son ticks sin `seq`, solo importa el último valor.
@@ -19,6 +19,10 @@ REPLAYABLE_TYPES = (
     "knowledge.recommendation_enriched",
     "assistant.answer_ready",
     "telemetry.scenario_changed",
+    "facility.incident_opened",
+    "facility.incident_updated",
+    "facility.incident_resolved",
+    "facility.zone_status_changed",
 )
 TRANSLATED_TYPES = ("telemetry.readings_recorded", *REPLAYABLE_TYPES)
 
@@ -32,6 +36,10 @@ SERVER_TYPES: dict[str, str] = {
     "recommendation.ready": "alerts",
     "recommendation.enriched": "alerts",
     "assistant.answer": "assistant",
+    "incident.opened": "habitat",
+    "incident.updated": "habitat",
+    "incident.resolved": "habitat",
+    "zone.status": "habitat",
 }
 # Respuestas del servidor en el topic `system`. No llevan `seq` ni se reenvían.
 SYSTEM_TYPES = ("subscribed", "pong", "ping", "resumed", "error")
@@ -114,5 +122,19 @@ def translate(event: EventEnvelope) -> list[WsMessage]:
             return one("alerts", "recommendation.enriched", {**p, "composed_by": "llm"})
         case "assistant.answer_ready":
             return one("assistant", "assistant.answer", dict(p))
+        case "facility.incident_opened":
+            data = {**p, "severity": str(p["severity"]).upper(), "status": "ABIERTA"}
+            return one("habitat", "incident.opened", data)
+        case "facility.incident_updated":
+            data = {
+                **p,
+                "severity": str(p["severity"]).upper(),
+                "status": str(p["status"]).upper(),
+            }
+            return one("habitat", "incident.updated", data)
+        case "facility.incident_resolved":
+            return one("habitat", "incident.resolved", {**p, "status": "RESUELTA"})
+        case "facility.zone_status_changed":
+            return one("habitat", "zone.status", {**p, "status": str(p["status"]).upper()})
         case _:
             return []

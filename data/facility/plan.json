@@ -1,0 +1,136 @@
+{
+  "evidence_state": "DEMO",
+  "note": "Plano de ejemplo (plan, sección 13.7). Cambiar de nave a base lunar es cambiar este archivo.",
+  "habitat": {
+    "code": "nave-transito",
+    "name": "Nave de tránsito",
+    "kind": "nave",
+    "p_total_nominal_kpa": 101.3
+  },
+  "canvas": {
+    "width": 968,
+    "height": 372
+  },
+  "zones": [
+    {
+      "code": "eng",
+      "name": "Ingeniería y propulsión",
+      "kind": "ingenieria",
+      "deck": 1,
+      "layout": {
+        "x": 60,
+        "y": 56,
+        "w": 150,
+        "h": 104
+      }
+    },
+    {
+      "code": "eclss",
+      "name": "Soporte vital (ECLSS)",
+      "kind": "soporte_vital",
+      "deck": 1,
+      "layout": {
+        "x": 222,
+        "y": 56,
+        "w": 150,
+        "h": 104
+      }
+    },
+    {
+      "code": "lab",
+      "name": "Laboratorio",
+      "kind": "laboratorio",
+      "deck": 1,
+      "layout": {
+        "x": 384,
+        "y": 56,
+        "w": 170,
+        "h": 104
+      }
+    },
+    {
+      "code": "med",
+      "name": "Enfermería",
+      "kind": "enfermeria",
+      "deck": 1,
+      "layout": {
+        "x": 566,
+        "y": 56,
+        "w": 140,
+        "h": 104
+      }
+    },
+    {
+      "code": "bridge",
+      "name": "Puente de control",
+      "kind": "puente",
+      "deck": 1,
+      "layout": {
+        "x": 718,
+        "y": 56,
+        "w": 190,
+        "h": 104
+      }
+    },
+    {
+      "code": "air",
+      "name": "Esclusa",
+      "kind": "esclusa",
+      "deck": 2,
+      "layout": {
+        "x": 60,
+        "y": 212,
+        "w": 130,
+        "h": 104
+      }
+    },
+    {
+      "code": "store",
+      "name": "Almacén",
+      "kind": "almacen",
+      "deck": 2,
+      "layout": {
+        "x": 202,
+        "y": 212,
+        "w": 140,
+        "h": 104
+      }
+    },
+    {
+      "code": "gym",
+      "name": "Gimnasio",
+      "kind": "gimnasio",
+      "deck": 2,
+      "layout": {
+        "x": 354,
+        "y": 212,
+        "w": 150,
+        "h": 104
+      }
+    },
+    {
+      "code": "galley",
+      "name": "Cocina y comedor",
+      "kind": "cocina",
+      "deck": 2,
+      "layout": {
+        "x": 516,
+        "y": 212,
+        "w": 170,
+        "h": 104
+      }
+    },
+    {
+      "code": "crew",
+      "name": "Dormitorios",
+      "kind": "dormitorios",
+      "deck": 2,
+      "layout": {
+        "x": 698,
+        "y": 212,
+        "w": 210,
+        "h": 104
+      }
+    }
+  ]
+}

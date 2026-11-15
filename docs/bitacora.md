@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 00:30.
+> Última actualización: 15 de noviembre de 2026, 02:00.
 
 ## Cómo se mantiene esta bitácora
 
@@ -33,11 +33,11 @@
 | Reparto en dos desarrolladores | Redactado (sección 16 del plan) y detallado para Dev B |
 | Plan detallado de Dev A | `docs/tareas-dev-a.md` (F0 y F1 marcadas como hechas) |
 | Generador del plan y del artefacto | En el repositorio (`tools/docgen/`), con prueba que verifica que reproduce el documento |
-| Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F5 terminada** salvo lo que depende de F4 y de Tripulación: GraphQL, gateway `/ws`, contratos exportados y operación del outbox. F4 en curso. El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
-| Pruebas | **623 pasan y 19 se omiten** (las omitidas son de Dev B), 97,04 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
+| Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F4 y F5 terminadas** (con pendientes menores: DataLoaders, límite de costo y lo que depende de Tripulación). Hitos I3 e I5 cubiertos del lado de A. El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
+| Pruebas | **662 pasan y 19 se omiten** (las omitidas son de Dev B), 96,84 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
 | Artefacto interactivo | Versión 4 publicada: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8 |
-| Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. Commits locales **sin subir**: fusiones B-015 y B-016, F5 (`9bed3c0`) y 5.4 |
-| Siguiente bloque propuesto | F4 (nave, zonas e incidencias) con su GraphQL y sus mensajes WebSocket. Cierra I3 e I5 |
+| Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. Commits locales **sin subir**: fusiones B-015 y B-016, F5 (`9bed3c0`), 5.4 (`81686a1`) y F4 |
+| Siguiente bloque propuesto | F9 (Dockerfile, compose completo y migraciones al arrancar) para la entrega al jurado. Después F10 y F11 (P1) |
 
 ---
 
@@ -305,6 +305,24 @@
 - **Verificación** (`scripts/check.sh`): ruff sin errores, mypy estricto sin errores en 154 archivos, 4 contratos de arquitectura cumplidos, **623 pruebas** (19 omitidas, de Dev B) y 97,04 % de cobertura.
 - **Pendiente de F5** (depende de otras fases): consultas de Tripulación (`crewMember`, `recordBaseline`, `setConsent`), topics `habitat` (F4) y `crew`, DataLoaders y límite de costo.
 
+### B-019 · F4: nave, zonas e incidencias
+- **Commit previo:** 5.4 quedó en `81686a1` (sin subir).
+- **Qué:** una alerta de Alerta o más en una zona abre un ticket con tipo, descripción, severidad y ubicación, y la zona toma su color en la misma transacción. GraphQL, WebSocket y contratos incluidos.
+- **Datos (generados una vez desde `tools/docgen`):**
+  - `data/facility/plan.json`: las 10 zonas, con los mismos códigos que el simulador y la geometría del artefacto. Todo `DEMO`.
+  - `data/facility/incident_types.json`: 61 tipos y 12 categorías. Cada tipo AUTO lleva sus **claves de regla exactas**. En `ITYPES` había familias (`env-pio2` valía para hipoxia y para hiperoxia). Las 20 reglas que aún no existen van en `pending_rules`.
+- **Reglas del dominio** (`facility/domain/incidents.py`, funciones puras): Atención no abre ticket. Hay un solo ticket automático abierto por zona: si llega otra alerta se anota y, si es peor, se escala (`incident_updated`). Cuando se resuelve la última alerta, el ticket queda marcado como «valores normales» pero **no se cierra solo**. Un ticket automático no se puede cerrar con alertas activas en su zona; uno manual sí. El color de la zona es la peor severidad entre alertas activas y tickets abiertos, y solo se publica cuando cambia.
+- **Persistencia:** migración `migrations/facility` (`habitat`, `zone`, `zone_alert`, `incident` con índice único parcial de un ticket automático abierto por zona, e `incident_update`).
+- **Arranque:** la primera vez que el proceso necesita Nave (un evento, una consulta o una mutación), sincroniza el plano y reconstruye la proyección de alertas activas y el color de cada zona desde `ActiveAlertsQuery` de Monitoreo.
+- **GraphQL** (fragmento propio, `interfaces/graphql/facility.py`, compuesto con `merge_types`; los tipos compartidos pasaron a `common.py`): `ship`, `incidents` (cursor y filtros por estado y zona), `incident` (con su tipo y su historial), `incidentTypes(category)`, `reportIncident`, `acknowledgeIncident` y `resolveIncident`, con errores tipados (`NOT_FOUND`, `ALREADY_RESOLVED`, `ACTIVE_ALERTS`, `UNKNOWN_ZONE`, `UNKNOWN_TYPE`, `INVALID_SEVERITY`).
+- **WebSocket:** topic nuevo `habitat` con `incident.opened`, `incident.updated`, `incident.resolved` y `zone.status`, todos con `seq` para reanudar.
+- **Verificación** (`scripts/check.sh`): ruff sin errores, mypy estricto sin errores en 165 archivos, 4 contratos de arquitectura cumplidos, **662 pruebas** (19 omitidas, de Dev B) y 96,84 % de cobertura. La prueba de extremo a extremo comprueba además que un cliente que se suscribe tarde recupera con `resume` el ticket y el color del laboratorio, en orden y sin duplicados. Latencia de la alerta: 63 ms.
+- **Criterios de aceptación de F4,** todos con prueba: una alerta abre exactamente un ticket y pinta la zona; una segunda alerta no abre otro; un ticket automático con valores fuera de rango no se resuelve; cambiar el plano cambia las zonas de `ship`; al reiniciar se reconstruye el estado de las zonas.
+- **TDD:** el dominio, las pruebas de los mensajes WebSocket y la del exportador empezaron en RED. **El servicio de aplicación, el repositorio SQL y el GraphQL se escribieron antes que sus pruebas de integración.** Para comprobar que esas pruebas detectan errores se hizo una mutación: con el bloqueo de cierre desactivado, la prueba falla.
+- **Hallazgo en los datos:** la validación del catálogo encontró reglas futuras compartidas entre tipos (`power-bus` en dos, `sensor-health` en tres). Se separaron (`power-bus-fault`, `power-bus-low`, `sensor-health-down`, `-calibration` y `-dosimeter`).
+- **Diferencias con el plan:** no hay tabla `incident_type` (el catálogo se carga en memoria, como el plano); hay una tabla nueva, `zone_alert`; `typicalZones` devuelve códigos de zona (`*` = cualquiera), mientras el mock de Dev B usa nombres; no hay DataLoaders.
+- **Riesgo:** con Nave conectada, el tick más lento de la prueba de extremo a extremo subió de 0,27 a 0,64 s (incluye la reconstrucción inicial). Sigue bajo 1 s.
+
 ---
 
 ## 4. Archivos del proyecto por área
@@ -320,6 +338,7 @@
 | Generador del plan y del artefacto | `tools/docgen/` | Asistente (movido desde el *scratchpad*) |
 | Backend de Dev A (Bloques 1 y 2) | `src/`, `tests/`, `migrations/`, `docker/`, `scripts/`, `rules/`, `data/` | Asistente |
 | GraphQL compuesto (F5) | `src/spaceapp/interfaces/graphql/` | Asistente |
+| Nave e incidencias (F4) | `src/spaceapp/modules/facility/`, `migrations/facility/`, `data/facility/` | Asistente |
 | Contratos generados para Dev B | `contracts/schema.generated.graphql`, `contracts/openapi.json`, `contracts/ws-messages.schema.json` | Asistente (generados) |
 | Informes de evidencia TDD | `docs/tdd/f0-f1.tdd.md`, `docs/tdd/f2-f3.tdd.md` | Asistente |
 
@@ -414,9 +433,9 @@ Las pruebas de integración necesitan Docker en marcha (`systemctl --user start 
 
 ## 9. Próximos pasos
 
-1. **F4:** plano e incidencias (tickets automáticos desde las alertas por zona, catálogo de 61 tipos, estado de color de cada zona) con su GraphQL y sus mensajes WebSocket. Cierra I3 e I5.
+1. **F9 (entrega al jurado):** Dockerfile, compose completo con perfil `jurado` y migraciones de todos los módulos al arrancar. Después F10 (tareas) y F11 (plan desde Tierra).
 2. **Subir `dev-A`** (dos fusiones locales y F5) cuando el usuario lo pida, directo o por PR hacia `testing`.
 3. **Revisión de contratos por Dev B (I0):** `contracts.py` de cada módulo, `event_registry.py` y el bus en memoria.
 4. **Republicar el artefacto** para reflejar el modelo de datos actual (decisión del usuario).
 5. **Decisiones pendientes** de la sección 2.3.
-6. **Avisar a Dev B** de los contratos generados y de que `schema.graphql` sigue siendo su borrador.
+6. **Avisar a Dev B** de los contratos generados, de que `schema.graphql` sigue siendo su borrador, del topic nuevo `habitat` y de que `typicalZones` trae códigos de zona.

@@ -5,19 +5,29 @@ Los errores esperados son tipos del esquema (`union`), no excepciones.
 
 from __future__ import annotations
 
-import base64
 from datetime import datetime
 from enum import Enum
 from typing import Annotated, cast
 from uuid import UUID
 
 import strawberry
-from strawberry import Info
 from strawberry.extensions import QueryDepthLimiter
 from strawberry.scalars import JSON
+from strawberry.tools import merge_types
 
-from spaceapp.interfaces.graphql.context import Context
+from spaceapp.interfaces.graphql.common import (
+    EvidenceState,
+    GqlInfo,
+    PageInfo,
+    Severity,
+    decode_cursor,
+    encode_cursor,
+    habitat,
+    page_size,
+    uuid_or_none,
+)
 from spaceapp.interfaces.graphql.dashboard import build_dashboard
+from spaceapp.interfaces.graphql.facility import FacilityMutation, FacilityQuery
 from spaceapp.modules.knowledge.domain import model as knowledge
 from spaceapp.modules.monitoring.application.acknowledge_alert import (
     AlertAlreadyResolved,
@@ -25,32 +35,12 @@ from spaceapp.modules.monitoring.application.acknowledge_alert import (
     AlreadyAcknowledged,
 )
 from spaceapp.modules.monitoring.facade import AlertView, RuleView
-from spaceapp.platform.ids import habitat_id as habitat_id_of
 from spaceapp.platform.vocab import Citation as CitationDTO
 
 MAX_DEPTH = 10
-MAX_PAGE = 100
-
-GqlInfo = Info[Context, None]
 
 
 # --- Enumeraciones -------------------------------------------------------------------------
-
-
-@strawberry.enum
-class Severity(Enum):
-    NORMAL = "normal"
-    ATENCION = "atencion"
-    ALERTA = "alerta"
-    CRITICO = "critico"
-
-
-@strawberry.enum
-class EvidenceState(Enum):
-    VERIFICADO = "VERIFICADO"
-    TB = "TB"
-    DEMO = "DEMO"
-    NO_VERIFICADO = "NO_VERIFICADO"
 
 
 @strawberry.enum
@@ -228,12 +218,6 @@ class AlertType:
 
 
 @strawberry.type
-class PageInfo:
-    has_next_page: bool
-    end_cursor: str | None
-
-
-@strawberry.type
 class AlertConnection:
     nodes: list[AlertType]
     page_info: PageInfo
@@ -281,49 +265,21 @@ class ReadingSeries:
     points: list[ReadingPoint]
 
 
-# --- Utilidades ----------------------------------------------------------------------------
-
-
-def _habitat(value: str) -> UUID:
-    """Un hábitat se puede pedir por su UUID o por su código (`nave-transito`)."""
-    try:
-        return UUID(value)
-    except ValueError:
-        return habitat_id_of(value)
-
-
-def _cursor(a: AlertView) -> str:
-    return base64.urlsafe_b64encode(f"{a.raised_at.isoformat()}|{a.alert_id}".encode()).decode()
-
-
-def _uncursor(cursor: str) -> tuple[datetime, UUID]:
-    raw = base64.urlsafe_b64decode(cursor.encode()).decode()
-    at, _, alert_id = raw.partition("|")
-    return datetime.fromisoformat(at), UUID(alert_id)
-
-
-def _uuid_or_none(value: str) -> UUID | None:
-    try:
-        return UUID(value)
-    except ValueError:
-        return None
-
-
 # --- Raíces --------------------------------------------------------------------------------
 
 
 @strawberry.type
-class Query:
+class CoreQuery:
     @strawberry.field
     async def dashboard(self, info: GqlInfo, habitat_id: strawberry.ID) -> DashboardView:
         services = info.context.services
-        habitat = _habitat(habitat_id)
-        latest = await services.telemetry.latest(habitat)
-        alerts = await services.active_alerts.list(habitat_id=habitat)
+        habitat_uuid = habitat(habitat_id)
+        latest = await services.telemetry.latest(habitat_uuid)
+        alerts = await services.active_alerts.list(habitat_id=habitat_uuid)
         rules = {r.key: r for r in services.rules.all()}
         severity, vitals = build_dashboard(latest, alerts, rules)
         return DashboardView(
-            habitat_id=strawberry.ID(str(habitat)),
+            habitat_id=strawberry.ID(str(habitat_uuid)),
             global_severity=Severity(severity),
             vitals=[
                 Vital(
@@ -350,20 +306,23 @@ class Query:
         status: AlertStatus | None = None,
     ) -> AlertConnection:
         nodes, more = await info.context.services.alerts.page(
-            max(1, min(first, MAX_PAGE)),
-            after=_uncursor(after) if after else None,
+            page_size(first),
+            after=decode_cursor(after) if after else None,
             status=status.value if status else None,
         )
         return AlertConnection(
             nodes=[AlertType.of(a) for a in nodes],
             page_info=PageInfo(
-                has_next_page=more, end_cursor=_cursor(nodes[-1]) if nodes else None
+                has_next_page=more,
+                end_cursor=encode_cursor(nodes[-1].raised_at, nodes[-1].alert_id)
+                if nodes
+                else None,
             ),
         )
 
     @strawberry.field
     async def alert(self, info: GqlInfo, id: strawberry.ID) -> AlertType | None:
-        alert_id = _uuid_or_none(id)
+        alert_id = uuid_or_none(id)
         view = await info.context.services.alerts.get(alert_id) if alert_id else None
         return AlertType.of(view) if view else None
 
@@ -411,13 +370,13 @@ class Query:
 
 
 @strawberry.type
-class Mutation:
+class CoreMutation:
     @strawberry.mutation
     async def acknowledge_alert(
         self, info: GqlInfo, id: strawberry.ID, note: str | None = None
     ) -> AcknowledgeAlertResult:
         services = info.context.services
-        alert_id = _uuid_or_none(id)
+        alert_id = uuid_or_none(id)
         if alert_id is None:
             return AlertError(code=AlertErrorCode.NOT_FOUND, message=f"no existe la alerta {id}")
         result = await services.acknowledge(alert_id, note)
@@ -433,6 +392,9 @@ class Mutation:
             alert=AlertType.of(view), already_acknowledged=isinstance(result, AlreadyAcknowledged)
         )
 
+
+Query = merge_types("Query", (CoreQuery, FacilityQuery))
+Mutation = merge_types("Mutation", (CoreMutation, FacilityMutation))
 
 schema = strawberry.Schema(
     query=Query, mutation=Mutation, extensions=[lambda: QueryDepthLimiter(max_depth=MAX_DEPTH)]

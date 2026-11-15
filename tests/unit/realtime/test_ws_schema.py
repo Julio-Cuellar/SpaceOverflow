@@ -34,6 +34,17 @@ SAMPLES: dict[str, dict[str, Any]] = {
     },
     "knowledge.recommendation_enriched": {"recommendation_id": "r", "text": "t"},
     "assistant.answer_ready": {"utterance_id": "u", "text": "t", "citations": []},
+    "facility.incident_opened": {
+        "incident_id": "i",
+        "zone_id": "z",
+        "severity": "alerta",
+        "title": "CO₂ alto",
+        "description": "d",
+        "source": "ALERTA",
+    },
+    "facility.incident_updated": {"incident_id": "i", "severity": "critico", "status": "abierta"},
+    "facility.incident_resolved": {"incident_id": "i", "zone_id": "z", "resolved_at": T},
+    "facility.zone_status_changed": {"zone_id": "z", "status": "alerta", "open_incidents": 1},
 }
 
 

@@ -110,4 +110,43 @@ def test_events_without_a_ws_message_translate_to_nothing() -> None:
 
 
 def test_every_translated_topic_is_a_known_topic() -> None:
-    assert set(TOPICS) == {"telemetry", "alerts", "assistant"}
+    assert set(TOPICS) == {"telemetry", "alerts", "assistant", "habitat"}
+
+
+def test_facility_events_reach_the_habitat_topic_in_upper_case() -> None:
+    from spaceapp.modules.facility.contracts import IncidentOpened, ZoneStatusChanged
+
+    zone, incident = uuid4(), uuid4()
+    opened = EventEnvelope.from_payload(
+        IncidentOpened(
+            incident_id=incident,
+            zone_id=zone,
+            severity="alerta",
+            title="CO₂ alto",
+            description="d",
+            source="ALERTA",
+        ),
+        aggregate_type="incident",
+        aggregate_id=incident,
+        partition_key="p",
+    )
+    [m] = translate(opened)
+    assert (m.topic, m.type, m.data["severity"], m.data["status"]) == (
+        "habitat",
+        "incident.opened",
+        "ALERTA",
+        "ABIERTA",
+    )
+    changed = EventEnvelope.from_payload(
+        ZoneStatusChanged(zone_id=zone, status="critico", open_incidents=2),
+        aggregate_type="zone",
+        aggregate_id=zone,
+        partition_key="p",
+    )
+    [z] = translate(changed)
+    assert (z.topic, z.type, z.data["status"], z.data["open_incidents"]) == (
+        "habitat",
+        "zone.status",
+        "CRITICO",
+        2,
+    )
