@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 06:15.
+> Última actualización: 15 de noviembre de 2026, 06:30.
 
 ## Cómo se mantiene esta bitácora
 
@@ -394,6 +394,13 @@
   2. **Puerto 8000:** el workflow de n8n llama a `host.docker.internal:8000` (`backend_url`) para sus herramientas del RAG y de alertas. La app de Dev A debe escuchar en 8000 y exponer `/api/v1/assistant/tools/...`, o se cambia `backend_url` en un solo sitio.
   3. **Interfaz sin proxy ni CORS:** `web/vite.config.ts` solo tiene proxy para `/dev`, y el backend no tiene CORS. Para consumir `/graphql`, `/api` y `/ws` hace falta proxy (con `ws: true` para `/ws`) o CORS.
 - **Sin cambios de código en este bloque.**
+
+### B-026 · Intento de abrir y fusionar los PRs hacia `testing`
+- **Pedido del usuario:** abrir y fusionar los PRs `dev-A → testing` y `dev-B → testing`.
+- **No se pudo.** Lo que se probó: `gh` no está instalado; la extensión Claude in Chrome no estaba conectada; el navegador integrado abre las páginas de comparación de GitHub, pero **sin sesión iniciada** (aparece «Sign in» y no hay botón para crear el PR). Iniciar sesión es algo que debe hacer el usuario: el asistente no escribe contraseñas ni tokens, ni toma uno del almacén de credenciales de git.
+- **Estado de los PRs:** ninguno abierto. `dev-A → testing`: 9 commits y 110 archivos, sin conflictos aparentes. `dev-B → testing`: GitHub mostraba «Checking mergeability» al revisar; la fusión de prueba local con `dev-A` salió sin conflictos.
+- **Orden recomendado al fusionar:** primero `dev-A`, luego `dev-B`, y revisar el CI de `testing` entre uno y otro.
+- **Pendiente:** que el usuario abra y fusione los PRs desde la web, o inicie sesión en el navegador integrado o conecte la extensión de Chrome para que el asistente lo haga.
 
 ---
 
