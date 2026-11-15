@@ -32,7 +32,7 @@ describe('AssistantPanel', () => {
     await userEvent.type(screen.getByLabelText('Pregunta'), '¿Cómo cambio el filtro de la esclusa?')
     await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
 
-    expect(screen.getByText('No tengo esa información en las fuentes cargadas.')).toBeInTheDocument()
+    expect(screen.getByText("I don't have that information in the loaded sources.")).toBeInTheDocument()
   })
 
   it('shows whether the answers come from the local or the cloud adapter', () => {
@@ -126,7 +126,7 @@ describe('AssistantPanel with a slow answer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo consultar el asistente')
-    expect(screen.queryByText(/No tengo esa información/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/I don't have that information/)).not.toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })

@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from uuid import UUID, uuid4
 
+from spaceapp.modules.assistant.application.grounding import unsupported_figures
 from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
 from spaceapp.modules.assistant.contracts import AnswerReady
 from spaceapp.modules.assistant.domain.model import AskOutcome
@@ -29,8 +30,8 @@ from spaceapp.modules.knowledge.contracts import CitationDTO
 
 __all__ = ["NO_INFO_TEXT", "AskAssistant", "AskOutcome", "AskResult", "source_label"]
 
-NO_INFO_TEXT = "No tengo esa información en las fuentes cargadas."
-ALERT_NOTE = "Esta respuesta no cambia la alerta."
+NO_INFO_TEXT = "I don't have that information in the loaded sources."
+ALERT_NOTE = "This answer does not change the alert."
 TOP_K = 3
 TIMEOUT_S = 8.0
 
@@ -52,9 +53,9 @@ def source_label(citation: CitationDTO) -> str:
 
 
 def _template(passages: tuple[CitationDTO, ...], alerts: list[str]) -> str:
-    lines = ["Según las fuentes cargadas:"]
+    lines = ["According to the loaded sources:"]
     lines += [f"- {p.excerpt} ({source_label(p)})" for p in passages]
-    lines += [f"Alerta activa: {title}. {ALERT_NOTE}" for title in alerts]
+    lines += [f"Active alert: {title}. {ALERT_NOTE}" for title in alerts]
     return "\n".join(lines)
 
 
@@ -154,7 +155,9 @@ class AskAssistant:
             executor.shutdown(wait=False, cancel_futures=True)
         if not composed or not cited:
             return None
-        sources = "Fuentes: " + "; ".join(source_label(p) for p in cited)
+        if not self._figures_supported(composed, question, cited, self._alerts.titles()):
+            return None
+        sources = "Sources: " + "; ".join(source_label(p) for p in cited)
         return f"{composed}\n\n{sources}", cited
 
     def _compose(
@@ -166,10 +169,25 @@ class AskAssistant:
     ) -> tuple[str, str]:
         if self._llm.available:
             composed = self._stream_within_limit(question, passages, alerts, on_token)
-            if composed:
-                sources = "Fuentes: " + "; ".join(source_label(p) for p in passages)
+            if composed and self._figures_supported(composed, question, passages, alerts):
+                sources = "Sources: " + "; ".join(source_label(p) for p in passages)
                 return f"{composed}\n\n{sources}", "llm"
         return _template(passages, alerts), "plantilla"
+
+    @staticmethod
+    def _figures_supported(
+        text: str, question: str, passages: tuple[CitationDTO, ...], alerts: list[str]
+    ) -> bool:
+        """Toda cifra de la redacción sale de un pasaje, de la pregunta o de una alerta.
+
+        Si no, no se entrega: se responde con los pasajes tal cual. Ante la duda, el texto literal.
+        """
+        sources = [
+            question,
+            *alerts,
+            *(f"{p.excerpt} {p.requirement_ref or ''} {p.document_code}" for p in passages),
+        ]
+        return not unsupported_figures(text, *sources)
 
     def _stream_within_limit(
         self,

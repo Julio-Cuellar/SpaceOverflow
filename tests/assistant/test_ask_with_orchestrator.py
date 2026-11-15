@@ -82,6 +82,17 @@ def build(agent_factory, alerts=None, timeout_s: float = 5.0):  # type: ignore[n
     return assistant, agent, log, publisher
 
 
+def test_an_agent_answer_with_an_invented_figure_is_not_delivered() -> None:
+    assistant, _, _, _ = build(lambda log: FakeAgent(log, text="Headache appears above 99 mmHg."))
+
+    result = assistant(uuid.uuid4(), HEADACHE, turn_id=uuid.uuid4())
+
+    assert result.composed_by != "n8n"
+    assert result.degraded is True
+    assert "99" not in result.text
+    assert result.citations
+
+
 def test_the_answer_is_the_agents_text_with_citations_built_by_the_backend() -> None:
     assistant, _, _, _ = build(lambda log: FakeAgent(log))
 
@@ -91,7 +102,7 @@ def test_the_answer_is_the_agents_text_with_citations_built_by_the_backend() -> 
     assert result.composed_by == "n8n"
     assert result.degraded is False
     assert result.text.startswith("Puede deberse al CO₂ alto.")
-    assert "Fuentes: " in result.text
+    assert "Sources: " in result.text
     assert result.citations
     assert any(c.document_code.startswith("OCHMO-TB-004") for c in result.citations)
 

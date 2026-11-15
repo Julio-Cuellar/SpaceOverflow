@@ -2,10 +2,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Protocol
 from uuid import UUID
 
 from spaceapp.modules.knowledge.domain.model import Action, Citation, Guidance, Recommendation
+
+
+class EmbeddingError(Exception):
+    """El modelo de embeddings no respondió o devolvió algo inválido. La búsqueda sigue sin él."""
+
+
+class Embedder(Protocol):
+    """Convierte textos en vectores. `model` identifica los vectores que produce."""
+
+    model: str
+
+    def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
 
 class PassageSource(Protocol):

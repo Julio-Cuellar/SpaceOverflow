@@ -743,3 +743,74 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 - **GREEN:** 231 pruebas web (antes 222 + las nuevas); tipos y ESLint limpios. En el navegador, «What is the noise limit in the crew quarters?» pasó por el proxy, el backend, n8n y la herramienta `search_passages` y volvió con 3 citas.
 - **Defecto encontrado y NO corregido:** el modelo respondió «64 dB en descanso y 71 dB en trabajo». Son los valores de la banda de 63 Hz de la tabla 6.6-3; el límite real es la curva **NC-40** (dormitorios) y **NC-50** (trabajo) [V2 6079]. Citó un documento VERIFICADO pero leyó mal la tabla, y el backend solo comprueba que hubo pasajes, no que el texto se ciña a ellos. Además respondió en español a una pregunta en inglés (el prompt del agente está en español). Pendiente decidir con el usuario el idioma (decisión 6) y cómo acotar la redacción al texto de los pasajes.
 - **No verificado:** voz real; el conjunto de evaluación en inglés.
+
+## E21 · El asistente responde siempre en inglés (15 nov 2026)
+
+**Motivo:** el usuario pidió: «todo debe ser en ingles, así que el bot que conteste si o si en ingles». Esto cierra la decisión pendiente nº 6 (idioma de la respuesta): **inglés, aunque la pregunta llegue en otro idioma**. Los documentos de la NASA ya están en inglés, así que la respuesta cita el texto sin traducirlo.
+
+- **RED observado:** se cambiaron primero las pruebas (`test_ask.py`, `test_ollama.py`, `test_ask_with_orchestrator.py`, `test_n8n_workflow_file.py`, y en la web `mockAnswer.test.ts`, `AssistantPanel.test.tsx`, `askBackend.test.ts`, `App.test.tsx`) y se añadieron dos: el prompt de Ollama exige «Answer in English» aunque la pregunta esté en español, y el agente de n8n dice «Always answer in English». Resultado: `test_mentions_the_active_alert_without_changing_it` falló con el texto aún en español («Según las fuentes cargadas…»), y 3 pruebas de la web fallaron igual.
+- **Qué se hizo:** textos en inglés en `ask.py` (`NO_INFO_TEXT`, nota de alerta, plantilla, «Sources:»), en `ollama.py` (`NO_INFO_RULE` y `build_prompt`), en `mockAnswer.ts` y en `n8n/workflows/space-apps-asistente.json` (mensaje de sistema, descripciones de las dos herramientas y la consulta de `search_passages`, que ahora pide palabras clave **en inglés**, porque las fuentes están en inglés y eso ayuda a la recuperación).
+- **Error mío corregido en el momento:** una descripción con un apóstrofe («person's») dentro de la expresión `$fromAI('…')` habría roto la cadena entre comillas simples; se quitó. El JSON se validó.
+- **GREEN:** Python 670 pruebas (19 omitidas), ruff, mypy estricto e `import-linter` limpios; web 231 pruebas, `tsc` y ESLint limpios. Las 5 pruebas de arquitectura fallan si `pytest` se lanza sin `.venv/bin` en el `PATH` (no encuentran `lint-imports`); con el `PATH` correcto pasan.
+- **No verificado:** el workflow **no se reimportó** en el n8n en marcha (hay que hacerlo con los comandos de `n8n/README.md`), así que el cambio del agente no se ha probado de punta a punta con el modelo real.
+- **Queda en español, sin tocar:** el catálogo DEMO (`data/knowledge/demo_catalog.json`) y los pasajes de simulación de la web (la plantilla los cita tal cual, así que una respuesta de la fuente DEMO sale con el texto citado en español); las etiquetas de la interfaz; la voz (Whisper con `LANGUAGE = "es"`); el README del módulo `assistant`; las preguntas de evaluación en español y el glosario es→en (siguen sirviendo si alguien pregunta en español).
+
+## E22 · Plan de mitigación del RAG: fases 0, 1 y verificador de cifras (15 nov 2026)
+
+**Motivo:** el usuario pidió planificar y luego ejecutar la mitigación de los errores del RAG («eficiente y respuestas certeras»). Se ejecutó lo que no necesita descargas ni permisos. **No se ejecutó la fase 2 (embeddings)**: sigue pidiendo permiso para descargar el modelo.
+
+**Diagnóstico previo (script de un solo uso, fuera del repo):** de 50 preguntas con respuesta, **0** tenían el pasaje fuera del índice; 23 salían en el top 3, 9 en los puestos 4 a 10, 10 en el 11 o más y 8 no salían. La ingesta estaba bien: el fallo es de vocabulario y de orden.
+
+**Hecho, con RED observado en cada paso:**
+- **Fase 0 (medir).** `evaluate.py`: puesto del primer acierto, recall@1/3/5/10 y MRR; anclas tolerantes (mayúsculas, espacios, coma de miles, «µ» y «μ», y un número no es un trozo de otro: «25 mg» no está en «125 mg»); `expected_contains_any` (alternativas); `diagnose()` y el flag `--diagnose` (si el pasaje no está en el índice, no se recupera, o sale tarde). **Conjunto reservado** nuevo (`eval_questions_reserved.json`: 15 temas nuevos preguntados en inglés y en español, más 8 fuera de alcance), escrito **antes** de tocar el buscador y congelado; una prueba comprueba que cada ancla sigue en el índice real.
+- **Fase 1.2 (reinterpretada).** El plan decía «filtro por cobertura de peso»; el diagnóstico mostró que la causa eran las palabras de la pregunta («much», «needed», «necesita») que el pasaje debía contener. Se ampliaron las palabras vacías. **No** se relajó el mínimo de dos coincidencias: «world» (peso 5,58) bastaría para responder «Who won the football World Cup?».
+- **Fase 1.1 (glosario).** 40 → 85 entradas por temas de la norma (nutrición, actividad extravehicular, atmósfera, acústica, iluminación, radiación, medicina). Se evitaron a propósito los términos exclusivos del conjunto reservado (ebullismo, tamiz, PLSS, polvo lunar). Una entrada mía («agua potable») bajó una pregunta del top 3 y se quitó. **Las entradas nuevas siguen pendientes de revisión del equipo.** Pruebas nuevas: claves normalizadas, cobertura por tema y que toda traducción exista en el índice real.
+- **Verificador de cifras** (`assistant/application/grounding.py`, conectado en el camino del agente de n8n y en el del modelo local): una redacción con una cifra que no sale de un pasaje, de la pregunta ni de una alerta no se entrega; se responde con los pasajes. **Límite:** no detecta una cifra real mal atribuida; el caso de «64 y 71 dB» (banda de 63 Hz leída como límite) **no** queda cerrado, porque esas cifras sí están en el pasaje. Los tokens que ya se emitieron en streaming no se pueden retirar; el texto final sí es el verificado.
+
+**Probado y descartado (se queda el registro, no el código):**
+- **Quitar encabezados y pies repetidos** antes de fragmentar (módulo y pruebas escritos, probados y borrados; el índice se restauró). Recall@3 igual en los cuatro conjuntos, recall@1 del principal 38 % → 25 %, recall@10 del reservado 70 % → 63 %. Causa: en el checklist del botiquín la cabecera repetida es lo único que dice de qué trata la tabla. Idea para después: quitar el relleno **y** anteponer el título del documento al texto indexado.
+- **Multiplicador de puntaje para la norma:** mejora algo principal y validación, pero empeora el reservado (recall@3 60 % → 53 % con ×1,5 y 40 % con ×2). No generaliza.
+
+**Resultado (recall@3 · recall@10 · MRR; antes → después):**
+
+| Conjunto | Antes | Después |
+|---|---|---|
+| Principal ES (16) | 56 % · 75 % · 0,50 | 56 % · 75 % · 0,50 |
+| Validación ES (9) | 11 % · 33 % · 0,15 | 67 % · 89 % · 0,70 |
+| Inglés (25) | 52 % · 68 % · 0,46 | 56 % · 68 % · 0,49 |
+| **Reservado (30)** | **57 % · 70 % · 0,53** | **60 % · 70 % · 0,54** |
+
+- **La mejora de validación no es limpia:** se había visto cómo fallaba antes de añadir el glosario. La cifra honesta es la del reservado: **+1 caso (57 % → 60 %)**. **Ningún conjunto llega al 80 %.**
+- **Fuera de alcance:** 1 de 8 respondida en el reservado («Which medication should I take for a migraine?», cercana al tema). Sigue igual: falta la calibración de la abstención.
+- **GREEN:** 721 pruebas de Python (19 omitidas), cobertura 96 %, `ruff`, `mypy` estricto e `import-linter` limpios.
+
+**Lo que queda y por qué:** (1) **fase 2, embeddings:** es la solución de fondo; el recall@10 (70 %) está por encima del recall@3 (60 %) y hay 4 casos del reservado «en el índice, no recuperada», que son de vocabulario; pide permiso de descarga. (2) Calibrar la abstención con preguntas cercanas al tema. (3) Decisión de latencia del agente (15 a 120 s). (4) Revisión del glosario por el equipo. (5) Temas curados como impulso de ranking: no se hizo.
+
+## E23 · RAG fase 2: búsqueda híbrida con embeddings (15 nov 2026)
+
+**Motivo:** el usuario autorizó la descarga del modelo («Sí, descargar»). Se descargó `bge-m3` en el contenedor `spaceapp-ollama` (1 157,7 MB; 120 GB libres en disco).
+
+**Hecho, con RED observado en cada paso (TDD):**
+- `ports.Embedder`/`EmbeddingError`; `OllamaEmbedder` (`/api/embed`, lotes de 32, `keep_alive` 30 min para no recargar el modelo ≈ 4 s en cada pregunta).
+- `ingest/vectors.py`: `VectorIndex` (vectores normalizados en float32, `embeddings.json` + `embeddings.f32`, coseno en Python puro, sin dependencias nuevas).
+- `ingest.embed`: comando incremental; si Ollama falla, indica `ollama pull bge-m3`.
+- `HybridKnowledgeSource`: BM25 + coseno fusionados con RRF (k = 60, profundidad 50); caché de vectores de pregunta; sin modelo, sin vectores o con vectores de otro modelo cae a solo palabras (probado). `evaluate --mode hybrid`; el servidor de desarrollo usa el híbrido si hay vectores.
+- Vectores del índice real: 1 588 fragmentos citables, **≈ 25 min en CPU** (más de lo estimado). No se versionan.
+
+**Decisión de seguridad con medición (regresión encontrada y corregida):** la primera versión dejaba que el significado decidiera solo. En el conjunto reservado subió las preguntas fuera de alcance respondidas de **1 a 3 de 8** (migraña en español y «billete de avión a Marte»: temas cercanos que se parecen por significado a los pasajes médicos). Se añadió `require_word_match` (por defecto activo): si las palabras no encuentran nada, no se cita nada; el significado solo reordena y completa. Pruebas nuevas escritas antes (RED: 2 fallos). Coste medido: recall@3 reservado 77 % → 70 %. **Se prefirió no responder mal a responder más.** Las preguntas fuera de alcance de los conjuntos de ajuste tienen similitud 0,33 a 0,39 y las útiles ≥ 0,51: umbral 0,5 sin fugas en ajuste (barrido 0,35 a 0,6; en 0,35 fugan). Ese barrido no puede calibrar los casos cercanos al tema; por eso la puerta léxica, no un umbral más alto.
+
+**Resultado (recall@3 · @10; léxico → híbrido final):**
+
+| Conjunto | Léxico | Híbrido |
+|---|---|---|
+| Principal ES (16) | 56 % · 75 % | 62 % · 88 % |
+| Validación ES (9) | 67 % · 89 % | 78 % · 89 % |
+| Inglés (25) | 56 % · 68 % | 52 % · 84 % |
+| **Reservado (30, medido una vez por variante)** | **60 % · 70 %** | **70 % · 87 %** |
+
+- **Reservado:** +3 casos en @3 (60 → 70 %) y +5 en @10. **Sigue sin llegar al 80 %.** Inglés @3 baja un caso (14 → 13); no se ocultó. Fuera de alcance reservado: 1 de 8, la misma que ya respondía el léxico (migraña en inglés, comparte palabras con los pasajes médicos).
+- **El reservado ya no es del todo virgen:** se midió con la variante sin puerta léxica y con ella; la puerta se decidió por la fuga de seguridad, sin afinar un umbral con esas preguntas.
+- **Latencia de búsqueda:** 0,4 a 1,0 s por pregunta nueva (incluye ≈ 0,2 s de embedding) y 0,15 a 0,3 s si ya se vio.
+- **GREEN:** 768 pruebas de Python (19 omitidas), cobertura de `knowledge` y `assistant` 97 %, `ruff`, `mypy` estricto e `import-linter` limpios.
+
+**Lo que falta:** (1) 80 % en @3: el recall@10 es 87 % y el @3 70 %, es un problema de orden: reordenador o fragmentos con título del documento antepuesto. (2) Decisión de latencia del agente de n8n. (3) Revisión del glosario por el equipo. (4) Reimportar el workflow de n8n con el prompt en inglés (necesita permiso). (5) Nada se ha commiteado ni subido.

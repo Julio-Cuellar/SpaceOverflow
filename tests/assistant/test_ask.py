@@ -92,8 +92,32 @@ def test_mentions_the_active_alert_without_changing_it() -> None:
 
     result = assistant(uuid.uuid4(), HEADACHE)
 
-    assert "Alerta activa: CO₂ alto (Alerta)" in result.text
-    assert "no cambia la alerta" in result.text
+    assert "According to the loaded sources:" in result.text
+    assert "Active alert: CO₂ alto (Alerta)" in result.text
+    assert "does not change the alert" in result.text
+
+
+def test_a_model_answer_with_a_figure_the_passages_do_not_have_is_replaced_by_the_passages() -> (
+    None
+):
+    llm = FakeLlm(tokens=["Headache appears ", "above 9.9 mmHg."])
+    assistant, _ = build(llm=llm)
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert result.composed_by == "plantilla"
+    assert "9.9" not in result.text
+    assert "2.8" in result.text
+
+
+def test_a_model_answer_that_only_uses_figures_from_the_passages_is_kept() -> None:
+    llm = FakeLlm(tokens=["Headache appears ", "between 2.8 and 4.5 mmHg."])
+    assistant, _ = build(llm=llm)
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert result.composed_by == "llm"
+    assert result.text.startswith("Headache appears between 2.8 and 4.5 mmHg.")
 
 
 def test_answers_no_information_without_calling_the_model_when_no_passage_is_relevant() -> None:

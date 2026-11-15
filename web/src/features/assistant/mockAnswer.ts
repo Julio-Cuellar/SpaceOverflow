@@ -1,8 +1,8 @@
 import { passagesFixture, type PassageFixture } from '../../data/mocks/passages'
 import type { EvidenceState } from '../../shared/lib/evidence'
 
-export const NO_INFO_TEXT = 'No tengo esa información en las fuentes cargadas.'
-const ALERT_NOTE = 'Esta respuesta no cambia la alerta.'
+export const NO_INFO_TEXT = "I don't have that information in the loaded sources."
+const ALERT_NOTE = 'This answer does not change the alert.'
 const TOP_K = 3
 const MIN_TERM_LENGTH = 4
 
@@ -39,7 +39,7 @@ function sourceLabel(p: PassageFixture): string {
 
 /**
  * Misma política que el caso de uso del backend: solo pasajes recuperados, con cita; sin pasaje,
- * «No tengo esa información»; una alerta activa se nombra pero nunca se cambia.
+ * «I don't have that information»; una alerta activa se nombra pero nunca se cambia.
  */
 export function mockAnswer(question: string, activeAlerts: string[]): AssistantAnswer {
   const query = terms(question)
@@ -58,9 +58,9 @@ export function mockAnswer(question: string, activeAlerts: string[]): AssistantA
   }
 
   const lines = [
-    'Según las fuentes cargadas:',
+    'According to the loaded sources:',
     ...found.map((p) => `- ${p.excerpt} (${sourceLabel(p)})`),
-    ...activeAlerts.map((title) => `Alerta activa: ${title}. ${ALERT_NOTE}`),
+    ...activeAlerts.map((title) => `Active alert: ${title}. ${ALERT_NOTE}`),
   ]
   return {
     outcome: 'ANSWERED',

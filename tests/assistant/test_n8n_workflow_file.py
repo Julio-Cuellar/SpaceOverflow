@@ -84,8 +84,16 @@ def test_the_agent_rules_forbid_touching_alerts_and_inventing(workflow: dict[str
     rules = node(workflow, "Agente")["parameters"]["options"]["systemMessage"]
 
     assert "search_passages" in rules
-    assert "No tengo esa información en las fuentes cargadas." in rules
-    assert "No puedes cambiar, reconocer ni resolver alertas" in rules
+    assert "I don't have that information in the loaded sources." in rules
+    assert "You cannot change, acknowledge or resolve alerts" in rules
+
+
+def test_the_agent_always_answers_in_english(workflow: dict[str, Any]) -> None:
+    rules = node(workflow, "Agente")["parameters"]["options"]["systemMessage"]
+
+    assert "Always answer in English" in rules
+    assert "even if the question is in another language" in rules
+    assert "español" not in rules.lower()
 
 
 def test_the_credential_file_holds_no_secret() -> None:

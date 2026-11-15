@@ -1,0 +1,58 @@
+{
+  "_nota": "Conjunto RESERVADO del RAG (15 nov 2026), escrito ANTES de las mejoras de la fase 1 del plan de recuperación. CONGELADO: no se usa para ajustar el buscador, el glosario ni los umbrales; solo para medir si lo ajustado con los otros conjuntos generaliza. Quince temas que no aparecen en los otros tres conjuntos, cada uno preguntado en inglés y en español, más ocho preguntas fuera de alcance (algunas cercanas al tema). Cada ancla se buscó en el texto extraído de los PDFs, y una prueba comprueba que sigue existiendo en el índice real. Uso: python -m spaceapp.modules.knowledge.evaluate --questions data/knowledge/eval_questions_reserved.json --diagnose",
+  "cases": [
+    { "question": "What is the time-weighted average limit for lunar dust particles in the habitable atmosphere?", "expected_contains": ["0.3 mg/m3"] },
+    { "question": "¿Cuál es el límite promedio ponderado en el tiempo para el polvo lunar en la atmósfera habitable?", "expected_contains": ["0.3 mg/m3"] },
+
+    { "question": "What dust generation rate per crew member is assumed for the particulate matter limit?", "expected_contains": ["1.33 mg/person-minute"] },
+    { "question": "¿Qué tasa de generación de polvo por tripulante se asume en el límite de partículas?", "expected_contains": ["1.33 mg/person-minute"] },
+
+    { "question": "At what pressure do body fluids vaporize (ebullism) at normal body temperature?", "expected_contains": ["6.27 kPa"] },
+    { "question": "¿A qué presión se vaporizan los fluidos corporales (ebullismo) a temperatura corporal normal?", "expected_contains": ["6.27 kPa"] },
+
+    { "question": "How long do the symptoms of acute mountain sickness last?", "expected_contains": ["2-7 days"] },
+    { "question": "¿Cuánto duran los síntomas del mal agudo de montaña?", "expected_contains": ["2-7 days"] },
+
+    { "question": "How close to the pause command must the system stop a commanded pressure change?", "expected_contains": ["within 1 psi"] },
+    { "question": "¿Con qué margen debe detenerse un cambio de presión ordenado cuando se da la orden de pausa?", "expected_contains": ["within 1 psi"] },
+
+    { "question": "For how many consecutive days can the crew be exposed to a PIO2 of 127 mmHg?", "expected_contains": ["five consecutive days"] },
+    { "question": "¿Durante cuántos días seguidos puede la tripulación exponerse a una PIO2 de 127 mmHg?", "expected_contains": ["five consecutive days"] },
+
+    { "question": "What CO2 removal rate does the CDRA reach at 2 mmHg?", "expected_contains": ["3.7 kg/day"] },
+    { "question": "¿Qué tasa de eliminación de CO₂ alcanza el CDRA a 2 mmHg?", "expected_contains": ["3.7 kg/day"] },
+
+    { "question": "What kind of sieve does the CDRA use to remove carbon dioxide?", "expected_contains": ["four-bed molecular sieve"] },
+    { "question": "¿Qué tipo de tamiz usa el CDRA para eliminar el dióxido de carbono?", "expected_contains": ["four-bed molecular sieve"] },
+
+    { "question": "What CO2 concentration does average indoor air have on Earth?", "expected_contains_any": ["0.08% to 0.1%", "0.608 to 0.76 mmHg"] },
+    { "question": "¿Qué concentración de CO₂ tiene el aire interior promedio en la Tierra?", "expected_contains_any": ["0.08% to 0.1%", "0.608 to 0.76 mmHg"] },
+
+    { "question": "At what arterial oxygen pressure do subtle performance decrements begin?", "expected_contains": ["80mmHg"] },
+    { "question": "¿A qué presión arterial de oxígeno empiezan a notarse las primeras pérdidas de rendimiento?", "expected_contains": ["80mmHg"] },
+
+    { "question": "What pressure does the PLSS maintain inside the spacesuit?", "expected_contains": ["4.2 psi"] },
+    { "question": "¿Qué presión mantiene el PLSS dentro del traje espacial?", "expected_contains": ["4.2 psi"] },
+
+    { "question": "What respiratory quotient is assumed to determine O2 consumption and CO2 output?", "expected_contains": ["RQ of 0.92"] },
+    { "question": "¿Qué cociente respiratorio se asume para calcular el consumo de O2 y la producción de CO2?", "expected_contains": ["RQ of 0.92"] },
+
+    { "question": "What share of astronauts reported headaches in the ISS CO2 data?", "expected_contains": ["38.7%"] },
+    { "question": "¿Qué porcentaje de astronautas reportó dolores de cabeza en los datos de CO2 de la ISS?", "expected_contains": ["38.7%"] },
+
+    { "question": "What range of CO2 partial pressure has the ISS experienced?", "expected_contains": ["1 to 9 mmHg"] },
+    { "question": "¿Qué rango de presión parcial de CO2 ha tenido la ISS?", "expected_contains": ["1 to 9 mmHg"] },
+
+    { "question": "What atmosphere does the International Space Station use?", "expected_contains": ["14.7 psia/21% O2"] },
+    { "question": "¿Qué atmósfera usa la Estación Espacial Internacional?", "expected_contains": ["14.7 psia/21% O2"] },
+
+    { "question": "Who won the 2022 football World Cup?", "out_of_scope": true },
+    { "question": "¿Quién ganó el Mundial de fútbol de 2022?", "out_of_scope": true },
+    { "question": "Which medication should I take for a migraine?", "out_of_scope": true },
+    { "question": "¿Qué medicina tomo para la migraña?", "out_of_scope": true },
+    { "question": "How much does a plane ticket to Mars cost?", "out_of_scope": true },
+    { "question": "¿Cuánto cuesta un boleto de avión a Marte?", "out_of_scope": true },
+    { "question": "What is the capital of Australia?", "out_of_scope": true },
+    { "question": "¿Cuál es la capital de Australia?", "out_of_scope": true }
+  ]
+}

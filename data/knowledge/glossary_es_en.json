@@ -1,5 +1,5 @@
 {
-  "_nota": "Glosario español-inglés para buscar en documentos de NASA, que están en inglés, con preguntas en español. Son traducciones de términos, no afirmaciones médicas. Solución provisoria hasta decidir un modelo de embeddings multilingüe. Pendiente de revisión del equipo.",
+  "_nota": "Glosario español-inglés para buscar en documentos de NASA, que están en inglés, con preguntas en español. Son traducciones de términos, no afirmaciones médicas. Solución provisoria hasta decidir un modelo de embeddings multilingüe. Pendiente de revisión del equipo. 15 nov 2026: se añadieron entradas por temas de la norma (nutrición, actividad extravehicular, atmósfera, acústica, iluminación, radiación, medicina); están marcadas para revisión en la bitácora, E22.",
   "entries": [
     { "es": ["dioxido de carbono", "co2", "ppco2"], "en": ["carbon dioxide", "co2", "ppco2"] },
     { "es": ["limite", "limites", "maximo"], "en": ["limit", "maximum"] },
@@ -40,6 +40,55 @@
     { "es": ["rango"], "en": ["range"] },
     { "es": ["mision", "misiones"], "en": ["mission"] },
     { "es": ["dosis"], "en": ["dose"] },
-    { "es": ["musculo", "fuerza muscular"], "en": ["muscle", "strength"] }
+    { "es": ["musculo", "fuerza muscular"], "en": ["muscle", "strength"] },
+
+    { "es": ["energia", "caloria", "calorias", "kilocalorias"], "en": ["energy", "kcal", "calories"] },
+    { "es": ["energia diaria", "requerimiento energetico", "necesidad energetica"], "en": ["energy requirements"] },
+    { "es": ["vitamina", "vitaminas"], "en": ["vitamin"] },
+    { "es": ["proteina", "proteinas"], "en": ["protein"] },
+    { "es": ["grasa", "grasas"], "en": ["fat"] },
+    { "es": ["carbohidrato", "carbohidratos"], "en": ["carbohydrate"] },
+    { "es": ["calcio"], "en": ["calcium"] },
+    { "es": ["sodio"], "en": ["sodium"] },
+    { "es": ["hierro"], "en": ["iron"] },
+    { "es": ["alimento", "alimentos", "comida", "dieta", "nutricion"], "en": ["food", "diet", "nutrition"] },
+    { "es": ["liquido", "liquidos", "hidratacion"], "en": ["fluid", "hydration"] },
+
+    { "es": ["actividad extravehicular", "caminata espacial", "eva"], "en": ["extravehicular activity", "eva"] },
+    { "es": ["traje espacial", "traje"], "en": ["spacesuit", "suit"] },
+    { "es": ["ejercicio", "entrenamiento fisico"], "en": ["exercise"] },
+    { "es": ["cardiovascular", "corazon"], "en": ["cardiovascular"] },
+    { "es": ["presion arterial"], "en": ["blood pressure"] },
+    { "es": ["frecuencia cardiaca", "pulso"], "en": ["heart rate"] },
+
+    { "es": ["gas diluyente", "diluyente"], "en": ["diluent gas", "diluent"] },
+    { "es": ["nitrogeno"], "en": ["nitrogen"] },
+    { "es": ["contaminante", "contaminantes", "contaminacion"], "en": ["contaminant", "contamination"] },
+    { "es": ["ventilacion", "flujo de aire", "circulacion de aire"], "en": ["ventilation", "airflow"] },
+    { "es": ["presion total"], "en": ["total pressure"] },
+    { "es": ["cambio de presion"], "en": ["pressure change"] },
+    { "es": ["incendio", "fuego", "humo"], "en": ["fire", "smoke"] },
+    { "es": ["respiracion", "respirar"], "en": ["breathing", "respiration"] },
+
+    { "es": ["alarma", "alarmas", "alerta sonora"], "en": ["alarm"] },
+    { "es": ["acustica", "acustico", "decibelios", "decibeles"], "en": ["acoustic", "dba"] },
+    { "es": ["audicion", "oido", "oidos", "auditiva"], "en": ["hearing"] },
+    { "es": ["iluminacion", "luz", "luminosidad"], "en": ["lighting", "light"] },
+
+    { "es": ["particulas solares", "evento de particulas solares", "tormenta solar"], "en": ["solar particle", "spe"] },
+    { "es": ["rayos cosmicos", "radiacion cosmica"], "en": ["galactic cosmic", "gcr"] },
+    { "es": ["blindaje"], "en": ["shielding"] },
+    { "es": ["carrera", "vida laboral"], "en": ["career"] },
+
+    { "es": ["primeros auxilios"], "en": ["first aid"] },
+    { "es": ["lesion", "lesiones", "herida", "heridas"], "en": ["injury"] },
+    { "es": ["enfermedad", "enfermedades"], "en": ["illness"] },
+    { "es": ["tratamiento", "tratar", "trata"], "en": ["treatment"] },
+    { "es": ["emergencia", "emergencias"], "en": ["emergency"] },
+    { "es": ["cirujano de vuelo"], "en": ["flight surgeon"] },
+    { "es": ["estres"], "en": ["stress"] },
+    { "es": ["aislamiento", "confinamiento"], "en": ["isolation", "confinement"] },
+    { "es": ["masa corporal"], "en": ["body mass"] },
+    { "es": ["vision", "vista"], "en": ["vision", "visual"] }
   ]
 }

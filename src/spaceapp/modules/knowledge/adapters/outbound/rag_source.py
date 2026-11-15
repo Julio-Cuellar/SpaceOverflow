@@ -16,13 +16,12 @@ from pathlib import Path
 
 from spaceapp.modules.knowledge.domain.glossary import (
     Glossary,
-    content_word_count,
     stem,
     terms,
     token_counts,
 )
 from spaceapp.modules.knowledge.domain.model import Citation, EvidenceState
-from spaceapp.modules.knowledge.ingest.chunking import MAX_CHARS, Chunk
+from spaceapp.modules.knowledge.ingest.chunking import MAX_CHARS, Chunk, searchable_chunks
 from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
 from spaceapp.modules.knowledge.ports import PassageSource
 
@@ -30,8 +29,6 @@ from spaceapp.modules.knowledge.ports import PassageSource
 # basta.
 MIN_SCORE = 1.0
 MIN_MATCHED_TERMS = 2
-# Por debajo de este número de palabras, un fragmento es un título o una entrada de índice.
-MIN_CONTENT_WORDS = 6
 BM25_K1 = 1.5
 BM25_B = 0.75
 # Se cita el fragmento completo: recortar a 500 caracteres escondía la cifra en la mitad de los
@@ -39,6 +36,8 @@ BM25_B = 0.75
 # (medido sobre los PDFs reales: con 500 se veía 7 de 25 respuestas; con 1200, 13 de 25).
 EXCERPT_MAX_CHARS = MAX_CHARS
 _QUERY_MIN_LENGTH = 4
+# Palabras de la pregunta que no dicen de qué trata («how much … is needed»): si cuentan como
+# términos, el pasaje tendría que contenerlas y la cifra buscada quedaría fuera de los resultados.
 _STOPWORDS = frozenset(
     [
         "what",
@@ -49,6 +48,23 @@ _STOPWORDS = frozenset(
         "have",
         "shall",
         "which",
+        "much",
+        "many",
+        "does",
+        "should",
+        "would",
+        "could",
+        "about",
+        "there",
+        "when",
+        "where",
+        "whom",
+        "whose",
+        "need",
+        "needs",
+        "needed",
+        "required",
+        "each",
         "para",
         "como",
         "pero",
@@ -66,7 +82,18 @@ _STOPWORDS = frozenset(
         "cuales",
         "cuanto",
         "cuanta",
+        "cuantos",
+        "cuantas",
         "quien",
+        "necesita",
+        "necesito",
+        "necesitan",
+        "debe",
+        "deben",
+        "puede",
+        "pueden",
+        "tiene",
+        "tienen",
     ]
 )
 
@@ -122,7 +149,7 @@ class RagKnowledgeSource:
     def __init__(self, chunks: Sequence[Chunk], glossary_path: Path) -> None:
         self._glossary = load_glossary(glossary_path)
         # Los títulos sueltos y las entradas de índice no son pasajes citables: se descartan.
-        self._chunks = [c for c in chunks if content_word_count(c.content) >= MIN_CONTENT_WORDS]
+        self._chunks = searchable_chunks(chunks)
         self._counts = [token_counts(chunk.content) for chunk in self._chunks]
         self._lengths = [sum(counts.values()) for counts in self._counts]
         self._average_length = (sum(self._lengths) / len(self._lengths)) if self._lengths else 1.0
@@ -151,8 +178,21 @@ class RagKnowledgeSource:
     def from_index(cls, index_path: Path, glossary_path: Path) -> RagKnowledgeSource:
         return cls(JsonlChunkStore(index_path).all(), glossary_path)
 
+    @property
+    def chunks(self) -> list[Chunk]:
+        """Los fragmentos citables, en el orden de las posiciones que devuelve `rank`."""
+        return self._chunks
+
     def search(self, text: str, k: int) -> list[Citation]:
         """Pasajes citables, del más al menos relevante. Vacío si ninguno pasa el umbral."""
+        positions, query = self.rank(text)
+        return [self.citation(position, query) for position in positions[:k]]
+
+    def rank(self, text: str) -> tuple[list[int], set[str]]:
+        """Posiciones de los fragmentos que pasan los umbrales, del más al menos relevante.
+
+        Devuelve también los términos de la consulta, que `citation` usa para elegir el extracto.
+        """
         english, translated = self._glossary.explain(text)
         # Las palabras que el glosario ya tradujo no se buscan en español: están en `english`.
         untranslated = {
@@ -162,7 +202,7 @@ class RagKnowledgeSource:
         }
         query = untranslated | english
         if not self._chunks or not query:
-            return []
+            return [], set()
 
         # Una coincidencia aislada no es una respuesta: con varios términos en la pregunta, el
         # fragmento debe coincidir en al menos dos (p. ej. «world» en una lista de acrónimos).
@@ -177,9 +217,10 @@ class RagKnowledgeSource:
                 scored.append((-score, position))
         scored.sort()
 
-        return [self._citation(self._chunks[position], query) for _, position in scored[:k]]
+        return [position for _, position in scored], query
 
-    def _citation(self, chunk: Chunk, query: set[str]) -> Citation:
+    def citation(self, position: int, query: set[str]) -> Citation:
+        chunk = self._chunks[position]
         return Citation(
             document_code=chunk.document_code,
             requirement_ref=chunk.requirement_ref,

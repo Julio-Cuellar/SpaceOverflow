@@ -16,6 +16,17 @@ docker exec spaceapp-ollama ollama create spaceapp-asistente -f /tmp/Modelfile  
 
 n8n (en otro contenedor) lo alcanza por `http://host.docker.internal:11434`. El modelo que usa el asistente es `spaceapp-asistente`.
 
+## Modelo de embeddings (búsqueda por significado)
+
+El RAG busca por palabras y, si están los vectores y este modelo, también por significado (`bge-m3`: multilingüe, 1 024 dimensiones, 1,16 GB). Sin él la búsqueda sigue funcionando solo por palabras.
+
+```bash
+docker exec spaceapp-ollama ollama pull bge-m3          # 1,16 GB, una vez, con internet
+.venv/bin/python -m spaceapp.modules.knowledge.ingest.embed   # calcula los vectores; es incremental
+```
+
+Cada consulta cuesta unos 200 ms de embedding. Ollama pide `keep_alive` de 30 minutos para no recargar el modelo (≈ 4 s) en cada pregunta. La dirección de Ollama del servidor de desarrollo se cambia con `SPACEAPP_OLLAMA_URL`.
+
 ## Mediciones en esta máquina (16 hilos lógicos, Docker Desktop con 4 GB, otros contenedores en marcha)
 
 | Prueba | Resultado |

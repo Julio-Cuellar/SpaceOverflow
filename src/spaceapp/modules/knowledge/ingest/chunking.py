@@ -9,10 +9,15 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
+
+from spaceapp.modules.knowledge.domain.glossary import content_word_count
 
 MAX_CHARS = 1200
 OVERLAP = 150
+# Por debajo de este número de palabras, un fragmento es un título o una entrada de índice.
+MIN_CONTENT_WORDS = 6
 
 _REQUIREMENT = re.compile(r"\[(V[12] \d{4})\]")
 _HYPHEN_BREAK = re.compile(r"-\s*\n\s*")
@@ -27,6 +32,15 @@ class Chunk:
     page: int
     content: str
     evidence_state: str
+
+
+def searchable_chunks(chunks: Iterable[Chunk]) -> list[Chunk]:
+    """Los fragmentos citables: los títulos sueltos y las entradas de índice se descartan.
+
+    La búsqueda por palabras y el cálculo de vectores usan la misma lista, para que cada
+    fragmento tenga a la vez su puntaje léxico y su vector.
+    """
+    return [c for c in chunks if content_word_count(c.content) >= MIN_CONTENT_WORDS]
 
 
 def clean(text: str) -> str:

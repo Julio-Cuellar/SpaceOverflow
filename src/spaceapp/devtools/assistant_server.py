@@ -29,10 +29,9 @@ from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
 from spaceapp.modules.assistant.application.voice import ConfirmUtterance
 from spaceapp.modules.assistant.ports import AssistantOrchestrator, PassageSearch
 from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowledgeSource
-from spaceapp.modules.knowledge.adapters.outbound.rag_source import (
-    FallbackKnowledgeSource,
-    RagKnowledgeSource,
-)
+from spaceapp.modules.knowledge.adapters.outbound.hybrid_source import build_knowledge_source
+from spaceapp.modules.knowledge.adapters.outbound.ollama_embedder import DEFAULT_URL, OllamaEmbedder
+from spaceapp.modules.knowledge.adapters.outbound.rag_source import FallbackKnowledgeSource
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -101,9 +100,11 @@ def _knowledge() -> KnowledgeQuery:
     index = ROOT / "data" / "knowledge" / "index" / "chunks.jsonl"
     glossary = ROOT / "data" / "knowledge" / "glossary_es_en.json"
     if index.exists():
-        return KnowledgeQuery(
-            FallbackKnowledgeSource(RagKnowledgeSource.from_index(index, glossary), demo)
-        )
+        # Híbrida (palabras y significado) si hay vectores y el modelo de embeddings; si no, o si
+        # Ollama no responde, solo palabras.
+        embedder = OllamaEmbedder(base_url=os.environ.get("SPACEAPP_OLLAMA_URL", DEFAULT_URL))
+        rag = build_knowledge_source(index, glossary, embedder)
+        return KnowledgeQuery(FallbackKnowledgeSource(rag, demo))
     return KnowledgeQuery(demo)
 
 

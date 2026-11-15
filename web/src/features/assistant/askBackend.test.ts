@@ -47,7 +47,7 @@ describe('askBackend', () => {
   })
 
   it('keeps the no-information outcome the backend decided', async () => {
-    const fetchImpl = respond({ ...body, outcome: 'NO_INFO', text: 'No tengo esa información.', citations: [] })
+    const fetchImpl = respond({ ...body, outcome: 'NO_INFO', text: "I don't have that information.", citations: [] })
 
     const answer = await askBackend('/dev/ask', fetchImpl)('¿Capital de Francia?')
 

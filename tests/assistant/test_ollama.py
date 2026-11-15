@@ -56,5 +56,17 @@ def test_the_prompt_contains_only_the_retrieved_passages_and_the_no_information_
 
     prompt = str(sent[0]["prompt"])
     assert "Dolor de cabeza entre 2.8 y 4.5 mmHg de ppCO₂." in prompt
-    assert "No tengo esa información en las fuentes cargadas" in prompt
+    assert "I don't have that information in the loaded sources" in prompt
     assert "CO₂ alto (Alerta)" in prompt
+
+
+def test_the_prompt_demands_english_even_when_the_question_is_in_spanish() -> None:
+    sent: list[dict[str, object]] = []
+    gateway = OllamaGateway(model="m", opener=fake_opener([{"response": "", "done": True}], sent))
+
+    list(gateway.stream("¿Por qué me duele la cabeza?", [PASSAGE], []))
+
+    prompt = str(sent[0]["prompt"])
+    instructions = prompt.split("Question:")[0]
+    assert "Answer in English" in instructions
+    assert "español" not in instructions.lower()

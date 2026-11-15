@@ -16,14 +16,15 @@ describe('mockAnswer', () => {
     const answer = mockAnswer('¿Cómo cambio el filtro de la esclusa?', [])
 
     expect(answer.outcome).toBe('NO_INFO')
-    expect(answer.text).toBe('No tengo esa información en las fuentes cargadas.')
+    expect(answer.text).toBe("I don't have that information in the loaded sources.")
     expect(answer.citations).toEqual([])
   })
 
   it('names the active alert without changing it', () => {
     const answer = mockAnswer('¿Por qué me duele la cabeza?', ['CO₂ alto (Alerta)'])
 
-    expect(answer.text).toContain('Alerta activa: CO₂ alto (Alerta)')
-    expect(answer.text).toContain('no cambia la alerta')
+    expect(answer.text).toContain('According to the loaded sources:')
+    expect(answer.text).toContain('Active alert: CO₂ alto (Alerta)')
+    expect(answer.text).toContain('does not change the alert')
   })
 })

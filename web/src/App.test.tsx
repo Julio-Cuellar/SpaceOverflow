@@ -104,7 +104,7 @@ describe('App', () => {
 
     await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
     await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
-    expect(screen.getByText(/Alerta activa: CO₂ alto \(Alerta\)/)).toBeInTheDocument()
+    expect(screen.getByText(/Active alert: CO₂ alto \(Alerta\)/)).toBeInTheDocument()
 
     await openTab('Cabina')
     expect(screen.getByRole('status', { name: 'Estado global' })).toHaveTextContent('Alerta')
