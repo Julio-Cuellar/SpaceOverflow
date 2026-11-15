@@ -21,7 +21,7 @@
 | F7 | Panel de la nave | PARCIAL | Plano desde `zone.layout`, pins de ticket, orden y regla de «resolver», gráficas por zona con pausa, formulario de reporte, catálogo filtrable y modo demo por perfil. Falta el catálogo completo de 61 tipos y el backend |
 | F12 | RAG sobre PDFs de NASA | PARCIAL | Manifiesto con licencias, fragmentación por requisito, lectura de PDF, ingesta idempotente, búsqueda con glosario es→en, respaldo a demo y evaluación, probados con PDFs sintéticos y luego con los 7 PDFs reales (2 087 fragmentos, E10). **Recuperación por debajo del umbral del plan:** 56 % en el conjunto principal, 11 % en el retenido, 0 respuestas sin fuente. Faltan el buscador de pasajes en la web (12.6) y la decisión del modelo de embeddings |
 | F13 | Asistente texto y Ollama | PARCIAL | Backend: caso de uso con límite de 8 s, adaptadores nulo y Ollama, evento `answer_ready` (15 pruebas). Web: pestaña Asistente con datos de demostración. Falta GraphQL, persistencia SQL, Ollama real probado y n8n opcional |
-| F14 | Voz con Whisper | PENDIENTE | |
+| F14 | Voz con Whisper | PARCIAL | Núcleo probado con un Whisper de mentira: puerto, adaptadores nulo y `faster-whisper`, subida de audio, transcripción editable y confirmación (E15). Falta el modelo real, la ruta REST, la entrega por WS y la interfaz |
 | F9 | Entrega (Docker, sin internet) | PENDIENTE | conjunta con A |
 | F10 | Tareas (interfaz) | PARCIAL | Lista con filtros y etiqueta de origen, tarea propia, bloqueo con motivo, «¿Funcionó?», posponer, racha y consentimiento, con datos de demostración (E13). Falta `tasks`/`createTask` reales y `task.assigned` por WS (hito I5 de A) |
 | F11 | Panel del centro de control | PARCIAL | Ruta `/ground`, plantillas con estado en la nave (solo si se comparte «tareas»), borrador de la versión siguiente, publicar plan vN, canalización, control del enlace con demora y aviso «Plan vN aplicado» en la nave, con datos simulados en memoria (E14). Falta el backend de A (`groundTasks`, `publishGroundPlan`, WS `plan.*`) |
@@ -585,3 +585,22 @@ Rama `dev-B`, puesta al día con `testing` (880c416, incluye el PR nº 4). Plan:
 - **Defecto propio, hallado en el navegador:** al cablear `main.tsx` con un script de Python, `open("main.tsx", "w")` se evaluó antes que `open("main.tsx").read()` y **dejó el archivo vacío**. Las 201 pruebas, el lint, el typecheck y el build pasaron igual (un módulo vacío compila) y la página salió en blanco. Corrección: prueba de humo `main.test.tsx` (RED observado con el archivo vacío: `Unable to find role="tab" and name "Cabina"`) y `main.tsx` restaurado. Lección: toda edición de un archivo con un script debe leerlo primero y comprobar el resultado.
 - **Verificación:** lint, typecheck y build limpios; **202 pruebas web pasan** (34 archivos), cobertura 97,21 % de líneas. Revisado en el navegador: `/ground` → añadir plantilla → publicar v4 → la canalización llega a «Confirmado» en unos 7 s → «Ir a la nave» muestra «Plan v4 aplicado». Se añadió CSS mínimo para ver la etapa actual y el filtro elegido sin depender del color.
 - **Límites:** el estado vive en memoria (se pierde al recargar); el rol `ground` no tiene autenticación (supuesto del plan: selección de perfil local); solo se previó el caso de un plan en camino a la vez.
+
+## E15 · F14 Voz con Whisper: núcleo del backend (15 nov 2026)
+
+Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace falta permiso, ver pendientes).
+
+- **RED observado:** `No module named '...audio_store'` y `'...null_stt'` (los dos archivos de pruebas no podían importar lo que probaban).
+- **Qué se hizo** (módulo `assistant`):
+  - `domain/voz`: `Transcript`, `Utterance`, estados `RECEIVED`, `TRANSCRIBED`, `NO_TRANSCRIPT` y `CONFIRMED`, y los errores de dominio.
+  - Puertos `SpeechToText`, `AudioStore` y `UtteranceRepository`; adaptadores `NullSpeechToText`, `WhisperSpeechToText` (carga perezosa con candado, español, `vad_filter`, y un `initial_prompt` con «hipoxia», «ppCO₂» y «presión parcial»), `LocalAudioStore` e `InMemoryUtterances`. `build_speech_to_text` devuelve el nulo si `faster_whisper` no está instalado.
+  - `SubmitAudio.submit` (valida webm o wav y que no esté vacío, guarda el audio y devuelve el id sin transcribir), `transcribe` (nunca lanza por el modelo; deja el motivo) y `ConfirmUtterance.confirm` (usa el texto editado, no se confirma dos veces, vacío no pregunta).
+- **Reglas del plan probadas:** transcribir no pregunta ni publica nada; sin modelo, con fallo o sin habla la tripulación puede escribir y confirmar igual; solo se pregunta con lo confirmado.
+- **Verificación (Python 3.12):** ruff, formato, mypy estricto (142 archivos) e import-linter (4 cumplidos) limpios; **570 pruebas pasan**, 19 omitidas, cobertura 97,24 %. Se añadió en `pyproject.toml` un `ignore_missing_imports` para `faster_whisper` (mypy).
+- **No verificado:** el modelo real. Todas las pruebas usan un modelo de mentira; no sé cuánto tarda ni qué precisión tiene en esta máquina, ni con ruido de cabina o términos médicos.
+- **Pendiente, por orden:**
+  1. Instalar `faster-whisper` y descargar el modelo (permiso explícito del usuario) y medir con audios.
+  2. Ruta `POST /api/v1/voice/utterances` (`202`): requiere `python-multipart`, que A no tiene en sus dependencias.
+  3. La transcripción por WebSocket: el plan nombra `assistant.transcript`, pero **no hay un evento para ella** en el registro de A (la prueba de contratos fija 22). Hay que pedirlo a Dev A antes de añadirlo.
+  4. Interfaz de voz en la web (14.3) y pruebas con audios (14.4). No hay audios de ejemplo ni un sintetizador de voz aquí.
+  5. Política de retención del audio de la tripulación.

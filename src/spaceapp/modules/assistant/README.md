@@ -14,6 +14,15 @@ Responde preguntas de la tripulación **solo con pasajes recuperados** y los cit
 - `NullLlmGateway`: sin modelo; el caso de uso usa la plantilla. Es el que garantiza que todo funcione sin Ollama ni red.
 - `OllamaGateway`: Ollama local en streaming (NDJSON). El modelo se indica al crearlo; no hay uno elegido todavía.
 
+## Voz con confirmación (`application/voice.py`, F14)
+
+1. `SubmitAudio.submit` guarda el audio (solo `webm` o `wav`) y devuelve el `utterance_id` **sin transcribir** (la ruta responderá `202`). `transcribe` corre aparte.
+2. Lo transcrito queda como texto **editable**. **Nada se pregunta al asistente sin confirmar:** `ConfirmUtterance.confirm(id, texto)` pregunta con el texto que la tripulación dejó (editado o escrito) y no se puede confirmar dos veces.
+3. Sin modelo de voz, con un fallo o sin habla, la intervención queda `NO_TRANSCRIPT` con el motivo y la tripulación escribe la pregunta: el flujo es el mismo.
+4. Una emergencia no depende de la voz: este código no toca las alertas.
+
+Adaptadores de `SpeechToText`: `NullSpeechToText` (sin modelo) y `WhisperSpeechToText` (`faster-whisper` en CPU, `int8`, español, con un texto de contexto con términos médicos). Se cargan al primer uso; `build_speech_to_text` devuelve el nulo si la biblioteca no está instalada.
+
 ## Pruebas
 
 ```bash
@@ -22,7 +31,8 @@ Responde preguntas de la tripulación **solo con pasajes recuperados** y los cit
 
 ## Límites actuales
 
-- Solo texto. La voz (F14) y la confirmación de lo transcrito no están hechas.
+- La voz está hecha en el núcleo y probada con un Whisper de mentira. **Falta** la ruta `POST /api/v1/voice/utterances` (necesita `python-multipart`), la entrega de la transcripción por WebSocket (no existe un evento `assistant.transcript` en el contrato de Dev A) y probar el modelo real con audio.
+- El audio se guarda tal cual en una carpeta local y no se borra: falta una política de retención.
 - Conversaciones en memoria; falta el esquema `assistant` en PostgreSQL y su migración.
 - Faltan los resolvers GraphQL (`askAssistant`, `conversation`), que se registran en el esquema que compone Dev A.
 - La fuente de alertas activas es un puerto de solo lectura; hoy no hay adaptador real (`ActiveAlertsQuery` de Monitoreo).
