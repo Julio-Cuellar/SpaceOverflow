@@ -22,6 +22,9 @@ tools/docgen/out/
 data/knowledge/pdfs/
 data/knowledge/index/
 
+# Grabaciones de voz de pruebas: son de personas, no se versionan
+data/voice/
+
 # Editor y sistema
 .DS_Store
 .idea/
