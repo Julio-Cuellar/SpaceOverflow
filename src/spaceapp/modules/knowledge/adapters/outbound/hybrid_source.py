@@ -1,15 +1,15 @@
-"""Búsqueda híbrida: las palabras (BM25 + glosario) proponen y el significado (embeddings) ordena.
+"""Hybrid search: words (BM25 + glossary) propose and meaning (embeddings) orders.
 
-La búsqueda por palabras acierta con el pasaje en sus primeros 50 resultados casi siempre, pero lo
-deja en un puesto malo cuando la pregunta es una paráfrasis («energía diaria» frente a *energy
-requirements*). El modelo de embeddings sí entiende la paráfrasis, pero por sí solo responde también
-temas cercanos fuera de alcance (una medicina, un precio). Por eso reparten el trabajo: las palabras
-deciden si hay respuesta y qué pasajes son candidatos; el coseno los reordena, y los que casi
-empatan con el mejor conservan el orden de las palabras. Medido sobre los
-conjuntos de ajuste, reordenar así dio más aciertos en el top 3 que fusionar las dos listas con RRF.
+Word search almost always finds the passage in its first 50 results, but leaves it at a bad rank
+when the question is a paraphrase ('daily energy' versus *energy requirements*). The embeddings
+model does understand the paraphrase, but on its own it also answers nearby out-of-scope topics (a
+medicine, a price). So they split the work: words decide whether there is an answer and which
+passages are candidates; the cosine reorders them, and those that almost tie with the best keep
+the word order. Measured on the tuning sets, reordering this way gave more hits in the top 3 than
+fusing the two lists with RRF.
 
-Si el modelo no responde, o no hay vectores, se busca solo por palabras: sin Ollama el asistente
-sigue funcionando, con la recuperación de antes.
+If the model does not answer, or there are no vectors, it searches by words only: without Ollama
+the assistant keeps working, with the retrieval it had before.
 """
 
 from __future__ import annotations
@@ -22,11 +22,11 @@ from spaceapp.modules.knowledge.domain.model import Citation
 from spaceapp.modules.knowledge.ingest.vectors import VectorIndex
 from spaceapp.modules.knowledge.ports import Embedder, EmbeddingError, PassageSource
 
-# Por debajo de esta similitud coseno, un pasaje no cuenta como parecido a la pregunta.
+# Below this cosine similarity, a passage does not count as similar to the question.
 DEFAULT_MIN_SIMILARITY = 0.5
 DEPTH = 50
-# Dos pasajes a menos de esta distancia del mejor coseno son un empate: la diferencia es ruido del
-# modelo (en el ajuste, 0,02 subió el primer puesto de 38 % a 50 % sin bajar el top 3).
+# Two passages within this distance of the best cosine are a tie: the difference is model noise
+# (in tuning, 0.02 raised the first rank from 38% to 50% without lowering the top 3).
 NEAR_BEST = 0.02
 CACHE_SIZE = 256
 DEFAULT_VECTORS_NAME = "embeddings.json"
@@ -48,16 +48,16 @@ class HybridKnowledgeSource:
         self._min_similarity = min_similarity
         self._depth = depth
         row_of = {chunk_id: row for row, chunk_id in enumerate(vectors.ids)}
-        # Fila de vectores de cada fragmento citable; `None` si todavía no tiene vector.
+        # Vector row of each citable fragment; `None` if it has no vector yet.
         self._row_of_position = [row_of.get(chunk.id) for chunk in lexical.chunks]
         self._cache: OrderedDict[str, list[float]] = OrderedDict()
 
     def search(self, text: str, k: int) -> list[Citation]:
         positions, query = self._lexical.rank(text)
-        if not positions:  # las palabras no encuentran nada: el significado no decide solo
+        if not positions:  # words find nothing: meaning alone does not decide
             return []
         similarities = self._similarities(text)
-        if similarities is None:  # sin modelo: solo palabras
+        if similarities is None:  # no model: words only
             return [self._lexical.citation(p, query) for p in positions[:k]]
 
         ordered = self._reorder(positions[: self._depth], similarities)
@@ -68,7 +68,7 @@ class HybridKnowledgeSource:
     def _similarities(self, text: str) -> list[float] | None:
         try:
             return self._vectors.similarities(self._query_vector(text))
-        except (EmbeddingError, ValueError):  # modelo caído, o vectores de otro modelo
+        except (EmbeddingError, ValueError):  # model down, or vectors from another model
             return None
 
     def _query_vector(self, text: str) -> list[float]:
@@ -83,10 +83,10 @@ class HybridKnowledgeSource:
         return vector
 
     def _reorder(self, candidates: list[int], similarities: list[float]) -> list[int] | None:
-        """Primero los casi empatados con el mejor coseno (orden de las palabras); luego el resto.
+        """First those that almost tie with the best cosine (word order); then the rest.
 
-        `None` si ninguno se parece lo bastante. Un fragmento sin vector no se puede comparar: va
-        al final, en el orden de las palabras.
+        `None` if none is similar enough. A fragment without a vector cannot be compared: it goes
+        last, in word order.
         """
         row_of = self._row_of_position
         scored = [(similarities[row], p) for p in candidates if (row := row_of[p]) is not None]
@@ -112,11 +112,11 @@ def build_knowledge_source(
     vectors_path: Path | None = None,
     min_similarity: float = DEFAULT_MIN_SIMILARITY,
 ) -> PassageSource:
-    """Híbrida si hay vectores del mismo modelo; si no, solo por palabras."""
+    """Hybrid if there are vectors from the same model; otherwise, words only."""
     lexical = RagKnowledgeSource.from_index(index_path, glossary_path)
     try:
         vectors = VectorIndex.load(vectors_path or index_path.with_name(DEFAULT_VECTORS_NAME))
-    except ValueError:  # archivos a medias: se busca por palabras en vez de fallar
+    except ValueError:  # half-written files: search by words instead of failing
         return lexical
     if vectors is None or vectors.model != embedder.model:
         return lexical

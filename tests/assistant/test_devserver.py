@@ -1,4 +1,4 @@
-"""Servidor de desarrollo del asistente: solo para probar n8n y Ollama sin el main.py de Dev A."""
+"""Development server of the assistant: only to test n8n and Ollama without Dev A's main.py."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowled
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
 DEMO_CATALOG = Path(__file__).resolve().parents[2] / "data" / "knowledge" / "demo_catalog.json"
-HEADACHE = "¿Por qué me duele la cabeza?"
+HEADACHE = "Why do I have a headache?"
 
 
 def client(**agent_options: object) -> TestClient:
@@ -44,11 +44,15 @@ def test_a_question_goes_through_the_state_machine_and_is_answered_with_citation
 
 
 def test_a_question_without_a_source_closes_as_no_info() -> None:
-    body = client(text="Es París.").post("/dev/ask", json={"text": "¿Capital de Francia?"}).json()
+    body = (
+        client(text="It is Paris.")
+        .post("/dev/ask", json={"text": "What is the capital of France?"})
+        .json()
+    )
 
     assert body["state"] == "NO_INFO"
     assert body["citations"] == []
-    assert "París" not in body["text"]
+    assert "Paris" not in body["text"]
 
 
 def test_a_failing_orchestrator_closes_as_a_template_answer() -> None:
@@ -64,7 +68,7 @@ def test_an_empty_question_is_rejected() -> None:
 
 def test_the_agent_tools_are_mounted_and_refuse_a_turn_that_is_not_open() -> None:
     response = client().post(
-        f"/api/v1/assistant/tools/{uuid.uuid4()}/search_passages", json={"query": "cabeza"}
+        f"/api/v1/assistant/tools/{uuid.uuid4()}/search_passages", json={"query": "headache"}
     )
 
     assert response.status_code == 404
@@ -76,7 +80,7 @@ class FakeVoice:
     def transcribe(self, audio: bytes, content_type: str) -> object:
         from spaceapp.modules.assistant.domain.voice import Transcript
 
-        # El catálogo de demostración está en español: la pregunta debe coincidir con él.
+        # The demo catalog is in English: the question must match it.
         return Transcript(HEADACHE, 0.9, "en")
 
 
@@ -126,3 +130,33 @@ def test_without_a_speech_service_the_server_still_works_and_voice_says_to_type(
 
     state = web.get(f"/api/v1/voice/utterances/{uploaded.json()['utterance_id']}").json()
     assert state["status"] == "NO_TRANSCRIPT"
+
+
+class FakeSpeaker:
+    available = True
+
+    def speak(self, text: str) -> bytes | None:
+        return b"RIFFfake-wav"
+
+
+def test_the_server_reads_an_answer_aloud_when_a_voice_service_is_connected(tmp_path: Path) -> None:
+    app = build_app(
+        passages=KnowledgeQuery(DemoKnowledgeSource.from_file(DEMO_CATALOG)),
+        orchestrator=None,
+        speaker=FakeSpeaker(),  # type: ignore[arg-type]
+        audio_dir=tmp_path,
+    )
+
+    response = TestClient(app).post("/api/v1/voice/speak", json={"text": "The limit is 3 mmHg."})
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "audio/wav"
+
+
+def test_without_a_voice_service_reading_aloud_is_503_and_the_rest_still_works(
+    tmp_path: Path,
+) -> None:
+    web = voice_client(tmp_path)
+
+    assert web.post("/api/v1/voice/speak", json={"text": "hello"}).status_code == 503
+    assert web.get("/health").json() == {"status": "ok"}

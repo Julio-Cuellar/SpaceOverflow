@@ -1,4 +1,4 @@
-"""Suscripción de Conocimiento al bus: cada `monitoring.alert_raised` genera una recomendación."""
+"""Knowledge's bus subscription: each `monitoring.alert_raised` generates a recommendation."""
 
 from __future__ import annotations
 

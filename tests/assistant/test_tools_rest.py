@@ -1,4 +1,4 @@
-"""Herramientas del agente de n8n: búsqueda de pasajes y alertas activas, solo lectura."""
+"""Tools of the n8n agent: passage search and active alerts, read-only."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def search(client: TestClient, turn: uuid.UUID | str, body: dict) -> object:  # 
 def test_the_search_returns_the_passages_with_their_source(rig) -> None:  # type: ignore[no-untyped-def]
     client, _, turn = rig
 
-    response = search(client, turn, {"query": "dolor de cabeza"})
+    response = search(client, turn, {"query": "headache"})
 
     assert response.status_code == 200  # type: ignore[attr-defined]
     [first, *_] = response.json()["passages"]  # type: ignore[attr-defined]
@@ -57,7 +57,7 @@ def test_the_search_returns_the_passages_with_their_source(rig) -> None:  # type
 def test_what_the_agent_sees_is_recorded_for_the_citations(rig) -> None:  # type: ignore[no-untyped-def]
     client, log, turn = rig
 
-    response = search(client, turn, {"query": "dolor de cabeza"})
+    response = search(client, turn, {"query": "headache"})
 
     ids = [p["passage_id"] for p in response.json()["passages"]]  # type: ignore[attr-defined]
     assert ids == [passage_id(c) for c in log.retrieved(turn)]
@@ -72,14 +72,14 @@ def test_a_question_without_a_passage_says_so_and_records_nothing(rig) -> None: 
     assert response.status_code == 200  # type: ignore[attr-defined]
     body = response.json()  # type: ignore[attr-defined]
     assert body["passages"] == []
-    assert "No hay pasajes" in body["message"]
+    assert "There are no passages" in body["message"]
     assert log.retrieved(turn) == []
 
 
 def test_the_number_of_passages_is_capped(rig) -> None:  # type: ignore[no-untyped-def]
     client, _, turn = rig
 
-    response = search(client, turn, {"query": "presión CO₂ cabeza", "k": 50})
+    response = search(client, turn, {"query": "pressure CO₂ headache", "k": 50})
 
     assert response.status_code == 422  # type: ignore[attr-defined]
 
@@ -95,7 +95,7 @@ def test_a_turn_that_is_not_open_gets_nothing(rig) -> None:  # type: ignore[no-u
     client, log, turn = rig
     log.close(turn)
 
-    response = search(client, turn, {"query": "dolor de cabeza"})
+    response = search(client, turn, {"query": "headache"})
 
     assert response.status_code == 404  # type: ignore[attr-defined]
 
@@ -103,7 +103,7 @@ def test_a_turn_that_is_not_open_gets_nothing(rig) -> None:  # type: ignore[no-u
 def test_an_unknown_turn_gets_nothing(rig) -> None:  # type: ignore[no-untyped-def]
     client, _, _ = rig
 
-    assert search(client, uuid.uuid4(), {"query": "dolor de cabeza"}).status_code == 404  # type: ignore[attr-defined]
+    assert search(client, uuid.uuid4(), {"query": "headache"}).status_code == 404  # type: ignore[attr-defined]
 
 
 def test_a_turn_id_that_is_not_a_uuid_is_rejected(rig) -> None:  # type: ignore[no-untyped-def]

@@ -70,6 +70,6 @@ describe('microphone', () => {
   it('rejects when there is no microphone support at all', async () => {
     vi.stubGlobal('navigator', {})
 
-    await expect(startMicrophoneRecording()).rejects.toThrow(/micrófono/)
+    await expect(startMicrophoneRecording()).rejects.toThrow(/microphone/)
   })
 })

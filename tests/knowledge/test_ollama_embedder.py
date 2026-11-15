@@ -21,7 +21,7 @@ class FakeResponse(io.BytesIO):
 
 
 def opener(sent: list[dict[str, Any]], reply: Any = None, fail: Exception | None = None) -> Any:
-    """Simula `urlopen`: guarda lo que se envía y devuelve un vector por texto (o `reply`)."""
+    """Simulates `urlopen`: records what is sent and returns one vector per text (or `reply`)."""
 
     def open_url(request: urllib.request.Request, timeout: float | None = None) -> FakeResponse:
         body = json.loads(request.data)  # type: ignore[arg-type]
@@ -101,7 +101,7 @@ def test_a_network_failure_is_reported_as_an_embedding_error(failure: Exception)
     "reply",
     [
         {"error": 'model "bge-m3" not found'},
-        {"embeddings": [[1.0]]},  # un vector para dos textos
+        {"embeddings": [[1.0]]},  # one vector for two texts
         {"embeddings": "no es una lista"},
         ["tampoco es un objeto"],
     ],

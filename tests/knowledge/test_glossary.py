@@ -50,7 +50,7 @@ def test_the_glossary_expansion_is_normalized_the_same_way() -> None:
 
 
 def test_every_spanish_key_is_written_already_normalized() -> None:
-    # Sin acentos y en minúsculas: si no, la frase nunca coincide con la pregunta normalizada.
+    # Without accents and in lowercase: otherwise the phrase never matches the normalized question.
     entries = json.loads(GLOSSARY_FILE.read_text(encoding="utf-8"))["entries"]
 
     not_normalized = [
@@ -89,7 +89,7 @@ def test_the_glossary_covers_the_main_topics_of_the_standard(question: str, expe
 
 @pytest.mark.skipif(not REAL_INDEX.exists(), reason="sin índice real: los PDFs no se versionan")
 def test_every_english_term_of_the_glossary_exists_in_the_real_index() -> None:
-    # Una traducción a una palabra que ningún documento tiene no sirve para encontrar nada.
+    # A translation to a word that no document has is no use to find anything.
     vocabulary: set[str] = set()
     for chunk in JsonlChunkStore(REAL_INDEX).all():
         vocabulary |= terms(chunk.content, 1)

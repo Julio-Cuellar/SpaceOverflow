@@ -4,7 +4,7 @@ import { askBackend } from './askBackend'
 const body = {
   state: 'ANSWERED',
   outcome: 'ANSWERED',
-  text: 'El límite es 3 mmHg.',
+  text: 'The limit is 3 mmHg.',
   composed_by: 'n8n',
   degraded: false,
   citations: [
@@ -35,7 +35,7 @@ describe('askBackend', () => {
       }),
     )
     expect(answer.outcome).toBe('ANSWERED')
-    expect(answer.text).toBe('El límite es 3 mmHg.')
+    expect(answer.text).toBe('The limit is 3 mmHg.')
     expect(answer.citations).toEqual([
       {
         documentCode: 'OCHMO-TB-004 CO₂',
@@ -49,7 +49,7 @@ describe('askBackend', () => {
   it('keeps the no-information outcome the backend decided', async () => {
     const fetchImpl = respond({ ...body, outcome: 'NO_INFO', text: "I don't have that information.", citations: [] })
 
-    const answer = await askBackend('/dev/ask', fetchImpl)('¿Capital de Francia?')
+    const answer = await askBackend('/dev/ask', fetchImpl)('What is the capital of France?')
 
     expect(answer.outcome).toBe('NO_INFO')
     expect(answer.citations).toEqual([])
@@ -57,15 +57,15 @@ describe('askBackend', () => {
 
   it('fails instead of inventing an answer when the backend does not respond well', async () => {
     const failing = respond({ detail: 'boom' }, { status: 500 })
-    await expect(askBackend('/dev/ask', failing)('pregunta')).rejects.toThrow()
+    await expect(askBackend('/dev/ask', failing)('question')).rejects.toThrow()
 
     const unreachable = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
-    await expect(askBackend('/dev/ask', unreachable)('pregunta')).rejects.toThrow()
+    await expect(askBackend('/dev/ask', unreachable)('question')).rejects.toThrow()
   })
 
   it('rejects an evidence state the interface does not know', async () => {
     const odd = respond({ ...body, citations: [{ ...body.citations[0], evidence_state: 'INVENTADO' }] })
 
-    await expect(askBackend('/dev/ask', odd)('pregunta')).rejects.toThrow()
+    await expect(askBackend('/dev/ask', odd)('question')).rejects.toThrow()
   })
 })

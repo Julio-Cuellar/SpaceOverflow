@@ -1,5 +1,5 @@
 {
-  "_nota": "Glosario español-inglés para buscar en documentos de NASA, que están en inglés, con preguntas en español. Son traducciones de términos, no afirmaciones médicas. Solución provisoria hasta decidir un modelo de embeddings multilingüe. Pendiente de revisión del equipo. 15 nov 2026: se añadieron entradas por temas de la norma (nutrición, actividad extravehicular, atmósfera, acústica, iluminación, radiación, medicina); están marcadas para revisión en la bitácora, E22.",
+  "_nota": "Spanish-English glossary to search NASA documents, which are in English, with Spanish questions. These are term translations, not medical claims. Provisional solution until a multilingual embeddings model is decided. Pending team review. 15 Nov 2026: entries by topic of the standard were added (nutrition, extravehicular activity, atmosphere, acoustics, lighting, radiation, medicine); they are marked for review in the logbook, E22.",
   "entries": [
     { "es": ["dioxido de carbono", "co2", "ppco2"], "en": ["carbon dioxide", "co2", "ppco2"] },
     { "es": ["limite", "limites", "maximo"], "en": ["limit", "maximum"] },

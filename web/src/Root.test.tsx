@@ -79,8 +79,8 @@ describe('Root with the real assistant', () => {
     render(<Root initialPath="/" askAssistant={askAssistant} />)
     await userEvent.click(screen.getByRole('tab', { name: 'Asistente' }))
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), 'pregunta')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'question')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
     expect(await screen.findByText('Sin datos.')).toBeInTheDocument()
   })

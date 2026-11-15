@@ -1,6 +1,6 @@
 import type { Recording } from './VoiceInput'
 
-/** El navegador solo da el micrófono en `localhost` o con HTTPS (plan, F14: documentarlo en el README). */
+/** The browser only gives the microphone on `localhost` or over HTTPS (plan, F14: document it in the README). */
 export function microphoneAvailable(): boolean {
   return (
     typeof navigator !== 'undefined' &&
@@ -9,10 +9,10 @@ export function microphoneAvailable(): boolean {
   )
 }
 
-/** Empieza a grabar con `MediaRecorder`. Rechaza si no hay micrófono o la tripulación niega el permiso. */
+/** Starts recording with `MediaRecorder`. Rejects if there is no microphone or the crew denies permission. */
 export async function startMicrophoneRecording(): Promise<Recording> {
   if (!microphoneAvailable()) {
-    throw new Error('Este navegador no ofrece micrófono (hace falta localhost o HTTPS).')
+    throw new Error('This browser offers no microphone (it needs localhost or HTTPS).')
   }
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
   const recorder = new MediaRecorder(stream)
@@ -24,7 +24,7 @@ export async function startMicrophoneRecording(): Promise<Recording> {
     stop: () =>
       new Promise<Blob>((resolve) => {
         recorder.onstop = () => {
-          // Suelta el micrófono: el indicador del navegador debe apagarse al soltar el botón.
+          // Release the microphone: the browser indicator must turn off when the button is released.
           stream.getTracks().forEach((track) => track.stop())
           resolve(new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }))
         }

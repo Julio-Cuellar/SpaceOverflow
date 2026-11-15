@@ -1,4 +1,4 @@
-"""Rutas REST de la voz: audio crudo dentro, texto editable fuera, y nada se pregunta sin confirmar."""
+"""Voice REST routes: raw audio in, editable text out, and nothing is asked without confirming."""
 
 from __future__ import annotations
 
@@ -39,6 +39,8 @@ class FakeStt:
     def transcribe(self, audio: bytes, content_type: str) -> Transcript | None:
         if self._fail:
             raise RuntimeError("model down")
+        if not self._text:
+            return None
         return Transcript(text=self._text, confidence=0.8, language="en")
 
 
@@ -93,7 +95,7 @@ def test_uploading_audio_answers_202_and_the_transcript_waits_for_confirmation(
     assert state["status"] == "TRANSCRIBED"
     assert state["text"] == "why do I have a headache"
     assert state["confidence"] == 0.8
-    assert rig.conversations.messages(uuid.UUID(CONVERSATION)) == []  # nada se preguntó aún
+    assert rig.conversations.messages(uuid.UUID(CONVERSATION)) == []  # nothing was asked yet
 
 
 def test_without_a_speech_model_the_state_says_to_type_the_question(tmp_path: Path) -> None:
@@ -102,7 +104,19 @@ def test_without_a_speech_model_the_state_says_to_type_the_question(tmp_path: Pa
     state = rig.client.get(f"{URL}/{rig.upload()}").json()
 
     assert state["status"] == "NO_TRANSCRIPT"
-    assert "escribe" in state["reason"]
+    assert "type your question" in state["reason"]
+
+
+def test_the_state_tells_apart_no_speech_a_failed_service_and_no_model(tmp_path: Path) -> None:
+    def code(stt: object) -> object:
+        rig = Rig(tmp_path, stt)
+        return rig.client.get(f"{URL}/{rig.upload()}").json()["reason_code"]
+
+    assert code(FakeStt(text="")) == "NO_SPEECH"
+    assert code(FakeStt(fail=True)) == "FAILED"
+    assert code(NullSpeechToText()) == "NO_MODEL"
+    rig = Rig(tmp_path, FakeStt())
+    assert rig.client.get(f"{URL}/{rig.upload()}").json()["reason_code"] is None
 
 
 def test_a_failing_model_also_leaves_the_text_box_open(tmp_path: Path) -> None:
@@ -156,7 +170,7 @@ def test_confirming_the_edited_text_asks_the_assistant_and_returns_the_answer(
     utterance_id = rig.upload()
 
     response = rig.client.post(
-        f"{URL}/{utterance_id}/confirm", json={"text": "¿Por qué me duele la cabeza?"}
+        f"{URL}/{utterance_id}/confirm", json={"text": "Why do I have a headache?"}
     )
 
     body = response.json()

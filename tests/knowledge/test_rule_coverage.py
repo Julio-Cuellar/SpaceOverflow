@@ -1,7 +1,7 @@
-"""Cruza el catálogo de reglas de Monitoreo (dev A) con el de Conocimiento.
+"""Cross-checks Monitoring's rule catalog (dev A) with Knowledge's.
 
-Una alerta de una regla que Conocimiento no conoce se queda sin recomendación, y el evento
-termina en el outbox como fallido. Estas pruebas lo detectan al cambiar cualquiera de los dos.
+An alert of a rule that Knowledge does not know is left without a recommendation, and the event
+ends in the outbox as failed. These tests detect it when either of the two changes.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ MONITORING_RULES = json.loads(
 )["rules"]
 BY_KEY: dict[str, dict[str, Any]] = {rule["key"]: rule for rule in MONITORING_RULES}
 
-# De menos a más respaldo. Una recomendación nunca puede decir más que la regla que la originó.
+# From less to more backing. A recommendation can never say more than the rule that originated it.
 STRENGTH = {"DEMO": 0, "NO_VERIFICADO": 1, "TB": 2, "VERIFICADO": 3}
 REQUIREMENT = re.compile(r"^(V[12] \d{4})\b")
 
@@ -65,7 +65,7 @@ def test_a_requirement_named_by_monitoring_is_the_one_cited(
 ) -> None:
     match = REQUIREMENT.match(BY_KEY[rule_key]["source_requirement"])
     if match is None:
-        pytest.skip("la regla no cita un número de requisito")
+        pytest.skip("the rule cites no requirement number")
 
     cited = {c.requirement_ref for c in demo_source.guidance_for(rule_key).citations}
 
@@ -77,7 +77,7 @@ def test_every_recommendation_of_a_rule_with_demo_evidence_is_not_presented_as_v
     demo_source: DemoKnowledgeSource, rule_key: str
 ) -> None:
     if BY_KEY[rule_key]["evidence_state"] != "DEMO":
-        pytest.skip("la regla tiene respaldo")
+        pytest.skip("the rule has backing")
 
     states = {c.evidence_state.value for c in demo_source.guidance_for(rule_key).citations}
 

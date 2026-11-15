@@ -1,4 +1,4 @@
-"""Guarda el audio de la tripulación en una carpeta local. Nada sale de la nave."""
+"""Stores the crew's audio in a local folder. Nothing leaves the ship."""
 
 from __future__ import annotations
 

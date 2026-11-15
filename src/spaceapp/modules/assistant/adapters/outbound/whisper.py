@@ -1,7 +1,7 @@
-"""Whisper local con `faster-whisper`: voz a texto sin internet ni GPU (plan, F14.1).
+"""Local Whisper with `faster-whisper`: speech to text without internet or GPU (plan, F14.1).
 
-La biblioteca y el modelo se cargan al primer uso, no al arrancar: sin ellos el sistema sigue
-funcionando con el adaptador nulo y la entrada por texto.
+The library and the model are loaded on first use, not at startup: without them the system keeps
+working with the null adapter and text input.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from spaceapp.modules.assistant.adapters.outbound.null_stt import NullSpeechToTe
 from spaceapp.modules.assistant.domain.voice import Transcript
 from spaceapp.modules.assistant.ports import SpeechToText
 
-# Whisper acierta más con términos poco comunes si se le da un texto de contexto con ellos.
+# Whisper does better with uncommon terms if it is given a context text containing them.
 MEDICAL_TERMS_PROMPT = (
     "A crew member's question about their health and the cabin atmosphere: hypoxia, ppCO2, "
     "partial pressure of oxygen, carbon dioxide, cabin pressure, alert."
@@ -65,7 +65,7 @@ def _import_whisper_model() -> Any:
 def build_speech_to_text(
     model_size: str, importer: Callable[[], Any] = _import_whisper_model
 ) -> SpeechToText:
-    """Whisper si la biblioteca está instalada; si no, el adaptador nulo (se escribe a mano)."""
+    """Whisper if the library is installed; otherwise, the null adapter (the question is typed)."""
     try:
         model_class = importer()
     except ImportError:

@@ -11,13 +11,13 @@ PASSAGE = CitationDTO(
     document_code="OCHMO-TB-004 CO₂",
     requirement_ref=None,
     page=None,
-    excerpt="Dolor de cabeza entre 2.8 y 4.5 mmHg de ppCO₂.",
+    excerpt="Headache between 2.8 and 4.5 mmHg of ppCO₂.",
     evidence_state="TB",
 )
 
 
 def fake_opener(lines: Sequence[dict[str, object]], sent: list[dict[str, object]]):  # type: ignore[no-untyped-def]
-    """Imita urlopen: guarda el cuerpo enviado y devuelve las líneas NDJSON de respuesta."""
+    """Imitates urlopen: records the body sent and returns the NDJSON response lines."""
 
     def opener(request):  # type: ignore[no-untyped-def]
         sent.append(json.loads(request.data.decode("utf-8")))
@@ -41,7 +41,7 @@ def test_yields_the_response_tokens_of_the_ndjson_stream() -> None:
         ),
     )
 
-    tokens = list(gateway.stream("¿Qué pasa?", [PASSAGE], []))
+    tokens = list(gateway.stream("What happens?", [PASSAGE], []))
 
     assert tokens == ["Hola", " mundo"]
     assert sent[0]["model"] == "modelo-pequeno"
@@ -52,10 +52,10 @@ def test_the_prompt_contains_only_the_retrieved_passages_and_the_no_information_
     sent: list[dict[str, object]] = []
     gateway = OllamaGateway(model="m", opener=fake_opener([{"response": "", "done": True}], sent))
 
-    list(gateway.stream("¿Qué pasa?", [PASSAGE], ["CO₂ alto (Alerta)"]))
+    list(gateway.stream("What happens?", [PASSAGE], ["CO₂ alto (Alerta)"]))
 
     prompt = str(sent[0]["prompt"])
-    assert "Dolor de cabeza entre 2.8 y 4.5 mmHg de ppCO₂." in prompt
+    assert "Headache between 2.8 and 4.5 mmHg of ppCO₂." in prompt
     assert "I don't have that information in the loaded sources" in prompt
     assert "CO₂ alto (Alerta)" in prompt
 
@@ -64,7 +64,7 @@ def test_the_prompt_demands_english_even_when_the_question_is_in_spanish() -> No
     sent: list[dict[str, object]] = []
     gateway = OllamaGateway(model="m", opener=fake_opener([{"response": "", "done": True}], sent))
 
-    list(gateway.stream("¿Por qué me duele la cabeza?", [PASSAGE], []))
+    list(gateway.stream("Why do I have a headache?", [PASSAGE], []))
 
     prompt = str(sent[0]["prompt"])
     instructions = prompt.split("Question:")[0]

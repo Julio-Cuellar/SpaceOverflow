@@ -1,8 +1,8 @@
-"""Lo que el agente recuperó en cada turno. De aquí salen las citas, no del modelo.
+"""What the agent retrieved in each turn. The citations come from here, not from the model.
 
-Un turno se abre al empezar la consulta y se cierra al terminar o al agotarse el tiempo. Solo un
-turno abierto acepta llamadas de las herramientas, así que el identificador del turno hace de
-credencial de un solo uso y un resultado tardío no llega a ninguna respuesta.
+A turn opens when the query starts and closes when it ends or the time runs out. Only an open turn
+accepts calls from the tools, so the turn identifier works as a single-use credential and a late
+result does not reach any answer.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from spaceapp.platform.vocab import Citation
 
 
 class TurnClosedError(LookupError):
-    """El turno no está abierto: no existe, ya terminó o se cortó por tiempo."""
+    """The turn is not open: it does not exist, already ended or was cut by timeout."""
 
 
 def passage_id(citation: Citation) -> str:
@@ -38,7 +38,7 @@ class RetrievalLog:
             return turn_id in self._turns
 
     def record(self, turn_id: UUID, passages: Sequence[Citation]) -> list[str]:
-        """Anota lo recuperado y devuelve los ids que verá el agente."""
+        """Records what was retrieved and returns the ids the agent will see."""
         with self._lock:
             seen = self._turns.get(turn_id)
             if seen is None:

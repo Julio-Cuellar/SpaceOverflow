@@ -10,16 +10,16 @@ describe('AssistantPanel', () => {
   it('offers example questions the crew can tap instead of typing', async () => {
     render(<AssistantPanel answerFor={answerFor} mode="local" />)
 
-    await userEvent.click(screen.getByRole('button', { name: '¿Por qué me duele la cabeza?' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Why do I have a headache?' }))
 
-    expect(screen.getByText(/Dolor de cabeza entre 2.8 y 4.5 mmHg/i)).toBeInTheDocument()
+    expect(screen.getByText(/Headache between 2.8 and 4.5 mmHg/i)).toBeInTheDocument()
   })
 
   it('links each citation to its passage, with its evidence state next to it', async () => {
     render(<AssistantPanel answerFor={answerFor} mode="local" />)
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'Why do I have a headache?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
     const link = screen.getByRole('link', { name: /OCHMO-TB-004 CO₂/ })
     expect(link.getAttribute('href')).toMatch(/^#pasaje\//)
@@ -29,42 +29,99 @@ describe('AssistantPanel', () => {
   it('says it has no information for a question without a passage', async () => {
     render(<AssistantPanel answerFor={answerFor} mode="local" />)
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Cómo cambio el filtro de la esclusa?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'How do I change the airlock filter?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
     expect(screen.getByText("I don't have that information in the loaded sources.")).toBeInTheDocument()
   })
 
   it('shows whether the answers come from the local or the cloud adapter', () => {
     const { rerender } = render(<AssistantPanel answerFor={answerFor} mode="local" />)
-    expect(screen.getByText('Modo local')).toBeInTheDocument()
+    expect(screen.getByText('Mode local')).toBeInTheDocument()
 
-    rerender(<AssistantPanel answerFor={answerFor} mode="nube" />)
-    expect(screen.getByText('Modo nube')).toBeInTheDocument()
+    rerender(<AssistantPanel answerFor={answerFor} mode="cloud" />)
+    expect(screen.getByText('Mode cloud')).toBeInTheDocument()
   })
 
   it('does not allow sending an empty question, and clears the input after sending', async () => {
     render(<AssistantPanel answerFor={answerFor} mode="local" />)
-    const send = screen.getByRole('button', { name: 'Preguntar' })
+    const send = screen.getByRole('button', { name: 'Ask' })
     expect(send).toBeDisabled()
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
+    await userEvent.type(screen.getByLabelText('Question'), 'Why do I have a headache?')
     expect(send).toBeEnabled()
     await userEvent.click(send)
 
-    expect(screen.getByLabelText('Pregunta')).toHaveValue('')
+    expect(screen.getByLabelText('Question')).toHaveValue('')
+  })
+
+  describe('reading answers aloud', () => {
+    const answerWith = (text: string): AssistantAnswer => ({ outcome: 'ANSWERED', text, citations: [] })
+
+    it('offers no listen button when there is no voice service', async () => {
+      render(<AssistantPanel answerFor={answerFor} mode="local" />)
+      await userEvent.click(screen.getByRole('button', { name: 'Why do I have a headache?' }))
+
+      expect(screen.queryByRole('button', { name: /Listen/ })).not.toBeInTheDocument()
+      expect(screen.queryByLabelText('Read answers aloud')).not.toBeInTheDocument()
+    })
+
+    it('reads an answer when the crew presses listen on it', async () => {
+      const speak = vi.fn().mockResolvedValue(undefined)
+      render(<AssistantPanel answerFor={() => answerWith('The limit is 3 mmHg.')} mode="local" speak={speak} />)
+      await userEvent.type(screen.getByLabelText('Question'), 'limit')
+      await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Listen to the answer' }))
+
+      expect(speak).toHaveBeenCalledWith('The limit is 3 mmHg.')
+    })
+
+    it('does not read anything on its own while the option is off', async () => {
+      const speak = vi.fn().mockResolvedValue(undefined)
+      render(<AssistantPanel answerFor={() => answerWith('Answer.')} mode="local" speak={speak} />)
+
+      await userEvent.type(screen.getByLabelText('Question'), 'question')
+      await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+      await screen.findByText('Answer.')
+
+      expect(speak).not.toHaveBeenCalled()
+    })
+
+    it('reads each new answer by itself once the crew turns the option on', async () => {
+      const speak = vi.fn().mockResolvedValue(undefined)
+      render(<AssistantPanel answerFor={() => answerWith('Answer.')} mode="local" speak={speak} />)
+      await userEvent.click(screen.getByLabelText('Read answers aloud'))
+
+      await userEvent.type(screen.getByLabelText('Question'), 'question')
+      await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+
+      await vi.waitFor(() => expect(speak).toHaveBeenCalledWith('Answer.'))
+    })
+
+    it('says the voice failed and keeps the answer on screen', async () => {
+      const speak = vi.fn().mockRejectedValue(new Error('503'))
+      render(<AssistantPanel answerFor={() => answerWith('Answer.')} mode="local" speak={speak} />)
+      await userEvent.type(screen.getByLabelText('Question'), 'question')
+      await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Listen to the answer' }))
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Could not read it aloud')
+      expect(screen.getByText('Answer.')).toBeVisible()
+    })
   })
 
   describe('voice input', () => {
     const AUDIO = new Blob(['audio'])
     const voice = () => ({
       startRecording: vi.fn(async () => ({ stop: async () => AUDIO })),
-      transcribe: vi.fn(async () => ({ text: '¿Por qué me duele la cabeza?' })),
+      transcribe: vi.fn(async () => ({ text: 'Why do I have a headache?' })),
     })
 
     async function speak() {
       const user = userEvent.setup()
-      const button = screen.getByRole('button', { name: 'Mantener para hablar' })
+      const button = screen.getByRole('button', { name: 'Hold to talk' })
       await user.pointer([{ keys: '[MouseLeft>]', target: button }])
       await user.pointer([{ keys: '[/MouseLeft]', target: button }])
       return user
@@ -73,8 +130,8 @@ describe('AssistantPanel', () => {
     it('offers no voice button when no voice is connected: the text form always works', () => {
       render(<AssistantPanel answerFor={answerFor} mode="local" />)
 
-      expect(screen.queryByRole('button', { name: 'Mantener para hablar' })).not.toBeInTheDocument()
-      expect(screen.getByLabelText('Pregunta')).toBeVisible()
+      expect(screen.queryByRole('button', { name: 'Hold to talk' })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Question')).toBeVisible()
     })
 
     it('does not ask anything until the crew confirms the transcript', async () => {
@@ -82,19 +139,19 @@ describe('AssistantPanel', () => {
 
       await speak()
 
-      expect(await screen.findByLabelText('Transcripción (puedes corregirla)')).toBeVisible()
-      expect(within(screen.getByRole('list', { name: 'Conversación' })).queryAllByRole('listitem')).toHaveLength(0)
+      expect(await screen.findByLabelText('Transcript (you can correct it)')).toBeVisible()
+      expect(within(screen.getByRole('list', { name: 'Conversation' })).queryAllByRole('listitem')).toHaveLength(0)
     })
 
     it('asks the assistant with the confirmed text and shows the answer with its sources', async () => {
       render(<AssistantPanel answerFor={answerFor} mode="local" voice={voice()} />)
 
       const user = await speak()
-      await user.click(await screen.findByRole('button', { name: 'Confirmar y preguntar' }))
+      await user.click(await screen.findByRole('button', { name: 'Confirm and ask' }))
 
-      const conversation = within(screen.getByRole('list', { name: 'Conversación' }))
-      expect(conversation.getByText('¿Por qué me duele la cabeza?', { exact: false })).toBeVisible()
-      expect(screen.getByText(/Dolor de cabeza entre 2.8 y 4.5 mmHg/i)).toBeInTheDocument()
+      const conversation = within(screen.getByRole('list', { name: 'Conversation' }))
+      expect(conversation.getByText('Why do I have a headache?', { exact: false })).toBeVisible()
+      expect(screen.getByText(/Headache between 2.8 and 4.5 mmHg/i)).toBeInTheDocument()
     })
   })
 })
@@ -105,12 +162,12 @@ describe('AssistantPanel with a slow answer', () => {
     const slow = () => new Promise<AssistantAnswer>((r) => (resolve = r))
     render(<AssistantPanel answerFor={slow} mode="local" />)
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'Why do I have a headache?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
-    expect(screen.getByRole('status')).toHaveTextContent('Consultando')
-    expect(screen.getByText('Tú:', { exact: false })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Preguntar' })).toBeDisabled()
+    expect(screen.getByRole('status')).toHaveTextContent('Consulting')
+    expect(screen.getByText('You:', { exact: false })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ask' })).toBeDisabled()
 
     await act(async () => resolve({ outcome: 'ANSWERED', text: 'Respuesta lista.', citations: [] }))
 
@@ -119,13 +176,13 @@ describe('AssistantPanel with a slow answer', () => {
   })
 
   it('tells the crew the consultation failed instead of showing an invented answer', async () => {
-    const failing = () => Promise.reject(new Error('backend caído'))
+    const failing = () => Promise.reject(new Error('backend down'))
     render(<AssistantPanel answerFor={failing} mode="local" />)
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Cuánto dura el mareo espacial?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'How long does space motion sickness last?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo consultar el asistente')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not consult the assistant')
     expect(screen.queryByText(/I don't have that information/)).not.toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
@@ -143,8 +200,8 @@ describe('AssistantPanel with several citations from one document', () => {
     const answer = { outcome: 'ANSWERED' as const, text: 'Respuesta.', citations: [citation, citation, citation] }
     render(<AssistantPanel answerFor={() => Promise.resolve(answer)} mode="local" />)
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), 'pregunta')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'question')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
     expect(await screen.findAllByRole('link', { name: /NASA-STD-3001/ })).toHaveLength(3)
     expect(consoleError).not.toHaveBeenCalled()

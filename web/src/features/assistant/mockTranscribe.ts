@@ -1,10 +1,10 @@
 /**
- * Transcripción simulada para la demo sin backend: no se usa ningún modelo de voz. Se retira cuando la
- * interfaz envíe el audio a `POST /api/v1/voice/utterances` y reciba la transcripción real.
+ * Simulated transcript for the demo without a backend: no voice model is used. It is removed when the
+ * interface sends the audio to `POST /api/v1/voice/utterances` and receives the real transcript.
  */
 export const SIMULATED_TRANSCRIPT_NOTICE =
-  'Transcripción simulada: aún no hay un modelo de voz conectado. Corrígela o escribe tu pregunta.'
+  'Simulated transcript: no voice model is connected yet. Correct it or type your question.'
 
 export async function mockTranscribe(): Promise<{ text: string }> {
-  return { text: '¿Por qué me duele la cabeza?' }
+  return { text: 'Why do I have a headache?' }
 }

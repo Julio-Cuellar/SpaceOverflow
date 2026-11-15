@@ -1,40 +1,40 @@
-# n8n · orquestador del asistente
+# n8n · assistant orchestrator
 
-El asistente responde con un **agente de n8n**: modelo Ollama local, memoria por conversación y dos herramientas que vuelven a este backend (el RAG y las alertas activas). Los archivos de aquí se importan con la CLI de n8n; el workflow es dato versionado, no algo que viva solo en la interfaz.
+The assistant answers with an **n8n agent**: a local Ollama model, memory per conversation and two tools that call back into this backend (the RAG and the active alerts). The files here are imported with the n8n CLI; the workflow is versioned data, not something that lives only in the interface.
 
-| Archivo | Qué es |
+| File | What it is |
 |---|---|
-| `workflows/space-apps-asistente.json` | Webhook → Config → Agente (Ollama + memoria + herramientas) → Responder |
-| `credentials/ollama.json` | Credencial `ollamaApi` con la URL de Ollama (sin secretos) |
+| `workflows/space-apps-asistente.json` | Webhook → Config → Agent (Ollama + memory + tools) → Respond |
+| `credentials/ollama.json` | `ollamaApi` credential with the Ollama URL (no secrets) |
 
-## Cómo funciona
+## How it works
 
-1. El backend llama a `POST /webhook/space-apps-assistant` con `{turn_id, conversation_id, question, alerts}`.
-2. El nodo **Config** guarda `backend_url` (por defecto `http://host.docker.internal:8000`) y los datos del turno. **Es el único sitio donde se cambia la dirección del backend.**
-3. El agente usa `search_passages` (`POST {backend}/api/v1/assistant/tools/{turn_id}/search_passages`) y, si hace falta, `active_alerts` (solo lectura). La herramienta anota lo que devuelve: **de ahí salen las citas**, no de lo que el modelo diga.
-4. El workflow responde `{"text": ...}`. Si falla o tarda, el backend responde con los pasajes en texto plano.
+1. The backend calls `POST /webhook/space-apps-assistant` with `{turn_id, conversation_id, question, alerts}`.
+2. The **Config** node stores `backend_url` (default `http://host.docker.internal:8000`) and the turn data. **It is the only place where the backend address is changed.**
+3. The agent uses `search_passages` (`POST {backend}/api/v1/assistant/tools/{turn_id}/search_passages`) and, if needed, `active_alerts` (read-only). The tool records what it returns: **the citations come from there**, not from what the model says.
+4. The workflow answers `{"text": ...}`. If it fails or is slow, the backend answers with the passages as plain text.
 
-## Importar y activar
+## Import and activate
 
 ```bash
 docker cp n8n/credentials/ollama.json n8n:/tmp/cred.json && docker exec n8n n8n import:credentials --input=/tmp/cred.json
 docker cp n8n/workflows/space-apps-asistente.json n8n:/tmp/wf.json && docker exec n8n n8n import:workflow --input=/tmp/wf.json
 docker exec n8n n8n publish:workflow --id=spaceAppsAsistente1
-docker restart n8n                                  # el webhook solo se registra al arrancar
+docker restart n8n                                  # the webhook is only registered at startup
 ```
 
-El workflow espera un modelo `spaceapp-asistente` en Ollama (ver `docker/ollama/README.md`). Probado también en un n8n recién creado (2.44.5): importa sin errores.
+The workflow expects a `spaceapp-asistente` model in Ollama (see `docker/ollama/README.md`). Also tested on a freshly created n8n (2.44.5): it imports without errors.
 
-## Probarlo
+## Try it
 
 ```bash
-python -m spaceapp.devtools.assistant_server        # backend de desarrollo en el puerto 8000
-curl -X POST localhost:8000/dev/ask -H 'Content-Type: application/json' -d '{"text":"¿Por qué me duele la cabeza?"}'
+python -m spaceapp.devtools.assistant_server        # development backend on port 8000
+curl -X POST localhost:8000/dev/ask -H 'Content-Type: application/json' -d '{"text":"Why do I have a headache?"}'
 ```
 
-## Privacidad y seguridad
+## Privacy and security
 
-- El workflow **no guarda ejecuciones** (`saveDataSuccessExecution` y `saveDataErrorExecution` en `none`): lo que pregunta la tripulación no queda en la base de n8n. Para depurar, actívalo a mano y vuelve a quitarlo.
-- Las herramientas solo funcionan durante un turno abierto: sin un `turn_id` vivo devuelven 404.
-- **El webhook no tiene autenticación.** Cualquiera que llegue al puerto de n8n puede lanzar una consulta al modelo (gasta CPU, no da acceso a nada más). En la entrega, publicar solo en `127.0.0.1` o añadir autenticación de cabecera.
-- Si n8n se comparte con otros proyectos (aquí tiene otros 7 workflows), no arrancar su túnel de ngrok mientras el webhook esté activo.
+- The workflow **does not save executions** (`saveDataSuccessExecution` and `saveDataErrorExecution` set to `none`): what the crew asks does not stay in n8n's database. To debug, turn it on by hand and turn it off again.
+- The tools only work during an open turn: without a live `turn_id` they return 404.
+- **The webhook has no authentication.** Anyone who reaches the n8n port can send a query to the model (it uses CPU, it gives access to nothing else). For the delivery, publish only on `127.0.0.1` or add header authentication.
+- If n8n is shared with other projects (here it has 7 other workflows), do not start its ngrok tunnel while the webhook is active.

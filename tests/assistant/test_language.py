@@ -10,7 +10,7 @@ from spaceapp.modules.assistant.application.language import is_english
     [
         "The average 1-hour CO2 limit is 3 mmHg.",
         "According to the loaded sources, the crew needs 3,035 kcal per day.",
-        "ppCO2 3 mmHg",  # sin palabras de función: no hay motivo para rechazarla
+        "ppCO2 3 mmHg",  # no function words: no reason to reject it
         "",
     ],
 )

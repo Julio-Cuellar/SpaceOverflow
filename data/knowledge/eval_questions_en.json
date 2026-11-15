@@ -1,5 +1,5 @@
 {
-  "_nota": "Conjunto de DIAGNÓSTICO del idioma: las mismas 25 preguntas de los conjuntos principal y de validación, en inglés y con las mismas expectativas verificadas en los PDFs. Sirve para separar el fallo de idioma del fallo de recuperación: si en inglés acierta mucho y en español poco, el cuello de botella es la traducción. No se usa para ajustar el buscador. Las 16 primeras corresponden al conjunto principal y las 9 siguientes al de validación, en el mismo orden.",
+  "_nota": "Language DIAGNOSIS set: the same 25 questions of the main and validation sets, in English and with the same expectations verified in the PDFs. It separates the language failure from the retrieval failure: if it hits a lot in English and little in Spanish, the bottleneck is the translation. It is not used to tune the search. The first 16 correspond to the main set and the next 9 to the validation set, in the same order.",
   "cases": [
     { "question": "What is the average one-hour CO2 limit?", "expected_contains": ["no more than 3 mmHg"] },
     { "question": "Why do I have a headache?", "expected_contains": ["2.8-4.5 mmHg"] },

@@ -1,4 +1,4 @@
-"""Valores de la entrada por voz. Sin dependencias externas."""
+"""Values of the voice input. No external dependencies."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from uuid import UUID
 
-# Tipos de audio que acepta la ruta de voz (plan, F14): lo que graba `MediaRecorder` y WAV.
+# Audio types the voice route accepts (plan, F14): what `MediaRecorder` records, and WAV.
 _EXTENSIONS = {
     "audio/webm": "webm",
     "audio/wav": "wav",
@@ -16,19 +16,19 @@ _EXTENSIONS = {
 
 
 class UtteranceStatus(StrEnum):
-    """Estados de una intervención, por voz o por texto (máquina de estados del asistente)."""
+    """States of an utterance, by voice or by text (the assistant's state machine)."""
 
-    TYPED = "TYPED"  # ESCRITA: texto tecleado, listo para confirmar
+    TYPED = "TYPED"  # TYPED: typed text, ready to confirm
     RECEIVED = "RECEIVED"  # RECIBIDA: audio guardado
     TRANSCRIBING = "TRANSCRIBING"  # TRANSCRIBIENDO
-    TRANSCRIBED = "TRANSCRIBED"  # TRANSCRITA: texto editable a la espera de confirmar
-    NO_TRANSCRIPT = "NO_TRANSCRIPT"  # SIN_TRANSCRIPCION: sin modelo, fallo o sin habla
+    TRANSCRIBED = "TRANSCRIBED"  # TRANSCRIBED: editable text waiting for confirmation
+    NO_TRANSCRIPT = "NO_TRANSCRIPT"  # NO_TRANSCRIPT: no model, failure or no speech
     CONFIRMED = "CONFIRMED"  # CONFIRMADA
-    CONSULTING = "CONSULTING"  # CONSULTANDO: el orquestador trabaja
-    ANSWERED = "ANSWERED"  # RESPONDIDA: con pasajes y citas
-    NO_INFO = "NO_INFO"  # SIN_INFORMACION: ningún pasaje respalda
-    TEMPLATE_ANSWER = "TEMPLATE_ANSWER"  # RESPUESTA_DE_PLANTILLA: el orquestador no pudo
-    FAILED = "FAILED"  # FALLIDA: ni siquiera la plantilla
+    CONSULTING = "CONSULTING"  # CONSULTING: the orchestrator is working
+    ANSWERED = "ANSWERED"  # ANSWERED: with passages and citations
+    NO_INFO = "NO_INFO"  # NO_INFO: no passage supports it
+    TEMPLATE_ANSWER = "TEMPLATE_ANSWER"  # TEMPLATE_ANSWER: the orchestrator could not
+    FAILED = "FAILED"  # FAILED: not even the template
     DISCARDED = "DISCARDED"  # DESCARTADA
 
 
@@ -49,7 +49,7 @@ _S = UtteranceStatus
 _E = TurnEvent
 _READY_FOR_CREW = (_S.TYPED, _S.TRANSCRIBED, _S.NO_TRANSCRIPT)
 
-# Única fuente de verdad de las transiciones. Lo que no está aquí no puede ocurrir.
+# Single source of truth for the transitions. What is not here cannot happen.
 TRANSITIONS: dict[tuple[UtteranceStatus, TurnEvent], UtteranceStatus] = {
     (_S.RECEIVED, _E.TRANSCRIBE): _S.TRANSCRIBING,
     (_S.TRANSCRIBING, _E.TRANSCRIPT_READY): _S.TRANSCRIBED,
@@ -65,33 +65,33 @@ TRANSITIONS: dict[tuple[UtteranceStatus, TurnEvent], UtteranceStatus] = {
 
 INITIAL_STATES = frozenset({_S.RECEIVED, _S.TYPED})
 TERMINAL_STATES = frozenset({_S.ANSWERED, _S.NO_INFO, _S.TEMPLATE_ANSWER, _S.FAILED, _S.DISCARDED})
-# Estados en los que la pregunta ya se confirmó: no se vuelve a preguntar.
+# States in which the question was already confirmed: it is not asked again.
 CONFIRMED_OR_LATER = frozenset(
     {_S.CONFIRMED, _S.CONSULTING, _S.ANSWERED, _S.NO_INFO, _S.TEMPLATE_ANSWER, _S.FAILED}
 )
 
 
 class InvalidTransitionError(RuntimeError):
-    """El evento no es válido en el estado actual. El estado no cambia."""
+    """The event is not valid in the current state. The state does not change."""
 
 
 def transition(state: UtteranceStatus, event: TurnEvent) -> UtteranceStatus:
     try:
         return TRANSITIONS[(state, event)]
     except KeyError:
-        raise InvalidTransitionError(f"{event} no es válido en el estado {state}") from None
+        raise InvalidTransitionError(f"{event} is not valid in state {state}") from None
 
 
 class UnsupportedAudioError(ValueError):
-    """El audio está vacío o no es webm ni wav."""
+    """The audio is empty or is neither webm nor wav."""
 
 
 class UnknownUtteranceError(LookupError):
-    """No existe una intervención con ese id."""
+    """There is no utterance with that id."""
 
 
 class AlreadyConfirmedError(RuntimeError):
-    """La intervención ya se confirmó: no se vuelve a preguntar."""
+    """The utterance was already confirmed: it is not asked again."""
 
 
 @dataclass(frozen=True)
@@ -113,7 +113,7 @@ class Utterance:
 
 
 def audio_extension(content_type: str) -> str:
-    """Extensión del archivo para un tipo de audio, ignorando parámetros como `;codecs=opus`."""
+    """File extension for an audio type, ignoring parameters such as `;codecs=opus`."""
     base = content_type.split(";", 1)[0].strip().lower()
     try:
         return _EXTENSIONS[base]

@@ -11,27 +11,45 @@ interface Message {
 }
 
 interface AssistantPanelProps {
-  /** Responde una pregunta: la simulación local (síncrona) o el asistente real (tarda). */
+  /** Answers a question: the local simulation (synchronous) or the real assistant (slow). */
   answerFor: (question: string) => AssistantAnswer | Promise<AssistantAnswer>
-  /** Adaptador de redacción: Ollama local o nube. */
-  mode: 'local' | 'nube'
-  /** Entrada por voz. Sin ella solo hay texto, que siempre está disponible. */
+  /** Writing adapter: local Ollama or cloud. */
+  mode: 'local' | 'cloud'
+  /** Voice input. Without it there is only text, which is always available. */
   voice?: {
     startRecording: () => Promise<Recording>
     transcribe: (audio: Blob) => Promise<{ text: string } | null>
     notice?: string
   }
+  /** Reads an answer aloud. Without it there is no "Listen" button: the answer is text only. */
+  speak?: (text: string) => Promise<void>
 }
 
-const EXAMPLES = ['¿Por qué me duele la cabeza?', '¿Cuánto dura el mareo espacial?']
+const EXAMPLES = ['Why do I have a headache?', 'How long does space motion sickness last?']
 
-/** Chat de texto. Cada respuesta cita sus fuentes; sin pasaje, dice que no tiene información. */
-export function AssistantPanel({ answerFor, mode, voice }: AssistantPanelProps) {
+/** Text chat. Each answer cites its sources; without a passage, it says it has no information. */
+export function AssistantPanel({ answerFor, mode, voice, speak }: AssistantPanelProps) {
   const inputId = useId()
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [pending, setPending] = useState(false)
   const [failed, setFailed] = useState(false)
+  const [readAloud, setReadAloud] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
+  const [speechFailed, setSpeechFailed] = useState(false)
+
+  const read = async (text: string) => {
+    if (!speak) return
+    setSpeechFailed(false)
+    setSpeaking(true)
+    try {
+      await speak(text)
+    } catch {
+      setSpeechFailed(true)
+    } finally {
+      setSpeaking(false)
+    }
+  }
 
   const send = async (raw: string) => {
     const question = raw.trim()
@@ -46,6 +64,7 @@ export function AssistantPanel({ answerFor, mode, voice }: AssistantPanelProps) 
         ...current,
         { id: current.length, role: 'assistant', text: answer.text, answer },
       ])
+      if (readAloud) void read(answer.text)
     } catch {
       setFailed(true)
     } finally {
@@ -54,12 +73,12 @@ export function AssistantPanel({ answerFor, mode, voice }: AssistantPanelProps) 
   }
 
   return (
-    <section aria-label="Asistente">
+    <section aria-label="Assistant">
       <p>
-        <span className="chip">Modo {mode}</span>
+        <span className="chip">Mode {mode}</span>
       </p>
 
-      <ul aria-label="Preguntas de ejemplo">
+      <ul aria-label="Example questions">
         {EXAMPLES.map((example) => (
           <li key={example}>
             <button type="button" onClick={() => send(example)}>
@@ -69,18 +88,23 @@ export function AssistantPanel({ answerFor, mode, voice }: AssistantPanelProps) 
         ))}
       </ul>
 
-      <ol aria-label="Conversación">
+      <ol aria-label="Conversation">
         {messages.map((message) => (
           <li key={message.id}>
             {message.role === 'crew' ? (
               <p>
-                <strong>Tú:</strong> {message.text}
+                <strong>You:</strong> {message.text}
               </p>
             ) : (
               <>
                 <p className="answer-text">{message.text}</p>
+                {speak && (
+                  <button type="button" disabled={speaking} onClick={() => void read(message.text)}>
+                    Listen to the answer
+                  </button>
+                )}
                 {message.answer && message.answer.citations.length > 0 && (
-                  <ul aria-label="Fuentes">
+                  <ul aria-label="Sources">
                     {message.answer.citations.map((c, index) => (
                       <li key={`${c.documentCode}-${index}`}>
                         <a href={`#pasaje/${encodeURIComponent(c.documentCode)}`}>
@@ -98,9 +122,26 @@ export function AssistantPanel({ answerFor, mode, voice }: AssistantPanelProps) 
         ))}
       </ol>
 
-      {pending && <p role="status">Consultando al asistente…</p>}
+      {speak && (
+        <p>
+          <label>
+            <input
+              type="checkbox"
+              checked={readAloud}
+              onChange={(event) => setReadAloud(event.target.checked)}
+            />{' '}
+            Read answers aloud
+          </label>
+        </p>
+      )}
+      {speaking && <p role="status">Reading the answer…</p>}
+      {speechFailed && (
+        <p role="alert">Could not read it aloud: the answer stays on screen.</p>
+      )}
+
+      {pending && <p role="status">Consulting the assistant…</p>}
       {failed && (
-        <p role="alert">No se pudo consultar el asistente. Revisa la conexión e inténtalo de nuevo.</p>
+        <p role="alert">Could not consult the assistant. Check the connection and try again.</p>
       )}
 
       {voice && (
@@ -118,10 +159,10 @@ export function AssistantPanel({ answerFor, mode, voice }: AssistantPanelProps) 
           send(draft)
         }}
       >
-        <label htmlFor={inputId}>Pregunta</label>
+        <label htmlFor={inputId}>Question</label>
         <textarea id={inputId} value={draft} onChange={(e) => setDraft(e.target.value)} />
         <button type="submit" disabled={draft.trim() === '' || pending}>
-          Preguntar
+          Ask
         </button>
       </form>
     </section>

@@ -1,8 +1,8 @@
-"""¿La redacción del modelo está en inglés? Función pura, sin librerías.
+"""Is the model's wording in English? Pure function, no libraries.
 
-El asistente siempre responde en inglés, pero un modelo pequeño contesta en el idioma de la
-pregunta aunque se le pida lo contrario. La comprobación cuenta palabras de función (artículos,
-preposiciones, conjunciones) de cada idioma; solo distingue inglés de español.
+The assistant always answers in English, but a small model answers in the language of the question
+even when asked otherwise. The check counts function words (articles, prepositions, conjunctions)
+of each language; it only tells English from Spanish.
 """
 
 from __future__ import annotations
@@ -82,7 +82,7 @@ _SPANISH = frozenset(
 
 
 def is_english(text: str) -> bool:
-    """Falso solo si hay claramente más palabras de función del español que del inglés."""
+    """False only if there are clearly more Spanish function words than English ones."""
     words = _WORD.findall(text.lower())
     english = sum(1 for word in words if word in _ENGLISH)
     spanish = sum(1 for word in words if word in _SPANISH)

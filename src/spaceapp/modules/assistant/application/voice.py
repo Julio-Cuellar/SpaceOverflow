@@ -1,10 +1,10 @@
-"""Voz con confirmación (plan, F14): transcribir no es actuar.
+"""Voice with confirmation (plan, F14): transcribing is not acting.
 
-Reglas:
-- Recibir el audio responde de inmediato; la transcripción va aparte.
-- Lo transcrito queda como texto editable. **Nada se pregunta al asistente sin confirmar.**
-- Sin modelo de voz, o si falla, la tripulación escribe la pregunta: el flujo sigue igual.
-- Una emergencia no depende de la voz: este módulo no toca alertas.
+Rules:
+- Receiving the audio answers at once; the transcription goes apart.
+- What was transcribed stays as editable text. **Nothing is asked without confirming.**
+- Without a voice model, or if it fails, the crew types the question: the flow goes on the same.
+- An emergency does not depend on voice: this module does not touch alerts.
 """
 
 from __future__ import annotations
@@ -36,9 +36,9 @@ __all__ = [
     "UnsupportedAudioError",
 ]
 
-NO_MODEL = "No hay modelo de voz: escribe tu pregunta como texto."
-FAILED = "La transcripción falló: escribe tu pregunta como texto."
-NO_SPEECH = "No se oyó nada: repite o escribe tu pregunta como texto."
+NO_MODEL = "There is no voice model: type your question as text."
+FAILED = "The transcription failed: type your question as text."
+NO_SPEECH = "Nothing was heard: repeat or type your question as text."
 
 
 class SubmitAudio:
@@ -50,10 +50,10 @@ class SubmitAudio:
         self._utterances = utterances
 
     def submit(self, conversation_id: UUID, audio: bytes, content_type: str) -> UUID:
-        """Guarda el audio y devuelve el `utterance_id` sin transcribir (responde 202)."""
+        """Stores the audio and returns the `utterance_id` without transcribing (answers 202)."""
         extension = audio_extension(content_type)
         if not audio:
-            raise UnsupportedAudioError("el audio está vacío")
+            raise UnsupportedAudioError("the audio is empty")
         utterance_id = uuid4()
         path = self._store.save(utterance_id, audio, extension)
         self._utterances.add(
@@ -67,14 +67,15 @@ class SubmitAudio:
         return utterance_id
 
     def transcribe(self, utterance_id: UUID) -> Utterance:
-        """Transcribe en segundo plano. Nunca lanza por un fallo del modelo: deja el motivo."""
+        """Transcribes in the background. A model failure never raises: it leaves the reason."""
         utterance = self._utterances.get(utterance_id)
         if utterance.status is not UtteranceStatus.RECEIVED:
             return utterance
         working = replace(utterance, status=transition(utterance.status, TurnEvent.TRANSCRIBE))
         self._utterances.update(working)
         done = self._transcribe(working)
-        # Son grabaciones de personas: el audio se borra al tener texto o saber que no lo hay.
+        # These are recordings of people: the audio is deleted once there is text or it is known
+        # there is none.
         if done.audio_path is not None:
             self._store.delete(done.audio_path)
             done = replace(done, audio_path=None)
@@ -87,7 +88,7 @@ class SubmitAudio:
         try:
             audio = _read(utterance.audio_path)
             transcript = self._stt.transcribe(audio, _content_type(utterance.audio_path))
-        except Exception:  # el modelo puede fallar por muchas causas; la voz nunca es obligatoria
+        except Exception:  # the model can fail for many reasons; voice is never mandatory
             return self._no_transcript(utterance, FAILED)
         if transcript is None or not transcript.text.strip():
             return self._no_transcript(utterance, NO_SPEECH)
@@ -109,7 +110,7 @@ class SubmitAudio:
 
 def _read(path: str | None) -> bytes:
     if path is None:
-        raise FileNotFoundError("la intervención no tiene audio")
+        raise FileNotFoundError("the utterance has no audio")
     with open(path, "rb") as handle:
         return handle.read()
 
@@ -124,17 +125,17 @@ class ConfirmUtterance:
         self._ask = ask
 
     def confirm(self, utterance_id: UUID, text: str) -> AskResult:
-        """Confirma el texto (editado o escrito) y consulta. Se confirma una sola vez."""
+        """Confirms the text (edited or typed) and consults. It is confirmed only once."""
         utterance = self._utterances.get(utterance_id)
         if utterance.status in CONFIRMED_OR_LATER:
             raise AlreadyConfirmedError(str(utterance_id))
         if not text.strip():
-            # Nada que confirmar: no hay transición y la intervención sigue esperando.
+            # Nothing to confirm: there is no transition and the utterance keeps waiting.
             return self._ask(utterance.conversation_id, text)
         return self._consult(utterance, text.strip())
 
     def confirm_text(self, conversation_id: UUID, text: str) -> AskResult:
-        """Pregunta escrita: pasa por la misma máquina de estados que la de voz."""
+        """Typed question: it goes through the same state machine as the voice one."""
         if not text.strip():
             return self._ask(conversation_id, text)
         utterance = Utterance(

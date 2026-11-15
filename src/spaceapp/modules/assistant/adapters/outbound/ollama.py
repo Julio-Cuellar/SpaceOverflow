@@ -1,4 +1,4 @@
-"""Adaptador de Ollama local. Habla con su API HTTP en streaming (NDJSON)."""
+"""Local Ollama adapter. It talks to its HTTP API in streaming (NDJSON)."""
 
 from __future__ import annotations
 

@@ -1,8 +1,8 @@
-"""Evalúa el asistente completo (n8n + Ollama + RAG) con las preguntas del RAG.
+"""Evaluates the whole assistant (n8n + Ollama + RAG) with the RAG questions.
 
-Pregunta por `POST /dev/ask` del servidor de desarrollo y juzga con las mismas expectativas que la
-evaluación de la búsqueda. Una pregunta fuera de alcance solo pasa si el turno cierra en `NO_INFO`
-y sin citas: cualquier otra cosa sería una respuesta sin fuente.
+It asks through `POST /dev/ask` of the development server and judges with the same expectations as
+the search evaluation. An out-of-scope question only passes if the turn closes as `NO_INFO` and
+without citations: anything else would be an answer without a source.
 
     python -m spaceapp.devtools.evaluate_assistant --questions data/knowledge/eval_questions.json
 """
@@ -108,7 +108,7 @@ def _http_ask(base_url: str, timeout_s: float) -> Callable[[str], tuple[dict[str
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Evalúa el asistente completo.")
+    parser = argparse.ArgumentParser(description="Evaluates the whole assistant.")
     parser.add_argument("--questions", type=Path, required=True)
     parser.add_argument("--url", default="http://127.0.0.1:8000")
     parser.add_argument("--timeout", type=float, default=300.0)
@@ -123,13 +123,13 @@ def main() -> int:
         return answer, seconds
 
     summary = run(cases, logged)
-    print(f"Aciertos: {summary.hits} de {summary.in_scope}")
+    print(f"Hits: {summary.hits} of {summary.in_scope}")
     for question in summary.misses:
-        print(f"  Sin acierto: {question}")
-    print(f"Fuera de alcance respondidas: {summary.leaks} de {summary.out_of_scope}")
+        print(f"  No hit: {question}")
+    print(f"Out of scope answered: {summary.leaks} of {summary.out_of_scope}")
     for question in summary.leaked:
-        print(f"  Respondida sin tener fuente: {question}")
-    print(f"Estados: {dict(summary.states)} · degradadas: {summary.degraded}")
+        print(f"  Answered without a source: {question}")
+    print(f"States: {dict(summary.states)} · degraded: {summary.degraded}")
     print(f"Latencia media: {summary.mean_latency_s:.1f} s")
     return 0 if not summary.leaks else 1
 

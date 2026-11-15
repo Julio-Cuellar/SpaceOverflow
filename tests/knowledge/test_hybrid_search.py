@@ -53,7 +53,7 @@ def vectors(include: Sequence[Chunk] = tuple(CHUNKS), model: str = "fake") -> Ve
 
 
 class FakeEmbedder:
-    """Cada pregunta conocida se parece a un pasaje; las desconocidas, a ninguno."""
+    """Each known question resembles one passage; the unknown ones, none."""
 
     def __init__(self, answers: dict[str, list[float]], model: str = "fake") -> None:
         self.model = model
@@ -87,8 +87,8 @@ def hybrid(
 
 
 def test_meaning_alone_never_answers_a_question_the_words_did_not_find() -> None:
-    # Un tema cercano pero fuera de alcance (una medicina, un precio) se parece a los pasajes
-    # médicos por significado: sin una sola palabra en común no hay base para citarlos.
+    # A nearby but out-of-scope topic (a medicine, a price) resembles the medical passages by
+    # meaning: without a single word in common there is no basis to cite them.
     question = "What makes my skull throb?"
     assert RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3) == []
     source, _ = hybrid({question: [0.1, 0.99, 0.0]})
@@ -100,7 +100,7 @@ def test_meaning_reorders_the_passages_the_words_found() -> None:
     question = "ppCO2 mmHg"
     lexical = RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3)
     assert {r.document_code for r in lexical} == {STANDARD, BRIEF}
-    # Por significado, el pasaje del dolor de cabeza se parece más a la pregunta.
+    # By meaning, the headache passage is more similar to the question.
     source, _ = hybrid({question: [0.4, 0.9, 0.0]})
 
     results = source.search(question, k=3)
@@ -122,8 +122,8 @@ def test_passages_almost_as_close_in_meaning_as_the_best_keep_the_order_of_the_w
     question = "ppCO2 mmHg"
     lexical = RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3)
     assert lexical[0].document_code == STANDARD
-    # El pasaje del dolor de cabeza se parece un poco más (0,714 frente a 0,700), pero la
-    # diferencia es ruido del modelo: manda el orden de las palabras.
+    # The headache passage is slightly more similar (0.714 versus 0.700), but the difference is
+    # model noise: the word order rules.
     source, _ = hybrid({question: [1.0, 1.02, 0.0]})
 
     assert source.search(question, k=3)[0].document_code == STANDARD

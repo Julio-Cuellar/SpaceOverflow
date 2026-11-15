@@ -1,4 +1,4 @@
-"""Un n8n de mentira sobre HTTP real: el adaptador habla con un servidor de verdad, sin mocks."""
+"""A fake n8n over real HTTP: the adapter talks to a real server, without mocks."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ class FakeN8n:
                     self.end_headers()
                     self.wfile.write(data)
                 except (BrokenPipeError, ConnectionResetError):
-                    pass  # el cliente ya se rindió por tiempo
+                    pass  # the client already gave up on time
 
             def log_message(self, *args: object) -> None:
                 pass

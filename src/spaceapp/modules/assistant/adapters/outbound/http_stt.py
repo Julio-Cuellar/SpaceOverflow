@@ -1,8 +1,8 @@
-"""Voz a texto con el contenedor de Whisper (`docker/voice`): audio crudo por HTTP, texto de vuelta.
+"""Speech to text with the Whisper container (`docker/voice`): raw audio over HTTP, text back.
 
-El idioma y el texto de contexto con términos médicos viven en `whisper.py`, que es lo que corre
-dentro del contenedor: aquí solo se envía el audio. Si el contenedor no responde, se lanza el error
-y el caso de uso deja la transcripción en blanco para que la tripulación escriba la pregunta.
+The language and the context text with medical terms live in `whisper.py`, which is what runs
+inside the container: here only the audio is sent. If the container does not answer, the error is
+raised and the use case leaves the transcript blank so the crew types the question.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ class HttpSpeechToText:
             payload = json.load(response)
         text = payload.get("text") if isinstance(payload, dict) else None
         if not isinstance(text, str):
-            raise ValueError(f"el servicio de voz no devolvió texto: {payload!r}")
+            raise ValueError(f"the voice service returned no text: {payload!r}")
         confidence = payload.get("confidence")
         language = payload.get("language")
         return Transcript(

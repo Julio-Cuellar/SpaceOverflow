@@ -1,4 +1,4 @@
-"""Adaptador de n8n: llama al webhook del agente y valida lo que vuelve."""
+"""n8n adapter: calls the agent's webhook and validates what comes back."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ CONVERSATION = uuid.uuid4()
 
 
 def ask(orchestrator: N8nOrchestrator, alerts: tuple[str, ...] = ()) -> str:
-    return orchestrator.answer(TURN, CONVERSATION, "¿Por qué me duele la cabeza?", alerts)
+    return orchestrator.answer(TURN, CONVERSATION, "Why do I have a headache?", alerts)
 
 
 def test_it_posts_the_turn_to_the_webhook_and_returns_the_text() -> None:
@@ -29,7 +29,7 @@ def test_it_posts_the_turn_to_the_webhook_and_returns_the_text() -> None:
     assert request["json"] == {
         "turn_id": str(TURN),
         "conversation_id": str(CONVERSATION),
-        "question": "¿Por qué me duele la cabeza?",
+        "question": "Why do I have a headache?",
         "alerts": ["CO₂ alto"],
     }
 

@@ -1,4 +1,4 @@
-"""Adaptador nulo de voz: sin modelo, la tripulación escribe la pregunta y todo sigue igual."""
+"""Null voice adapter: without a model, the crew types the question and all goes on the same."""
 
 from __future__ import annotations
 

@@ -27,7 +27,7 @@ def chunks() -> list[Chunk]:
     return [
         *chunk_page("DOC", 1, LONG, "TB"),
         *chunk_page("DOC", 2, LONG.replace("carbon dioxide", "oxygen"), "TB"),
-        *chunk_page("DOC", 3, "1.2 Scope", "TB"),  # un título: no es un pasaje citable
+        *chunk_page("DOC", 3, "1.2 Scope", "TB"),  # a title: not a citable passage
     ]
 
 
@@ -100,7 +100,7 @@ class TestCommand:
         loaded = VectorIndex.load(out)
         assert code == 0
         assert loaded is not None and len(loaded) == 2
-        assert "2 nuevos, 0 reutilizados" in capsys.readouterr().out
+        assert "2 new, 0 reused" in capsys.readouterr().out
 
     def test_running_it_again_does_not_call_the_model(self, tmp_path: Path) -> None:
         index, out = self.prepare(tmp_path)
@@ -121,7 +121,7 @@ class TestCommand:
         )
 
         assert code == 2
-        assert "ingesta" in capsys.readouterr().err
+        assert "ingestion" in capsys.readouterr().err
 
     def test_says_how_to_install_the_model_when_ollama_cannot_be_reached(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]

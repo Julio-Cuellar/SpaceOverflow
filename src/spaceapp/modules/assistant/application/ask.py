@@ -1,10 +1,10 @@
-"""Caso de uso: responder una pregunta con pasajes citados.
+"""Use case: answer a question with cited passages.
 
-Reglas del plan (sección 13):
-- Solo se redacta con lo recuperado. Sin pasaje, no se llama al modelo y se dice que no hay
-  información.
-- Si el modelo tarda más del límite o falla, se responde con los pasajes en texto plano.
-- Las citas las pone el caso de uso, no el modelo. El asistente no cambia ninguna alerta.
+Plan rules (section 13):
+- It only writes with what was retrieved. Without a passage, the model is not called and the answer
+  says there is no information.
+- If the model takes longer than the limit or fails, the answer is the passages as plain text.
+- Citations are added by the use case, not by the model. The assistant never changes an alert.
 """
 
 from __future__ import annotations
@@ -45,7 +45,8 @@ class AskResult:
     citations: tuple[CitationDTO, ...]
     composed_by: str  # "n8n", "llm" o "plantilla"
     utterance_id: UUID | None = None
-    # True si había orquestador pero no sirvió (caído, lento o sin pasajes) y se respondió sin él.
+    # True if there was an orchestrator but it was no use (down, slow or without passages) and it
+    # was answered without it.
     degraded: bool = False
 
 
@@ -56,7 +57,7 @@ def source_label(citation: CitationDTO) -> str:
 
 def _template(question: str, passages: tuple[CitationDTO, ...], alerts: list[str]) -> str:
     lines = ["According to the loaded sources:"]
-    lines += [f"- {brief(p.excerpt, question)} ({source_label(p)})" for p in passages]
+    lines += [f"- {brief(p.excerpt, question)}" for p in passages]
     lines += [f"Active alert: {title}. {ALERT_NOTE}" for title in alerts]
     return "\n".join(lines)
 
@@ -136,10 +137,10 @@ class AskAssistant:
     def _via_orchestrator(
         self, turn_id: UUID, conversation_id: UUID, question: str
     ) -> tuple[str, tuple[CitationDTO, ...]] | None:
-        """Texto del agente y las citas de lo que recuperó, o `None` si no hay que fiarse de él.
+        """The agent's text and the citations of what it retrieved, or `None` if not to be trusted.
 
-        No se fía si falla, tarda más del límite o contesta sin haber recuperado ningún pasaje:
-        un texto sin fuente no se entrega, aunque suene bien.
+        It is not trusted if it fails, takes longer than the limit or answers without having
+        retrieved any passage: a text without a source is not delivered, even if it sounds good.
         """
         assert self._orchestrator is not None and self._retrievals is not None
         self._retrievals.open(turn_id)
@@ -150,7 +151,7 @@ class AskAssistant:
         try:
             composed = future.result(timeout=self._orchestrator_timeout_s).strip()
             cited = tuple(self._retrievals.retrieved(turn_id))
-        except Exception:  # caído, lento o con una respuesta inválida: se responde sin él
+        except Exception:  # down, slow or with an invalid answer: answer without it
             return None
         finally:
             self._retrievals.close(turn_id)
@@ -180,7 +181,7 @@ class AskAssistant:
     def _acceptable(
         cls, text: str, question: str, passages: tuple[CitationDTO, ...], alerts: list[str]
     ) -> bool:
-        """En inglés, sin negarse y con cifras de las fuentes; si no, se entregan los pasajes."""
+        """In English, not refusing, with figures from the sources; else the passages go out."""
         return (
             is_english(text)
             and not cls._refuses(text)
@@ -189,10 +190,10 @@ class AskAssistant:
 
     @staticmethod
     def _refuses(text: str) -> bool:
-        """Dice que no tiene la información aunque se le dieron pasajes: no sirve de respuesta.
+        """It says it lacks the information although it was given passages: useless as an answer.
 
-        Un modelo pequeño lo hace con pasajes que sí contestan. Citar fuentes junto a un «no sé»
-        engaña; el texto literal de los pasajes, no.
+        A small model does this even with passages that do answer. Citing sources next to an
+        'I don't know' misleads; the literal text of the passages does not.
         """
         return NO_INFO_TEXT.rstrip(".").lower() in text.lower().replace("\u2019", "'")
 
@@ -200,9 +201,10 @@ class AskAssistant:
     def _figures_supported(
         text: str, question: str, passages: tuple[CitationDTO, ...], alerts: list[str]
     ) -> bool:
-        """Toda cifra de la redacción sale de un pasaje, de la pregunta o de una alerta.
+        """Every figure in the wording comes from a passage, the question or an alert.
 
-        Si no, no se entrega: se responde con los pasajes tal cual. Ante la duda, el texto literal.
+        If not, it is not delivered: the passages are answered as they are. When in doubt, the
+        literal text.
         """
         sources = [
             question,
@@ -230,7 +232,7 @@ class AskAssistant:
         future = executor.submit(run)
         try:
             future.result(timeout=self._timeout_s)
-        except Exception:  # tiempo agotado o cualquier fallo del modelo: se devuelven los pasajes
+        except Exception:  # timeout or any model failure: the passages are returned
             return ""
         finally:
             executor.shutdown(wait=False, cancel_futures=True)

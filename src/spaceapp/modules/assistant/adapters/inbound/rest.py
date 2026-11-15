@@ -1,8 +1,8 @@
-"""Herramientas REST del agente de n8n (plan: el RAG es una herramienta del agente).
+"""REST tools of the n8n agent (plan: RAG is a tool of the agent).
 
-Solo lectura y solo durante un turno abierto: el identificador del turno va en la ruta y el
-`RetrievalLog` rechaza el que no existe, ya terminó o se cortó por tiempo. Nada de aquí puede
-cambiar una alerta. Lo que devuelve la búsqueda se anota: de ahí salen las citas de la respuesta.
+Read-only and only during an open turn: the turn identifier goes in the path and the
+`RetrievalLog` rejects one that does not exist, already ended or was cut by timeout. Nothing here
+can change an alert. What the search returns is recorded: the citations of the answer come from it.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from spaceapp.modules.assistant.ports import ActiveAlerts, PassageSearch
 
 DEFAULT_K = 3
 MAX_K = 5
-NO_PASSAGES = "No hay pasajes que respalden esta pregunta."
+NO_PASSAGES = "There are no passages that support this question."
 
 
 class SearchRequest(BaseModel):
@@ -51,7 +51,7 @@ def build_router(*, log: RetrievalLog, passages: PassageSearch, alerts: ActiveAl
 
     def require_open(turn_id: UUID) -> None:
         if not log.is_open(turn_id):
-            raise HTTPException(status_code=404, detail="el turno no está abierto")
+            raise HTTPException(status_code=404, detail="the turn is not open")
 
     @router.post("/{turn_id}/search_passages", response_model=SearchResponse)
     def search_passages(turn_id: UUID, request: SearchRequest) -> SearchResponse:
@@ -62,7 +62,7 @@ def build_router(*, log: RetrievalLog, passages: PassageSearch, alerts: ActiveAl
         try:
             log.record(turn_id, found)
         except TurnClosedError:
-            raise HTTPException(status_code=404, detail="el turno no está abierto") from None
+            raise HTTPException(status_code=404, detail="the turn is not open") from None
         return SearchResponse(
             passages=[
                 PassageView(

@@ -50,10 +50,12 @@ export interface AppProps {
   /** Consentimiento de la categoría «tareas». Si no se pasa, la app lo guarda por su cuenta. */
   tasksShared?: boolean
   onTasksSharedChange?: (shared: boolean) => void
-  /** Asistente real (backend, n8n y Ollama). Sin él, la pestaña usa la simulación local. */
+  /** Real assistant (backend, n8n and Ollama). Without it, the tab uses the local simulation. */
   askAssistant?: (question: string) => Promise<AssistantAnswer>
-  /** Voz real (backend y Whisper). Sin ella, la pestaña usa una transcripción simulada y lo avisa. */
+  /** Real voice (backend and Whisper). Without it, the tab uses a simulated transcript and says so. */
   transcribeVoice?: (audio: Blob) => Promise<{ text: string } | null>
+  /** Reads an answer aloud (backend and Kokoro). Without it, answers are text only. */
+  speak?: (text: string) => Promise<void>
 }
 
 export function App({
@@ -62,6 +64,7 @@ export function App({
   onTasksSharedChange,
   askAssistant,
   transcribeVoice,
+  speak,
 }: AppProps = {}) {
   const [state, setState] = useState(initialState)
   const [view, setView] = useState<View>('cabina')
@@ -143,6 +146,7 @@ export function App({
       ) : view === 'asistente' ? (
         <AssistantPanel
           mode="local"
+          speak={speak}
           answerFor={askAssistant ?? ((question) => mockAnswer(question, activeAlertTitles(state)))}
           voice={{
             startRecording: startMicrophoneRecording,

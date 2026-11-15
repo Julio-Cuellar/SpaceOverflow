@@ -28,7 +28,7 @@ REAL_INDEX = ROOT / "data" / "knowledge" / "index" / "chunks.jsonl"
 
 
 class FakeSearch:
-    """Devuelve lo que se le indique para cada pregunta."""
+    """Returns what it is told for each question."""
 
     def __init__(self, answers: dict[str, list[Citation]]) -> None:
         self._answers = answers
@@ -38,7 +38,7 @@ class FakeSearch:
 
 
 class ConstantEmbedder:
-    """Todo se parece a todo: sirve para probar el cableado, no la calidad."""
+    """Everything resembles everything: it tests the wiring, not the quality."""
 
     model = "fake"
 
@@ -86,7 +86,7 @@ def test_a_case_can_also_require_text_in_the_passage() -> None:
 
 
 def test_a_case_with_only_expected_text_accepts_any_document_that_has_it() -> None:
-    # Los Technical Brief citan los mismos requisitos que la norma: importa el contenido.
+    # The Technical Briefs cite the same requirements as the standard: the content matters.
     cases = [EvalCase("q1", expected_contains=("13.5 psi/min",))]
 
     found = {"q1": [passage("BRIEF", "...shall not exceed 13.5 psi/min.")]}
@@ -100,7 +100,7 @@ def test_loading_a_case_without_any_expectation_is_an_error(tmp_path: Path) -> N
     path = tmp_path / "questions.json"
     path.write_text(json.dumps({"cases": [{"question": "¿qué?"}]}), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="sin expectativa"):
+    with pytest.raises(ValueError, match="without expectation"):
         load_cases(path)
 
 
@@ -174,7 +174,7 @@ def test_records_the_rank_of_the_first_hit_and_derives_recall_and_mrr() -> None:
     assert result.recall_at(1) == 0.25
     assert result.recall_at(3) == 0.5
     assert result.recall_at(5) == 0.75
-    assert result.hits == 2  # con k=3: los dos primeros
+    assert result.hits == 2  # with k=3: the first two
     assert result.mrr == pytest.approx((1 + 1 / 2 + 1 / 5 + 0) / 4)
 
 
@@ -262,10 +262,10 @@ def test_diagnose_tells_a_ranking_problem_from_a_missing_passage() -> None:
 
     assert [found[q].category for q in ("top", "mid", "deep", "never", "absent")] == [
         "top 3",
-        "puestos 4 a 10",
-        "puesto 11 o más",
-        "en el índice, no recuperada",
-        "no está en el índice",
+        "ranks 4 to 10",
+        "rank 11 or later",
+        "in the index, not retrieved",
+        "not in the index",
     ]
     assert found["mid"].rank == 6
     assert found["never"].rank is None
@@ -281,7 +281,7 @@ def test_the_reserved_set_is_large_enough_and_every_case_has_a_text_anchor() -> 
     assert all(c.expected_contains or c.expected_contains_any for c in in_scope)
 
 
-@pytest.mark.skipif(not REAL_INDEX.exists(), reason="sin índice real: los PDFs no se versionan")
+@pytest.mark.skipif(not REAL_INDEX.exists(), reason="no real index: the PDFs are not versioned")
 def test_every_anchor_of_the_reserved_set_exists_in_the_real_index() -> None:
     chunks = JsonlChunkStore(REAL_INDEX).all()
 
@@ -309,8 +309,8 @@ class TestCommand:
             json.dumps(
                 {
                     "cases": [
-                        {"question": "¿Por qué me duele la cabeza?", "expected_documents": ["DOC"]},
-                        {"question": "¿Cuál es la capital de Francia?", "out_of_scope": True},
+                        {"question": "Why do I have a headache?", "expected_documents": ["DOC"]},
+                        {"question": "What is the capital of France?", "out_of_scope": True},
                     ]
                 }
             ),
@@ -333,7 +333,7 @@ class TestCommand:
         )
 
         assert code == 0
-        assert "Aciertos: 1 de 1" in capsys.readouterr().out
+        assert "Hits: 1 of 1" in capsys.readouterr().out
 
     def test_fails_clearly_when_the_questions_file_does_not_exist(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -350,7 +350,7 @@ class TestCommand:
         )
 
         assert code == 2
-        assert "preguntas" in capsys.readouterr().err
+        assert "questions" in capsys.readouterr().err
 
     def test_fails_clearly_when_the_glossary_does_not_exist(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -367,7 +367,7 @@ class TestCommand:
         )
 
         assert code == 2
-        assert "glosario" in capsys.readouterr().err
+        assert "glossary" in capsys.readouterr().err
 
     def test_fails_clearly_when_there_is_no_index_yet(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -384,7 +384,7 @@ class TestCommand:
         )
 
         assert code == 2
-        assert "ingesta" in capsys.readouterr().err
+        assert "ingestion" in capsys.readouterr().err
 
     def test_prints_recall_at_several_cutoffs_and_the_mean_reciprocal_rank(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -422,8 +422,8 @@ class TestCommand:
 
         out = capsys.readouterr().out
         assert code == 0
-        assert "[top 3] ¿Por qué me duele la cabeza?" in out
-        assert "Diagnóstico:" in out
+        assert "[top 3] Why do I have a headache?" in out
+        assert "Diagnosis:" in out
 
     def test_says_which_mode_it_evaluated(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -439,7 +439,7 @@ class TestCommand:
             ]
         )
 
-        assert "Modo: léxico" in capsys.readouterr().out
+        assert "Mode: lexical" in capsys.readouterr().out
 
     def test_the_hybrid_mode_uses_the_vectors_and_says_so(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -449,8 +449,8 @@ class TestCommand:
         vectors = tmp_path / "embeddings.json"
         VectorIndex.build("fake", [c.id for c in chunks], [[1.0, 0.0]] * len(chunks)).save(vectors)
 
-        # Con un modelo donde todo se parece a todo, la pregunta fuera de alcance también recibe
-        # pasaje y el código de salida es 1: aquí solo importa que se use el modo híbrido.
+        # With a model where everything resembles everything, the out-of-scope question also gets a
+        # passage and the exit code is 1: here all that matters is that the hybrid mode is used.
         main(
             [
                 "--index",
@@ -467,7 +467,7 @@ class TestCommand:
             embedder=ConstantEmbedder(),
         )
 
-        assert "Modo: híbrido (fake)" in capsys.readouterr().out
+        assert "Mode: hybrid (fake)" in capsys.readouterr().out
 
     def test_the_hybrid_mode_without_vectors_says_how_to_make_them(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]

@@ -1,5 +1,5 @@
 {
-  "_nota": "Preguntas de evaluación del RAG (F12.5). Cada pregunta se ancla en un texto que existe en los PDFs de NASA: los anclajes se buscaron directamente en el texto extraído, sin pasar por el buscador, y se comprobó que los 16 existen (14 nov 2026). Acierta si el texto esperado aparece en el extracto de alguno de los 3 primeros pasajes, en cualquier documento: los Technical Brief citan los mismos requisitos que la norma. Las dos últimas preguntas no tienen respuesta en las fuentes y deben quedar sin pasaje.",
+  "_nota": "RAG evaluation questions (F12.5). Each question is anchored in a text that exists in the NASA PDFs: the anchors were looked up directly in the extracted text, without going through the search, and all 16 were confirmed to exist (14 Nov 2026). It hits if the expected text appears in the excerpt of any of the first 3 passages, in any document: the Technical Briefs cite the same requirements as the standard. The last two questions have no answer in the sources and must be left without a passage.",
   "cases": [
     { "question": "¿Cuál es el límite de CO₂ promedio de una hora?", "expected_contains": ["no more than 3 mmHg"] },
     { "question": "¿Por qué me duele la cabeza?", "expected_contains": ["2.8-4.5 mmHg"] },

@@ -1,7 +1,7 @@
 import { EVIDENCE_STATES, type EvidenceState } from '../../shared/lib/evidence'
 import type { AssistantAnswer, AssistantCitation } from './mockAnswer'
 
-/** Con el modelo local una respuesta tarda entre 15 y 120 s (bitácora E19). */
+/** With the local model an answer takes between 15 and 120 s (logbook E19). */
 const TIMEOUT_MS = 150_000
 
 interface BackendCitation {
@@ -34,8 +34,8 @@ function toCitation(citation: BackendCitation): AssistantCitation {
 }
 
 /**
- * Cliente del asistente real: la pregunta pasa por el backend, n8n y Ollama. Si algo falla lanza
- * un error; nunca devuelve una respuesta inventada ni cae en silencio a la simulación.
+ * Client of the real assistant: the question goes through the backend, n8n and Ollama. If anything
+ * fails it throws an error; it never returns an invented answer nor silently falls back to the simulation.
  */
 export function askBackend(url: string, fetchImpl: typeof fetch = fetch) {
   return async (question: string): Promise<AssistantAnswer> => {
@@ -45,7 +45,7 @@ export function askBackend(url: string, fetchImpl: typeof fetch = fetch) {
       body: JSON.stringify({ text: question }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     })
-    if (!response.ok) throw new Error(`El asistente respondió ${response.status}`)
+    if (!response.ok) throw new Error(`The assistant answered ${response.status}`)
     const body = (await response.json()) as BackendAnswer
     return {
       outcome: body.outcome,

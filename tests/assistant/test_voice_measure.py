@@ -1,4 +1,4 @@
-"""Medición de la voz: tasa de error de palabras (WER) entre lo dicho y lo transcrito."""
+"""Voice measurement: word error rate (WER) between what was said and what was transcribed."""
 
 from __future__ import annotations
 

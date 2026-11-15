@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 GLOSSARY = ROOT / "data" / "knowledge" / "glossary_es_en.json"
 STANDARD = "NASA-STD-3001 Vol. 2 Rev F"
 BRIEF = "OCHMO-TB-004 CO₂"
-MEDICAL = "OCHMO-TB-044 operaciones médicas"
+MEDICAL = "OCHMO-TB-044 Medical Operations"
 
 
 def corpus() -> list[Chunk]:
@@ -107,15 +107,15 @@ def nutrition_source() -> RagKnowledgeSource:
 
 
 def test_question_words_do_not_have_to_appear_in_the_passage() -> None:
-    # «much» y «needed» son de la pregunta, no del documento: exigirlos escondía el pasaje.
+    # 'much' and 'needed' belong to the question, not the document: requiring them hid the passage.
     results = nutrition_source().search("How much vitamin D is needed per day?", k=3)
 
     assert results[0].requirement_ref == "V2 7006"
 
 
 def test_a_rare_word_alone_does_not_answer_a_question_that_has_other_unknown_words() -> None:
-    # «world» sale en una lista de siglas; «football» no sale en ningún documento. Una pregunta
-    # con palabras que ningún documento tiene exige dos coincidencias, no una.
+    # 'world' appears in a list of acronyms; 'football' appears in no document. A question with
+    # words that no document has requires two matches, not one.
     acronyms = chunk_page(
         "ACR",
         1,
@@ -136,7 +136,7 @@ def test_a_very_long_passage_is_shortened_for_the_answer() -> None:
 
 
 def test_the_excerpt_shows_the_part_that_matches_not_just_the_start_of_the_passage() -> None:
-    # Caso real: TB-044 p. 9 tiene la cifra al final de un fragmento de ~1200 caracteres.
+    # Real case: TB-044 p. 9 has the figure at the end of a ~1200-character fragment.
     text = ("Background about the crew timeline and the duty day. " * 60) + (
         "Motion sickness associated with adaptation can last on average for 3 days."
     )
@@ -150,10 +150,10 @@ def test_the_excerpt_shows_the_part_that_matches_not_just_the_start_of_the_passa
 
 
 def test_the_excerpt_prefers_the_region_with_the_rare_term_over_one_with_common_terms() -> None:
-    # Dos términos comunes (cabin, pressure) en una región no deben ganarle a un término raro
-    # (diluent) con la cifra en otra: contar términos sin ponderar escondía la cifra.
+    # Two common terms (cabin, pressure) in one region must not beat a rare term (diluent) with the
+    # figure in another: counting terms without weighting hid the figure.
     common_region = "The cabin pressure is monitored. The cabin pressure sensor is checked. " * 8
-    # Texto neutro entre las dos regiones: ninguna ventana del tamaño del extracto cubre ambas.
+    # Neutral text between the two regions: no excerpt-sized window covers both.
     neutral = "Crew activities and schedules are planned well ahead of time. " * 40
     rare_region = "The atmosphere shall contain at least 30% diluent gas for crew safety."
     target = chunk_page(
@@ -176,8 +176,8 @@ def test_the_excerpt_prefers_the_region_with_the_rare_term_over_one_with_common_
 
 
 def test_a_question_matching_only_one_incidental_word_gets_no_passage() -> None:
-    # Caso real: «Who won the last football world cup?» coincidía solo en «world», dentro de una
-    # lista de acrónimos, y recibía una respuesta. Una coincidencia aislada no es una respuesta.
+    # Real case: 'Who won the last football world cup?' matched only on 'world', inside a list of
+    # acronyms, and got an answer. A lone match is not an answer.
     acronyms = chunk_page(
         "STD",
         275,
@@ -201,7 +201,7 @@ def test_a_question_matching_only_one_incidental_word_gets_no_passage() -> None:
 
 
 def test_words_the_glossary_translated_do_not_count_against_the_coverage() -> None:
-    # «cabeza» y «duele» ya se tradujeron a «headache»: no son términos sin cubrir.
+    # 'cabeza' and 'duele' were already translated to 'headache': they are not uncovered terms.
     chunks = chunk_page(
         "TB", 2, "Headache is the first symptom of high ppCO2 in the cabin air.", "TB"
     )
@@ -229,7 +229,7 @@ def test_loads_the_chunks_from_the_index_file(tmp_path: Path) -> None:
 
 
 def test_a_focused_passage_beats_a_long_list_that_only_mentions_the_term() -> None:
-    # Caso real: una tabla de condiciones médicas lista «headache» entre decenas de términos.
+    # Real case: a table of medical conditions lists 'headache' among dozens of terms.
     long_list = chunk_page(
         "RISK-TABLE",
         81,
@@ -258,7 +258,7 @@ def test_singular_and_plural_forms_match() -> None:
         *chunk_page("B", 1, "Unrelated text about pumps and valves in the cabin.", "TB"),
     ]
 
-    # El glosario traduce «dura» a «lasts»; el texto dice «last».
+    # The glossary translates 'dura' to 'lasts'; the text says 'last'.
     results = RagKnowledgeSource(chunks, GLOSSARY).search("¿Cuánto dura el mareo?", k=2)
 
     assert [r.document_code for r in results] == ["A"]
@@ -325,4 +325,4 @@ def test_the_real_demo_source_can_be_the_fallback() -> None:
     demo = DemoKnowledgeSource.from_file(ROOT / "data" / "knowledge" / "demo_catalog.json")
     combined = FallbackKnowledgeSource(RagKnowledgeSource([], GLOSSARY), demo)
 
-    assert combined.search("dolor de cabeza", 1)[0].document_code == "OCHMO-TB-004 CO₂"
+    assert combined.search("headache", 1)[0].document_code == "OCHMO-TB-004 CO₂"

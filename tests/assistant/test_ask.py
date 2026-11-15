@@ -21,11 +21,11 @@ from spaceapp.modules.knowledge.contracts import CitationDTO
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
 DEMO_CATALOG = Path(__file__).resolve().parents[2] / "data" / "knowledge" / "demo_catalog.json"
-HEADACHE = "¿Por qué me duele la cabeza?"
+HEADACHE = "Why do I have a headache?"
 
 
 class FakeLlm:
-    """Modelo de prueba: emite tokens, puede tardar o fallar, y registra las llamadas."""
+    """Test model: emits tokens, can be slow or fail, and records the calls."""
 
     available = True
 
@@ -49,7 +49,7 @@ class FakeLlm:
 
 
 class FakeAlerts:
-    """Solo lectura: el asistente no tiene ningún puerto para cambiar una alerta."""
+    """Read-only: the assistant has no port to change an alert."""
 
     def __init__(self, titles: Sequence[str] = ()) -> None:
         self._titles = list(titles)
@@ -82,7 +82,7 @@ def test_answers_a_headache_question_with_the_tb004_passage_and_its_citation() -
     result = assistant(uuid.uuid4(), HEADACHE)
 
     assert result.outcome is AskOutcome.ANSWERED
-    assert "dolor de cabeza entre 2.8 y 4.5 mmhg" in result.text.lower()
+    assert "headache between 2.8 and 4.5 mmhg" in result.text.lower()
     assert result.citations[0].document_code == "OCHMO-TB-004 CO₂"
     assert result.citations[0].evidence_state == "TB"
 
@@ -114,7 +114,18 @@ def test_the_template_shows_only_the_part_of_each_passage_that_answers_the_quest
 
     assert "between 2.8 and 4.5 mmHg" in result.text
     assert len(result.text) < len(passage) / 2
-    assert result.citations[0].excerpt == passage  # la cita conserva el extracto completo
+    assert result.citations[0].excerpt == passage  # the citation keeps the full excerpt
+
+
+def test_the_template_text_has_no_source_label_after_each_passage() -> None:
+    assistant, _ = build()
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert result.composed_by == "plantilla"
+    assert "VERIFICADO" not in result.text
+    assert " · " not in result.text
+    assert result.citations[0].evidence_state == "TB"  # the sources stay in the citations
 
 
 def test_mentions_the_active_alert_without_changing_it() -> None:
@@ -141,7 +152,7 @@ def test_a_model_answer_with_a_figure_the_passages_do_not_have_is_replaced_by_th
 
 
 def test_a_model_answer_in_spanish_is_replaced_by_the_passages() -> None:
-    llm = FakeLlm(tokens=["El dolor de cabeza aparece ", "entre 2.8 y 4.5 mmHg en la cabina."])
+    llm = FakeLlm(tokens=["El headache aparece ", "entre 2.8 y 4.5 mmHg en la cabina."])
     assistant, _ = build(llm=llm)
 
     result = assistant(uuid.uuid4(), HEADACHE)
@@ -164,7 +175,7 @@ def test_answers_no_information_without_calling_the_model_when_no_passage_is_rel
     llm = FakeLlm(tokens=["esto no debe salir"])
     assistant, _ = build(llm=llm)
 
-    result = assistant(uuid.uuid4(), "¿Cómo cambio el filtro de la esclusa?")
+    result = assistant(uuid.uuid4(), "How do I change the airlock filter?")
 
     assert result.outcome is AskOutcome.NO_INFO
     assert result.text == NO_INFO_TEXT
@@ -188,7 +199,7 @@ def test_falls_back_to_the_passages_when_the_model_exceeds_the_time_limit() -> N
     result = assistant(uuid.uuid4(), HEADACHE)
 
     assert result.composed_by == "plantilla"
-    assert "dolor de cabeza entre 2.8 y 4.5 mmhg" in result.text.lower()
+    assert "headache between 2.8 and 4.5 mmhg" in result.text.lower()
 
 
 def test_falls_back_to_the_passages_when_the_model_fails() -> None:
@@ -256,7 +267,7 @@ def test_publishes_the_no_information_answer_too_with_no_citations() -> None:
     publisher = ListPublisher()
     assistant, _ = build(publisher=publisher)
 
-    assistant(uuid.uuid4(), "¿Cómo cambio el filtro de la esclusa?")
+    assistant(uuid.uuid4(), "How do I change the airlock filter?")
 
     [event] = publisher.events
     assert event.text == NO_INFO_TEXT

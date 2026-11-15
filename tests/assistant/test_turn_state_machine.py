@@ -1,7 +1,7 @@
-"""Máquina de estados de la intervención (voz o texto): de lo recibido a la respuesta.
+"""State machine of the utterance (voice or text): from what was received to the answer.
 
-Las propiedades importan más que los ejemplos: nada llega a n8n sin confirmar, los estados
-terminales no cambian y ningún estado se queda colgado.
+Properties matter more than examples: nothing reaches n8n without confirmation, terminal states
+do not change and no state is left hanging.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def test_the_text_path_skips_the_transcription() -> None:
     ("state", "event", "expected"),
     [
         (S.TRANSCRIBING, E.TRANSCRIPT_FAILED, S.NO_TRANSCRIPT),
-        (S.NO_TRANSCRIPT, E.CONFIRM, S.CONFIRMED),  # la tripulación escribe lo que quiere preguntar
+        (S.NO_TRANSCRIPT, E.CONFIRM, S.CONFIRMED),  # the crew types what they want to ask
         (S.TYPED, E.DISCARD, S.DISCARDED),
         (S.TRANSCRIBED, E.DISCARD, S.DISCARDED),
         (S.NO_TRANSCRIPT, E.DISCARD, S.DISCARDED),
@@ -138,15 +138,15 @@ def test_a_random_sequence_of_events_never_breaks_the_rules(events: list[E], sta
         try:
             state = transition(state, event)
         except InvalidTransitionError:
-            # Rechazar un evento deja el estado como estaba: nunca se salta un paso.
+            # Rejecting an event leaves the state as it was: a step is never skipped.
             assert (state, event) not in TRANSITIONS
             continue
         history.append(state)
 
-    # Nunca se consulta sin haber confirmado antes.
+    # A question is never consulted without having confirmed first.
     if S.CONSULTING in history:
         assert S.CONFIRMED in history[: history.index(S.CONSULTING)]
-    # Un estado terminal, una vez alcanzado, es el último.
+    # A terminal state, once reached, is the last one.
     for index, past in enumerate(history):
         if past in TERMINAL_STATES:
             assert index == len(history) - 1

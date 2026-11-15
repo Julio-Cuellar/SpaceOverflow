@@ -1,4 +1,4 @@
-"""El workflow de n8n es dato versionado: se comprueba su forma sin necesitar n8n."""
+"""The n8n workflow is versioned data: its shape is checked without needing n8n."""
 
 from __future__ import annotations
 

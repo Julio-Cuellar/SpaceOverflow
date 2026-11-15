@@ -22,10 +22,12 @@ export function Root({
   initialPath = window.location.pathname,
   askAssistant,
   transcribeVoice,
+  speak,
 }: {
   initialPath?: string
   askAssistant?: AppProps['askAssistant']
   transcribeVoice?: AppProps['transcribeVoice']
+  speak?: AppProps['speak']
 }) {
   const [path, setPath] = useState(initialPath)
   const [ground, setGround] = useState(initialGroundState)
@@ -89,6 +91,7 @@ export function Root({
         onTasksSharedChange={setTasksShared}
         askAssistant={askAssistant}
         transcribeVoice={transcribeVoice}
+        speak={speak}
       />
     </>
   )

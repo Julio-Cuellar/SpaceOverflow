@@ -1,4 +1,4 @@
-"""Servidor HTTP del contenedor de Whisper. Un modelo de mentira, un servidor real en el puerto 0."""
+"""HTTP server of the Whisper container. A fake model, a real server on port 0."""
 
 from __future__ import annotations
 
@@ -35,8 +35,8 @@ class FakeStt:
 def serve() -> Iterator[Any]:
     servers: list[ThreadingHTTPServer] = []
 
-    def start(stt: FakeStt) -> str:
-        server = build_server(stt, host="127.0.0.1", port=0)
+    def start(stt: FakeStt, tts: object | None = None) -> str:
+        server = build_server(stt, host="127.0.0.1", port=0, tts=tts)  # type: ignore[arg-type]
         servers.append(server)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         return f"http://127.0.0.1:{server.server_address[1]}"
@@ -45,6 +45,35 @@ def serve() -> Iterator[Any]:
     for server in servers:
         server.shutdown()
         server.server_close()
+
+
+class FakeTts:
+    available = True
+
+    def __init__(self, audio: bytes | None = b"RIFFfake-wav", fail: bool = False) -> None:
+        self._audio = audio
+        self._fail = fail
+        self.spoken: list[str] = []
+
+    def speak(self, text: str) -> bytes | None:
+        self.spoken.append(text)
+        if self._fail:
+            raise RuntimeError("voice model exploded")
+        return self._audio
+
+
+def speak(url: str, payload: Any) -> tuple[int, str, bytes]:
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=5) as response:
+            return response.status, response.headers["Content-Type"], response.read()
+    except urllib.error.HTTPError as error:
+        return error.code, error.headers["Content-Type"], error.read()
 
 
 def post(url: str, body: bytes, content_type: str = "audio/webm") -> tuple[int, Any]:
@@ -117,3 +146,48 @@ def test_an_unknown_path_is_not_found(serve: Any) -> None:
     status, _ = post(f"{serve(FakeStt(None))}/other", b"audio")
 
     assert status == 404
+
+
+def test_speak_turns_the_text_into_a_wav(serve: Any) -> None:
+    tts = FakeTts()
+    base = serve(FakeStt(None), tts)
+
+    status, content_type, audio = speak(f"{base}/speak", {"text": "The limit is three."})
+
+    assert status == 200
+    assert content_type == "audio/wav"
+    assert audio == b"RIFFfake-wav"
+    assert tts.spoken == ["The limit is three."]
+
+
+def test_speak_without_a_voice_model_is_503_and_json(serve: Any) -> None:
+    status, content_type, body = speak(f"{serve(FakeStt(None))}/speak", {"text": "hello"})
+
+    assert status == 503
+    assert content_type == "application/json"
+    assert "error" in json.loads(body)
+
+
+def test_speak_with_an_unavailable_voice_is_503(serve: Any) -> None:
+    status, _, _ = speak(f"{serve(FakeStt(None), FakeTts(audio=None))}/speak", {"text": "hello"})
+
+    assert status == 503
+
+
+@pytest.mark.parametrize("payload", [{}, {"text": ""}, {"text": "   "}, {"text": 5}, ["x"]])
+def test_speak_rejects_a_missing_or_empty_text(serve: Any, payload: Any) -> None:
+    tts = FakeTts()
+
+    status, _, _ = speak(f"{serve(FakeStt(None), tts)}/speak", payload)
+
+    assert status == 400
+    assert tts.spoken == []
+
+
+def test_speak_with_a_failing_model_is_a_json_error(serve: Any) -> None:
+    status, content_type, _ = speak(
+        f"{serve(FakeStt(None), FakeTts(fail=True))}/speak", {"text": "hi"}
+    )
+
+    assert status == 500
+    assert content_type == "application/json"

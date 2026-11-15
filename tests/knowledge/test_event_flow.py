@@ -1,4 +1,4 @@
-"""Recorrido de punta a punta sobre el bus de Dev A: alert_raised entra, recommendation_ready sale."""
+"""End-to-end walk over Dev A's bus: alert_raised comes in, recommendation_ready goes out."""
 
 from __future__ import annotations
 

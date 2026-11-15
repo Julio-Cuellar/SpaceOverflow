@@ -1,9 +1,9 @@
-"""Comando de vectores: `python -m spaceapp.modules.knowledge.ingest.embed`.
+"""Vectors command: `python -m spaceapp.modules.knowledge.ingest.embed`.
 
-Calcula con Ollama el vector de cada fragmento citable y lo guarda junto al índice. Va aparte de la
-ingesta a propósito: la ingesta no necesita red ni modelo, y la búsqueda sigue funcionando por
-palabras si los vectores no existen. Es incremental: solo calcula los fragmentos que no tienen
-vector del mismo modelo.
+Computes with Ollama the vector of each citable fragment and stores it next to the index. It is
+kept apart from the ingestion on purpose: the ingestion needs no network or model, and the search
+keeps working by words if the vectors do not exist. It is incremental: it only computes the
+fragments that have no vector from the same model.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def build_embeddings(
     progress: Callable[[int, int], None] | None = None,
     batch: int = PROGRESS_BATCH,
 ) -> tuple[VectorIndex, int, int]:
-    """Vectores de los fragmentos citables: (índice, calculados ahora, reutilizados)."""
+    """Vectors of the citable fragments: (index, computed now, reused)."""
     searchable = searchable_chunks(chunks)
     reusable = existing if existing is not None and existing.model == embedder.model else None
 
@@ -63,19 +63,19 @@ def build_embeddings(
 
 def main(argv: Sequence[str] | None = None, embedder: Embedder | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Calcula los vectores de los fragmentos con un modelo de embeddings local."
+        description="Computes the fragment vectors with a local embeddings model."
     )
     parser.add_argument("--index", type=Path, default=DEFAULT_INDEX)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--model", default=DEFAULT_MODEL)
-    parser.add_argument("--url", default=DEFAULT_URL, help="dirección de Ollama")
-    parser.add_argument("--batch", type=int, default=32, help="textos por petición")
+    parser.add_argument("--url", default=DEFAULT_URL, help="Ollama address")
+    parser.add_argument("--batch", type=int, default=32, help="texts per request")
     args = parser.parse_args(argv)
 
     chunks = JsonlChunkStore(args.index).all() if args.index.exists() else []
     if not chunks:
         print(
-            "No hay índice. Ejecuta primero la ingesta: "
+            "There is no index. Run the ingestion first: "
             "python -m spaceapp.modules.knowledge.ingest",
             file=sys.stderr,
         )
@@ -86,8 +86,8 @@ def main(argv: Sequence[str] | None = None, embedder: Embedder | None = None) ->
     )
     try:
         existing = VectorIndex.load(args.out)
-    except ValueError as error:  # archivos a medias: se recalcula todo en vez de fallar
-        print(f"Se ignoran los vectores anteriores: {error}", file=sys.stderr)
+    except ValueError as error:  # half-written files: everything is recomputed instead of failing
+        print(f"Ignoring the previous vectors: {error}", file=sys.stderr)
         existing = None
 
     def report(done: int, total: int) -> None:
@@ -97,8 +97,8 @@ def main(argv: Sequence[str] | None = None, embedder: Embedder | None = None) ->
         index, new, reused = build_embeddings(chunks, embedder, existing, progress=report)
     except EmbeddingError as error:
         print(
-            f"No se pudieron calcular los vectores: {error}\n"
-            f"¿Está Ollama en marcha y el modelo instalado? "
+            f"The vectors could not be computed: {error}\n"
+            f"Is Ollama running and the model installed? "
             f"docker exec spaceapp-ollama ollama pull {embedder.model}",
             file=sys.stderr,
         )
@@ -106,8 +106,8 @@ def main(argv: Sequence[str] | None = None, embedder: Embedder | None = None) ->
 
     index.save(args.out)
     print(
-        f"Vectores: {new} nuevos, {reused} reutilizados "
-        f"({embedder.model}, {index.dim} dimensiones) en {args.out}"
+        f"Vectors: {new} new, {reused} reused "
+        f"({embedder.model}, {index.dim} dimensions) in {args.out}"
     )
     return 0
 

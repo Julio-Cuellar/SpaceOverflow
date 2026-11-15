@@ -1,9 +1,9 @@
-"""Vectores de los fragmentos: guardarlos, cargarlos y buscar por similitud coseno (sin librerías).
+"""Fragment vectors: store them, load them and search by cosine similarity (no libraries).
 
-Van en dos archivos juntos: `embeddings.json` (modelo, dimensión e ids, en el orden de las filas) y
-`embeddings.f32` (los números en float32, little-endian). Se guardan ya normalizados: así el
-producto escalar de dos vectores es su coseno, y comparar una consulta con ~2 000 fragmentos cuesta
-unas décimas de segundo en Python puro.
+They go in two files together: `embeddings.json` (model, dimension and ids, in row order) and
+`embeddings.f32` (the numbers as little-endian float32). They are stored already normalized: this
+way the dot product of two vectors is their cosine, and comparing a query with ~2,000 fragments
+takes a few tenths of a second in pure Python.
 """
 
 from __future__ import annotations
@@ -39,10 +39,10 @@ class VectorIndex:
         cls, model: str, ids: Sequence[str], vectors: Sequence[Sequence[float]]
     ) -> VectorIndex:
         if len(ids) != len(vectors):
-            raise ValueError("hay un número distinto de ids y de vectores")
+            raise ValueError("there is a different number of ids and vectors")
         dim = len(vectors[0]) if vectors else 0
         if any(len(vector) != dim for vector in vectors):
-            raise ValueError("los vectores tienen dimensiones distintas")
+            raise ValueError("the vectors have different dimensions")
         data: array[float] = array("f")
         for vector in vectors:
             data.extend(_normalise(vector))
@@ -61,13 +61,11 @@ class VectorIndex:
         return list(self._data[row * self.dim : (row + 1) * self.dim])
 
     def similarities(self, query: Sequence[float]) -> list[float]:
-        """Coseno entre la consulta y cada fragmento, en el orden de `ids`."""
+        """Cosine between the query and each fragment, in the order of `ids`."""
         if not self.ids:
             return []
         if len(query) != self.dim:
-            raise ValueError(
-                f"la consulta tiene {len(query)} dimensiones y los vectores {self.dim}"
-            )
+            raise ValueError(f"the query has {len(query)} dimensions and the vectors {self.dim}")
         unit = _normalise(query)
         return [
             sum(map(mul, unit, self._data[row * self.dim : (row + 1) * self.dim]))
@@ -75,7 +73,7 @@ class VectorIndex:
         ]
 
     def save(self, path: Path) -> None:
-        """Escribe primero los números y al final el json: si algo falla, el json viejo manda."""
+        """Writes the numbers first and the json last: if something fails, the old json rules."""
         path.parent.mkdir(parents=True, exist_ok=True)
         binary = _binary_path(path)
         temporary_binary = binary.with_name(binary.name + ".tmp")
@@ -92,7 +90,7 @@ class VectorIndex:
 
     @classmethod
     def load(cls, path: Path) -> VectorIndex | None:
-        """Los vectores guardados, o `None` si todavía no se calcularon."""
+        """The stored vectors, or `None` if they have not been computed yet."""
         binary = _binary_path(path)
         if not path.exists() or not binary.exists():
             return None
@@ -103,8 +101,8 @@ class VectorIndex:
         data: array[float] = array("f")
         if len(raw) % data.itemsize != 0 or len(raw) // data.itemsize != len(ids) * dim:
             raise ValueError(
-                f"{binary.name} no coincide con {path.name}: "
-                f"{len(raw)} bytes para {len(ids)} vectores de {dim} números"
+                f"{binary.name} does not match {path.name}: "
+                f"{len(raw)} bytes for {len(ids)} vectors of {dim} numbers"
             )
         data.frombytes(raw)
         if sys.byteorder == "big":

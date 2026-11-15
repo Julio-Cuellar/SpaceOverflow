@@ -1,4 +1,4 @@
-"""Adaptador de voz que habla con el contenedor de Whisper. Sin red: el `opener` es de mentira."""
+"""Voice adapter that talks to the Whisper container. No network: the `opener` is fake."""
 
 from __future__ import annotations
 

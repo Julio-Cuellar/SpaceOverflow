@@ -1,4 +1,4 @@
-"""Puertos del asistente: lo que necesita del exterior. Las lecturas van por fachadas públicas."""
+"""Assistant ports: what it needs from the outside. Reads go through public facades."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ class StoredMessage:
 
 
 class LlmGateway(Protocol):
-    """Redacta con un modelo, solo con lo recuperado. `available` es False en el adaptador nulo."""
+    """Writes with a model, only from what was retrieved. `available` is False in the null one."""
 
     available: bool
 
@@ -36,7 +36,7 @@ class PassageSearch(Protocol):
 
 
 class ActiveAlerts(Protocol):
-    """Solo lectura. El asistente puede nombrar una alerta activa, nunca cambiarla."""
+    """Read-only. The assistant may name an active alert, never change it."""
 
     def titles(self) -> list[str]: ...
 
@@ -45,33 +45,43 @@ class ConversationRepository(Protocol):
     def add(
         self, conversation_id: UUID, role: str, text: str, citations: tuple[CitationDTO, ...]
     ) -> UUID:
-        """Guarda un mensaje y devuelve su id (el `utterance_id` del evento)."""
+        """Stores a message and returns its id (the event's `utterance_id`)."""
         ...
 
     def messages(self, conversation_id: UUID) -> list[StoredMessage]: ...
 
 
 class EventPublisher(Protocol):
-    """Publica por el outbox (en memoria hasta I1). No bloquea la respuesta al astronauta."""
+    """Publishes via the outbox (in memory until I1). It does not block the astronaut's answer."""
 
     def publish(self, event: AnswerReady) -> None: ...
 
 
 class SpeechToText(Protocol):
-    """Voz a texto. `available` es False en el adaptador nulo: entonces se escribe a mano."""
+    """Speech to text. `available` is False in the null adapter: then the question is typed."""
 
     available: bool
 
     def transcribe(self, audio: bytes, content_type: str) -> Transcript | None: ...
 
 
+class TextToSpeech(Protocol):
+    """Text to speech. `available` is False in the null adapter: then the answer is only read."""
+
+    available: bool
+
+    def speak(self, text: str) -> bytes | None:
+        """WAV audio of the text. Raises if the voice service does not answer."""
+        ...
+
+
 class AudioStore(Protocol):
     def save(self, utterance_id: UUID, audio: bytes, extension: str) -> str:
-        """Guarda el audio y devuelve dónde quedó."""
+        """Stores the audio and returns where it ended up."""
         ...
 
     def delete(self, path: str) -> None:
-        """Borra el audio; si ya no está, no hace nada."""
+        """Deletes the audio; if it is no longer there, it does nothing."""
         ...
 
 
@@ -86,9 +96,9 @@ class UtteranceRepository(Protocol):
 
 
 class AssistantOrchestrator(Protocol):
-    """Quien responde con herramientas (n8n). Devuelve solo texto: las citas las pone el backend.
+    """Whoever answers with tools (n8n). It returns text only: the backend adds the citations.
 
-    Lanza `OrchestratorError` si falla. `available` es False si no está configurado.
+    Raises `OrchestratorError` if it fails. `available` is False if it is not configured.
     """
 
     @property

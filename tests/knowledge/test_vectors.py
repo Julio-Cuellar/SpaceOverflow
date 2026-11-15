@@ -43,9 +43,9 @@ def test_load_returns_nothing_when_there_are_no_vectors_yet(tmp_path: Path) -> N
 def test_load_rejects_vectors_that_do_not_match_the_list_of_ids(tmp_path: Path) -> None:
     path = tmp_path / "embeddings.json"
     VectorIndex.build("m", ["a", "b"], [[1.0, 0.0], [0.0, 1.0]]).save(path)
-    path.with_suffix(".f32").write_bytes(b"\x00" * 4)  # un solo número, no 2 por 2
+    path.with_suffix(".f32").write_bytes(b"\x00" * 4)  # a single number, not 2 by 2
 
-    with pytest.raises(ValueError, match="no coincide"):
+    with pytest.raises(ValueError, match="does not match"):
         VectorIndex.load(path)
 
 

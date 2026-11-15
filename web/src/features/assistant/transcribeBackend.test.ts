@@ -4,12 +4,13 @@ import { transcribeBackend } from './transcribeBackend'
 const json = (payload: unknown, status = 200) =>
   new Response(JSON.stringify(payload), { status })
 
-const state = (status: string, text = '') => ({
+const state = (status: string, text = '', reasonCode: string | null = null) => ({
   utterance_id: 'u-1',
   status,
   text,
   confidence: null,
   reason: null,
+  reason_code: reasonCode,
 })
 
 const audio = new Blob(['bytes'], { type: 'audio/webm;codecs=opus' })
@@ -46,14 +47,26 @@ describe('transcribeBackend', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(4)
   })
 
-  it('returns null when nothing was heard or there is no speech model', async () => {
+  it('returns null only when nothing was heard', async () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(json({ utterance_id: 'u-1' }, 202))
-      .mockResolvedValueOnce(json(state('NO_TRANSCRIPT')))
+      .mockResolvedValueOnce(json(state('NO_TRANSCRIPT', '', 'NO_SPEECH')))
 
     expect(await transcribeBackend('/v', 'c', fetchImpl, 0)(audio)).toBeNull()
   })
+
+  it.each(['FAILED', 'NO_MODEL'])(
+    'fails, instead of saying nothing was heard, when the voice service reports %s',
+    async (code) => {
+      const fetchImpl = vi
+        .fn()
+        .mockResolvedValueOnce(json({ utterance_id: 'u-1' }, 202))
+        .mockResolvedValueOnce(json(state('NO_TRANSCRIPT', '', code)))
+
+      await expect(transcribeBackend('/v', 'c', fetchImpl, 0)(audio)).rejects.toThrow(code)
+    },
+  )
 
   it('fails instead of inventing a transcript when the upload is refused', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(json({ detail: 'nope' }, 415))
@@ -75,6 +88,6 @@ describe('transcribeBackend', () => {
       Promise.resolve(url.includes('conversation_id') ? json({ utterance_id: 'u-1' }, 202) : json(state('TRANSCRIBING'))),
     )
 
-    await expect(transcribeBackend('/v', 'c', fetchImpl, 0, 3)(audio)).rejects.toThrow(/tard/i)
+    await expect(transcribeBackend('/v', 'c', fetchImpl, 0, 3)(audio)).rejects.toThrow(/too long/i)
   })
 })

@@ -1,9 +1,10 @@
-"""Resumen extractivo de un pasaje para la plantilla: la parte que contesta la pregunta.
+"""Extractive summary of a passage for the template: the part that answers the question.
 
-La plantilla se usa cuando el modelo no contesta, y mostraba cada pasaje entero (600 a 900
-caracteres). Aquí se elige la frase que más se parece a la pregunta y, si aún es larga, la ventana
-que más términos y cifras reúne. No se reescribe nada: todo lo que sale está literalmente en el
-pasaje. Las citas conservan el extracto completo; esto solo cambia lo que se lee en la plantilla.
+The template is used when the model does not answer, and it showed every passage in full (600 to
+900 characters). Here the sentence most similar to the question is chosen and, if it is still long,
+the window that gathers the most terms and figures. Nothing is rewritten: everything shown is
+literally in the passage. Citations keep the full excerpt; this only changes what is read in the
+template.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ import re
 MAX_CHARS = 260
 
 _WORD = re.compile(r"[A-Za-z0-9]+")
-# El encabezado de cada hoja de la norma («NASA-STD-3001, VOLUME 2, REVISION F 54 of 55»).
+# The header of each page of the standard ('NASA-STD-3001, VOLUME 2, REVISION F 54 of 55').
 _PAGE_HEADER = re.compile(r"NASA-STD-3001,? VOLUME \d,? REVISION [A-Z] \d+ of \d+\s*")
 _SENTENCE_END = re.compile(r"(?<=[.;\]])\s+(?=[A-Z\[(])")
 _STOP = frozenset(
@@ -78,17 +79,17 @@ def _weight(sentence: str, query: set[str]) -> float:
 
 
 def _window(sentence: str, query: set[str]) -> str:
-    """La ventana de `MAX_CHARS` con más términos de la pregunta y cifras, entre palabras."""
+    """The `MAX_CHARS` window with the most question terms and figures, between words."""
     words = [(m.start(), m.end()) for m in re.finditer(r"\S+", sentence)]
     best_score, best_first = -1.0, 0
     for first, (start, _) in enumerate(words):
         piece = sentence[start : start + MAX_CHARS]
         score = _weight(piece, query)
-        if score >= best_score:  # a igualdad, la más tardía: la cifra suele ir tras los términos
+        if score >= best_score:  # on a tie, the latest: the figure usually follows the terms
             best_score, best_first = score, first
     start = words[best_first][0]
     end = start + MAX_CHARS
-    if end < len(sentence):  # termina en una palabra entera
+    if end < len(sentence):  # ends on a whole word
         last = max(i for i, (_, word_end) in enumerate(words) if word_end <= end)
         end = words[last][1]
     else:
@@ -113,7 +114,7 @@ def brief(excerpt: str, question: str) -> str:
     query = _terms(question)
     sentences = [s for s in _SENTENCE_END.split(text) if s.strip()]
     best = max(sentences, key=lambda s: _weight(s, query), default=text)
-    if _weight(best, query) <= 0.5:  # ninguna frase se parece a la pregunta: el comienzo
+    if _weight(best, query) <= 0.5:  # no sentence resembles the question: the beginning
         return _head(text)
     if len(best) <= MAX_CHARS:
         return best.strip()

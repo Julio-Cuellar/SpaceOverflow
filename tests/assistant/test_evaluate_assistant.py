@@ -1,4 +1,4 @@
-"""Evaluación del asistente completo (n8n + Ollama + RAG) con las preguntas del RAG."""
+"""Evaluation of the whole assistant (n8n + Ollama + RAG) with the RAG questions."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def cite(document: str = "DOC-A", excerpt: str = "texto") -> dict[str, Any]:
 def test_an_in_scope_question_hits_when_a_citation_has_the_expected_text() -> None:
     case = EvalCase("q", expected_contains=("3 mmhg",))
 
-    verdict = judge(case, response(citations=[cite(excerpt="El límite es 3 mmHg")]))
+    verdict = judge(case, response(citations=[cite(excerpt="The limit is 3 mmHg")]))
 
     assert verdict.passed is True
 

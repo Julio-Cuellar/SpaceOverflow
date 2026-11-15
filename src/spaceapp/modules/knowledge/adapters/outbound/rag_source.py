@@ -1,8 +1,8 @@
-"""Búsqueda sobre los fragmentos de los PDFs de NASA, con respaldo a la fuente de demostración.
+"""Search over the NASA PDF fragments, falling back to the demo source.
 
-Sin modelo de embeddings: puntúa por términos, ponderados por su rareza, y traduce la pregunta con
-un glosario porque los documentos están en inglés. Cuando se decida un modelo multilingüe, este
-adaptador es el que se reemplaza (plan, decisión 5).
+Without an embeddings model: it scores by terms, weighted by rarity, and translates the question
+with a glossary because the documents are in English. If a multilingual model is chosen, this
+adapter is the one to replace (plan, decision 5).
 """
 
 from __future__ import annotations
@@ -25,19 +25,18 @@ from spaceapp.modules.knowledge.ingest.chunking import MAX_CHARS, Chunk, searcha
 from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
 from spaceapp.modules.knowledge.ports import PassageSource
 
-# Por debajo de este puntaje no hay pasaje: una palabra presente en casi todos los fragmentos no
-# basta.
+# Below this score there is no passage: a word present in almost every fragment is not enough.
 MIN_SCORE = 1.0
 MIN_MATCHED_TERMS = 2
 BM25_K1 = 1.5
 BM25_B = 0.75
-# Se cita el fragmento completo: recortar a 500 caracteres escondía la cifra en la mitad de los
-# casos
-# (medido sobre los PDFs reales: con 500 se veía 7 de 25 respuestas; con 1200, 13 de 25).
+# The full fragment is cited: cutting to 500 characters hid the figure in half of the cases
+# (measured on the real PDFs: with 500 it showed 7 of 25 answers; with 1200, 13 of 25).
 EXCERPT_MAX_CHARS = MAX_CHARS
 _QUERY_MIN_LENGTH = 4
-# Palabras de la pregunta que no dicen de qué trata («how much … is needed»): si cuentan como
-# términos, el pasaje tendría que contenerlas y la cifra buscada quedaría fuera de los resultados.
+# Question words that say nothing about the topic ('how much ... is needed'): if they count as
+# terms, the passage would have to contain them and the figure being looked for would fall out of
+# the results.
 _STOPWORDS = frozenset(
     [
         "what",
@@ -108,11 +107,11 @@ _CONTEXT_BEFORE = 120
 
 
 def _snippet(content: str, query: set[str], idf: dict[str, float]) -> str:
-    """Extracto de hasta 500 caracteres: la parte del pasaje que mejor cubre la pregunta.
+    """Excerpt of up to 500 characters: the part of the passage that best covers the question.
 
-    Recortar siempre el comienzo escondería la cifra cuando está al final de un fragmento largo.
-    Cada término cuenta por su rareza: un término raro («diluent») pesa más que dos comunes
-    («cabin», «pressure»), que aparecen por todas partes y no señalan dónde está la respuesta.
+    Always cutting the beginning would hide the figure when it is at the end of a long fragment.
+    Each term counts by its rarity: a rare term ('diluent') weighs more than two common ones
+    ('cabin', 'pressure'), which appear everywhere and do not point to where the answer is.
     """
     if len(content) <= EXCERPT_MAX_CHARS:
         return content
@@ -131,7 +130,7 @@ def _snippet(content: str, query: set[str], idf: dict[str, float]) -> str:
         if covered > best:
             best, start = covered, candidate
 
-    width = EXCERPT_MAX_CHARS - 2  # queda sitio para las elipsis
+    width = EXCERPT_MAX_CHARS - 2  # room left for the ellipses
     if start > 0:
         space = content.find(" ", start)
         if 0 <= space < start + 40:
@@ -148,7 +147,7 @@ def _snippet(content: str, query: set[str], idf: dict[str, float]) -> str:
 class RagKnowledgeSource:
     def __init__(self, chunks: Sequence[Chunk], glossary_path: Path) -> None:
         self._glossary = load_glossary(glossary_path)
-        # Los títulos sueltos y las entradas de índice no son pasajes citables: se descartan.
+        # Loose titles and index entries are not citable passages: they are discarded.
         self._chunks = searchable_chunks(chunks)
         self._counts = [token_counts(chunk.content) for chunk in self._chunks]
         self._lengths = [sum(counts.values()) for counts in self._counts]
@@ -160,7 +159,7 @@ class RagKnowledgeSource:
         }
 
     def _score(self, query: set[str], position: int) -> float:
-        """BM25: pondera cada término por su rareza, su frecuencia y la longitud del fragmento."""
+        """BM25: weighs each term by its rarity, its frequency and the length of the fragment."""
         counts = self._counts[position]
         length_ratio = self._lengths[position] / self._average_length
         score = 0.0
@@ -180,21 +179,21 @@ class RagKnowledgeSource:
 
     @property
     def chunks(self) -> list[Chunk]:
-        """Los fragmentos citables, en el orden de las posiciones que devuelve `rank`."""
+        """The citable fragments, in the order of the positions that `rank` returns."""
         return self._chunks
 
     def search(self, text: str, k: int) -> list[Citation]:
-        """Pasajes citables, del más al menos relevante. Vacío si ninguno pasa el umbral."""
+        """Citable passages, from most to least relevant. Empty if none passes the threshold."""
         positions, query = self.rank(text)
         return [self.citation(position, query) for position in positions[:k]]
 
     def rank(self, text: str) -> tuple[list[int], set[str]]:
-        """Posiciones de los fragmentos que pasan los umbrales, del más al menos relevante.
+        """Positions of the fragments that pass the thresholds, from most to least relevant.
 
-        Devuelve también los términos de la consulta, que `citation` usa para elegir el extracto.
+        It also returns the query terms, which `citation` uses to pick the excerpt.
         """
         english, translated = self._glossary.explain(text)
-        # Las palabras que el glosario ya tradujo no se buscan en español: están en `english`.
+        # Words the glossary already translated are not searched in Spanish: they are in `english`.
         untranslated = {
             term
             for term in terms(text, _QUERY_MIN_LENGTH)
@@ -204,8 +203,8 @@ class RagKnowledgeSource:
         if not self._chunks or not query:
             return [], set()
 
-        # Una coincidencia aislada no es una respuesta: con varios términos en la pregunta, el
-        # fragmento debe coincidir en al menos dos (p. ej. «world» en una lista de acrónimos).
+        # A lone match is not an answer: with several terms in the question, the
+        # fragment must match at least two (e.g. 'world' in a list of acronyms).
         required = min(MIN_MATCHED_TERMS, len(query))
 
         scored: list[tuple[float, int]] = []
@@ -231,7 +230,7 @@ class RagKnowledgeSource:
 
 
 class FallbackKnowledgeSource:
-    """Perfil `jurado`: RAG primero; si falta un pasaje, cae a la fuente de demostración."""
+    """`jurado` (judge) profile: RAG first; if a passage is missing, use the demo source."""
 
     def __init__(self, primary: PassageSource, fallback: PassageSource) -> None:
         self._primary = primary

@@ -1,4 +1,4 @@
-"""Valores del asistente. Sin dependencias externas."""
+"""Values of the assistant. No external dependencies."""
 
 from __future__ import annotations
 
@@ -12,4 +12,4 @@ class AskOutcome(StrEnum):
 
 
 class OrchestratorError(RuntimeError):
-    """El orquestador (n8n) no respondió bien: caído, lento o con una respuesta inválida."""
+    """The orchestrator (n8n) did not answer well: down, slow or with an invalid answer."""

@@ -1,7 +1,7 @@
-"""Comprueba el Whisper real dentro de la imagen spaceapp-voice (ver docker/voice/README.md).
+"""Checks the real Whisper inside the spaceapp-voice image (see docker/voice/README.md).
 
-Sin argumentos genera tono y silencio: solo prueba que el modelo carga y cuánto tarda.
-Con rutas de audio (wav o webm) las transcribe y muestra texto, confianza y tiempo.
+Without arguments it generates a tone and silence: it only proves the model loads and how long it takes.
+Given audio paths (wav or webm) it transcribes them and shows text, confidence and time.
 """
 
 import io
@@ -33,7 +33,7 @@ def wav_bytes(seconds, freq=None):
 
 
 stt = build_speech_to_text("small")
-print("adaptador:", type(stt).__name__, "available =", stt.available)
+print("adapter:", type(stt).__name__, "available =", stt.available)
 
 if sys.argv[1:]:
     for name in sys.argv[1:]:
@@ -46,10 +46,10 @@ if sys.argv[1:]:
 
 t = time.time()
 r = stt.transcribe(wav_bytes(5, 440), "audio/wav")
-print("1.ª transcripción (carga el modelo):", round(time.time() - t, 1), "s ->", r)
+print("1st transcription (loads the model):", round(time.time() - t, 1), "s ->", r)
 t = time.time()
 r = stt.transcribe(wav_bytes(5), "audio/wav")
-print("2.ª, 5 s de silencio:", round(time.time() - t, 2), "s ->", r)
+print("2nd, 5 s of silence:", round(time.time() - t, 2), "s ->", r)
 t = time.time()
 r = stt.transcribe(wav_bytes(10, 300), "audio/wav")
-print("3.ª, 10 s de tono:", round(time.time() - t, 2), "s ->", r)
+print("3rd, 10 s of tone:", round(time.time() - t, 2), "s ->", r)

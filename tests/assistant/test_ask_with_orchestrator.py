@@ -1,4 +1,4 @@
-"""El asistente con n8n como orquestador: el agente recupera, el backend cita y valida."""
+"""The assistant with n8n as orchestrator: the agent retrieves, the backend cites and validates."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowled
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
 DEMO_CATALOG = Path(__file__).resolve().parents[2] / "data" / "knowledge" / "demo_catalog.json"
-HEADACHE = "¿Por qué me duele la cabeza?"
+HEADACHE = "Why do I have a headache?"
 
 
 class FakeAlerts:
@@ -31,7 +31,7 @@ class FakeAlerts:
 
 
 class FakeAgent:
-    """Hace lo que haría el agente de n8n: llama a la herramienta de búsqueda y redacta."""
+    """Does what the n8n agent would do: calls the search tool and writes the answer."""
 
     available = True
 
@@ -108,7 +108,7 @@ def test_an_agent_that_says_it_has_no_information_after_retrieving_passages_is_n
 
 
 def test_an_agent_answer_in_spanish_is_not_delivered() -> None:
-    text = "El dolor de cabeza puede deberse a un nivel de CO₂ alto en la cabina."
+    text = "El headache puede deberse a un nivel de CO₂ alto en la cabina."
     assistant, _, _, _ = build(lambda log: FakeAgent(log, text=text))
 
     result = assistant(uuid.uuid4(), HEADACHE, turn_id=uuid.uuid4())
@@ -163,14 +163,14 @@ def test_an_agent_that_retrieved_nothing_is_not_trusted_and_the_template_answers
 
 
 def test_an_agent_that_retrieved_nothing_for_an_unknown_question_means_no_information() -> None:
-    assistant, _, _, publisher = build(lambda log: FakeAgent(log, text="Es París."))
+    assistant, _, _, publisher = build(lambda log: FakeAgent(log, text="It is Paris."))
 
-    result = assistant(uuid.uuid4(), "¿Cuál es la capital de Francia?", turn_id=uuid.uuid4())
+    result = assistant(uuid.uuid4(), "What is the capital of France?", turn_id=uuid.uuid4())
 
     assert result.outcome is AskOutcome.NO_INFO
     assert result.text == NO_INFO_TEXT
     assert result.citations == ()
-    assert "París" not in publisher.events[0].text
+    assert "Paris" not in publisher.events[0].text
 
 
 def test_when_n8n_fails_the_template_answers_and_says_it_was_degraded() -> None:
@@ -201,7 +201,7 @@ def test_a_late_passage_recorded_after_the_cut_is_refused() -> None:
     turn = uuid.uuid4()
 
     assistant(uuid.uuid4(), HEADACHE, turn_id=turn)
-    time.sleep(0.6)  # el hilo del agente termina y trata de registrar lo que recuperó
+    time.sleep(0.6)  # the agent's thread finishes and tries to record what it retrieved
 
     assert log.retrieved(turn) == []
 

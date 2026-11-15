@@ -6,21 +6,21 @@ export interface Recording {
 
 interface VoiceInputProps {
   startRecording: () => Promise<Recording>
-  /** Devuelve el texto, o `null` si no se oyó nada. Rechaza si falla el modelo. */
+  /** Returns the text, or `null` if nothing was heard. Rejects if the model fails. */
   transcribe: (audio: Blob) => Promise<{ text: string } | null>
-  /** Solo se llama cuando la tripulación confirma el texto. Transcribir no es actuar. */
+  /** Only called when the crew confirms the text. Transcribing is not acting. */
   onConfirm: (text: string) => void
-  /** Aviso bajo la transcripción, p. ej. que es simulada mientras no haya modelo de voz. */
+  /** Notice under the transcript, e.g. that it is simulated while there is no voice model. */
   notice?: string
 }
 
 type Phase = 'idle' | 'listening' | 'transcribing' | 'review'
 
-const TYPE_INSTEAD = 'escribe tu pregunta en el cuadro de texto.'
+const TYPE_INSTEAD = 'type your question in the text box.'
 
 /**
- * Mantener para hablar → transcripción editable → confirmar (plan, F14.3). Sin micrófono, sin
- * permiso o con un fallo del modelo, el mensaje manda a escribir: el texto siempre está disponible.
+ * Hold to talk → editable transcript → confirm (plan, F14.3). Without a microphone, without
+ * permission or with a model failure, the message says to type: text is always available.
  */
 export function VoiceInput({ startRecording, transcribe, onConfirm, notice }: VoiceInputProps) {
   const fieldId = useId()
@@ -40,7 +40,7 @@ export function VoiceInput({ startRecording, transcribe, onConfirm, notice }: Vo
       held.current = false
       recording.current = null
       setPhase('idle')
-      setProblem(`Sin micrófono o sin permiso: ${TYPE_INSTEAD}`)
+      setProblem(`No microphone or no permission: ${TYPE_INSTEAD}`)
     })
   }
 
@@ -55,14 +55,14 @@ export function VoiceInput({ startRecording, transcribe, onConfirm, notice }: Vo
       const result = await transcribe(audio)
       if (result === null || result.text.trim() === '') {
         setPhase('idle')
-        setProblem(`No se oyó nada: repite o ${TYPE_INSTEAD}`)
+        setProblem(`Nothing was heard: repeat or ${TYPE_INSTEAD}`)
         return
       }
       setText(result.text)
       setPhase('review')
     } catch {
       setPhase('idle')
-      setProblem(`No se pudo grabar o transcribir: ${TYPE_INSTEAD}`)
+      setProblem(`Could not record or transcribe: ${TYPE_INSTEAD}`)
     }
   }
 
@@ -92,17 +92,17 @@ export function VoiceInput({ startRecording, transcribe, onConfirm, notice }: Vo
             }
           }}
         >
-          Mantener para hablar
+          Hold to talk
         </button>
       )}
 
-      {phase === 'listening' && <p role="status">Escuchando…</p>}
-      {phase === 'transcribing' && <p role="status">Transcribiendo…</p>}
+      {phase === 'listening' && <p role="status">Listening…</p>}
+      {phase === 'transcribing' && <p role="status">Transcribing…</p>}
       {problem !== null && <p role="alert">{problem}</p>}
 
       {phase === 'review' && (
         <div>
-          <label htmlFor={fieldId}>Transcripción (puedes corregirla)</label>
+          <label htmlFor={fieldId}>Transcript (you can correct it)</label>
           <textarea id={fieldId} value={text} onChange={(event) => setText(event.target.value)} />
           {notice && <p>{notice}</p>}
           <button
@@ -113,10 +113,10 @@ export function VoiceInput({ startRecording, transcribe, onConfirm, notice }: Vo
               reset()
             }}
           >
-            Confirmar y preguntar
+            Confirm and ask
           </button>
           <button type="button" onClick={reset}>
-            Descartar
+            Discard
           </button>
         </div>
       )}

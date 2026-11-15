@@ -1,4 +1,4 @@
-"""Registro de lo que el agente recuperó en un turno: de ahí salen las citas, no del modelo."""
+"""Record of what the agent retrieved in a turn: the citations come from it, not from the model."""
 
 from __future__ import annotations
 

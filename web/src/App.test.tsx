@@ -91,8 +91,8 @@ describe('App', () => {
     render(<App />)
     await openTab('Asistente')
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'Why do I have a headache?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
     expect(screen.getByRole('link', { name: /OCHMO-TB-004 CO₂/ })).toBeInTheDocument()
   })
@@ -102,8 +102,8 @@ describe('App', () => {
     await provokeCo2InLab()
     await openTab('Asistente')
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'Why do I have a headache?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
     expect(screen.getByText(/Active alert: CO₂ alto \(Alerta\)/)).toBeInTheDocument()
 
     await openTab('Cabina')
@@ -187,12 +187,12 @@ describe('App', () => {
     render(<App />)
     await openTab('Asistente')
 
-    const button = screen.getByRole('button', { name: 'Mantener para hablar' })
+    const button = screen.getByRole('button', { name: 'Hold to talk' })
     await userEvent.pointer([{ keys: '[MouseLeft>]', target: button }])
     await userEvent.pointer([{ keys: '[/MouseLeft]', target: button }])
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('escribe tu pregunta')
-    expect(screen.getByLabelText('Pregunta')).toBeVisible()
+    expect(await screen.findByRole('alert')).toHaveTextContent('type your question')
+    expect(screen.getByLabelText('Question')).toBeVisible()
   })
 })
 
@@ -220,13 +220,26 @@ describe('App with the real voice service', () => {
     await openTab('Asistente')
 
     const user = userEvent.setup()
-    const button = screen.getByRole('button', { name: 'Mantener para hablar' })
+    const button = screen.getByRole('button', { name: 'Hold to talk' })
     await user.pointer([{ keys: '[MouseLeft>]', target: button }])
     await user.pointer([{ keys: '[/MouseLeft]', target: button }])
 
     expect(await screen.findByDisplayValue('what is the minimum cabin pressure')).toBeVisible()
     expect(transcribeVoice).toHaveBeenCalledWith(expect.any(Blob))
-    expect(screen.queryByText(/Transcripción simulada/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Simulated transcript/)).not.toBeInTheDocument()
+  })
+})
+
+describe('App with the real voice output', () => {
+  it('offers to read answers aloud only when a voice service is given', async () => {
+    const { unmount } = render(<App />)
+    await openTab('Asistente')
+    expect(screen.queryByLabelText('Read answers aloud')).not.toBeInTheDocument()
+    unmount()
+
+    render(<App speak={vi.fn().mockResolvedValue(undefined)} />)
+    await openTab('Asistente')
+    expect(screen.getByLabelText('Read answers aloud')).toBeVisible()
   })
 })
 
@@ -240,8 +253,8 @@ describe('App with the real assistant', () => {
     render(<App askAssistant={askAssistant} />)
     await openTab('Asistente')
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), 'What is the noise limit in the crew quarters?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'What is the noise limit in the crew quarters?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
     expect(await screen.findByText('Respuesta de n8n.')).toBeInTheDocument()
     expect(askAssistant).toHaveBeenCalledWith('What is the noise limit in the crew quarters?')

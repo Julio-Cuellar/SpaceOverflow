@@ -1,7 +1,7 @@
-"""Mide Whisper con grabaciones reales: error de palabras (WER) y tiempo de cada frase.
+"""Measures Whisper with real recordings: word error rate (WER) and time per phrase.
 
-Cada grabación `data/voice/samples/<nombre>.wav` (o `.webm`) lleva al lado `<nombre>.txt` con lo que
-se dijo. El servicio de voz debe estar en marcha (`docker/voice/README.md`).
+Each recording `data/voice/samples/<name>.wav` (or `.webm`) has next to it `<name>.txt` with what
+was said. The voice service must be running (`docker/voice/README.md`).
 
     arecord -f S16_LE -r 16000 -c 1 -d 5 data/voice/samples/cabin.wav
     echo "What is the minimum cabin pressure?" > data/voice/samples/cabin.txt
@@ -27,10 +27,10 @@ def _words(text: str) -> list[str]:
 
 
 def word_error_rate(expected: str, transcript: str) -> float:
-    """Palabras que hay que cambiar, quitar o añadir (Levenshtein) entre las palabras esperadas."""
+    """Words to change, remove or add (Levenshtein) relative to the expected words."""
     reference = _words(expected)
     if not reference:
-        raise ValueError("el texto esperado no tiene palabras")
+        raise ValueError("the expected text has no words")
     heard = _words(transcript)
     previous = list(range(len(heard) + 1))
     for i, word in enumerate(reference, start=1):
@@ -43,7 +43,7 @@ def word_error_rate(expected: str, transcript: str) -> float:
 
 
 def measure(results: Sequence[tuple[str, str, float]]) -> dict[str, float]:
-    """Resumen de `(esperado, transcrito, segundos)`."""
+    """Summary of `(expected, transcript, seconds)`."""
     errors = [word_error_rate(expected, heard) for expected, heard, _ in results]
     seconds = [elapsed for _, _, elapsed in results]
     return {
@@ -69,7 +69,7 @@ def _transcribe(url: str, path: Path) -> tuple[str, float]:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Mide la transcripción con grabaciones reales.")
+    parser = argparse.ArgumentParser(description="Measures the transcription with real recordings.")
     parser.add_argument("--samples", type=Path, default=Path("data/voice/samples"))
     parser.add_argument("--url", default="http://127.0.0.1:9000")
     args = parser.parse_args(argv)
@@ -79,7 +79,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         (path, path.with_suffix(".txt")) for path in audio if path.with_suffix(".txt").exists()
     ]
     if not pairs:
-        print(f"No hay grabaciones con su .txt en {args.samples}", flush=True)
+        print(f"No recordings with a .txt next to them in {args.samples}", flush=True)
         return 2
 
     results: list[tuple[str, str, float]] = []
@@ -88,11 +88,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         heard, elapsed = _transcribe(args.url, path)
         results.append((expected, heard, elapsed))
         print(f"{path.name}: {elapsed:5.1f} s  WER {word_error_rate(expected, heard):4.0%}")
-        print(f"   dicho:      {expected}\n   transcrito: {heard}")
+        print(f"   said:       {expected}\n   transcript: {heard}")
     summary = measure(results)
     print(
-        f"\n{summary['samples']:.0f} frases · WER medio {summary['mean_wer']:.0%} · "
-        f"{summary['mean_seconds']:.1f} s de media, {summary['max_seconds']:.1f} s el máximo"
+        f"\n{summary['samples']:.0f} phrases · mean WER {summary['mean_wer']:.0%} · "
+        f"{summary['mean_seconds']:.1f} s on average, {summary['max_seconds']:.1f} s at most"
     )
     return 0
 

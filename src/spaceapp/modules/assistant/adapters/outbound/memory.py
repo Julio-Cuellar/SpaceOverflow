@@ -1,4 +1,4 @@
-"""Repositorio en memoria de conversaciones. Sirve para pruebas y para la demo sin base de datos."""
+"""In-memory repository of conversations. Used for tests and for the demo without a database."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ class InMemoryConversations:
 
 
 class ListPublisher:
-    """Publicador en memoria: guarda los eventos. En I1 lo reemplaza el outbox real."""
+    """In-memory publisher: it stores the events. In I1 the real outbox replaces it."""
 
     def __init__(self) -> None:
         self.events: list[AnswerReady] = []

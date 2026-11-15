@@ -1,65 +1,81 @@
-# Whisper local (voz del asistente)
+# Local voice (assistant)
 
-Servicio HTTP de Whisper en Docker: el backend le manda el audio y recibe el texto (`HttpSpeechToText`). Es el mismo adaptador `WhisperSpeechToText` (`faster-whisper`, CPU, `int8`) sin instalar nada en el Python del equipo. El modelo vive en un volumen, no en la imagen.
+Voice HTTP service in Docker: Whisper (hearing: audio → text, `HttpSpeechToText`) and Kokoro-82M (speech: text → audio, `HttpTextToSpeech`). It is the same `WhisperSpeechToText` adapter (`faster-whisper`, CPU, `int8`) without installing anything in the team's Python. The models live in volumes, not in the image.
 
-## Preparación (una vez, con internet)
+## Setup (once, with internet)
 
 ```bash
-docker build -t spaceapp-voice:dev docker/voice          # imagen de unos 840 MB
+docker build -t spaceapp-voice:dev docker/voice          # image of about 876 MB
 docker volume create spaceapp-whisper-models
 docker run --rm -v spaceapp-whisper-models:/models spaceapp-voice:dev \
   python -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')"
 ```
 
-El modelo es `Systran/faster-whisper-small` (MIT, unos 464 MB en el volumen). Tarda unos 30 s en bajar; después carga en 1 a 2 s.
+The model is `Systran/faster-whisper-small` (MIT, about 464 MB in the volume). It takes about 30 s to download; afterwards it loads in 1 to 2 s.
 
-## Servicio (sin internet)
+## Output voice: Kokoro-82M (once, with internet)
+
+Kokoro-82M (Apache-2.0) runs on CPU with `kokoro-onnx` 0.6.1 (MIT), which is already in the image (`espeakng-loader` brings the phonemizer: apt is not needed). The weights go in a separate volume, like Whisper's:
 
 ```bash
-docker run -d --name spaceapp-voice -p 127.0.0.1:9000:9000 \
-  -v spaceapp-whisper-models:/models:ro -v "$PWD":/app:ro -e HF_HUB_OFFLINE=1 spaceapp-voice:dev
-curl -s localhost:9000/health                                   # {"status": "ok"}
-curl -s -X POST localhost:9000/transcribe -H 'Content-Type: audio/wav' --data-binary @frase.wav
+docker volume create spaceapp-kokoro-models
+docker run --rm -v spaceapp-kokoro-models:/kokoro spaceapp-voice:dev python -c "
+import urllib.request
+base = 'https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/'
+for name in ('voices-v1.0.bin', 'kokoro-v1.0.onnx'):      # 28.2 MB and 325.5 MB
+    urllib.request.urlretrieve(base + name, '/kokoro/' + name)"
 ```
 
-La repo se monta en `/app` (solo lectura): el servicio ejecuta `spaceapp.devtools.voice_server`, que usa el idioma (inglés) y el texto de contexto de `whisper.py`. El modelo carga en la primera petición (≈ 2 s). Con el modelo cargado, el contenedor usa unos 300 MB; Docker Desktop reparte 4 GB entre este, Ollama y n8n.
+Voice `af_heart`, US English (`kokoro.py`). Without the files the service still starts with the null voice and `/speak` answers 503.
 
-El servidor de desarrollo lo llama en `SPACEAPP_WHISPER_URL` (por defecto `http://127.0.0.1:9000`). Si no responde, la voz dice que se escriba la pregunta. El audio se borra en cuanto se transcribe.
+## Service (offline)
 
-## Medir con voz real
+```bash
+docker run -d --name spaceapp-voice --restart unless-stopped -p 127.0.0.1:9000:9000 \
+  -v spaceapp-whisper-models:/models:ro -v spaceapp-kokoro-models:/kokoro:ro \
+  -v "$PWD":/app:ro -e HF_HUB_OFFLINE=1 spaceapp-voice:dev
+curl -s localhost:9000/health                                   # {"status": "ok"}
+curl -s -X POST localhost:9000/transcribe -H 'Content-Type: audio/wav' --data-binary @phrase.wav
+curl -s -X POST localhost:9000/speak -H 'Content-Type: application/json' -d '{"text":"Hello."}' -o hello.wav
+```
+
+The repo is mounted at `/app` (read-only): the service runs `spaceapp.devtools.voice_server`, which uses the language (English) and the context text of `whisper.py`. The model loads on the first request (≈ 2 s). With both models loaded the container uses about 1.1 GB; Docker Desktop shares 4 GB among this one, Ollama and n8n.
+
+The development server calls it at `SPACEAPP_WHISPER_URL` (default `http://127.0.0.1:9000`). If it does not answer, the voice says to type the question. The audio is deleted as soon as it is transcribed.
+
+## Measuring with real voice
 
 ```bash
 mkdir -p data/voice/samples
-arecord -f S16_LE -r 16000 -c 1 -d 5 data/voice/samples/cabin.wav     # di la frase y espera 5 s
+arecord -f S16_LE -r 16000 -c 1 -d 5 data/voice/samples/cabin.wav     # say the phrase and wait 5 s
 echo "What is the minimum cabin pressure?" > data/voice/samples/cabin.txt
 .venv/bin/python -m spaceapp.devtools.voice_measure
 ```
 
-Imprime, por frase, lo dicho y lo transcrito con su tasa de error de palabras (WER) y el tiempo, y al final la media. `data/voice/` no se versiona: son grabaciones de personas.
+For each phrase it prints what was said and what was transcribed, with its word error rate (WER) and time, and the average at the end. `data/voice/` is not versioned: these are recordings of people.
 
-## Comprobación del modelo (sin internet)
+## Model check (offline)
 
 ```bash
 docker run --rm -v spaceapp-whisper-models:/models:ro -v "$PWD":/app:ro -e HF_HUB_OFFLINE=1 \
   spaceapp-voice:dev python /app/docker/voice/check_whisper.py
 ```
 
-Sin argumentos genera tono y silencio: prueba que el modelo carga y cuánto tarda, **no** la precisión. Para medir la precisión hacen falta grabaciones de voz:
+Without arguments it generates tone and silence: it proves the model loads and how long it takes, **not** the accuracy. Measuring accuracy needs voice recordings:
 
 ```bash
 mkdir -p data/voice/samples
-arecord -f S16_LE -r 16000 -c 1 -d 6 data/voice/samples/hipoxia.wav     # di una frase y espera 6 s
+arecord -f S16_LE -r 16000 -c 1 -d 6 data/voice/samples/hypoxia.wav     # say a phrase and wait 6 s
 docker run --rm -v spaceapp-whisper-models:/models:ro -v "$PWD":/app:ro -e HF_HUB_OFFLINE=1 \
-  spaceapp-voice:dev python /app/docker/voice/check_whisper.py /app/data/voice/samples/hipoxia.wav
+  spaceapp-voice:dev python /app/docker/voice/check_whisper.py /app/data/voice/samples/hypoxia.wav
 ```
 
-`data/voice/` no se versiona: son grabaciones de personas.
+## Why `av` is pinned
 
-## Por qué `av` está fijado
+`faster-whisper` 1.2.1 calls `av.open(..., metadata_errors="ignore")`. `av` 17 or later removed that argument and the transcription fails with `TypeError: open() got an unexpected keyword argument 'metadata_errors'`. With `av` 15 and 16 it works (13.1.0 too). The `Dockerfile` pins `av>=15,<17`. If `faster-whisper` is installed outside Docker it must be pinned the same way.
 
-`faster-whisper` 1.2.1 llama a `av.open(..., metadata_errors="ignore")`. `av` 17 o posterior quitó ese argumento y la transcripción falla con `TypeError: open() got an unexpected keyword argument 'metadata_errors'`. Con `av` 15 y 16 funciona (13.1.0 también). El `Dockerfile` fija `av>=15,<17`. Si se instala `faster-whisper` fuera de Docker hay que fijarlo igual.
+## Limits
 
-## Límites
-
-- No se ha medido la precisión con voz real ni con ruido de cabina (no había grabaciones).
-- Para la entrega sin internet (F9) el volumen del modelo hay que prepararlo antes con conexión.
+- **Memory:** Docker Desktop gives all containers 4 GB. With Ollama loaded (llama 2.3 GB + bge-m3 1.2 GB) the VM runs out of memory and the kernel kills the voice container (exit 137, `OOMKilled`). `--restart unless-stopped` brings it back, but the fix is to raise the Docker Desktop memory (Settings → Resources) to 8 GB, or to use a smaller Whisper model.
+- Whisper can repeat its own context text when the audio has no clear speech (hallucination); there is no guard yet.
+- For the offline delivery (F9) the model volumes must be prepared beforehand with a connection.

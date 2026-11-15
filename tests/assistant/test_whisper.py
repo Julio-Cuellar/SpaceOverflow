@@ -1,4 +1,4 @@
-"""Adaptador de Whisper local. El modelo real no se carga aquí: se inyecta uno de mentira."""
+"""Local Whisper adapter. The real model is not loaded here: a fake one is injected."""
 
 from __future__ import annotations
 
@@ -117,4 +117,4 @@ def test_with_the_library_the_builder_returns_whisper_without_loading_the_model(
 
     assert isinstance(stt, WhisperSpeechToText)
     assert stt.available is True
-    assert created == []  # carga perezosa: nada hasta la primera transcripción
+    assert created == []  # lazy loading: nothing until the first transcription

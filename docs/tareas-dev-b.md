@@ -1,134 +1,135 @@
-# Tareas de Dev B · interfaz, conocimiento y RAG
+# Dev B tasks · interface, knowledge and RAG
 
-> NASA Space Apps 2026 · monitor de salud para astronautas
-> Documento de trabajo para **Dev B**. Deriva de [`plan-arquitectura.md`](plan-arquitectura.md) (sobre todo las secciones 5, 8, 10, 13 y 16) y de [`spaceapps-health-monitor-context.md`](spaceapps-health-monitor-context.md).
-> Artefacto interactivo con el reparto, los diagramas y el prototipo de la interfaz: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8
-> Estado: **propuesta, pendiente de confirmación del plan**. Las horas son de trabajo por persona, no de reloj.
+> NASA Space Apps 2026 · astronaut health monitor
+> Working document for **Dev B**. It derives from [`plan-arquitectura.md`](plan-arquitectura.md) (mostly sections 5, 8, 10, 13 and 16) and from [`spaceapps-health-monitor-context.md`](spaceapps-health-monitor-context.md).
+> Interactive artifact with the split, the diagrams and the interface prototype: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8
+> Status: **proposal, pending confirmation of the plan**. The hours are work per person, not clock time.
+> Language: translated from Spanish to English on 15 Nov 2026 (the interface texts of the plan, such as "Prototipo de apoyo a la decisión", are now English too). Names of shared data (`VERIFICADO`, `jurado`, rule and action keys) keep their Spanish form.
 
 ---
 
-## 0. Resumen
+## 0. Summary
 
 | | |
 | --- | --- |
-| **Rol** | Dueño de toda la interfaz (SPA) y de los módulos `knowledge` y `assistant`. **Todo el RAG es suyo.** |
-| **Horas** | 34 h en total. 18,5 h en el corte P0 y 15,5 h en P1 y P2 |
-| **RAG** | 15 h repartidas en cinco fases: F8, F12, F13, F14 y F16 |
-| **Fases** | F0 (conjunta), F6, F7, F8, F12, F9 (conjunta), F13, F14, F10 (interfaz), F11 (interfaz) y F16 |
-| **Lenguajes** | TypeScript (React) en `web/`. Python (FastAPI) en los módulos `knowledge` y `assistant` |
-| **Compañero** | Dev A: plataforma, telemetría, monitoreo, nave e incidencias, tripulación, misiones, enlace con Tierra y gateway GraphQL y WebSocket |
-| **Regla de oro** | B no depende de A hasta el hito I2. Hasta entonces trabaja sobre mocks generados del contrato |
+| **Role** | Owner of the whole interface (SPA) and of the `knowledge` and `assistant` modules. **The whole RAG is theirs.** |
+| **Hours** | 34 h in total. 18.5 h in the P0 cut and 15.5 h in P1 and P2 |
+| **RAG** | 15 h split in five phases: F8, F12, F13, F14 and F16 |
+| **Phases** | F0 (joint), F6, F7, F8, F12, F9 (joint), F13, F14, F10 (interface), F11 (interface) and F16 |
+| **Languages** | TypeScript (React) in `web/`. Python (FastAPI) in the `knowledge` and `assistant` modules |
+| **Partner** | Dev A: platform, telemetry, monitoring, ship and incidents, crew, missions, Earth link and GraphQL and WebSocket gateway |
+| **Golden rule** | B does not depend on A until milestone I2. Until then B works on mocks generated from the contract |
 
-### Línea de tiempo de Dev B
+### Dev B timeline
 
-| Horas | Fase | Nombre | Prioridad | Esfuerzo | RAG |
+| Hours | Phase | Name | Priority | Effort | RAG |
 | --- | --- | --- | --- | --- | --- |
-| 0 a 1 | F0 | Cimientos (conjunta con A) | P0 | 1 h | |
-| 1 a 7 | F6 | Interfaz de cabina | P0 | 6 h | |
-| 7 a 14 | F7 | Panel de la nave | P0 | 7 h | |
-| 14 a 17 | F8 | Conocimiento con datos de demostración | P0 | 3 h | RAG |
-| 17 a 21 | F12 | RAG sobre PDFs de NASA | P1 | 4 h | RAG |
-| 21 a 22,5 | F9 | Entrega para el jurado (conjunta) | P0 | 1,5 h | |
-| 22,5 a 25,5 | F13 | Asistente: texto y Ollama | P1 | 3 h | RAG |
-| 25,5 a 28,5 | F14 | Voz con Whisper | P1 | 3 h | RAG |
-| 28,5 a 30 | F10 | Tareas (interfaz) | P1 | 1,5 h | |
-| 30 a 32 | F11 | Panel del centro de control (interfaz) | P1 | 2 h | |
-| 32 a 34 | F16 | Alexa como respaldo | P2 | 2 h | RAG |
+| 0 to 1 | F0 | Foundations (joint with A) | P0 | 1 h | |
+| 1 to 7 | F6 | Cabin interface | P0 | 6 h | |
+| 7 to 14 | F7 | Ship panel | P0 | 7 h | |
+| 14 to 17 | F8 | Knowledge with demo data | P0 | 3 h | RAG |
+| 17 to 21 | F12 | RAG over NASA PDFs | P1 | 4 h | RAG |
+| 21 to 22.5 | F9 | Delivery for the jury (joint) | P0 | 1.5 h | |
+| 22.5 to 25.5 | F13 | Assistant: text and Ollama | P1 | 3 h | RAG |
+| 25.5 to 28.5 | F14 | Voice with Whisper | P1 | 3 h | RAG |
+| 28.5 to 30 | F10 | Tasks (interface) | P1 | 1.5 h | |
+| 30 to 32 | F11 | Control center panel (interface) | P1 | 2 h | |
+| 32 to 34 | F16 | Alexa as a fallback | P2 | 2 h | RAG |
 
-F12 está marcada P1 en el plan, pero **cabe antes de la entrega** sin retrasar el hito I6. Subirla a P0 es una decisión pendiente (sección 11).
+F12 is marked P1 in the plan, but it **fits before the delivery** without delaying milestone I6. Raising it to P0 is a pending decision (section 11).
 
-### Hitos en los que B interviene
+### Milestones in which B takes part
 
-| Hito | Hora | Qué hace B |
+| Milestone | Hour | What B does |
 | --- | --- | --- |
-| I0 · Contratos congelados | 1 | Revisa y acepta esquema GraphQL, mensajes WS y OpenAPI. Deja listos mocks y generación de tipos |
-| I1 · Outbox real | 4 | Cambia el bus en memoria por el outbox real en los handlers de Conocimiento (cuando exista F8) |
-| I2 · Lecturas y simulador en vivo | 11 | Conecta los ticks WebSocket al panel de cabina |
-| I3 · Incidencias en vivo | 16 | Conecta el panel de la nave a `ship`, `incidents` y `incident.*` |
-| I4 · Alerta con recomendación citada | 17 | Conocimiento recibe `alert_raised` real y publica `recommendation_ready`. Se ve en el panel de alerta |
-| I5 · GraphQL y WebSocket completos | 20 | Retira todos los mocks. Primera prueba de extremo a extremo |
-| I6 · Entrega para el jurado | 22,5 | Prueba la imagen sin internet en otra computadora |
-| I7 · P1 completo | 32 | Plan desde Tierra de punta a punta, del lado de la interfaz |
+| I0 · Contracts frozen | 1 | Reviews and accepts the GraphQL schema, WS messages and OpenAPI. Leaves mocks and type generation ready |
+| I1 · Real outbox | 4 | Replaces the in-memory bus with the real outbox in the Knowledge handlers (when F8 exists) |
+| I2 · Live readings and simulator | 11 | Connects the WebSocket ticks to the cabin panel |
+| I3 · Live incidents | 16 | Connects the ship panel to `ship`, `incidents` and `incident.*` |
+| I4 · Alert with a cited recommendation | 17 | Knowledge receives the real `alert_raised` and publishes `recommendation_ready`. It shows in the alert panel |
+| I5 · Full GraphQL and WebSocket | 20 | Removes all the mocks. First end-to-end test |
+| I6 · Delivery for the jury | 22.5 | Tests the image without internet on another computer |
+| I7 · P1 complete | 32 | Plan from Earth end to end, on the interface side |
 
 ---
 
-## 1. Alcance
+## 1. Scope
 
-### 1.1 Qué es de B
+### 1.1 What belongs to B
 
-- **SPA completa** en `web/` (React, Vite y TypeScript): panel de cabina, panel de la nave, tareas del día, asistente, enlace y privacidad, y panel del centro de control (`/ground`).
-- **Módulo `knowledge`:** documentos, fragmentos con cita, catálogo de acciones, recomendaciones, ingesta y búsqueda.
-- **Módulo `assistant`:** conversaciones por texto y voz, respuestas con cita y en streaming.
-- **Adaptadores locales:** Ollama (redacción), Whisper (voz) y Alexa (respaldo, solo demo).
-- **Resolvers GraphQL** de Conocimiento y Asistente, y las rutas REST de audio (`R2`) y de Alexa (`R3`).
-- **Su parte de la imagen de Docker:** servir la SPA y aislar las dependencias pesadas del RAG.
+- **Complete SPA** in `web/` (React, Vite and TypeScript): cabin panel, ship panel, tasks of the day, assistant, link and privacy, and control center panel (`/ground`).
+- **`knowledge` module:** documents, fragments with citation, action catalog, recommendations, ingestion and search.
+- **`assistant` module:** conversations by text and voice, answers with citation and in streaming.
+- **Local adapters:** Ollama (wording), Whisper (voice) and Alexa (fallback, demo only).
+- **GraphQL resolvers** of Knowledge and Assistant, and the REST routes for audio (`R2`) and Alexa (`R3`).
+- **Their part of the Docker image:** serving the SPA and isolating the heavy dependencies of the RAG.
 
-### 1.2 Qué no es de B
+### 1.2 What does not belong to B
 
-- Reglas de monitoreo, cálculo de PIO₂, ventanas y detección de anomalías: son del módulo `monitoring` (A). **La interfaz muestra lo que calcula el backend y no lo recalcula.**
-- Outbox, relay, inbox y `UnitOfWork`: son de la plataforma (A).
-- Simulador, ingesta de lecturas y escenarios: telemetría (A).
-- Tablas `habitat`, `zone`, `incident`, `task`, `task_template` y las de enlace: son de A. B las consume por GraphQL.
-- El gateway `/ws` y la composición del esquema GraphQL: A. B registra sus resolvers y consume los mensajes.
+- Monitoring rules, PIO₂ calculation, windows and anomaly detection: they belong to the `monitoring` module (A). **The interface shows what the backend computes and does not recompute it.**
+- Outbox, relay, inbox and `UnitOfWork`: they belong to the platform (A).
+- Simulator, readings ingestion and scenarios: telemetry (A).
+- Tables `habitat`, `zone`, `incident`, `task`, `task_template` and the link ones: they belong to A. B consumes them through GraphQL.
+- The `/ws` gateway and the composition of the GraphQL schema: A. B registers its resolvers and consumes the messages.
 
-### 1.3 Reglas del proyecto que B debe respetar siempre
+### 1.3 Project rules B must always respect
 
-1. **El modelo de lenguaje nunca decide una alerta.** B solo explica, y nunca bloquea una alerta esperando a Ollama.
-2. **Toda cifra sin fuente verificada se rotula `DEMO`.** Los datos del cuerpo llevan además la marca «simulado».
-3. **Banner permanente:** «Prototipo de apoyo a la decisión. No es un dispositivo médico».
-4. **El color nunca va solo.** Cada estado lleva forma, icono y texto: ● Normal, ▲ Atención, ■ Crítico.
-5. **Nunca se inventa un protocolo médico.** Si no hay pasaje que respalde la respuesta: «No tengo esa información en las fuentes cargadas».
-6. **Nada se ejecuta por voz sin confirmar** lo transcrito, y siempre hay entrada por texto.
-7. **Una emergencia nunca depende de que el astronauta hable.** La alerta sale de los sensores.
-8. Textos de interfaz y documentación en **español**.
-9. **Alexa no es autónoma**: se dice así en la interfaz y en la presentación.
+1. **The language model never decides an alert.** B only explains, and never blocks an alert waiting for Ollama.
+2. **Every figure without a verified source is labeled `DEMO`.** Body data also carries the "simulated" mark.
+3. **Permanent banner:** "Decision-support prototype. It is not a medical device".
+4. **Color never goes alone.** Every state carries a shape, an icon and text: ● Normal, ▲ Attention, ■ Critical.
+5. **A medical protocol is never invented.** If there is no passage that supports the answer: "I don't have that information in the loaded sources".
+6. **Nothing is executed by voice without confirming** what was transcribed, and there is always text input.
+7. **An emergency never depends on the astronaut speaking.** The alert comes from the sensors.
+8. Interface texts and documentation in **English** (originally Spanish; changed on 15 Nov 2026).
+9. **Alexa is not autonomous**: this is said so in the interface and in the presentation.
 
 ---
 
-## 2. Cómo trabaja B sin esperar a A
+## 2. How B works without waiting for A
 
 ### 2.1 Contract-first
 
-En la Fase 0 se congelan, entre los dos:
+In Phase 0 the following are frozen, between the two:
 
-- **Eventos** en `contracts.py` (modelos Pydantic versionados).
-- **Esquema GraphQL** (`schema.graphql`) con tipos, enumeraciones y uniones de resultado.
-- **Mensajes WebSocket** (`ws-messages.schema.json`).
-- **OpenAPI** de las rutas REST.
+- **Events** in `contracts.py` (versioned Pydantic models).
+- **GraphQL schema** (`schema.graphql`) with types, enumerations and result unions.
+- **WebSocket messages** (`ws-messages.schema.json`).
+- **OpenAPI** of the REST routes.
 
-Un cambio de contrato exige revisión del otro desarrollador. Cualquier cambio rompe el build de B de inmediato por la generación de tipos.
+A contract change requires review by the other developer. Any change breaks B's build immediately because of the type generation.
 
-### 2.2 Mocks para la interfaz
+### 2.2 Mocks for the interface
 
-- **GraphQL:** servidor simulado con MSW, generado del esquema, con fixtures por escenario (normal, CO₂ alto, fuga de presión, humedad, fallo de O₂).
-- **WebSocket:** reproductor de mensajes grabados (`web/src/data/mocks/ws/*.json`). Las grabaciones salen de los escenarios del artefacto: ticks a 1 Hz, `alert.raised`, `zone.status`, `incident.opened`, etc.
-- **Se retiran** en los hitos I2, I3 y I5, a medida que A entrega lo real.
+- **GraphQL:** simulated server with MSW, generated from the schema, with fixtures per scenario (normal, high CO₂, pressure leak, humidity, O₂ failure).
+- **WebSocket:** player of recorded messages (`web/src/data/mocks/ws/*.json`). The recordings come from the artifact's scenarios: ticks at 1 Hz, `alert.raised`, `zone.status`, `incident.opened`, etc.
+- **They are removed** at milestones I2, I3 and I5, as A delivers the real thing.
 
-### 2.3 Bus en memoria para Conocimiento
+### 2.3 In-memory bus for Knowledge
 
-A entrega en F0 un `InMemoryEventBus` con la misma interfaz `EventBus` que el outbox. B desarrolla el handler de `alert_raised` sobre él y lo cambia por el real en I1. Los handlers deben ser **idempotentes** desde el principio (inbox por `(consumer, event_id)`).
+A delivers in F0 an `InMemoryEventBus` with the same `EventBus` interface as the outbox. B develops the `alert_raised` handler on it and swaps it for the real one in I1. The handlers must be **idempotent** from the start (inbox by `(consumer, event_id)`).
 
-### 2.4 Estructura de carpetas
+### 2.4 Folder structure
 
 ```text
 web/
   src/
-    app/                    # rutas, proveedores, layout
+    app/                    # routes, providers, layout
     shared/
-      ui/                   # Badge de evidencia, SevPill, Gauge, Card, Banner
+      ui/                   # Evidence badge, SevPill, Gauge, Card, Banner
       lib/                  # severity.ts, evidence.ts, format.ts
-      tokens.css            # colores semánticos, tema claro y oscuro
+      tokens.css            # semantic colors, light and dark theme
     features/
-      cabin/                # panel de cabina, cuerpo humano, panel de alerta
-      ship/                 # plano, tickets, gráficas por zona, catálogo
-      tasks/                # tareas del día, nueva tarea
-      assistant/            # chat, voz, citas, buscador de pasajes
-      link/                 # enlace y privacidad
-      ground/               # panel del centro de control
+      cabin/                # cabin panel, human body, alert panel
+      ship/                 # plan, tickets, per-zone charts, catalog
+      tasks/                # tasks of the day, new task
+      assistant/            # chat, voice, citations, passage finder
+      link/                 # link and privacy
+      ground/               # control center panel
     data/
-      graphql/              # documentos .graphql y tipos generados
-      ws/                   # useWs(topics), cola, resume
-      mocks/                # handlers MSW y grabaciones WS
+      graphql/              # .graphql documents and generated types
+      ws/                   # useWs(topics), queue, resume
+      mocks/                # MSW handlers and WS recordings
   codegen.ts, vite.config.ts, vitest.config.ts
 
 src/spaceapp/modules/knowledge/
@@ -142,454 +143,454 @@ src/spaceapp/modules/assistant/
   adapters/outbound/      # sql.py, whisper.py, ollama.py
   contracts.py  facade.py
 migrations/knowledge/  migrations/assistant/
-data/knowledge/         # fragmentos de demostración y manifiesto de documentos
+data/knowledge/         # demo fragments and document manifest
 ```
 
-### 2.5 Convenciones
+### 2.5 Conventions
 
-- **Ramas:** `b/<fase>-<tema>`, de menos de 2 h. Se integra a `main` con CI en verde.
-- **CI de B:** `eslint`, `tsc --noEmit`, `vitest`, generación de tipos desde el esquema, `ruff`, `mypy`, `import-linter` y `pytest` de sus módulos.
-- **`CODEOWNERS`:** `web/`, `modules/knowledge/`, `modules/assistant/`, `migrations/knowledge/` y `migrations/assistant/` son de B.
-- **Límites entre módulos:** B solo importa de otro módulo su `contracts` y su `facade`. Nunca `domain`, `adapters` ni modelos SQL.
-- **Un esquema de PostgreSQL por módulo** y sin claves foráneas hacia otros módulos (solo referencias blandas por id).
-
----
-
-## 3. Fases en detalle
-
-Cada fase indica objetivo, horas, dependencias, tareas con su estimación, criterios de aceptación y pruebas. Las casillas sirven para seguimiento.
-
-### F0 · Cimientos (conjunta con A) · 1 h · P0
-
-**Objetivo:** dejar el repositorio, los contratos y las herramientas listos para trabajar en paralelo. A lleva el repositorio y el `InMemoryEventBus`. B lleva `web/` y los mocks.
-
-**Depende de:** nada.
-
-**Tareas de B**
-
-- [ ] **0.1 Proyecto `web/` (0,25 h):** Vite, React 18, TypeScript estricto, ESLint, Vitest y alias de rutas.
-- [ ] **0.2 Cliente GraphQL y generación de tipos (0,25 h):** urql, `graphql-codegen` leyendo `schema.graphql`. El comando `npm run codegen` falla si el contrato cambia sin actualizar los documentos.
-- [ ] **0.3 Mocks (0,25 h):** MSW con un handler de `dashboard` y un reproductor de mensajes WS de ejemplo.
-- [ ] **0.4 Contratos y revisión (0,25 h):** revisar con A el esquema, los eventos y los mensajes WS. Registrar `CODEOWNERS` y el job de CI de B.
-
-**Criterios de aceptación**
-
-- `npm run dev` abre una pantalla vacía con el banner permanente.
-- `npm run codegen` genera tipos sin errores.
-- El mock devuelve un `dashboard` de ejemplo y el reproductor emite un `telemetry.tick`.
-- El esquema, los eventos y los mensajes WS quedan marcados como **congelados (I0)**.
+- **Branches:** `b/<phase>-<topic>`, under 2 h. Merged to `main` with green CI.
+- **B's CI:** `eslint`, `tsc --noEmit`, `vitest`, type generation from the schema, `ruff`, `mypy`, `import-linter` and `pytest` of its modules.
+- **`CODEOWNERS`:** `web/`, `modules/knowledge/`, `modules/assistant/`, `migrations/knowledge/` and `migrations/assistant/` are B's.
+- **Boundaries between modules:** B only imports from another module its `contracts` and its `facade`. Never `domain`, `adapters` or SQL models.
+- **One PostgreSQL schema per module** and no foreign keys to other modules (only soft references by id).
 
 ---
 
-### F6 · Interfaz de cabina · 6 h · P0
+## 3. Phases in detail
 
-**Objetivo:** que el astronauta entienda su estado de un vistazo y pueda actuar ante una alerta.
+Each phase states objective, hours, dependencies, tasks with their estimate, acceptance criteria and tests. The checkboxes serve for tracking.
 
-**Depende de:** F0. **Mock:** servidor GraphQL simulado y mensajes WS grabados.
+### F0 · Foundations (joint with A) · 1 h · P0
 
-**Contratos que consume**
+**Objective:** leave the repository, the contracts and the tools ready to work in parallel. A carries the repository and the `InMemoryEventBus`. B carries `web/` and the mocks.
 
-| Canal | Operación o mensaje |
+**Depends on:** nothing.
+
+**B's tasks**
+
+- [ ] **0.1 `web/` project (0.25 h):** Vite, React 18, strict TypeScript, ESLint, Vitest and path aliases.
+- [ ] **0.2 GraphQL client and type generation (0.25 h):** urql, `graphql-codegen` reading `schema.graphql`. The `npm run codegen` command fails if the contract changes without updating the documents.
+- [ ] **0.3 Mocks (0.25 h):** MSW with a `dashboard` handler and a sample WS message player.
+- [ ] **0.4 Contracts and review (0.25 h):** review with A the schema, the events and the WS messages. Register `CODEOWNERS` and B's CI job.
+
+**Acceptance criteria**
+
+- `npm run dev` opens an empty screen with the permanent banner.
+- `npm run codegen` generates types without errors.
+- The mock returns a sample `dashboard` and the player emits a `telemetry.tick`.
+- The schema, the events and the WS messages are marked as **frozen (I0)**.
+
+---
+
+### F6 · Cabin interface · 6 h · P0
+
+**Objective:** for the astronaut to understand their state at a glance and be able to act on an alert.
+
+**Depends on:** F0. **Mock:** simulated GraphQL server and recorded WS messages.
+
+**Contracts it consumes**
+
+| Channel | Operation or message |
 | --- | --- |
 | GraphQL | `dashboard`, `readings`, `alerts`, `alert`, `rules`, `crewMember`, `acknowledgeAlert` |
 | WebSocket | `telemetry.tick`, `alert.raised · alert.updated · alert.resolved`, `recommendation.ready · recommendation.enriched`, `scenario.changed`, `groundlink.state`, `subscribe`, `resume`, `ping` |
-| REST | `POST /api/v1/sim/scenarios/{key}:start · :stop` (modo demo) |
+| REST | `POST /api/v1/sim/scenarios/{key}:start · :stop` (demo mode) |
 
-**Tareas**
+**Tasks**
 
-- [ ] **6.1 Shell, tema y componentes base (0,5 h)**
-  - Diseño con tokens semánticos (semáforo, evidencia, superficie) en claro y oscuro. Oscuro por defecto para cabina.
-  - Componentes: `EvidenceBadge` (`VERIFICADO`, `TB`, `DEMO`, `SIMULADO`), `SevPill` con icono (● ▲ ■), `Card`, `Gauge`, `Banner`.
-  - Banner permanente «Prototipo de apoyo a la decisión. No es un dispositivo médico» y marca «Datos simulados».
-  - Objetivos táctiles de 48 px o más, contraste AA y foco visible.
-- [ ] **6.2 Capa de datos y tiempo real (0,75 h)**
-  - Hook `useWs(topics)`: conexión única a `/ws`, `subscribe`, cola por topic y deduplicación por `seq`.
-  - **Resume:** guarda el último `seq` y envía `resume { after_outbox_id }` al reconectar.
-  - Barra «Reconectando… mostrando el último dato de hace N s».
-  - Coalescencia de `telemetry.tick`. **Las alertas nunca se descartan.**
-- [ ] **6.3 Panel de cabina (1,25 h)**
-  - Semáforo global con la peor severidad.
-  - Tarjetas: oxígeno (PIO₂ con gauge y bandas), CO₂ (ppCO₂), presión y velocidad de cambio, radiación y chip de enlace con Tierra.
-  - Cada valor muestra su estado de evidencia. Las bandas amarillas, que son propuesta del equipo, llevan `DEMO`.
-  - **No se recalcula PIO₂ en el cliente:** se muestra el valor del `dashboard`.
-- [ ] **6.4 Gráficas dinámicas (0,75 h)**
-  - Series con uPlot desde `readings` y actualización en vivo con `telemetry.tick`.
-  - Ventana configurable, bandas de severidad dibujadas y marca del umbral.
-  - Gráficas legibles en modo claro y oscuro.
-- [ ] **6.5 Cuerpo humano (0,75 h)**
-  - Silueta SVG con seis indicadores: cabeza (ánimo y cefalea), pulmones (SpO₂), corazón, sangre y órganos (radiación), temperatura y huesos y músculo.
-  - Cada indicador usa el semáforo con número e icono. Al tocarlo: valor, peligro del programa de investigación humana de NASA con el que se relaciona y estado de evidencia.
-  - Los valores del cuerpo llevan `DEMO` y «simulado».
-- [ ] **6.6 Panel de alerta (1,25 h)**
-  - **Acciones primero**, después el motivo. Orden: qué hacer, por qué (regla, valor medido, documento, requisito y estado), causa probable (aire o cuerpo), cuándo escalar.
-  - Botón **Reconocer** (`acknowledgeAlert`) con estado optimista y manejo del error tipado.
-  - Muestra primero `recommendation.ready` (plantilla con citas) y después `recommendation.enriched` (texto del modelo) **sin saltos de diseño**.
-  - Alerta crítica: borde, sonido y vibración opcionales, y `aria-live`.
-- [ ] **6.7 Estados vacíos y de error (0,75 h)**
-  - Sin datos: «Esperando lecturas del simulador» con esqueleto.
-  - WebSocket caído, error de GraphQL, sin recomendación todavía y modelo ausente.
-  - Selector de entorno (nave, estación, rover o base) y pantalla de escenarios para la demo.
+- [ ] **6.1 Shell, theme and base components (0.5 h)**
+  - Design with semantic tokens (traffic light, evidence, surface) in light and dark. Dark by default for the cabin.
+  - Components: `EvidenceBadge` (`VERIFICADO`, `TB`, `DEMO`, `SIMULADO`), `SevPill` with icon (● ▲ ■), `Card`, `Gauge`, `Banner`.
+  - Permanent banner "Decision-support prototype. It is not a medical device" and mark "Simulated data".
+  - Touch targets of 48 px or more, AA contrast and visible focus.
+- [ ] **6.2 Data layer and real time (0.75 h)**
+  - `useWs(topics)` hook: single connection to `/ws`, `subscribe`, queue per topic and deduplication by `seq`.
+  - **Resume:** stores the last `seq` and sends `resume { after_outbox_id }` on reconnecting.
+  - Bar "Reconnecting... showing the last data from N s ago".
+  - Coalescing of `telemetry.tick`. **Alerts are never dropped.**
+- [ ] **6.3 Cabin panel (1.25 h)**
+  - Global traffic light with the worst severity.
+  - Cards: oxygen (PIO₂ with gauge and bands), CO₂ (ppCO₂), pressure and rate of change, radiation and Earth link chip.
+  - Each value shows its evidence state. The yellow bands, which are the team's proposal, carry `DEMO`.
+  - **PIO₂ is not recomputed in the client:** the value from the `dashboard` is shown.
+- [ ] **6.4 Dynamic charts (0.75 h)**
+  - uPlot series from `readings` and live update with `telemetry.tick`.
+  - Configurable window, drawn severity bands and threshold mark.
+  - Charts readable in light and dark mode.
+- [ ] **6.5 Human body (0.75 h)**
+  - SVG silhouette with six indicators: head (mood and headache), lungs (SpO₂), heart, blood and organs (radiation), temperature and bones and muscle.
+  - Each indicator uses the traffic light with a number and icon. On tapping: value, the NASA human research program hazard it relates to and evidence state.
+  - Body values carry `DEMO` and "simulated".
+- [ ] **6.6 Alert panel (1.25 h)**
+  - **Actions first**, then the reason. Order: what to do, why (rule, measured value, document, requirement and state), probable cause (air or body), when to escalate.
+  - **Acknowledge** button (`acknowledgeAlert`) with optimistic state and typed error handling.
+  - It shows `recommendation.ready` first (template with citations) and then `recommendation.enriched` (model text) **without layout jumps**.
+  - Critical alert: border, optional sound and vibration, and `aria-live`.
+- [ ] **6.7 Empty and error states (0.75 h)**
+  - No data: "Waiting for simulator readings" with a skeleton.
+  - WebSocket down, GraphQL error, no recommendation yet and model absent.
+  - Environment selector (ship, station, rover or base) and scenarios screen for the demo.
 
-**Criterios de aceptación**
+**Acceptance criteria**
 
-- Con los mocks, el escenario de CO₂ alto cambia el semáforo a rojo, muestra la alerta con acciones y fuente, y permite reconocerla.
-- Todo estado tiene forma, icono y texto, no solo color.
-- Se ve el banner de «no es dispositivo médico» en todas las pantallas.
-- Cortar y restablecer el WebSocket reanuda sin perder alertas ni duplicarlas.
-- Lighthouse de accesibilidad de 90 o más y navegación completa por teclado.
+- With the mocks, the high-CO₂ scenario turns the traffic light red, shows the alert with actions and source, and allows acknowledging it.
+- Every state has shape, icon and text, not only color.
+- The "not a medical device" banner is seen on every screen.
+- Cutting and restoring the WebSocket resumes without losing or duplicating alerts.
+- Accessibility Lighthouse of 90 or more and full keyboard navigation.
 
-**Pruebas**
+**Tests**
 
-- Vitest + Testing Library: `SevPill`, `EvidenceBadge`, gauge con bandas, `useWs` (resume y duplicados).
-- Playwright contra mocks: escenario de CO₂, reconocer alerta, caída del WebSocket.
+- Vitest + Testing Library: `SevPill`, `EvidenceBadge`, gauge with bands, `useWs` (resume and duplicates).
+- Playwright against mocks: CO₂ scenario, acknowledge alert, WebSocket drop.
 
 ---
 
-### F7 · Panel de la nave · 7 h · P0
+### F7 · Ship panel · 7 h · P0
 
-**Objetivo:** mostrar el plano de la nave con sus zonas, los tickets de incidencia y las gráficas de gases por zona, medidos de forma continua.
+**Objective:** show the ship plan with its zones, the incident tickets and the gas charts per zone, measured continuously.
 
-**Depende de:** F0. **Mock:** igual que F6, más fixtures de `ship`, `incidents` e `incidentTypes`. En I3 (hora 16) pasa a lo real.
+**Depends on:** F0. **Mock:** same as F6, plus fixtures of `ship`, `incidents` and `incidentTypes`. At I3 (hour 16) it moves to the real thing.
 
-**Contratos que consume**
+**Contracts it consumes**
 
-| Canal | Operación o mensaje |
+| Channel | Operation or message |
 | --- | --- |
 | GraphQL | `ship`, `incidents`, `incident`, `zoneReadings`, `incidentTypes`, `reportIncident`, `acknowledgeIncident`, `resolveIncident` |
-| WebSocket | `incident.opened · incident.updated · incident.resolved`, `zone.status`, `telemetry.tick` (por zona), `task.assigned` |
-| REST | `POST /api/v1/sim/scenarios/{key}:start · :stop` con `zone_id` (modo demo) |
+| WebSocket | `incident.opened · incident.updated · incident.resolved`, `zone.status`, `telemetry.tick` (per zone), `task.assigned` |
+| REST | `POST /api/v1/sim/scenarios/{key}:start · :stop` with `zone_id` (demo mode) |
 
-**Tareas**
+**Tasks**
 
-- [ ] **7.1 Plano SVG (1,5 h)**
-  - Se dibuja desde `ship` usando `zone.layout` (JSON: posición y tamaño). **Nada de coordenadas fijas en el código:** cambiar de nave a base lunar es cambiar datos.
-  - Cada zona tiene color por estado (verde, ámbar, rojo, magenta), icono de severidad y trazado rayado para el crítico.
-  - Pin con el identificador del ticket (`INC-0001`) y `+n` si hay más.
-  - Selección por clic y por teclado. Lectura rápida de CO₂ y O₂ dentro de cada zona.
-- [ ] **7.2 Tiempo real (0,75 h)**
-  - Suscripción a `zone.status` e `incident.*`. Actualiza el plano y la lista sin recargar.
-  - `telemetry.tick` por zona alimenta las gráficas y la lectura rápida.
-- [ ] **7.3 Gráficas por zona (1,5 h)**
-  - Seis métricas: O₂ (PIO₂), CO₂ (ppCO₂), N₂, humedad, temperatura y presión.
-  - Ventana de 90 s en vivo, con bandas de severidad y marca **ANOMALÍA** cuando el backend la reporta. Histórico con `zoneReadings`.
-  - Valor actual con color, icono de estado y etiqueta de evidencia (las bandas de humedad y temperatura son `DEMO`).
-  - Indicador «en vivo» y botón de pausa.
-- [ ] **7.4 Tickets (1,25 h)**
-  - Tarjeta con identificador, severidad, estado, título, **ubicación** (zona y cubierta), origen (alerta automática o reporte manual), **descripción**, historial y tareas.
-  - Acciones: reconocer y resolver. En tickets automáticos, **resolver queda deshabilitado mientras los valores sigan fuera de rango**, con la explicación a la vista.
-  - Aviso «Valores normales: puede cerrarse» cuando llega `alert_resolved`.
-  - Orden por severidad y antigüedad. Los resueltos se atenúan.
-- [ ] **7.5 Formulario de reporte (1 h)**
-  - Categoría → tipo → zona y severidad por defecto, desde `incidentTypes`. Título opcional (si queda vacío se usa el tipo) y descripción.
-  - Envía `reportIncident`. Manejo de `IncidentError` tipado.
-- [ ] **7.6 Catálogo de tipos (0,5 h)**
-  - Lista de los 61 tipos en 12 categorías, filtrable. Cada fila muestra detección (`AUTO` o `MANUAL`), severidad, evidencia y zonas típicas.
-  - Botón «Reportar» que rellena el formulario.
-- [ ] **7.7 Modo demo (0,5 h)**
-  - Botones para provocar escenarios por zona (fuga de presión, CO₂ alto, humedad, fallo de O₂, calor) y «Normalizar todo».
-  - Solo visible en perfiles de desarrollo y jurado.
+- [ ] **7.1 SVG plan (1.5 h)**
+  - It is drawn from `ship` using `zone.layout` (JSON: position and size). **No fixed coordinates in the code:** changing from a ship to a lunar base is changing data.
+  - Each zone has a color per state (green, amber, red, magenta), a severity icon and a hatched stroke for critical.
+  - Pin with the ticket identifier (`INC-0001`) and `+n` if there are more.
+  - Selection by click and by keyboard. Quick CO₂ and O₂ reading inside each zone.
+- [ ] **7.2 Real time (0.75 h)**
+  - Subscription to `zone.status` and `incident.*`. It updates the plan and the list without reloading.
+  - `telemetry.tick` per zone feeds the charts and the quick reading.
+- [ ] **7.3 Charts per zone (1.5 h)**
+  - Six metrics: O₂ (PIO₂), CO₂ (ppCO₂), N₂, humidity, temperature and pressure.
+  - 90 s live window, with severity bands and the **ANOMALY** mark when the backend reports it. History with `zoneReadings`.
+  - Current value with color, state icon and evidence label (the humidity and temperature bands are `DEMO`).
+  - "Live" indicator and pause button.
+- [ ] **7.4 Tickets (1.25 h)**
+  - Card with identifier, severity, state, title, **location** (zone and deck), origin (automatic alert or manual report), **description**, history and tasks.
+  - Actions: acknowledge and resolve. On automatic tickets, **resolve stays disabled while the values remain out of range**, with the explanation in view.
+  - Notice "Normal values: it can be closed" when `alert_resolved` arrives.
+  - Order by severity and age. Resolved ones are dimmed.
+- [ ] **7.5 Report form (1 h)**
+  - Category → type → default zone and severity, from `incidentTypes`. Optional title (if empty the type is used) and description.
+  - It sends `reportIncident`. Typed `IncidentError` handling.
+- [ ] **7.6 Type catalog (0.5 h)**
+  - List of the 61 types in 12 categories, filterable. Each row shows detection (`AUTO` or `MANUAL`), severity, evidence and typical zones.
+  - "Report" button that fills the form.
+- [ ] **7.7 Demo mode (0.5 h)**
+  - Buttons to provoke scenarios per zone (pressure leak, high CO₂, humidity, O₂ failure, heat) and "Normalize everything".
+  - Only visible in development and jury profiles.
 
-**Criterios de aceptación**
+**Acceptance criteria**
 
-- Con los mocks, un escenario por zona pinta la zona, abre un ticket con descripción, severidad y ubicación, y aparece en la lista y como pin en el plano.
-- Seleccionar una zona o un ticket muestra sus gráficas.
-- El plano se dibuja solo con datos: cambiar el JSON de `zone.layout` cambia el plano.
-- La interfaz funciona con 360 px de ancho: el plano se desplaza dentro de su panel.
-- Los seis indicadores gráficos tienen forma, icono y texto.
+- With the mocks, one scenario per zone paints the zone, opens a ticket with description, severity and location, and it appears in the list and as a pin on the plan.
+- Selecting a zone or a ticket shows its charts.
+- The plan is drawn only from data: changing the `zone.layout` JSON changes the plan.
+- The interface works at 360 px wide: the plan scrolls inside its panel.
+- The six graphic indicators have shape, icon and text.
 
-**Pruebas**
+**Tests**
 
-- Vitest: render del plano desde datos, orden de tickets y regla del botón «Resolver».
-- Playwright contra mocks: provocar escenario → ticket → reconocer → normalizar → resolver.
-- Prueba visual de claro y oscuro.
+- Vitest: plan render from data, ticket order and the "Resolve" button rule.
+- Playwright against mocks: provoke scenario → ticket → acknowledge → normalize → resolve.
+- Visual test of light and dark.
 
 ---
 
-### F8 · Conocimiento con datos de demostración · 3 h · P0 · RAG
+### F8 · Knowledge with demo data · 3 h · P0 · RAG
 
-**Objetivo:** que cada alerta tenga una recomendación determinista con cita, sin depender de ningún modelo.
+**Objective:** for each alert to have a deterministic recommendation with a citation, without depending on any model.
 
-**Depende de:** F0. **Mock:** bus en memoria con eventos `alert_raised` de ejemplo y una fachada `RuleQuery` falsa.
+**Depends on:** F0. **Mock:** in-memory bus with sample `alert_raised` events and a fake `RuleQuery` facade.
 
-**Contratos**
+**Contracts**
 
-| Dirección | Contrato |
+| Direction | Contract |
 | --- | --- |
-| Consume | Evento `monitoring.alert_raised` (payload: `alert_id`, `zone_id`, `rule_key`, `severity`, `evidence`, `cause_hint`). Fachada `RuleQuery` de Monitoreo (regla y `action_key`) |
-| Publica | `knowledge.recommendation_ready` (`alert_id`, `recommendation_id`, `action_keys[]`, `citations[]`) |
-| Expone | Fachadas `KnowledgeQuery` y `ActionCatalogQuery`. GraphQL `knowledgeSearch(query, k)` |
+| Consumes | Event `monitoring.alert_raised` (payload: `alert_id`, `zone_id`, `rule_key`, `severity`, `evidence`, `cause_hint`). Monitoring's `RuleQuery` facade (rule and `action_key`) |
+| Publishes | `knowledge.recommendation_ready` (`alert_id`, `recommendation_id`, `action_keys[]`, `citations[]`) |
+| Exposes | `KnowledgeQuery` and `ActionCatalogQuery` facades. GraphQL `knowledgeSearch(query, k)` |
 
-**Tareas**
+**Tasks**
 
-- [ ] **8.1 Esqueleto hexagonal (0,5 h)**
-  - Puertos: `KnowledgeSource`, `TextComposer`, `ChunkRepository`. Adaptadores: `demo_source`, `template_composer`, `sql`.
-  - `contracts.py` con `RecommendationReady` y `Citation`. `facade.py` de solo lectura.
-- [ ] **8.2 Esquema y migración (0,5 h)**
-  - Esquema `knowledge` con `document`, `chunk`, `action`, `recommendation` y `recommendation_action` (ver sección 4.2). Migración Alembic propia en `migrations/knowledge/`.
-- [ ] **8.3 Adaptador de demostración (0,75 h)**
-  - Catálogo de acciones y recomendaciones por regla, en JSON versionado: `env-co2-1h`, `env-pio2`, `env-ptotal`, `env-dpdt`, `env-n2`, `env-rh`, `env-t` y la regla de tendencia.
-  - **Todo marcado `DEMO` y etiquetado como ficticio**, con la frase «dato de demostración, no de NASA».
-  - Las acciones coinciden con el catálogo de tipos de incidencia (por ejemplo, `revisar_ventilacion_y_filtros` para CO₂).
-- [ ] **8.4 Handler de `alert_raised` (0,75 h)**
-  - Consumidor `knowledge.on_alert_raised`, idempotente por `(consumer, event_id)`.
-  - Construye la recomendación (acciones, citas, estado de evidencia) y publica `recommendation_ready` en la misma transacción.
-  - **No espera a ningún modelo.**
-- [ ] **8.5 Fachadas y GraphQL (0,5 h)**
-  - `ActionCatalogQuery` (título y descripción de una acción, usada por Misiones). `KnowledgeQuery` (búsqueda por texto sobre lo cargado).
-  - Resolvers de `knowledgeSearch` registrados en el esquema que compone A.
+- [ ] **8.1 Hexagonal skeleton (0.5 h)**
+  - Ports: `KnowledgeSource`, `TextComposer`, `ChunkRepository`. Adapters: `demo_source`, `template_composer`, `sql`.
+  - `contracts.py` with `RecommendationReady` and `Citation`. Read-only `facade.py`.
+- [ ] **8.2 Schema and migration (0.5 h)**
+  - `knowledge` schema with `document`, `chunk`, `action`, `recommendation` and `recommendation_action` (see section 4.2). Own Alembic migration in `migrations/knowledge/`.
+- [ ] **8.3 Demo adapter (0.75 h)**
+  - Catalog of actions and recommendations per rule, in versioned JSON: `env-co2-1h`, `env-pio2`, `env-ptotal`, `env-dpdt`, `env-n2`, `env-rh`, `env-t` and the trend rule.
+  - **Everything marked `DEMO` and labeled as fictitious**, with the sentence "demo data, not NASA data".
+  - The actions match the incident type catalog (for example, `revisar_ventilacion_y_filtros` for CO₂).
+- [ ] **8.4 `alert_raised` handler (0.75 h)**
+  - Consumer `knowledge.on_alert_raised`, idempotent by `(consumer, event_id)`.
+  - It builds the recommendation (actions, citations, evidence state) and publishes `recommendation_ready` in the same transaction.
+  - **It waits for no model.**
+- [ ] **8.5 Facades and GraphQL (0.5 h)**
+  - `ActionCatalogQuery` (title and description of an action, used by Missions). `KnowledgeQuery` (text search over what is loaded).
+  - `knowledgeSearch` resolvers registered in the schema A composes.
 
-**Criterios de aceptación**
+**Acceptance criteria**
 
-- Dado un `alert_raised` de `env-co2-1h`, se genera una recomendación con al menos dos acciones y una cita con documento, requisito y estado de evidencia.
-- Entregar el mismo evento dos veces **no duplica** la recomendación.
-- Con el adaptador demo, toda respuesta lleva la etiqueta `DEMO`.
-- Sin Ollama ni red, todo funciona.
-- `import-linter` en verde: `knowledge` no importa nada de otro módulo salvo `contracts` y `facade`.
+- Given an `alert_raised` of `env-co2-1h`, a recommendation is generated with at least two actions and a citation with document, requirement and evidence state.
+- Delivering the same event twice **does not duplicate** the recommendation.
+- With the demo adapter, every answer carries the `DEMO` label.
+- Without Ollama or network, everything works.
+- `import-linter` green: `knowledge` imports nothing from another module except `contracts` and `facade`.
 
-**Pruebas**
+**Tests**
 
-- `pytest` de dominio: una recomendación por cada regla del catálogo.
-- Prueba de idempotencia con evento duplicado.
-- Prueba de contrato: `RecommendationReady` valida contra su modelo Pydantic.
+- Domain `pytest`: one recommendation for each rule of the catalog.
+- Idempotency test with a duplicated event.
+- Contract test: `RecommendationReady` validates against its Pydantic model.
 
-**Hito:** I4 (hora 17). El evento real llega desde A y la recomendación aparece en el panel de alerta.
+**Milestone:** I4 (hour 17). The real event arrives from A and the recommendation appears in the alert panel.
 
 ---
 
-### F12 · RAG sobre PDFs de NASA · 4 h · P1 (cabe antes de la entrega) · RAG
+### F12 · RAG over NASA PDFs · 4 h · P1 (fits before the delivery) · RAG
 
-**Objetivo:** que las recomendaciones y respuestas salgan de fragmentos reales de los documentos públicos, con cita verificable.
+**Objective:** for the recommendations and answers to come from real fragments of the public documents, with a verifiable citation.
 
-**Depende de:** F8.
+**Depends on:** F8.
 
-**Documentos de entrada**
+**Input documents**
 
-| Documento | Estado | Uso |
+| Document | State | Use |
 | --- | --- | --- |
-| NASA-STD-3001 Vol. 1 Rev C | Leído (secciones 3 y 4) | Salud de la tripulación, radiación, criterios relativos a la línea base |
-| NASA-STD-3001 Vol. 2 Rev F | Leído (sección 6 y parte de 7.1) | Atmósfera, agua, acústica, vibración, radiación, nutrición |
-| OCHMO-TB-002 (ECLSS) | Leído | Resumen de atmósfera, agua y soporte vital |
-| OCHMO-TB-003 (atmósfera habitable) | Leído | Hipoxia, hiperoxia, descompresión |
-| OCHMO-TB-004 (CO₂) | Leído | Síntomas por nivel de CO₂, caso Apolo 13 |
-| OCHMO-TB-044 (operaciones médicas) | Leído | Rol del CMO, mareo espacial |
-| Checklist del botiquín médico | Leído | Catálogo de acciones y mediciones a bordo |
-| Human Integration Design Handbook, OCHMO-STD-100.1A, Manual de emergencias médicas de la ISS | **No abiertos** | Opcionales. El manual viene de una liberación por transparencia: **revisar licencia y vigencia** |
+| NASA-STD-3001 Vol. 1 Rev C | Read (sections 3 and 4) | Crew health, radiation, baseline-related criteria |
+| NASA-STD-3001 Vol. 2 Rev F | Read (section 6 and part of 7.1) | Atmosphere, water, acoustics, vibration, radiation, nutrition |
+| OCHMO-TB-002 (ECLSS) | Read | Summary of atmosphere, water and life support |
+| OCHMO-TB-003 (habitable atmosphere) | Read | Hypoxia, hyperoxia, decompression |
+| OCHMO-TB-004 (CO₂) | Read | Symptoms by CO₂ level, Apollo 13 case |
+| OCHMO-TB-044 (medical operations) | Read | Role of the CMO, space motion sickness |
+| Medical kit checklist | Read | Catalog of actions and on-board measurements |
+| Human Integration Design Handbook, OCHMO-STD-100.1A, ISS Medical Emergency Manual | **Not opened** | Optional. The manual comes from a transparency release: **check the license and currency** |
 
-**Tareas**
+**Tasks**
 
-- [ ] **12.1 Selección y licencia (0,5 h)**
-  - Manifiesto `data/knowledge/manifest.json` con código, título, URL, `license_status` y `verification_state` por documento.
-  - **No se empaqueta ningún PDF sin confirmar su licencia.** Los dudosos se indexan localmente y se documenta.
-- [ ] **12.2 Ingesta (1,25 h)**
-  - Comando `python -m spaceapp.knowledge.ingest`: extrae texto por página, detecta referencias de requisito (`[V2 6004]`, `[V1 4033]`, `Tabla 6.2-1`) y fragmenta por requisito o sección con solapamiento corto.
-  - Guarda por fragmento: documento, número de requisito, página, contenido y `evidence_state`.
-  - **Tablas que vienen como imagen** (Tabla 6.2-1 y figuras): se transcriben a mano o se toman del catálogo de reglas, y se marcan como transcritas.
-  - Ingesta idempotente: reejecutarla no duplica fragmentos.
-- [ ] **12.3 Búsqueda (0,75 h)**
-  - Primero **texto completo** (`tsvector` en español), que no necesita modelo.
-  - Vector opcional con pgvector si hay un modelo de embeddings local. **Falta decidir cuál** (sección 11).
-  - Umbral mínimo de relevancia: bajo el umbral, no hay pasaje.
-- [ ] **12.4 Política de respuesta (0,75 h)**
-  - Responder **solo** con pasajes recuperados, con cita obligatoria (documento, requisito, página y estado).
-  - Sin pasaje: «No tengo esa información en las fuentes cargadas». **Nunca se inventa un protocolo.**
-  - Si el contenido viene del adaptador demo, la respuesta dice «dato de demostración, no de NASA».
-  - Cambio de adaptador por perfil: `jurado` usa RAG y cae a demo si falta un pasaje.
-- [ ] **12.5 Evaluación (0,5 h)**
-  - Conjunto de unas 15 preguntas con el pasaje esperado (CO₂ y cefalea, hipoxia, presión de cabina, mareo espacial, rol del CMO, botiquín, límites de radiación, etc.).
-  - Métricas: acierto del pasaje esperado en los 3 primeros y **cero respuestas sin fuente**.
-- [ ] **12.6 Buscador de pasajes en la SPA (0,25 h)**
-  - Pantalla con búsqueda, lista de pasajes con cita y estado, y enlace al fragmento completo.
+- [ ] **12.1 Selection and license (0.5 h)**
+  - Manifest `data/knowledge/manifest.json` with code, title, URL, `license_status` and `verification_state` per document.
+  - **No PDF is packaged without confirming its license.** The doubtful ones are indexed locally and documented.
+- [ ] **12.2 Ingestion (1.25 h)**
+  - Command `python -m spaceapp.knowledge.ingest`: extracts text per page, detects requirement references (`[V2 6004]`, `[V1 4033]`, `Table 6.2-1`) and fragments by requirement or section with a short overlap.
+  - It stores per fragment: document, requirement number, page, content and `evidence_state`.
+  - **Tables that come as an image** (Table 6.2-1 and figures): they are transcribed by hand or taken from the rule catalog, and marked as transcribed.
+  - Idempotent ingestion: running it again does not duplicate fragments.
+- [ ] **12.3 Search (0.75 h)**
+  - First **full text** (`tsvector` in Spanish), which needs no model.
+  - Optional vector with pgvector if there is a local embeddings model. **Which one is still to be decided** (section 11).
+  - Minimum relevance threshold: below the threshold, there is no passage.
+- [ ] **12.4 Answer policy (0.75 h)**
+  - Answer **only** with retrieved passages, with mandatory citation (document, requirement, page and state).
+  - Without a passage: "I don't have that information in the loaded sources". **A protocol is never invented.**
+  - If the content comes from the demo adapter, the answer says "demo data, not NASA data".
+  - Adapter switch by profile: `jurado` uses RAG and falls back to demo if a passage is missing.
+- [ ] **12.5 Evaluation (0.5 h)**
+  - Set of about 15 questions with the expected passage (CO₂ and headache, hypoxia, cabin pressure, space motion sickness, CMO role, medical kit, radiation limits, etc.).
+  - Metrics: hit of the expected passage in the first 3 and **zero answers without a source**.
+- [ ] **12.6 Passage finder in the SPA (0.25 h)**
+  - Screen with search, list of passages with citation and state, and a link to the full fragment.
 
-**Criterios de aceptación**
+**Acceptance criteria**
 
-- `knowledgeSearch("dolor de cabeza CO₂")` devuelve el fragmento de TB-004 con documento y estado.
-- Una pregunta fuera de las fuentes devuelve «No tengo esa información…» y ninguna cita inventada.
-- La ingesta completa es repetible y se ejecuta sin internet.
-- La evaluación pasa el umbral acordado y no hay respuestas sin fuente.
+- `knowledgeSearch("headache CO₂")` returns the TB-004 fragment with document and state.
+- A question outside the sources returns "I don't have that information..." and no invented citation.
+- The full ingestion is repeatable and runs without internet.
+- The evaluation passes the agreed threshold and there are no answers without a source.
 
-**Pruebas**
+**Tests**
 
-- Pruebas doradas de ingesta (un PDF corto de ejemplo con fragmentos esperados).
-- Pruebas de búsqueda con el conjunto de evaluación.
-- Prueba de política: pregunta sin pasaje → mensaje de ausencia de información.
-
----
-
-### F9 · Entrega para el jurado (conjunta con A) · 1,5 h para B · P0
-
-**Objetivo:** que el jurado ejecute todo con un comando, sin internet.
-
-**Depende de:** F5, F7 y F8 (hora 21).
-
-**Tareas de B**
-
-- [ ] **9.1 SPA en la imagen (0,5 h):** compilar `web/` y servirla desde el mismo contenedor (o desde un servidor estático del compose). Variable de entorno de perfil visible en la interfaz.
-- [ ] **9.2 Capa de B en Docker (0,5 h):** aislar Ollama y Whisper en su propia capa o contenedor del compose, detrás de puertos con adaptador nulo. Incluir los fragmentos ya indexados y el modelo de Whisper pequeño. Documentar el tamaño final.
-- [ ] **9.3 Prueba en otra computadora (0,5 h, con A):** sin internet, sin GPU y con el micrófono bloqueado. La entrada por texto debe funcionar.
-
-**Criterios de aceptación**
-
-- Un solo comando levanta backend, base de datos y SPA con el perfil `jurado`.
-- Sin Ollama, la recomendación de plantilla con cita sigue funcionando.
-- Sin micrófono, el asistente funciona por texto.
-
-**Hito:** I6 (hora 22,5).
+- Golden ingestion tests (a short sample PDF with expected fragments).
+- Search tests with the evaluation set.
+- Policy test: question without a passage → no-information message.
 
 ---
 
-### F13 · Asistente: texto y Ollama · 3 h · P1 · RAG
+### F9 · Delivery for the jury (joint with A) · 1.5 h for B · P0
 
-**Objetivo:** que el astronauta pregunte por texto y reciba una respuesta con cita, en streaming.
+**Objective:** for the jury to run everything with one command, without internet.
 
-**Depende de:** F8.
+**Depends on:** F5, F7 and F8 (hour 21).
 
-**Contratos**
+**B's tasks**
 
-| Dirección | Contrato |
+- [ ] **9.1 SPA in the image (0.5 h):** build `web/` and serve it from the same container (or from a static server of the compose). Profile environment variable visible in the interface.
+- [ ] **9.2 B's layer in Docker (0.5 h):** isolate Ollama and Whisper in their own layer or container of the compose, behind ports with a null adapter. Include the already indexed fragments and the small Whisper model. Document the final size.
+- [ ] **9.3 Test on another computer (0.5 h, with A):** without internet, without GPU and with the microphone blocked. Text input must work.
+
+**Acceptance criteria**
+
+- A single command raises backend, database and SPA with the `jurado` profile.
+- Without Ollama, the template recommendation with a citation keeps working.
+- Without a microphone, the assistant works by text.
+
+**Milestone:** I6 (hour 22.5).
+
+---
+
+### F13 · Assistant: text and Ollama · 3 h · P1 · RAG
+
+**Objective:** for the astronaut to ask by text and receive an answer with a citation, in streaming.
+
+**Depends on:** F8.
+
+**Contracts**
+
+| Direction | Contract |
 | --- | --- |
-| Expone | GraphQL `askAssistant(text, conversationId)`, `confirmUtterance(id, text)`, `conversation(id)` |
-| Publica | `assistant.answer_ready` (`utterance_id`, `text`, `citations[]`) |
-| Mensajes WS | `assistant.transcript`, `assistant.token`, `assistant.answer` (los emite el gateway de A a partir de los eventos) |
-| Lee | `KnowledgeQuery` (propia) y `ActiveAlertsQuery` de Monitoreo |
+| Exposes | GraphQL `askAssistant(text, conversationId)`, `confirmUtterance(id, text)`, `conversation(id)` |
+| Publishes | `assistant.answer_ready` (`utterance_id`, `text`, `citations[]`) |
+| WS messages | `assistant.transcript`, `assistant.token`, `assistant.answer` (emitted by A's gateway from the events) |
+| Reads | `KnowledgeQuery` (its own) and Monitoring's `ActiveAlertsQuery` |
 
-**Tareas**
+**Tasks**
 
-- [ ] **13.1 Módulo y esquema (0,5 h):** esqueleto hexagonal de `assistant`, tablas `conversation` y `utterance`, migración propia.
-- [ ] **13.2 Casos de uso GraphQL (0,5 h):** `askAssistant`, `confirmUtterance` y `conversation`, con errores tipados.
-- [ ] **13.3 Flujo de respuesta (1 h)**
-  - `KnowledgeQuery` → pasajes con cita → `TextComposer` (Ollama) que redacta **solo con lo recuperado**.
-  - Tiempo límite de **8 s**: si vence, se responde con los pasajes en texto plano.
-  - Streaming de tokens y respuesta final con citas.
-  - Contexto de alertas activas: la respuesta puede mencionar la alerta vigente, **sin cambiarla ni decidirla**.
-- [ ] **13.4 Puerto `LlmGateway` (0,5 h):** adaptadores Ollama, n8n (opcional) y nulo. El nulo devuelve los pasajes sin redactar.
-- [ ] **13.5 Interfaz del asistente (0,5 h):** chat, ejemplos de preguntas, citas con enlace al pasaje, chip de modo («local» o «nube» según el adaptador) y estado «No tengo esa información…».
+- [ ] **13.1 Module and schema (0.5 h):** hexagonal skeleton of `assistant`, tables `conversation` and `utterance`, own migration.
+- [ ] **13.2 GraphQL use cases (0.5 h):** `askAssistant`, `confirmUtterance` and `conversation`, with typed errors.
+- [ ] **13.3 Answer flow (1 h)**
+  - `KnowledgeQuery` → passages with citation → `TextComposer` (Ollama) that writes **only with what was retrieved**.
+  - Time limit of **8 s**: if it expires, the answer is the passages as plain text.
+  - Token streaming and final answer with citations.
+  - Active alerts context: the answer may mention the current alert, **without changing or deciding it**.
+- [ ] **13.4 `LlmGateway` port (0.5 h):** Ollama, n8n (optional) and null adapters. The null one returns the passages unwritten.
+- [ ] **13.5 Assistant interface (0.5 h):** chat, example questions, citations with a link to the passage, mode chip ("local" or "cloud" depending on the adapter) and "I don't have that information..." state.
 
-**Criterios de aceptación**
+**Acceptance criteria**
 
-- «¿Por qué me duele la cabeza?» con CO₂ alto responde con el pasaje de TB-004 y su cita.
-- Sin Ollama o con más de 8 s, la respuesta llega igual con los pasajes.
-- Una pregunta sin pasaje no produce una respuesta inventada.
-- El asistente nunca cambia el estado de una alerta.
+- "Why do I have a headache?" with high CO₂ answers with the TB-004 passage and its citation.
+- Without Ollama or after more than 8 s, the answer still arrives with the passages.
+- A question without a passage does not produce an invented answer.
+- The assistant never changes the state of an alert.
 
-**Pruebas**
+**Tests**
 
-- `pytest` con un `LlmGateway` falso: tiempo agotado, nulo y streaming.
-- Playwright: pregunta con pasaje y pregunta sin pasaje.
-
----
-
-### F14 · Voz con Whisper · 3 h · P1 · RAG
-
-**Objetivo:** hablar al sistema sin teclear, con confirmación antes de actuar.
-
-**Depende de:** F13.
-
-**Contratos:** REST `POST /api/v1/voice/utterances` (audio `webm` o `wav` y `conversation_id`; responde `202` con `utterance_id`). WebSocket `assistant.transcript`.
-
-**Tareas**
-
-- [ ] **14.1 Puerto `SpeechToText` y Whisper local (1 h):** `faster-whisper` con un modelo pequeño que corra sin GPU. Adaptador nulo para texto.
-- [ ] **14.2 Ruta de audio (0,75 h):** guardar el audio, responder `202` de inmediato, transcribir de forma asíncrona y publicar la transcripción para que llegue por WS.
-- [ ] **14.3 Interfaz de voz (0,75 h):** botón de mantener para hablar (`MediaRecorder`), transcripción **editable**, botón de confirmar y estado de «escuchando».
-- [ ] **14.4 Pruebas con ruido y términos médicos (0,5 h):** audios de ejemplo, palabras como «hipoxia», «ppCO₂», «presión parcial». Entrada por texto siempre disponible.
-
-**Criterios de aceptación**
-
-- Hablar produce una transcripción editable. **No se actúa sin confirmar.**
-- Sin Whisper o sin micrófono, el sistema sigue funcionando por texto.
-- Una emergencia no depende de la voz.
-
-**Nota técnica:** el navegador solo permite el micrófono en `localhost` o con HTTPS. Documentarlo en el README.
+- `pytest` with a fake `LlmGateway`: timeout, null and streaming.
+- Playwright: question with a passage and question without a passage.
 
 ---
 
-### F10 · Tareas, parte de interfaz · 1,5 h · P1
+### F14 · Voice with Whisper · 3 h · P1 · RAG
 
-**Objetivo:** que la tripulación vea sus tareas del día, cree las suyas y bloquee las de Tierra con motivo.
+**Objective:** speak to the system without typing, with confirmation before acting.
 
-**Depende de:** F9. **Mock:** el esquema de tareas ya está congelado. B construye la interfaz sobre mocks hasta que A termine el backend (F10 de A).
+**Depends on:** F13.
 
-**Contratos que consume:** `tasks(kind, status)`, `groundPlan`, `createTask`, `updateTask · deleteTask`, `blockTask`, `completeTask(effective)`, `snoozeReminder`, `setConsent`. WS `task.assigned · reminder.due` y `plan.received · plan.applied`.
+**Contracts:** REST `POST /api/v1/voice/utterances` (audio `webm` or `wav` and `conversation_id`; answers `202` with `utterance_id`). WebSocket `assistant.transcript`.
 
-**Tareas**
+**Tasks**
 
-- [ ] **10.1 Lista de tareas (0,5 h):** filtros Todas, Salud, Nave e Incidentes, agrupadas, con **etiqueta de origen** (Tierra, Sistema o Tripulación) en cada tarjeta.
-- [ ] **10.2 Nueva tarea propia (0,5 h):** formulario de tipo, zona y título. Editar y eliminar solo las de origen `TRIPULACION`.
-- [ ] **10.3 Bloqueo y efectividad (0,25 h):** «No puedo cumplirla» con motivo (no se borra), «¿Funcionó?» al completar y posponer recordatorio.
-- [ ] **10.4 Racha, logros y consentimiento (0,25 h):** solo las rutinas de salud suman a la racha. **Las alertas críticas no se gamifican.** Interruptor de la categoría «tareas» en «Enlace y privacidad».
+- [ ] **14.1 `SpeechToText` port and local Whisper (1 h):** `faster-whisper` with a small model that runs without GPU. Null adapter for text.
+- [ ] **14.2 Audio route (0.75 h):** store the audio, answer `202` at once, transcribe asynchronously and publish the transcript so it arrives over WS.
+- [ ] **14.3 Voice interface (0.75 h):** hold-to-talk button (`MediaRecorder`), **editable** transcript, confirm button and "listening" state.
+- [ ] **14.4 Tests with noise and medical terms (0.5 h):** sample audio, words such as "hypoxia", "ppCO₂", "partial pressure". Text input always available.
 
-**Criterios de aceptación**
+**Acceptance criteria**
 
-- Una tarea de Tierra no se puede editar ni borrar, solo completar, posponer o bloquear con motivo.
-- Una tarea propia se puede crear sin enlace.
-- Las medidas de alertas, las de Tierra y los incidentes no suman puntos.
+- Speaking produces an editable transcript. **Nothing is acted on without confirming.**
+- Without Whisper or without a microphone, the system keeps working by text.
+- An emergency does not depend on voice.
 
----
-
-### F11 · Panel del centro de control, parte de interfaz · 2 h · P1
-
-**Objetivo:** que el centro de control programe tareas con la opción B: planes versionados con copia local en la nave.
-
-**Depende de:** F9. A termina antes el backend (F11 de A).
-
-**Contratos que consume (rol `ground`):** `groundTasks`, `saveGroundTemplate`, `cancelGroundTemplate`, `publishGroundPlan`, `PUT /api/v1/groundlink/link` (control del enlace en la demo) y los mensajes `plan.received · plan.applied`.
-
-**Tareas**
-
-- [ ] **11.1 Ruta `/ground` y diseño (0,5 h):** la misma SPA con rol `ground`. Dejar claro en la pantalla que es el panel de Tierra.
-- [ ] **11.2 Borrador y publicación (0,75 h):** plantillas activas con su estado en la nave (pendiente, recibida, aplicada, completada, bloqueada con motivo), borrador de la versión siguiente, añadir plantilla, marcar para cancelar y **Publicar plan vN**.
-- [ ] **11.3 Estado del plan y enlace (0,5 h):** canalización «Publicado → En el enlace → Recibido → Aplicado → Confirmado» y control del enlace con demora para la demo.
-- [ ] **11.4 Aviso en la nave (0,25 h):** «Plan vN aplicado» al recibir `plan.applied`.
-
-**Criterios de aceptación**
-
-- Con el enlace cortado, el plan queda «en cola». Al restablecerlo llega, se aplica y se confirma.
-- Una versión repetida se ignora, un plan corrupto se rechaza completo y un ítem inválido se rechaza solo él.
-- Solo se ve el estado de tareas si la tripulación comparte la categoría «tareas».
-
-**Hito:** I7 (hora 32).
+**Technical note:** the browser only allows the microphone on `localhost` or over HTTPS. Document it in the README.
 
 ---
 
-### F16 · Alexa como respaldo · 2 h · P2 · RAG
+### F10 · Tasks, interface part · 1.5 h · P1
 
-**Objetivo:** tener un adaptador de voz de respaldo para la demo, **solo si Whisper se traba**.
+**Objective:** for the crew to see their tasks of the day, create their own and block the ones from Earth with a reason.
 
-**Depende de:** F14.
+**Depends on:** F9. **Mock:** the tasks schema is already frozen. B builds the interface on mocks until A finishes the backend (A's F10).
 
-**Tareas**
+**Contracts it consumes:** `tasks(kind, status)`, `groundPlan`, `createTask`, `updateTask · deleteTask`, `blockTask`, `completeTask(effective)`, `snoozeReminder`, `setConsent`. WS `task.assigned · reminder.due` and `plan.received · plan.applied`.
 
-- [ ] **16.1 Skill de desarrollo (0,75 h):** modelo de interacción y cuenta de desarrollo del equipo. Un skill en modo desarrollo corre solo en esa cuenta, y alcanza para la demo.
-- [ ] **16.2 Webhook (0,5 h):** `POST /api/v1/alexa/webhook` activo **solo con el perfil `dev2`**. Traduce la intención a `askAssistant`.
-- [ ] **16.3 Túnel público (0,5 h):** endpoint accesible para Alexa.
-- [ ] **16.4 Documentación (0,25 h):** la interfaz muestra «Voz en la nube: no es autónomo». Se dice así en la presentación.
+**Tasks**
+
+- [ ] **10.1 Task list (0.5 h):** filters All, Health, Ship and Incidents, grouped, with an **origin label** (Earth, System or Crew) on each card.
+- [ ] **10.2 New own task (0.5 h):** form of type, zone and title. Edit and delete only those with origin `TRIPULACION`.
+- [ ] **10.3 Block and effectiveness (0.25 h):** "I cannot do it" with a reason (it is not deleted), "Did it work?" when completing and snoozing the reminder.
+- [ ] **10.4 Streak, achievements and consent (0.25 h):** only health routines add to the streak. **Critical alerts are not gamified.** Switch for the "tasks" category in "Link and privacy".
+
+**Acceptance criteria**
+
+- A task from Earth cannot be edited or deleted, only completed, snoozed or blocked with a reason.
+- An own task can be created without a link.
+- Alert measures, those from Earth and incidents add no points.
 
 ---
 
-## 4. Diseño de los módulos de B
+### F11 · Control center panel, interface part · 2 h · P1
 
-### 4.1 Contratos públicos de B
+**Objective:** for the control center to schedule tasks with option B: versioned plans with a local copy on the ship.
 
-**Eventos que B publica** (todos por outbox):
+**Depends on:** F9. A finishes the backend earlier (A's F11).
 
-| Evento | Receptores | Payload |
+**Contracts it consumes (role `ground`):** `groundTasks`, `saveGroundTemplate`, `cancelGroundTemplate`, `publishGroundPlan`, `PUT /api/v1/groundlink/link` (link control in the demo) and the messages `plan.received · plan.applied`.
+
+**Tasks**
+
+- [ ] **11.1 `/ground` route and design (0.5 h):** the same SPA with role `ground`. Make clear on the screen that it is the Earth panel.
+- [ ] **11.2 Draft and publish (0.75 h):** active templates with their state on the ship (pending, received, applied, completed, blocked with a reason), draft of the next version, add template, mark to cancel and **Publish plan vN**.
+- [ ] **11.3 Plan state and link (0.5 h):** pipeline "Published → On the link → Received → Applied → Confirmed" and link control with a delay for the demo.
+- [ ] **11.4 Notice on the ship (0.25 h):** "Plan vN applied" on receiving `plan.applied`.
+
+**Acceptance criteria**
+
+- With the link cut, the plan stays "queued". When restored it arrives, is applied and confirmed.
+- A repeated version is ignored, a corrupt plan is rejected as a whole and an invalid item is rejected alone.
+- The state of tasks is only seen if the crew shares the "tasks" category.
+
+**Milestone:** I7 (hour 32).
+
+---
+
+### F16 · Alexa as a fallback · 2 h · P2 · RAG
+
+**Objective:** have a fallback voice adapter for the demo, **only if Whisper gets stuck**.
+
+**Depends on:** F14.
+
+**Tasks**
+
+- [ ] **16.1 Development skill (0.75 h):** interaction model and the team's developer account. A skill in development mode runs only in that account, and is enough for the demo.
+- [ ] **16.2 Webhook (0.5 h):** `POST /api/v1/alexa/webhook` active **only with the `dev2` profile**. It translates the intent into `askAssistant`.
+- [ ] **16.3 Public tunnel (0.5 h):** endpoint reachable by Alexa.
+- [ ] **16.4 Documentation (0.25 h):** the interface shows "Voice in the cloud: not autonomous". It is said so in the presentation.
+
+---
+
+## 4. Design of B's modules
+
+### 4.1 B's public contracts
+
+**Events B publishes** (all through the outbox):
+
+| Event | Receivers | Payload |
 | --- | --- | --- |
-| `knowledge.recommendation_ready` | Misiones (A), Gateway (A), Enlace con Tierra (A) | `alert_id`, `recommendation_id`, `action_keys[]`, `citations[]` |
+| `knowledge.recommendation_ready` | Missions (A), Gateway (A), Earth link (A) | `alert_id`, `recommendation_id`, `action_keys[]`, `citations[]` |
 | `knowledge.recommendation_enriched` | Gateway (A) | `recommendation_id`, `text` |
 | `assistant.answer_ready` | Gateway (A) | `utterance_id`, `text`, `citations[]` |
 
-**Evento que B consume:** `monitoring.alert_raised` (de A).
+**Event B consumes:** `monitoring.alert_raised` (from A).
 
-**Fachadas de lectura**
+**Read facades**
 
-| Fachada | Quién la usa | Para qué |
+| Facade | Who uses it | What for |
 | --- | --- | --- |
-| `ActionCatalogQuery` (B) | Misiones (A) | Título y descripción de una acción |
-| `KnowledgeQuery` (B) | Asistente (B) | Pasajes citables |
-| `RuleQuery` (A) | Conocimiento (B) | Regla y `action_key` de una alerta |
-| `ActiveAlertsQuery` (A) | Asistente (B) | Contexto de alertas activas |
+| `ActionCatalogQuery` (B) | Missions (A) | Title and description of an action |
+| `KnowledgeQuery` (B) | Assistant (B) | Citable passages |
+| `RuleQuery` (A) | Knowledge (B) | Rule and `action_key` of an alert |
+| `ActiveAlertsQuery` (A) | Assistant (B) | Active alerts context |
 
-**Forma de una cita (`Citation`)**
+**Shape of a citation (`Citation`)**
 
 ```graphql
 type Citation {
@@ -603,201 +604,201 @@ type Recommendation {
   actions: [Action!]!
   body: String!
   citations: [Citation!]!
-  composedBy: String!             # plantilla | llm
+  composedBy: String!             # plantilla | llm  (template | llm)
 }
 ```
 
-### 4.2 Esquemas de datos
+### 4.2 Data schemas
 
-**Esquema `knowledge`**
+**`knowledge` schema**
 
-| Tabla | Columnas principales |
+| Table | Main columns |
 | --- | --- |
-| `document` | `id`, `code` (único), `title`, `url`, `license_status`, `verification_state`, `ingested_at` |
-| `chunk` | `id`, `document_id` (FK), `requirement_ref`, `page`, `content`, `embedding` (opcional), `evidence_state` |
-| `action` | `id`, `key` (único), `title`, `description`, `category`, `source_chunk_id` (FK, opcional) |
-| `recommendation` | `id`, `alert_id` (referencia blanda a Monitoreo), `source_kind` (`DEMO` o `RAG`), `body`, `citations` (jsonb), `composed_by`, `created_at` |
+| `document` | `id`, `code` (unique), `title`, `url`, `license_status`, `verification_state`, `ingested_at` |
+| `chunk` | `id`, `document_id` (FK), `requirement_ref`, `page`, `content`, `embedding` (optional), `evidence_state` |
+| `action` | `id`, `key` (unique), `title`, `description`, `category`, `source_chunk_id` (FK, optional) |
+| `recommendation` | `id`, `alert_id` (soft reference to Monitoring), `source_kind` (`DEMO` or `RAG`), `body`, `citations` (jsonb), `composed_by`, `created_at` |
 | `recommendation_action` | `recommendation_id` (FK), `action_id` (FK) |
 
-**Esquema `assistant`**
+**`assistant` schema**
 
-| Tabla | Columnas principales |
+| Table | Main columns |
 | --- | --- |
-| `conversation` | `id`, `crew_member_id` (referencia blanda), `channel` (voz o texto), `created_at` |
-| `utterance` | `id`, `conversation_id` (FK), `role` (tripulación o asistente), `text`, `adapter` (whisper, alexa o texto), `confirmed`, `citations` (jsonb), `created_at` |
+| `conversation` | `id`, `crew_member_id` (soft reference), `channel` (voice or text), `created_at` |
+| `utterance` | `id`, `conversation_id` (FK), `role` (crew or assistant), `text`, `adapter` (whisper, alexa or text), `confirmed`, `citations` (jsonb), `created_at` |
 
-Reglas: sin claves foráneas hacia otros módulos. `chunk.embedding` es opcional: sin él, se busca por texto completo.
+Rules: no foreign keys to other modules. `chunk.embedding` is optional: without it, search is full text.
 
-### 4.3 Flujo de recomendación por alerta
+### 4.3 Recommendation flow per alert
 
-1. Llega `monitoring.alert_raised` al handler de Conocimiento (idempotente).
-2. Se consulta `RuleQuery` para obtener la regla y su `action_key`.
-3. Se busca el pasaje o la acción en la fuente activa (`demo` o `rag`) y se arma la recomendación **de plantilla con cita**.
-4. Se guarda y se publica `recommendation_ready` en la misma transacción.
-5. **Opcional:** `TextComposer` (Ollama) redacta una explicación con tiempo límite de 8 s y publica `recommendation_enriched`. Si falla o vence, no pasa nada: la plantilla ya está en pantalla.
+1. `monitoring.alert_raised` arrives at Knowledge's handler (idempotent).
+2. `RuleQuery` is queried to obtain the rule and its `action_key`.
+3. The passage or the action is looked up in the active source (`demo` or `rag`) and the **template recommendation with a citation** is built.
+4. It is stored and `recommendation_ready` is published in the same transaction.
+5. **Optional:** `TextComposer` (Ollama) writes an explanation with an 8 s time limit and publishes `recommendation_enriched`. If it fails or expires, nothing happens: the template is already on screen.
 
-### 4.4 Qué adaptador activa cada perfil
+### 4.4 Which adapter each profile activates
 
-| Puerto | `dev1` | `dev2` | `jurado` |
+| Port | `dev1` | `dev2` | `jurado` |
 | --- | --- | --- | --- |
-| Voz de entrada | Whisper local | Alexa (nube, solo demo) | Whisper local |
-| Conocimiento | Demo + RAG | Demo + RAG | RAG. Cae a demo si falta un pasaje |
-| Redacción | Ollama | Ollama | Ollama. Cae a plantilla si tarda más de 8 s |
+| Input voice | Local Whisper | Alexa (cloud, demo only) | Local Whisper |
+| Knowledge | Demo + RAG | Demo + RAG | RAG. Falls back to demo if a passage is missing |
+| Wording | Ollama | Ollama | Ollama. Falls back to the template if it takes more than 8 s |
 
-El nombre de la variable (`SPACEAPP_PROFILE`) y el valor por defecto `jurado` son una **propuesta** y no una decisión tomada.
+The variable name (`SPACEAPP_PROFILE`) and the default value `jurado` are a **proposal** and not a decision taken.
 
 ---
 
-## 5. Contratos que B consume de A
+## 5. Contracts B consumes from A
 
 ### 5.1 GraphQL
 
-| Pantalla | Operaciones |
+| Screen | Operations |
 | --- | --- |
-| Cabina | `dashboard`, `readings`, `alerts`, `alert`, `rules`, `crewMember`, `acknowledgeAlert`, `recordBaseline`, `setConsent` |
-| Nave | `ship`, `incidents`, `incident`, `zoneReadings`, `incidentTypes`, `reportIncident`, `acknowledgeIncident`, `resolveIncident` |
-| Tareas | `tasks`, `groundPlan`, `createTask`, `updateTask · deleteTask`, `blockTask`, `completeTask`, `snoozeReminder` |
-| Enlace | `groundLinkStatus`, `syncGroundLinkNow`, `setConsent` |
-| Panel de Tierra (rol `ground`) | `groundTasks`, `saveGroundTemplate`, `cancelGroundTemplate`, `publishGroundPlan` |
+| Cabin | `dashboard`, `readings`, `alerts`, `alert`, `rules`, `crewMember`, `acknowledgeAlert`, `recordBaseline`, `setConsent` |
+| Ship | `ship`, `incidents`, `incident`, `zoneReadings`, `incidentTypes`, `reportIncident`, `acknowledgeIncident`, `resolveIncident` |
+| Tasks | `tasks`, `groundPlan`, `createTask`, `updateTask · deleteTask`, `blockTask`, `completeTask`, `snoozeReminder` |
+| Link | `groundLinkStatus`, `syncGroundLinkNow`, `setConsent` |
+| Earth panel (role `ground`) | `groundTasks`, `saveGroundTemplate`, `cancelGroundTemplate`, `publishGroundPlan` |
 
 ### 5.2 WebSocket (`/ws`)
 
-Mensaje del servidor: `{ "seq": 18342, "topic": "alerts", "type": "alert.raised", "at": "…", "data": { … } }`. `seq` es el `id` del outbox cuando el mensaje nace de un evento. En los ticks es `null`.
+Server message: `{ "seq": 18342, "topic": "alerts", "type": "alert.raised", "at": "…", "data": { … } }`. `seq` is the outbox `id` when the message comes from an event. On ticks it is `null`.
 
-| Mensaje | Se usa en |
+| Message | Used in |
 | --- | --- |
-| `telemetry.tick` | Cabina y nave |
-| `alert.raised · updated · resolved` | Cabina |
-| `recommendation.ready · enriched` | Panel de alerta |
-| `incident.opened · updated · resolved`, `zone.status` | Nave |
-| `task.assigned · reminder.due` | Tareas |
-| `plan.received · applied` | Tareas y panel de Tierra |
-| `assistant.transcript · token · answer` | Asistente |
-| `groundlink.state` | Enlace |
-| `scenario.changed` | Modo demo |
-| `subscribe · unsubscribe · resume · ping` | Capa de datos |
+| `telemetry.tick` | Cabin and ship |
+| `alert.raised · updated · resolved` | Cabin |
+| `recommendation.ready · enriched` | Alert panel |
+| `incident.opened · updated · resolved`, `zone.status` | Ship |
+| `task.assigned · reminder.due` | Tasks |
+| `plan.received · applied` | Tasks and Earth panel |
+| `assistant.transcript · token · answer` | Assistant |
+| `groundlink.state` | Link |
+| `scenario.changed` | Demo mode |
+| `subscribe · unsubscribe · resume · ping` | Data layer |
 
-**Presión inversa:** cola de 500 mensajes por cliente. Se descartan primero los `telemetry.tick`. **Las alertas no se descartan.**
+**Backpressure:** queue of 500 messages per client. `telemetry.tick` are dropped first. **Alerts are not dropped.**
 
 ### 5.3 REST
 
-| Ruta | Uso |
+| Route | Use |
 | --- | --- |
-| `POST /api/v1/sim/scenarios/{key}:start · :stop` | Modo demo |
-| `PUT /api/v1/groundlink/link` | Cortar o restablecer el enlace en la demo |
-| `GET /api/v1/rules/catalog.json` | Exportar el catálogo de reglas |
+| `POST /api/v1/sim/scenarios/{key}:start · :stop` | Demo mode |
+| `PUT /api/v1/groundlink/link` | Cut or restore the link in the demo |
+| `GET /api/v1/rules/catalog.json` | Export the rule catalog |
 
 ---
 
-## 6. Calidad y pruebas
+## 6. Quality and tests
 
-| Nivel | Qué cubre | Herramienta |
+| Level | What it covers | Tool |
 | --- | --- | --- |
-| Componentes | `SevPill`, `EvidenceBadge`, gauge, tarjeta de ticket, formulario de reporte | Vitest + Testing Library |
-| Capa de datos | `useWs`: resume, duplicados, orden, descarte de ticks sin descartar alertas | Vitest |
-| Extremo a extremo con mocks | Escenario → alerta → reconocer. Escenario por zona → ticket → resolver | Playwright |
-| Contrato | Tipos generados del esquema. Eventos de B contra sus modelos Pydantic | `graphql-codegen` en CI, `pytest` |
-| Conocimiento | Una recomendación por regla, idempotencia, política sin pasaje | `pytest` |
-| Ingesta y búsqueda | Pruebas doradas, conjunto de evaluación y cero respuestas sin fuente | `pytest` |
-| Asistente | Tiempo límite de 8 s, nulo, streaming | `pytest` con `LlmGateway` falso |
-| Accesibilidad | AA, teclado, `aria-live` en alertas, no depender del color | Lighthouse, axe |
-| Sin conexión | Contenedor sin red: todo el flujo con el perfil `jurado` | Manual, en otra computadora |
+| Components | `SevPill`, `EvidenceBadge`, gauge, ticket card, report form | Vitest + Testing Library |
+| Data layer | `useWs`: resume, duplicates, order, dropping ticks without dropping alerts | Vitest |
+| End to end with mocks | Scenario → alert → acknowledge. Scenario per zone → ticket → resolve | Playwright |
+| Contract | Types generated from the schema. B's events against their Pydantic models | `graphql-codegen` in CI, `pytest` |
+| Knowledge | One recommendation per rule, idempotency, policy without a passage | `pytest` |
+| Ingestion and search | Golden tests, evaluation set and zero answers without a source | `pytest` |
+| Assistant | 8 s time limit, null, streaming | `pytest` with a fake `LlmGateway` |
+| Accessibility | AA, keyboard, `aria-live` on alerts, not depending on color | Lighthouse, axe |
+| Offline | Container without network: the whole flow with the `jurado` profile | Manual, on another computer |
 
 ---
 
-## 7. Definición de hecho
+## 7. Definition of done
 
-Una fase de B está **hecha** cuando:
+A phase of B is **done** when:
 
-- [ ] Cumple sus criterios de aceptación.
-- [ ] La CI de B está en verde (`eslint`, `tsc`, `vitest`, `ruff`, `mypy`, `import-linter`, `pytest`).
-- [ ] No hay valores sin etiqueta de evidencia (`VERIFICADO`, `TB`, `DEMO` o `SIMULADO`).
-- [ ] El estado de toda alerta o severidad tiene forma, icono y texto.
-- [ ] Funciona sin internet y sin Ollama (adaptador nulo).
-- [ ] Hay una nota corta en el README del módulo o de la funcionalidad.
-- [ ] Si toca un contrato, el otro desarrollador lo revisó.
+- [ ] It meets its acceptance criteria.
+- [ ] B's CI is green (`eslint`, `tsc`, `vitest`, `ruff`, `mypy`, `import-linter`, `pytest`).
+- [ ] There are no values without an evidence label (`VERIFICADO`, `TB`, `DEMO` or `SIMULADO`).
+- [ ] The state of every alert or severity has shape, icon and text.
+- [ ] It works without internet and without Ollama (null adapter).
+- [ ] There is a short note in the README of the module or the feature.
+- [ ] If it touches a contract, the other developer reviewed it.
 
 ---
 
-## 8. Riesgos específicos de B
+## 8. Specific risks of B
 
-| Riesgo | Probabilidad | Mitigación |
+| Risk | Probability | Mitigation |
 | --- | --- | --- |
-| La API de A tarda y B se bloquea | Alta | Esquema congelado en I0, mocks generados y grabaciones WS. B no depende de A hasta I2 |
-| Un cambio de contrato rompe la interfaz sin aviso | Media | Tipos generados en CI: el build falla de inmediato |
-| Extracción de texto de los PDFs de mala calidad o tablas como imagen | Alta | Transcripción manual de tablas clave, pruebas doradas y evaluación |
-| Ollama lento sin GPU en el equipo del jurado | Alta | La recomendación de plantilla con cita sale primero. Redacción opcional con límite de 8 s |
-| Whisper pesado o con mala precisión con términos médicos | Media | Modelo pequeño, confirmación obligatoria y entrada por texto siempre disponible |
-| El micrófono falla en Docker o fuera de `localhost` | Media | Documentar HTTPS o `localhost`. Texto como alternativa funcional |
-| Licencia de los PDFs para la imagen de Docker | Media | `license_status` por documento y no empaquetar lo dudoso |
-| Demasiadas gráficas o SVG vivos a 1 Hz ralentizan la interfaz | Baja | uPlot, coalescencia de ticks y redibujar solo la zona seleccionada |
-| Reconexiones del WebSocket generan duplicados o pérdidas | Media | `seq` por mensaje, deduplicación y `resume` desde el último id |
-| Si B falta, A no conoce su parte | Media | README corto por módulo y pruebas de contrato como documentación |
+| A's API is late and B gets blocked | High | Schema frozen at I0, generated mocks and WS recordings. B does not depend on A until I2 |
+| A contract change breaks the interface without notice | Medium | Types generated in CI: the build fails at once |
+| Poor-quality text extraction from the PDFs or tables as an image | High | Manual transcription of key tables, golden tests and evaluation |
+| Slow Ollama without a GPU on the jury's machine | High | The template recommendation with a citation comes out first. Optional wording with an 8 s limit |
+| Whisper heavy or with poor accuracy on medical terms | Medium | Small model, mandatory confirmation and text input always available |
+| The microphone fails in Docker or outside `localhost` | Medium | Document HTTPS or `localhost`. Text as a working alternative |
+| License of the PDFs for the Docker image | Medium | `license_status` per document and do not package the doubtful |
+| Too many live charts or SVG at 1 Hz slow down the interface | Low | uPlot, tick coalescing and redrawing only the selected zone |
+| WebSocket reconnections generate duplicates or losses | Medium | `seq` per message, deduplication and `resume` from the last id |
+| If B is missing, A does not know their part | Medium | Short README per module and contract tests as documentation |
 
 ---
 
-## 9. Coordinación con Dev A
+## 9. Coordination with Dev A
 
-**Qué le pide B a A**
+**What B asks A for**
 
-1. En I0: bus en memoria, repositorio base y contratos congelados.
-2. En I1: el outbox real.
-3. En I2 a I5: lecturas, incidencias y el gateway reales, para retirar los mocks.
-4. Evento `alert_raised` con `zone_id` y la fachada `RuleQuery`.
+1. At I0: in-memory bus, base repository and frozen contracts.
+2. At I1: the real outbox.
+3. At I2 to I5: the real readings, incidents and gateway, to remove the mocks.
+4. Event `alert_raised` with `zone_id` and the `RuleQuery` facade.
 
-**Qué le entrega B a A**
+**What B delivers to A**
 
-1. `recommendation_ready` y la fachada `ActionCatalogQuery` (Misiones las usa).
-2. `assistant.answer_ready` para que el gateway lo transforme en mensajes WS.
-3. Los resolvers de Conocimiento y Asistente para componer el esquema.
+1. `recommendation_ready` and the `ActionCatalogQuery` facade (Missions uses them).
+2. `assistant.answer_ready` so the gateway turns it into WS messages.
+3. The Knowledge and Assistant resolvers to compose the schema.
 
-**Cuándo avisar**
+**When to warn**
 
-- Si un contrato necesita un campo nuevo: **antes** de implementarlo, con una solicitud al dueño.
-- Si un mock no refleja el comportamiento real: al detectarlo, no en el hito.
-- Al terminar cada fase: una línea con qué quedó listo y qué falta.
+- If a contract needs a new field: **before** implementing it, with a request to the owner.
+- If a mock does not reflect real behavior: when detected, not at the milestone.
+- At the end of each phase: one line with what is ready and what is missing.
 
 ---
 
-## 10. Decisiones pendientes que afectan a B
+## 10. Pending decisions that affect B
 
-No se deciden sin consultar. Mientras tanto se usa el supuesto indicado.
+They are not decided without consulting. Meanwhile the stated assumption is used.
 
-| # | Decisión | Supuesto actual |
+| # | Decision | Current assumption |
 | --- | --- | --- |
-| 1 | ¿El RAG solo devuelve pasajes con cita o también redacta con Ollama? | Redacta con Ollama, con caída a plantilla y límite de 8 s |
-| 2 | ¿n8n sigue como orquestador o se llama a Ollama directo? | n8n queda como adaptador opcional. Por defecto se llama a Ollama directo |
-| 3 | ¿Se sube F12 (RAG completo) a P0? | Sigue en P1, aunque cabe antes de la entrega |
-| 4 | Modelo de embeddings local | Ninguno al principio: texto completo. Vector si se decide un modelo |
-| 5 | Nombre de la variable de perfil y valor por defecto | `SPACEAPP_PROFILE`, con `jurado` por defecto |
-| 6 | Idioma de la interfaz para el jurado | Español. Pendiente si hace falta una versión en inglés |
-| 7 | Autenticación del panel de Tierra | Rol `ground` por selección local, sin cuentas externas |
-| 8 | Qué documentos extra se indexan (HIDH, OCHMO-STD-100.1A, manual de la ISS) | Solo los siete leídos. Los demás, opcionales y con licencia a revisar |
-| 9 | Escenario de la demo (tránsito a Marte, base lunar o ISS) | Nave de tránsito. Cambiar es cambiar datos |
+| 1 | Does the RAG only return passages with a citation or does it also write with Ollama? | It writes with Ollama, falling back to the template with an 8 s limit |
+| 2 | Does n8n stay as orchestrator or is Ollama called directly? | n8n stays as an optional adapter. By default Ollama is called directly (replaced on 15 Nov 2026: n8n is mandatory for the assistant, see logbook E18) |
+| 3 | Is F12 (full RAG) raised to P0? | It stays in P1, although it fits before the delivery |
+| 4 | Local embeddings model | None at first: full text. Vector if a model is decided (decided on 15 Nov 2026: `bge-m3`, logbook E23) |
+| 5 | Name of the profile variable and default value | `SPACEAPP_PROFILE`, with `jurado` by default |
+| 6 | Interface language for the jury | Spanish. Pending whether an English version is needed (decided on 15 Nov 2026: English, logbook E21 and E33) |
+| 7 | Authentication of the Earth panel | Role `ground` by local selection, without external accounts |
+| 8 | Which extra documents are indexed (HIDH, OCHMO-STD-100.1A, ISS manual) | Only the seven read. The others, optional and with a license to review |
+| 9 | Demo scenario (transit to Mars, lunar base or ISS) | Transit ship. Changing is changing data |
 
 ---
 
-## 11. Checklist maestro de Dev B
+## 11. Dev B master checklist
 
-**Corte P0 (18,5 h)**
+**P0 cut (18.5 h)**
 
-- [ ] F0 · Proyecto `web/`, codegen, mocks y contratos revisados (I0)
-- [ ] F6 · Panel de cabina, gráficas, cuerpo humano y panel de alerta
-- [ ] F7 · Plano, tickets, gráficas por zona, formulario y catálogo de incidencias
-- [ ] F8 · Conocimiento con datos de demostración y handler de `alert_raised` (I4)
-- [ ] F9 · SPA en la imagen, capa de B en Docker y prueba sin internet (I6)
+- [ ] F0 · `web/` project, codegen, mocks and reviewed contracts (I0)
+- [ ] F6 · Cabin panel, charts, human body and alert panel
+- [ ] F7 · Plan, tickets, per-zone charts, form and incident catalog
+- [ ] F8 · Knowledge with demo data and `alert_raised` handler (I4)
+- [ ] F9 · SPA in the image, B's layer in Docker and offline test (I6)
 
-**P1 y P2 (15,5 h)**
+**P1 and P2 (15.5 h)**
 
-- [ ] F12 · RAG sobre PDFs de NASA: ingesta, búsqueda, política y evaluación
-- [ ] F13 · Asistente por texto con Ollama
-- [ ] F14 · Voz con Whisper y confirmación
-- [ ] F10 · Tareas: lista, nueva tarea, bloqueo con motivo y consentimiento
-- [ ] F11 · Panel del centro de control (I7)
-- [ ] F16 · Alexa como respaldo (solo si Whisper se traba)
+- [ ] F12 · RAG over NASA PDFs: ingestion, search, policy and evaluation
+- [ ] F13 · Text assistant with Ollama
+- [ ] F14 · Voice with Whisper and confirmation
+- [ ] F10 · Tasks: list, new task, block with a reason and consent
+- [ ] F11 · Control center panel (I7)
+- [ ] F16 · Alexa as a fallback (only if Whisper gets stuck)
 
-**Cierre**
+**Closing**
 
-- [ ] README de `web/`, `knowledge` y `assistant`
-- [ ] Guion de demo con los escenarios y el orden de las pantallas
-- [ ] Prueba final en otra computadora, sin internet, con el perfil `jurado`
+- [ ] README of `web/`, `knowledge` and `assistant`
+- [ ] Demo script with the scenarios and the order of the screens
+- [ ] Final test on another computer, without internet, with the `jurado` profile

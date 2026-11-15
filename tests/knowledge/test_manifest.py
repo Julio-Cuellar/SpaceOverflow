@@ -17,10 +17,10 @@ def test_lists_the_seven_documents_read_for_the_plan() -> None:
         "NASA-STD-3001 Vol. 1 Rev C",
         "NASA-STD-3001 Vol. 2 Rev F",
         "OCHMO-TB-002 ECLSS",
-        "OCHMO-TB-003 atmósfera habitable",
+        "OCHMO-TB-003 Habitable Atmosphere",
         "OCHMO-TB-004 CO₂",
-        "OCHMO-TB-044 operaciones médicas",
-        "Checklist del botiquín médico",
+        "OCHMO-TB-044 Medical Operations",
+        "Medical Kit Checklist",
     }
 
 

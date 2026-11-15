@@ -1,9 +1,9 @@
 {
-  "_nota": "Manifiesto de documentos para el RAG (F12). Ningún PDF se empaqueta sin licencia confirmada: todos quedan con licencia no verificada y se indexan solo en local. Fuente: spaceapps-health-monitor-context.md, sección 6.2.",
+  "_nota": "Document manifest for the RAG (F12). No PDF is packaged without a confirmed license: all of them keep an unverified license and are indexed locally only. Source: spaceapps-health-monitor-context.md, section 6.2.",
   "documents": [
     {
       "code": "NASA-STD-3001 Vol. 1 Rev C",
-      "title": "NASA-STD-3001 Vol. 1 Rev C: salud de la tripulación",
+      "title": "NASA-STD-3001 Vol. 1 Rev C: crew health",
       "url": "https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf",
       "kind": "norma",
       "evidence_state": "VERIFICADO",
@@ -11,11 +11,11 @@
       "packageable": false,
       "read": true,
       "optional": false,
-      "note": "Leído en las secciones 3 y 4."
+      "note": "Read in sections 3 and 4."
     },
     {
       "code": "NASA-STD-3001 Vol. 2 Rev F",
-      "title": "NASA-STD-3001 Vol. 2 Rev F: factores humanos, hábitat y medio ambiente",
+      "title": "NASA-STD-3001 Vol. 2 Rev F: human factors, habitability and environmental health",
       "url": "https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf",
       "kind": "norma",
       "evidence_state": "VERIFICADO",
@@ -23,11 +23,11 @@
       "packageable": false,
       "read": true,
       "optional": false,
-      "note": "Leído en la sección 6 y parte de la 7.1. Algunas tablas vienen como imagen."
+      "note": "Read in section 6 and part of 7.1. Some tables come as an image."
     },
     {
       "code": "OCHMO-TB-002 ECLSS",
-      "title": "OCHMO-TB-002: soporte vital y control ambiental",
+      "title": "OCHMO-TB-002: life support and environmental control",
       "url": "https://www.nasa.gov/wp-content/uploads/2023/07/eclss-technical-brief-ochmo.pdf",
       "kind": "technical_brief",
       "evidence_state": "TB",
@@ -35,11 +35,11 @@
       "packageable": false,
       "read": true,
       "optional": false,
-      "note": "Daba una presión mínima de cabina de 26.2 kPa; la norma vigente dice 34.5 kPa."
+      "note": "It gave a minimum cabin pressure of 26.2 kPa; the current standard says 34.5 kPa."
     },
     {
-      "code": "OCHMO-TB-003 atmósfera habitable",
-      "title": "OCHMO-TB-003: atmósfera habitable",
+      "code": "OCHMO-TB-003 Habitable Atmosphere",
+      "title": "OCHMO-TB-003: habitable atmosphere",
       "url": "https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-003-habitable-atmosphere.pdf",
       "kind": "technical_brief",
       "evidence_state": "TB",
@@ -47,11 +47,11 @@
       "packageable": false,
       "read": true,
       "optional": false,
-      "note": "La Tabla 6.2-1 y las figuras vienen como imagen."
+      "note": "Table 6.2-1 and the figures come as an image."
     },
     {
       "code": "OCHMO-TB-004 CO₂",
-      "title": "OCHMO-TB-004: dióxido de carbono",
+      "title": "OCHMO-TB-004: carbon dioxide",
       "url": "https://www.nasa.gov/wp-content/uploads/2023/03/co2-technical-brief-ochmo.pdf",
       "kind": "technical_brief",
       "evidence_state": "TB",
@@ -61,8 +61,8 @@
       "optional": false
     },
     {
-      "code": "OCHMO-TB-044 operaciones médicas",
-      "title": "OCHMO-TB-044: operaciones médicas",
+      "code": "OCHMO-TB-044 Medical Operations",
+      "title": "OCHMO-TB-044: medical operations",
       "url": "https://www.nasa.gov/wp-content/uploads/2025/08/ochmo-tb-044-medical-operations.pdf",
       "kind": "technical_brief",
       "evidence_state": "TB",
@@ -72,8 +72,8 @@
       "optional": false
     },
     {
-      "code": "Checklist del botiquín médico",
-      "title": "Checklist del botiquín médico (liberación completa)",
+      "code": "Medical Kit Checklist",
+      "title": "Medical Kit Checklist (full release)",
       "url": "https://www.nasa.gov/wp-content/uploads/2015/03/medical_kit_checklist_-_full_release.pdf",
       "kind": "checklist",
       "evidence_state": "VERIFICADO",
@@ -84,7 +84,7 @@
     },
     {
       "code": "Human Integration Design Handbook",
-      "title": "Human Integration Design Handbook (revisión 1)",
+      "title": "Human Integration Design Handbook (revision 1)",
       "url": "https://www.nasa.gov/wp-content/uploads/2015/03/human_integration_design_handbook_revision_1.pdf",
       "kind": "handbook",
       "evidence_state": "NO_VERIFICADO",
@@ -92,11 +92,11 @@
       "packageable": false,
       "read": false,
       "optional": true,
-      "note": "Nadie lo ha abierto."
+      "note": "Nobody has opened it."
     },
     {
       "code": "OCHMO-STD-100.1A",
-      "title": "OCHMO-STD-100.1A: evaluaciones médicas",
+      "title": "OCHMO-STD-100.1A: medical evaluations",
       "url": "https://www.nasa.gov/wp-content/uploads/2023/04/ochmo-std-100.1a.pdf",
       "kind": "norma",
       "evidence_state": "NO_VERIFICADO",
@@ -104,11 +104,11 @@
       "packageable": false,
       "read": false,
       "optional": true,
-      "note": "Nadie lo ha abierto."
+      "note": "Nobody has opened it."
     },
     {
-      "code": "Manual de emergencias médicas de la ISS (2016)",
-      "title": "Manual de emergencias médicas de la ISS (2016)",
+      "code": "ISS Medical Emergency Manual (2016)",
+      "title": "ISS Medical Emergency Manual (2016)",
       "url": "https://www.governmentattic.org/19docs/NASA-ISSmedicalEmergManual_2016.pdf",
       "kind": "manual",
       "evidence_state": "NO_VERIFICADO",
@@ -116,7 +116,7 @@
       "packageable": false,
       "read": false,
       "optional": true,
-      "note": "Viene de una liberación por transparencia, no de un sitio oficial de NASA. Revisar licencia y vigencia antes de redistribuirlo."
+      "note": "It comes from a transparency release, not from an official NASA site. Check the license and currency before redistributing it."
     }
   ]
 }
