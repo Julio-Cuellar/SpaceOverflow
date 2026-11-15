@@ -543,3 +543,14 @@ Rama de trabajo `integration/a-b`, cortada de `dev-B` (ec2e298). Etiqueta local 
 - **Resultados** (equivalente a `scripts/check.sh`, en Python 3.12.16): ruff y formato limpios; mypy estricto en 137 archivos sin errores; import-linter 4 cumplidos, 0 rotos; **547 pruebas pasan** y 19 se omiten a propósito; **cobertura 97,27 %** (mínimo 80 %).
 - **El RAG no cambió:** reingesta con `--rebuild` (2 086 fragmentos) y las tres evaluaciones dan lo mismo que antes: 9 de 16, 1 de 9 y 13 de 25; ninguna pregunta fuera de alcance respondida.
 - **Web:** 123 pruebas pasan (25 archivos).
+
+### Fase 5 · CI y cierre
+
+- **CI:** el job de Python deja de usar `pip install -e ".[dev]"` (los extras ya no existen tras tomar el `pyproject.toml` de A) y la matriz 3.12 + 3.14. Ahora: Python 3.12, `pip install uv==0.13.8`, `uv sync --frozen` (falla si `uv.lock` no coincide), `ruff check`, `ruff format --check`, `mypy`, `lint-imports` y `pytest --cov --cov-fail-under=80`. El runner de GitHub trae Docker, que necesitan las pruebas de integración de A y la mía.
+- **Ensayo en copia limpia** (worktree de `HEAD`, `uv sync --frozen`): ruff, formato, mypy estricto (137 archivos) e import-linter (4 cumplidos) limpios; 547 pruebas pasan, 19 omitidas; cobertura 97,27 %. **Lo que no se ha visto:** la primera ejecución real en GitHub Actions (versión de `uv`, Docker del runner).
+- **Hallazgo sin resolver:** hay dos `CODEOWNERS`, el de A en la raíz (con `@dev-a` y `@dev-b` de ejemplo) y el mío en `.github/` (con el usuario real). GitHub da prioridad a `.github/CODEOWNERS`, así que el de la raíz no se usa hasta que se unifiquen. No lo toqué: el de la raíz es de A.
+- **Pendiente con Dev A:**
+  - Que `build_registry` de `main.py` llame a `register_knowledge` (Conocimiento no recibe alertas hasta entonces).
+  - `source_kind` (DEMO) no viaja en `recommendation_ready`; sigue siendo una solicitud abierta.
+  - Un repositorio SQL de recomendaciones (esquema `knowledge`) para que sobrevivan a un reinicio.
+- **Pendiente mío:** adaptador de `assistant.answer_ready` hacia el bus, buscador de pasajes en la web, y la decisión de embeddings.

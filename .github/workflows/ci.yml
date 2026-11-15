@@ -40,24 +40,24 @@ jobs:
       - run: npm run codegen
 
   python:
-    name: Python ${{ matrix.python-version }}
+    name: Python 3.12 (lint, tipos, arquitectura, pruebas)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        # 3.12 es el mínimo que declara pyproject.toml; 3.14 es la versión de desarrollo.
-        python-version: ["3.12", "3.14"]
     steps:
       - uses: actions/checkout@v4
 
+      # pyproject.toml fija >=3.12,<3.13: es la única versión que prueba el equipo (Dev A y Dev B).
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
+          python-version: "3.12"
 
-      - run: python -m pip install -e ".[dev]"
-      - run: ruff check src tests
-      - run: ruff format --check src tests
-      - run: mypy
-      - run: pytest -q
+      - run: python -m pip install uv==0.13.8
+      # --frozen: si uv.lock no coincide con pyproject.toml, falla en vez de resolver otra vez.
+      - run: uv sync --frozen
+
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run lint-imports
+      # Las pruebas de integración (outbox, migraciones) levantan PostgreSQL con testcontainers;
+      # el runner de GitHub trae Docker. La cobertura mínima es 80 %.
+      - run: uv run pytest -q --cov --cov-fail-under=80
