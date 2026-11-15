@@ -43,6 +43,26 @@ the assistant routes to `SPACEAPP_ASSISTANT_PROXY` (`:8000`, `python -m spaceapp
 CORS is not needed. Another API port: `SPACEAPP_API_PORT=8010 scripts/dev-backend.sh` and
 `SPACEAPP_API_PROXY=http://127.0.0.1:8010 npm run dev:backend`. `npm run dev` keeps the demo mode.
 
+### A mission in the database
+
+```bash
+SPACEAPP_DATABASE_URL=postgresql+asyncpg://spaceapp:spaceapp@localhost:5434/spaceapp \
+  .venv/bin/python -m spaceapp.devtools.seed_mission --reset      # about 40 s
+SPACEAPP_SIMULATOR_AUTOSTART=false scripts/dev-backend.sh          # keeps that state on screen
+```
+
+The seed replays three hours of simulated telemetry through the app's own use cases, so everything is
+written by the modules and labeled as the running system would: the habitat map (from
+`data/facility/plan.json`), readings of every zone, a slow CO₂ drift in the laboratory that the rules turn
+into the `env-co2-1h` alert (with its recommendation, labeled DEMO), the incident that alert opens, a second
+incident reported by hand and acknowledged, the day's tasks (one done, one blocked, one added by the crew)
+and a Ground plan that went through the link and was confirmed. `--reset` empties the module tables first;
+without it the seed refuses to run over existing readings. Run the API with the simulator on instead and it
+keeps generating live readings, but the laboratory returns to nominal.
+
+Not seeded because the backend has no storage for it yet: crew members, their wearable vitals and personal
+sessions (the Crew health page keeps saying it awaits the crew service).
+
 With the real backend, consent, baseline and "Sync now" are refused (`NOT_AVAILABLE`) until the backend has them,
 and Ground templates show no zone or recurrence.
 

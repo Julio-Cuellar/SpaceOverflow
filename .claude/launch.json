@@ -17,10 +17,8 @@
     },
     {
       "name": "web-backend",
-      "runtimeExecutable": "env",
+      "runtimeExecutable": "npm",
       "runtimeArgs": [
-        "SPACEAPP_API_PROXY=http://127.0.0.1:8010",
-        "npm",
         "--prefix",
         "web",
         "run",

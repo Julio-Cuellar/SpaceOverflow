@@ -60,3 +60,22 @@ async def test_every_monitoring_rule_produces_a_recommendation_through_the_wired
     assert bus.failures == []
     assert len(ready) == len(rules)
     assert all(e.payload_as(RecommendationReady).citations for e in ready)
+
+
+def test_an_alert_keeps_its_recommendation_after_a_restart() -> None:
+    # The store is in memory: a new process has none, but the rule gives the same one again.
+    wiring = build_knowledge(Settings())
+    alert_id = uuid4()
+
+    rebuilt = wiring.recommendation_for(alert_id, "env-co2-1h")
+
+    assert rebuilt is not None
+    assert rebuilt.alert_id == alert_id
+    assert rebuilt.rule_key == "env-co2-1h"
+    assert wiring.recommendation_for(alert_id, "env-co2-1h") == rebuilt
+
+
+def test_an_unknown_rule_has_no_recommendation() -> None:
+    assert (
+        build_knowledge(Settings()).recommendation_for(uuid4(), "rule-that-does-not-exist") is None
+    )

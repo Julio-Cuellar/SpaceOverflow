@@ -22,6 +22,25 @@ CONSUMER = "knowledge.on_alert_raised"
 _NAMESPACE = uuid.NAMESPACE_URL
 
 
+def build_recommendation(
+    source: KnowledgeSource, alert_id: uuid.UUID, rule_key: str
+) -> Recommendation:
+    """The recommendation of an alert. It is a pure function of the alert and the rule.
+
+    The id is deterministic, so it can be rebuilt after a restart without storing it.
+    """
+    guidance = source.guidance_for(rule_key)
+    return Recommendation(
+        id=uuid.uuid5(_NAMESPACE, f"{alert_id}:{rule_key}"),
+        alert_id=alert_id,
+        rule_key=rule_key,
+        source_kind=guidance.source_kind,
+        body=guidance.body,
+        actions=guidance.actions,
+        citations=guidance.citations,
+    )
+
+
 class HandleResult(Enum):
     RECORDED = "recorded"
     DUPLICATE = "duplicate"
@@ -50,21 +69,11 @@ class HandleAlertRaised:
         alert = event.payload_as(AlertRaised)
         # The guidance first: if the rule does not exist the error is raised and the event stays
         # unmarked.
-        guidance = self._source.guidance_for(alert.rule_key)
+        recommendation = build_recommendation(self._source, alert.alert_id, alert.rule_key)
 
         if not self._inbox.mark_once(CONSUMER, event.event_id):
             return HandleResult.DUPLICATE
 
-        recommendation = Recommendation(
-            # Deterministic id: the same alert and rule always produce the same id.
-            id=uuid.uuid5(_NAMESPACE, f"{alert.alert_id}:{alert.rule_key}"),
-            alert_id=alert.alert_id,
-            rule_key=alert.rule_key,
-            source_kind=guidance.source_kind,
-            body=guidance.body,
-            actions=guidance.actions,
-            citations=guidance.citations,
-        )
         self._recommendations.save(recommendation)
         await ctx.publish(
             EventEnvelope.from_payload(

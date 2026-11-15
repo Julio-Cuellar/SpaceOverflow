@@ -1043,3 +1043,21 @@ Without downloading anything: the real model and the library were not installed 
 **Port conflicts found on this machine:** 5433 belongs to another project's PostgreSQL (hence 5434), and an older API (`jurado` profile, code from before the merge) was already listening on 8002 and was left untouched: restart it to use the merged code.
 
 **Not verified:** the assistant tab and voice against the real services (this run used no assistant server), Ground publish/cancel flows, incidents reported from the UI, and load: the overview issued about 80 GraphQL requests in a few seconds while the simulator streamed readings.
+
+## E36 · A mission seeded into the database (15 Nov 2026)
+
+**Goal:** the console in backend mode should look like its demo mode, with the data in the database.
+
+**What the database already had:** the habitat map. `facility.habitat` and `facility.zone` are synced from `data/facility/plan.json` (ten zones in two rows, canvas 968×372); it is the same map the demo draws, with the backend's zone names.
+
+**What was added:** `spaceapp.devtools.seed_mission` (`--reset`, `--hours`). It replays the simulator on a fake clock (one tick every 30 s, 3 h, 14,450 readings) through `ingest_readings`, so the rules, the relay and the modules produce everything else themselves: the `env-co2-1h` alert in the laboratory, its recommendation, the incident INC-0001 that the alert opens, a manual incident (INC-0002, loose cargo in the crew quarters, acknowledged), the day's tasks (one completed, one blocked with a reason, one created by the crew) and a Ground plan with two templates that went through the link to CONFIRMED. About 40 s. It refuses to run over existing readings without `--reset`.
+
+**Fix found on the way:** the recommendation lived only in memory, so after restarting the API an alert in the database lost it. It is a pure function of the alert and its rule (the id is already deterministic), so `KnowledgeWiring.recommendation_for(alert_id, rule_key)` rebuilds it when the store has none; the GraphQL resolver now passes the rule key. Tests added.
+
+**Mistake caught:** the first `--reset` also emptied the Alembic version tables, and the next migration run failed with `DuplicateTable`. Reset now skips `alembic_version%` (the database of this session was re-stamped).
+
+**Verified:** the seed runs in an integration test (alert raised by the rules, incidents, tasks, plan confirmed, refusal without `--reset`); the whole suite passes, integration tests included (1,017 passed, 19 skipped), `ruff` and strict `mypy` clean. In the browser, against the seeded database: overview with CO₂ 3.65 mmHg High, the alert with its DEMO recommendation, both incidents, the map with the laboratory in alert and the crew quarters with an open incident, the laboratory zone trends, and Ground control with the plan CONFIRMED.
+
+**Not seeded (no storage in the backend):** crew members, wearable vitals and personal sessions. The Crew health page still says it awaits the crew service. The 1 h chart of the laboratory shows the plateau of the drift (it started 105 min before the end); a shorter drift made the pre-alert flap and created dozens of tasks, so it was kept long.
+
+**Open:** with the simulator on, the laboratory returns to nominal in minutes because the live simulator does not know the seeded history.

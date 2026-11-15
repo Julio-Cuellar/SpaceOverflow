@@ -207,7 +207,7 @@ class AlertType:
 
     @strawberry.field
     def recommendation(self, info: GqlInfo) -> RecommendationType | None:
-        found = info.context.services.recommendation_for(UUID(self.id))
+        found = info.context.services.recommendation_for(UUID(self.id), self.rule_key)
         return RecommendationType.of(found) if found else None
 
     @staticmethod

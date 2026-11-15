@@ -44,8 +44,11 @@ from spaceapp.modules.knowledge.adapters.outbound.memory import (
     InMemoryInbox,
     InMemoryRecommendations,
 )
-from spaceapp.modules.knowledge.application.handle_alert_raised import HandleAlertRaised
-from spaceapp.modules.knowledge.domain.model import Recommendation
+from spaceapp.modules.knowledge.application.handle_alert_raised import (
+    HandleAlertRaised,
+    build_recommendation,
+)
+from spaceapp.modules.knowledge.domain.model import Recommendation, UnknownRuleError
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 from spaceapp.modules.monitoring.adapters.inbound.events import register_monitoring
 from spaceapp.modules.monitoring.adapters.inbound.rest import build_router as monitoring_router
@@ -100,8 +103,19 @@ class KnowledgeWiring:
     recommendations: InMemoryRecommendations
     handler: HandleAlertRaised
 
-    def recommendation_for(self, alert_id: UUID) -> Recommendation | None:
-        return next((r for r in self.recommendations.all() if r.alert_id == alert_id), None)
+    def recommendation_for(self, alert_id: UUID, rule_key: str) -> Recommendation | None:
+        """The stored recommendation or, after a restart, the one the rule gives again.
+
+        The recommendation is a pure function of the alert and its rule, so alerts that are in
+        the database keep theirs even though the store is in memory.
+        """
+        stored = next((r for r in self.recommendations.all() if r.alert_id == alert_id), None)
+        if stored is not None:
+            return stored
+        try:
+            return build_recommendation(self.source, alert_id, rule_key)
+        except UnknownRuleError:
+            return None
 
 
 def build_knowledge(settings: Settings) -> KnowledgeWiring:

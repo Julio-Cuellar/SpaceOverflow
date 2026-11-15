@@ -28,7 +28,7 @@ class Services:
     rules: RuleQuery
     telemetry: TelemetryViews
     knowledge: KnowledgeQuery
-    recommendation_for: Callable[[UUID], Recommendation | None]
+    recommendation_for: Callable[[UUID, str], Recommendation | None]
     acknowledge: Callable[[UUID, str | None], Awaitable[AckResult]]
     facility: FacilityService
     ship: ShipQuery
