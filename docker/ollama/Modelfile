@@ -1,0 +1,8 @@
+# Variante del asistente sobre llama3.2:3b. No descarga nada: parte del modelo ya bajado.
+# Medido en esta máquina (16 hilos, Docker con 4 GB): con 16 hilos genera ~2,6 tok/s y con 4 hilos
+# unos 6 tok/s (ver docker/ollama/README.md). Las respuestas se limitan para no pasar de ~30 s.
+FROM llama3.2:3b
+PARAMETER num_thread 4
+PARAMETER num_predict 150
+PARAMETER num_ctx 2048
+PARAMETER temperature 0.2

@@ -674,3 +674,17 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 - **Verificación (Python 3.12):** ruff, formato, mypy estricto (146 archivos) e import-linter limpios; **646 pruebas pasan** (14 nuevas), cobertura 97 %+.
 - **No cableado todavía:** el router no está montado en ninguna aplicación. `main.py` es de Dev A; para la prueba punta a punta (fase 6) se usará un servidor de desarrollo propio.
 - **Riesgo anotado:** los pasajes salen de PDFs y llegan al agente como texto; un PDF con instrucciones podría intentar dirigir al modelo. Mitigación: herramientas de solo lectura, citas puestas por el backend y la instrucción del sistema del workflow (fase 5).
+
+### E18 · Fase 4: Ollama local en Docker (medido)
+
+**Descargas autorizadas por el usuario** (nombre, tamaño y fuente mostrados antes; eligió «llama3.2:3b»): imagen `ollama/ollama:latest` (Docker Hub, 3,4 GB comprimidos; **8,5 GB en disco**, la imagen ocupa más de lo anunciado) y el modelo `llama3.2:3b` (registry.ollama.ai, 2,0 GB). Contenedor `spaceapp-ollama` (127.0.0.1:11434), volumen `spaceapp-ollama-models`. Tardaron 4 min 43 s y 2 min 33 s.
+
+- **Qué se hizo:** `docker/ollama/Modelfile` (variante `spaceapp-asistente`: 4 hilos, 150 tokens máximo, contexto 2048, temperatura 0,2; no descarga nada) y `docker/ollama/README.md` con la preparación y las mediciones.
+- **Medido** (16 hilos lógicos, Docker Desktop con 4 GB, otros contenedores en marcha, promedio de carga 7 a 12):
+  - **Velocidad:** con los hilos por defecto **2,6 a 2,7 tok/s**; con 4 hilos **5,8 a 6,5 tok/s**. Más hilos no ayudan: compiten con los demás contenedores.
+  - **Latencia:** la primera respuesta (carga incluida, 450 tokens) tardó 190 s; con el modelo cargado, una de 109 tokens tarda 28 s.
+  - **Memoria:** el contenedor usa 2,5 GB de los 4 GB que da Docker Desktop.
+  - **Herramientas:** `llama3.2:3b` sí llama a `search_passages` con una consulta razonable («dolor de cabeza»), también ante una pregunta fuera de alcance («Capital de Francia»): decide llamar a la herramienta siempre que se le ordena; la validación del backend sigue siendo necesaria.
+  - **Alcance desde n8n:** el contenedor `n8n` llega a Ollama por `http://host.docker.internal:11434` (responde la versión 0.40.16).
+- **Conclusión que afecta al diseño (D6):** el límite de 8 s del plan es inalcanzable con este modelo en esta máquina. Una respuesta corta tarda 25 a 30 s. El tiempo del orquestador por defecto (30 s) queda corto para respuestas largas y **no se ha decidido**: propuesta, mostrar enseguida la respuesta de plantilla con los pasajes y completar con la redacción del modelo cuando llegue (como en la alerta: `recommendation_ready` y luego `recommendation_enriched`).
+- **Calidad (una muestra, no una evaluación):** con un pasaje en el prompt y sin acotar, el modelo contestó largo y genérico en vez de apoyarse en el pasaje. Se evaluará en la fase 6 con las preguntas del RAG.
