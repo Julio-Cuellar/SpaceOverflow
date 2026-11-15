@@ -35,7 +35,7 @@ El comando indexa los PDFs que haya en `data/knowledge/pdfs/` según `data/knowl
 - Un PDF que falta, roto o sin texto se avisa y no detiene a los demás.
 - Se fragmenta por referencia de requisito (`[V2 6004]`); una referencia citada a mitad de frase o dentro de un paréntesis abierto no parte el pasaje.
 - Búsqueda BM25 con raíces de palabra y umbral (`MIN_SCORE`, `MIN_MATCHED_TERMS`); sin pasaje relevante devuelve lista vacía. Pregunta en español → `data/knowledge/glossary_es_en.json` (unas 85 entradas, pendiente de revisión del equipo).
-- **Búsqueda híbrida (palabras + significado):** `python -m spaceapp.modules.knowledge.ingest.embed` calcula los vectores con `bge-m3` (Ollama local, 1 024 dimensiones; es incremental y guarda `embeddings.json` y `.f32` junto al índice). `build_knowledge_source` fusiona BM25 y coseno con RRF. Sin vectores, con otro modelo o sin Ollama, busca solo por palabras. El significado no decide solo que hay respuesta: si las palabras no encuentran nada, no se cita nada (`require_word_match`). Cuesta ≈ 0,4 a 1 s por pregunta nueva (embedding incluido) y ≈ 0,2 s si ya se vio.
+- **Búsqueda híbrida (palabras + significado):** `python -m spaceapp.modules.knowledge.ingest.embed` calcula los vectores con `bge-m3` (Ollama local, 1 024 dimensiones; es incremental y guarda `embeddings.json` y `.f32` junto al índice). `build_knowledge_source` deja que las palabras (BM25) propongan los 50 mejores candidatos y que el coseno los reordene. El significado no decide solo que hay respuesta: si las palabras no encuentran nada, o ningún candidato se parece lo bastante (coseno ≥ 0,5), no se cita nada. Sin vectores, con otro modelo o sin Ollama, busca solo por palabras. Cuesta ≈ 0,1 a 0,2 s por pregunta nueva (embedding incluido).
 - **Los PDFs y el índice no se versionan:** la licencia de redistribución no está confirmada.
 
 ## Evaluación (métrica estricta, k=3)
@@ -44,12 +44,12 @@ Un acierto exige que el texto esperado aparezca en el extracto de los 3 primeros
 
 | Conjunto | Léxico @3 | Híbrido @3 | Híbrido @10 | Fuera de alcance respondidas (híbrido) |
 |---|---|---|---|---|
-| Principal (ES, 16) | 56 % | 62 % | 88 % | 0 de 2 |
-| Validación (ES, 9) | 67 % | 78 % | 89 % | 0 de 1 |
-| Diagnóstico (EN, 25) | 56 % | 52 % | 84 % | 0 de 3 |
-| Reservado (30) | 60 % | 70 % | 87 % | 1 de 8 (migraña en inglés; el léxico también la responde) |
+| Principal ES (16) | 56 % | 81 % | 81 % | 0 de 2 |
+| Validación ES (9) | 67 % | 67 % | 78 % | 0 de 1 |
+| Diagnóstico EN (25) | 56 % | 68 % | 80 % | 0 de 3 |
+| Reservado (30) | 60 % | **80 %** | 87 % | 0 de 8 |
 
-**Todavía no se alcanza el 80 % en @3**, aunque la respuesta correcta suele estar en los 10 primeros puestos: lo que falta es ordenar mejor (un reordenador o más contexto en cada fragmento).
+Se alcanza el 80 % en @3 en el principal y en el reservado, **no** en validación (67 %, solo 9 preguntas) ni en inglés (68 %). El techo es el recall@10: los pasajes que las palabras no encuentran entre sus 50 primeros no se recuperan. El reservado se midió varias veces (ver la bitácora E24): su cifra ya no es de una sola vez.
 
 ## Límites actuales
 

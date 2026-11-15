@@ -814,3 +814,22 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 - **GREEN:** 768 pruebas de Python (19 omitidas), cobertura de `knowledge` y `assistant` 97 %, `ruff`, `mypy` estricto e `import-linter` limpios.
 
 **Lo que falta:** (1) 80 % en @3: el recall@10 es 87 % y el @3 70 %, es un problema de orden: reordenador o fragmentos con título del documento antepuesto. (2) Decisión de latencia del agente de n8n. (3) Revisión del glosario por el equipo. (4) Reimportar el workflow de n8n con el prompt en inglés (necesita permiso). (5) Nada se ha commiteado ni subido.
+
+## E24 · Reordenar: el significado ordena lo que las palabras proponen (15 nov 2026)
+
+**Motivo:** el usuario pidió commit y reordenar. El commit `0e17a05` recoge todo hasta E23 (sin `web/tsconfig.tsbuildinfo`). Con el RRF el recall@10 (87 %) estaba muy por encima del @3 (70 %): faltaba orden.
+
+**Experimento (script fuera del repo, vectores de pregunta reales, solo conjuntos de ajuste: principal + validación + inglés, 50 preguntas):** RRF con otros `k` y pesos 60 % → 68 % como mucho; **reordenar por coseno los primeros 30 a 50 candidatos de las palabras: 74 %**; mezclar coseno con un prior léxico o con candidatos semánticos extra: 68 a 72 %. Se eligió reordenar los 50 primeros (30 y 50 empatan; 100 baja a 72 %).
+
+**Hecho (TDD, RED observado: 4 pruebas fallaban por el motivo esperado):** `HybridKnowledgeSource` ya no fusiona con RRF; las palabras proponen y el coseno ordena. Se quitaron `rrf_k` y `require_word_match`, que dejaron de tener sentido. Si ningún candidato llega a coseno 0,5, no se cita nada. Un fragmento sin vector va detrás de los demás.
+
+**Resultado final (código real, recall@3 · @10):** principal 81 % · 81 %; validación 67 % · 78 %; inglés 68 % · 80 %; **reservado 80 % · 87 %** (RRF: 70 % · 87 %). Fuera de alcance respondidas: **0 de 8** en el reservado (antes 1: la migraña en inglés ya no pasa el umbral de coseno; no se afinó para eso).
+
+**Honestidad:**
+- **El reservado se midió tres veces** (RRF sin puerta, RRF con puerta y variante elegida). La elección de la variante salió de los conjuntos de ajuste y el reservado confirmó (+3 casos), pero la cifra de 80 % ya no es de una sola medición y está justo en el mínimo.
+- **No hay mejora pareja:** validación baja de 78 % a 67 % (un caso de 9) y recall@1 del principal de 44 % a 31 %. El recall@10 baja en principal (88 % → 81 %) y validación (89 % → 78 %): ya no se añaden candidatos que las palabras no vieron.
+- El umbral de coseno cuesta un caso del conjunto principal.
+- **Latencia:** 0,1 a 0,2 s por pregunta nueva y ≈ 0,06 s si ya se vio (antes 0,4 a 1,0 s), porque solo se compara con 50 vectores.
+- **GREEN:** 768 pruebas de Python (19 omitidas), `ruff`, `mypy` estricto e `import-linter` limpios; `knowledge` con 96 % de cobertura.
+
+**Lo que falta:** título del documento antepuesto a cada fragmento (exige recalcular vectores, ≈ 25 min), más candidatos de palabras (profundidad), latencia del agente de n8n, glosario por el equipo, reimportar el workflow de n8n (permiso).

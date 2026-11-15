@@ -1,9 +1,11 @@
-"""Búsqueda híbrida: por palabras (BM25 + glosario) y por significado (embeddings), fusionadas.
+"""Búsqueda híbrida: las palabras (BM25 + glosario) proponen y el significado (embeddings) ordena.
 
-La búsqueda por palabras no entiende paráfrasis («energía diaria» frente a *energy requirements*) ni
-cifras en tablas; la de significado sí, pero necesita el modelo. Cada canal ordena los fragmentos y
-las dos listas se fusionan con RRF (reciprocal rank fusion), que no necesita pesos ajustados a
-mano: un pasaje que sale en ambas listas sube, y uno que sale en una sola no desaparece.
+La búsqueda por palabras acierta con el pasaje en sus primeros 50 resultados casi siempre, pero lo
+deja en un puesto malo cuando la pregunta es una paráfrasis («energía diaria» frente a *energy
+requirements*). El modelo de embeddings sí entiende la paráfrasis, pero por sí solo responde también
+temas cercanos fuera de alcance (una medicina, un precio). Por eso reparten el trabajo: las palabras
+deciden si hay respuesta y qué pasajes son candidatos; el coseno los reordena. Medido sobre los
+conjuntos de ajuste, reordenar así dio más aciertos en el top 3 que fusionar las dos listas con RRF.
 
 Si el modelo no responde, o no hay vectores, se busca solo por palabras: sin Ollama el asistente
 sigue funcionando, con la recuperación de antes.
@@ -21,7 +23,6 @@ from spaceapp.modules.knowledge.ports import Embedder, EmbeddingError, PassageSo
 
 # Por debajo de esta similitud coseno, un pasaje no cuenta como parecido a la pregunta.
 DEFAULT_MIN_SIMILARITY = 0.5
-RRF_K = 60
 DEPTH = 50
 CACHE_SIZE = 256
 DEFAULT_VECTORS_NAME = "embeddings.json"
@@ -36,19 +37,12 @@ class HybridKnowledgeSource:
         *,
         min_similarity: float = DEFAULT_MIN_SIMILARITY,
         depth: int = DEPTH,
-        rrf_k: int = RRF_K,
-        require_word_match: bool = True,
     ) -> None:
         self._lexical = lexical
         self._vectors = vectors
         self._embedder = embedder
         self._min_similarity = min_similarity
         self._depth = depth
-        self._rrf_k = rrf_k
-        # El significado reordena y completa lo que encontraron las palabras, pero no decide solo
-        # que una pregunta tiene respuesta: un tema cercano y fuera de alcance (una medicina, un
-        # precio) se parece a los pasajes médicos sin que ninguno lo conteste.
-        self._require_word_match = require_word_match
         row_of = {chunk_id: row for row, chunk_id in enumerate(vectors.ids)}
         # Fila de vectores de cada fragmento citable; `None` si todavía no tiene vector.
         self._row_of_position = [row_of.get(chunk.id) for chunk in lexical.chunks]
@@ -56,15 +50,16 @@ class HybridKnowledgeSource:
 
     def search(self, text: str, k: int) -> list[Citation]:
         positions, query = self._lexical.rank(text)
-        if self._require_word_match and not positions:
+        if not positions:  # las palabras no encuentran nada: el significado no decide solo
             return []
         similarities = self._similarities(text)
         if similarities is None:  # sin modelo: solo palabras
             return [self._lexical.citation(p, query) for p in positions[:k]]
 
-        by_meaning = self._rank_by_meaning(similarities)
-        fused = self._fuse(positions[: self._depth], by_meaning)
-        return [self._lexical.citation(position, query) for position in fused[:k]]
+        ordered = self._reorder(positions[: self._depth], similarities)
+        if ordered is None:
+            return []
+        return [self._lexical.citation(position, query) for position in ordered[:k]]
 
     def _similarities(self, text: str) -> list[float] | None:
         try:
@@ -83,22 +78,20 @@ class HybridKnowledgeSource:
             self._cache.popitem(last=False)
         return vector
 
-    def _rank_by_meaning(self, similarities: list[float]) -> list[int]:
-        scored = [
-            (similarities[row], position)
-            for position, row in enumerate(self._row_of_position)
-            if row is not None and similarities[row] >= self._min_similarity
-        ]
-        scored.sort(key=lambda pair: -pair[0])
-        return [position for _, position in scored[: self._depth]]
+    def _reorder(self, candidates: list[int], similarities: list[float]) -> list[int] | None:
+        """Los candidatos por coseno decreciente; `None` si ninguno se parece lo bastante.
 
-    def _fuse(self, by_words: list[int], by_meaning: list[int]) -> list[int]:
-        scores: dict[int, float] = {}
-        for ranking in (by_words, by_meaning):
-            for rank, position in enumerate(ranking, start=1):
-                scores[position] = scores.get(position, 0.0) + 1.0 / (self._rrf_k + rank)
-        word_rank = {position: rank for rank, position in enumerate(by_words)}
-        return sorted(scores, key=lambda p: (-scores[p], word_rank.get(p, len(word_rank)), p))
+        Un fragmento sin vector no se puede comparar: va detrás de los demás, en el orden de las
+        palabras. El orden es estable, así que un empate conserva el de BM25.
+        """
+        row_of = self._row_of_position
+        with_vector = [p for p in candidates if row_of[p] is not None]
+        without_vector = [p for p in candidates if row_of[p] is None]
+        if with_vector:
+            with_vector.sort(key=lambda p: -similarities[row_of[p]])  # type: ignore[index]
+            if similarities[row_of[with_vector[0]]] < self._min_similarity:  # type: ignore[index]
+                return None
+        return with_vector + without_vector
 
 
 def build_knowledge_source(

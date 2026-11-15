@@ -37,6 +37,7 @@ NOISE = chunk_page(
     "VERIFICADO",
 )
 CHUNKS: list[Chunk] = [*CO2_LIMIT, *HEADACHE, *NOISE]
+NOISE_REF = "V2 6079"
 
 
 def axis(position: int) -> list[float]:
@@ -85,57 +86,59 @@ def hybrid(
     return source, embedder
 
 
-def test_finds_a_passage_by_meaning_when_the_question_shares_no_words_with_it() -> None:
-    question = "What makes my skull throb?"
-    assert RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3) == []
-
-    source, _ = hybrid({question: [0.1, 0.99, 0.0]}, require_word_match=False)
-
-    results = source.search(question, k=3)
-
-    assert [r.document_code for r in results] == [BRIEF]
-
-
-def test_by_default_meaning_alone_does_not_answer_a_question_the_words_did_not_find() -> None:
+def test_meaning_alone_never_answers_a_question_the_words_did_not_find() -> None:
     # Un tema cercano pero fuera de alcance (una medicina, un precio) se parece a los pasajes
     # médicos por significado: sin una sola palabra en común no hay base para citarlos.
     question = "What makes my skull throb?"
+    assert RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3) == []
     source, _ = hybrid({question: [0.1, 0.99, 0.0]})
 
     assert source.search(question, k=3) == []
 
 
-def test_the_default_still_lets_meaning_reorder_what_the_words_found() -> None:
-    question = "What is the one-hour average CO2 limit?"
-    source, _ = hybrid({question: [0.2, 0.9, 0.0]}, min_similarity=0.3)
-
-    assert BRIEF in [r.document_code for r in source.search(question, k=3)]
-
-
-def test_a_question_that_means_nothing_to_the_passages_gets_nothing() -> None:
-    source, _ = hybrid({"Who won the football World Cup?": [0.1, 0.1, 0.1]}, min_similarity=0.9)
-
-    assert source.search("Who won the football World Cup?", k=3) == []
-
-
-def test_a_passage_found_by_both_channels_outranks_one_found_only_by_meaning() -> None:
-    question = "What is the one-hour average CO2 limit?"
+def test_meaning_reorders_the_passages_the_words_found() -> None:
+    question = "ppCO2 mmHg"
     lexical = RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3)
-    assert [r.requirement_ref for r in lexical] == ["V2 6004"]
-    # El significado prefiere el pasaje del dolor de cabeza; el de la norma es el segundo.
-    source, _ = hybrid({question: [0.7, 0.9, 0.0]}, min_similarity=0.3)
+    assert {r.document_code for r in lexical} == {STANDARD, BRIEF}
+    # Por significado, el pasaje del dolor de cabeza se parece más a la pregunta.
+    source, _ = hybrid({question: [0.4, 0.9, 0.0]})
 
     results = source.search(question, k=3)
 
-    assert results[0].requirement_ref == "V2 6004"
-    assert BRIEF in [r.document_code for r in results]
+    assert results[0].document_code == BRIEF
+    assert {r.document_code for r in results} == {STANDARD, BRIEF}
+
+
+def test_meaning_decides_the_order_even_when_the_words_prefer_another_passage() -> None:
+    question = "ppCO2 mmHg"
+    lexical = RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3)
+    assert lexical[0].requirement_ref == "V2 6004"
+    source, _ = hybrid({question: [0.5, 0.9, 0.0]})
+
+    assert source.search(question, k=3)[0].document_code == BRIEF
+
+
+def test_a_passage_the_words_did_not_find_is_not_added_by_meaning() -> None:
+    question = "ppCO2 mmHg"
+    lexical = RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3)
+    assert NOISE_REF not in [r.requirement_ref for r in lexical]
+    source, _ = hybrid({question: [0.0, 0.1, 0.99]})
+
+    assert NOISE_REF not in [r.requirement_ref for r in source.search(question, k=3)]
+
+
+def test_nothing_is_cited_when_no_passage_is_close_in_meaning() -> None:
+    question = "ppCO2 mmHg"
+    source, _ = hybrid({question: [0.1, 0.1, 0.1]}, min_similarity=0.9)
+
+    assert source.search(question, k=3) == []
 
 
 def test_returns_at_most_k_passages() -> None:
-    question = "CO2 headache noise"
+    question = "ppCO2 mmHg"
     source, _ = hybrid({question: [1.0, 1.0, 1.0]}, min_similarity=0.1)
 
-    assert len(source.search(question, k=2)) == 2
+    assert len(source.search(question, k=1)) == 1
 
 
 def test_falls_back_to_the_lexical_search_when_the_model_cannot_be_reached() -> None:
