@@ -16,6 +16,8 @@ import { incidentTypesFixture } from './data/mocks/incidentTypes'
 import { tasksFixture } from './data/mocks/tasks'
 import { AssistantPanel } from './features/assistant/AssistantPanel'
 import { mockAnswer } from './features/assistant/mockAnswer'
+import { SIMULATED_TRANSCRIPT_NOTICE, mockTranscribe } from './features/assistant/mockTranscribe'
+import { startMicrophoneRecording } from './features/assistant/microphone'
 import { AlertPanel } from './features/cabin/AlertPanel'
 import { BodyMap } from './features/cabin/BodyMap'
 import { CabinPanel } from './features/cabin/CabinPanel'
@@ -132,6 +134,11 @@ export function App({ planNotice, tasksShared: sharedProp, onTasksSharedChange }
         <AssistantPanel
           mode="local"
           answerFor={(question) => mockAnswer(question, activeAlertTitles(state))}
+          voice={{
+            startRecording: startMicrophoneRecording,
+            transcribe: mockTranscribe,
+            notice: SIMULATED_TRANSCRIPT_NOTICE,
+          }}
         />
       ) : (
         <>

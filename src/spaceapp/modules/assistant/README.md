@@ -23,6 +23,10 @@ Responde preguntas de la tripulación **solo con pasajes recuperados** y los cit
 
 Adaptadores de `SpeechToText`: `NullSpeechToText` (sin modelo) y `WhisperSpeechToText` (`faster-whisper` en CPU, `int8`, español, con un texto de contexto con términos médicos). Se cargan al primer uso; `build_speech_to_text` devuelve el nulo si la biblioteca no está instalada.
 
+## Micrófono en el navegador
+
+El navegador solo ofrece el micrófono en `localhost` o con HTTPS. En otra dirección sin HTTPS la interfaz avisa y la tripulación escribe la pregunta. La interfaz de voz está en `web/src/features/assistant/` (`VoiceInput`, `microphone.ts`); hoy transcribe con una **simulación**, no con Whisper.
+
 ## Pruebas
 
 ```bash

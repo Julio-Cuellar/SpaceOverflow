@@ -21,7 +21,7 @@
 | F7 | Panel de la nave | PARCIAL | Plano desde `zone.layout`, pins de ticket, orden y regla de «resolver», gráficas por zona con pausa, formulario de reporte, catálogo filtrable y modo demo por perfil. Falta el catálogo completo de 61 tipos y el backend |
 | F12 | RAG sobre PDFs de NASA | PARCIAL | Manifiesto con licencias, fragmentación por requisito, lectura de PDF, ingesta idempotente, búsqueda con glosario es→en, respaldo a demo y evaluación, probados con PDFs sintéticos y luego con los 7 PDFs reales (2 087 fragmentos, E10). **Recuperación por debajo del umbral del plan:** 56 % en el conjunto principal, 11 % en el retenido, 0 respuestas sin fuente. Faltan el buscador de pasajes en la web (12.6) y la decisión del modelo de embeddings |
 | F13 | Asistente texto y Ollama | PARCIAL | Backend: caso de uso con límite de 8 s, adaptadores nulo y Ollama, evento `answer_ready` (15 pruebas). Web: pestaña Asistente con datos de demostración. Falta GraphQL, persistencia SQL, Ollama real probado y n8n opcional |
-| F14 | Voz con Whisper | PARCIAL | Núcleo probado con un Whisper de mentira: puerto, adaptadores nulo y `faster-whisper`, subida de audio, transcripción editable y confirmación (E15). Falta el modelo real, la ruta REST, la entrega por WS y la interfaz |
+| F14 | Voz con Whisper | PARCIAL | Núcleo probado con un Whisper de mentira: puerto, adaptadores nulo y `faster-whisper`, subida de audio, transcripción editable y confirmación (E15). Interfaz de voz hecha con transcripción simulada (E16). Falta el modelo real, la ruta REST y la entrega por WS |
 | F9 | Entrega (Docker, sin internet) | PENDIENTE | conjunta con A |
 | F10 | Tareas (interfaz) | PARCIAL | Lista con filtros y etiqueta de origen, tarea propia, bloqueo con motivo, «¿Funcionó?», posponer, racha y consentimiento, con datos de demostración (E13). Falta `tasks`/`createTask` reales y `task.assigned` por WS (hito I5 de A) |
 | F11 | Panel del centro de control | PARCIAL | Ruta `/ground`, plantillas con estado en la nave (solo si se comparte «tareas»), borrador de la versión siguiente, publicar plan vN, canalización, control del enlace con demora y aviso «Plan vN aplicado» en la nave, con datos simulados en memoria (E14). Falta el backend de A (`groundTasks`, `publishGroundPlan`, WS `plan.*`) |
@@ -592,7 +592,7 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 
 - **RED observado:** `No module named '...audio_store'` y `'...null_stt'` (los dos archivos de pruebas no podían importar lo que probaban).
 - **Qué se hizo** (módulo `assistant`):
-  - `domain/voz`: `Transcript`, `Utterance`, estados `RECEIVED`, `TRANSCRIBED`, `NO_TRANSCRIPT` y `CONFIRMED`, y los errores de dominio.
+  - `domain/voice.py`: `Transcript`, `Utterance`, estados `RECEIVED`, `TRANSCRIBED`, `NO_TRANSCRIPT` y `CONFIRMED`, y los errores de dominio.
   - Puertos `SpeechToText`, `AudioStore` y `UtteranceRepository`; adaptadores `NullSpeechToText`, `WhisperSpeechToText` (carga perezosa con candado, español, `vad_filter`, y un `initial_prompt` con «hipoxia», «ppCO₂» y «presión parcial»), `LocalAudioStore` e `InMemoryUtterances`. `build_speech_to_text` devuelve el nulo si `faster_whisper` no está instalado.
   - `SubmitAudio.submit` (valida webm o wav y que no esté vacío, guarda el audio y devuelve el id sin transcribir), `transcribe` (nunca lanza por el modelo; deja el motivo) y `ConfirmUtterance.confirm` (usa el texto editado, no se confirma dos veces, vacío no pregunta).
 - **Reglas del plan probadas:** transcribir no pregunta ni publica nada; sin modelo, con fallo o sin habla la tripulación puede escribir y confirmar igual; solo se pregunta con lo confirmado.
@@ -604,3 +604,15 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
   3. La transcripción por WebSocket: el plan nombra `assistant.transcript`, pero **no hay un evento para ella** en el registro de A (la prueba de contratos fija 22). Hay que pedirlo a Dev A antes de añadirlo.
   4. Interfaz de voz en la web (14.3) y pruebas con audios (14.4). No hay audios de ejemplo ni un sintetizador de voz aquí.
   5. Política de retención del audio de la tripulación.
+
+## E16 · F14 Voz: interfaz de la web (15 nov 2026)
+
+- **RED observado:** `Failed to resolve import "./VoiceInput"` y `"./microphone"`; luego 3 fallas en el panel y en `App` (aún sin cablear). Una prueba falló por mi propio selector, que también encontraba el botón de ejemplo de la misma pregunta; se corrigió la prueba (buscar dentro de la conversación), no el componente.
+- **Qué se hizo:**
+  - `microphone.ts`: `microphoneAvailable` y `startMicrophoneRecording` con `MediaRecorder`; juntan los trozos en un `Blob` y **sueltan el micrófono al parar**; rechazan sin micrófono o sin permiso.
+  - `VoiceInput`: botón «Mantener para hablar» (ratón, táctil y teclado con Espacio o Enter), estado «Escuchando…» y «Transcribiendo…», **transcripción editable**, «Confirmar y preguntar» (solo con texto no vacío) y «Descartar». Sin micrófono, sin permiso, con fallo o sin habla muestra un aviso que manda a escribir en el cuadro de texto.
+  - `AssistantPanel` recibe `voice` como propiedad opcional: sin ella solo hay texto. Al confirmar, la pregunta entra por el mismo camino que la escrita.
+  - `mockTranscribe`: **transcripción simulada** (siempre «¿Por qué me duele la cabeza?») con el aviso «Transcripción simulada: aún no hay un modelo de voz conectado».
+- **Reglas del plan probadas:** hablar produce una transcripción editable; **no se actúa sin confirmar** (la conversación sigue vacía tras transcribir); sin micrófono el texto sigue funcionando.
+- **Verificación:** lint, typecheck y build limpios; **222 pruebas web pasan** (36 archivos), cobertura 97,19 %.
+- **No verificado:** con un micrófono real ni con el modelo de voz real; los permisos del navegador y el formato que graba cada navegador solo se probaron con dobles. No se revisó en el navegador integrado (no hay micrófono allí). El navegador solo da el micrófono en `localhost` o con HTTPS.

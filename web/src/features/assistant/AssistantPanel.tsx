@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { EvidenceBadge } from '../../shared/ui/EvidenceBadge'
 import type { AssistantAnswer } from './mockAnswer'
+import { VoiceInput, type Recording } from './VoiceInput'
 
 interface Message {
   id: number
@@ -14,12 +15,18 @@ interface AssistantPanelProps {
   answerFor: (question: string) => AssistantAnswer
   /** Adaptador de redacción: Ollama local o nube. */
   mode: 'local' | 'nube'
+  /** Entrada por voz. Sin ella solo hay texto, que siempre está disponible. */
+  voice?: {
+    startRecording: () => Promise<Recording>
+    transcribe: (audio: Blob) => Promise<{ text: string } | null>
+    notice?: string
+  }
 }
 
 const EXAMPLES = ['¿Por qué me duele la cabeza?', '¿Cuánto dura el mareo espacial?']
 
 /** Chat de texto. Cada respuesta cita sus fuentes; sin pasaje, dice que no tiene información. */
-export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
+export function AssistantPanel({ answerFor, mode, voice }: AssistantPanelProps) {
   const inputId = useId()
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -80,6 +87,15 @@ export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
           </li>
         ))}
       </ol>
+
+      {voice && (
+        <VoiceInput
+          startRecording={voice.startRecording}
+          transcribe={voice.transcribe}
+          notice={voice.notice}
+          onConfirm={send}
+        />
+      )}
 
       <form
         onSubmit={(event) => {

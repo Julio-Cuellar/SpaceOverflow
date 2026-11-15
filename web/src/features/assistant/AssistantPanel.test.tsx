@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { AssistantPanel } from './AssistantPanel'
 import { mockAnswer } from './mockAnswer'
 
@@ -53,5 +53,48 @@ describe('AssistantPanel', () => {
     await userEvent.click(send)
 
     expect(screen.getByLabelText('Pregunta')).toHaveValue('')
+  })
+
+  describe('voice input', () => {
+    const AUDIO = new Blob(['audio'])
+    const voice = () => ({
+      startRecording: vi.fn(async () => ({ stop: async () => AUDIO })),
+      transcribe: vi.fn(async () => ({ text: '¿Por qué me duele la cabeza?' })),
+    })
+
+    async function speak() {
+      const user = userEvent.setup()
+      const button = screen.getByRole('button', { name: 'Mantener para hablar' })
+      await user.pointer([{ keys: '[MouseLeft>]', target: button }])
+      await user.pointer([{ keys: '[/MouseLeft]', target: button }])
+      return user
+    }
+
+    it('offers no voice button when no voice is connected: the text form always works', () => {
+      render(<AssistantPanel answerFor={answerFor} mode="local" />)
+
+      expect(screen.queryByRole('button', { name: 'Mantener para hablar' })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Pregunta')).toBeVisible()
+    })
+
+    it('does not ask anything until the crew confirms the transcript', async () => {
+      render(<AssistantPanel answerFor={answerFor} mode="local" voice={voice()} />)
+
+      await speak()
+
+      expect(await screen.findByLabelText('Transcripción (puedes corregirla)')).toBeVisible()
+      expect(within(screen.getByRole('list', { name: 'Conversación' })).queryAllByRole('listitem')).toHaveLength(0)
+    })
+
+    it('asks the assistant with the confirmed text and shows the answer with its sources', async () => {
+      render(<AssistantPanel answerFor={answerFor} mode="local" voice={voice()} />)
+
+      const user = await speak()
+      await user.click(await screen.findByRole('button', { name: 'Confirmar y preguntar' }))
+
+      const conversation = within(screen.getByRole('list', { name: 'Conversación' }))
+      expect(conversation.getByText('¿Por qué me duele la cabeza?', { exact: false })).toBeVisible()
+      expect(screen.getByText(/Dolor de cabeza entre 2.8 y 4.5 mmHg/i)).toBeInTheDocument()
+    })
   })
 })

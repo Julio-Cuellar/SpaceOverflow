@@ -182,4 +182,16 @@ describe('App', () => {
       expect(screen.getByText(/Tierra no verá el estado de tus tareas/)).toBeVisible()
     })
   })
+
+  it('offers voice in the assistant tab and, without a microphone, tells the crew to type', async () => {
+    render(<App />)
+    await openTab('Asistente')
+
+    const button = screen.getByRole('button', { name: 'Mantener para hablar' })
+    await userEvent.pointer([{ keys: '[MouseLeft>]', target: button }])
+    await userEvent.pointer([{ keys: '[/MouseLeft]', target: button }])
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('escribe tu pregunta')
+    expect(screen.getByLabelText('Pregunta')).toBeVisible()
+  })
 })
