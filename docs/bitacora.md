@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 05:45.
+> Última actualización: 15 de noviembre de 2026, 06:15.
 
 ## Cómo se mantiene esta bitácora
 
@@ -37,7 +37,7 @@
 | Pruebas | **707 pasan y 19 se omiten** (las omitidas son de Dev B), 95,89 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
 | Artefacto interactivo | Versión 4 publicada: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8 |
 | Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. **Subida a GitHub** (B-021): fusiones B-015 y B-016, F5, 5.4 y F4. Falta el PR hacia `testing` |
-| Siguiente bloque propuesto | Subir `dev-A` y que Dev B conecte tareas y panel de Tierra. F9 cuando la interfaz esté lista |
+| Siguiente bloque propuesto | PRs `dev-A → testing` y `dev-B → testing`; integrar en `testing` (asistente en `main.py`, proxy del front); luego `main` y F9 (B-025) |
 
 ---
 
@@ -373,6 +373,27 @@
 - **Qué (pedido del usuario):** `git push origin dev-A` (`3183793..d083d7a`), con F10 y F11. Después se subió este registro.
 - **PR `dev-A → testing`:** no se pudo abrir desde aquí. `gh` no está instalado, la extensión Claude in Chrome no estaba conectada y el navegador integrado no tiene sesión de GitHub. Se le dio al usuario el enlace y la descripción en inglés para abrirlo desde la web.
 - **Verificación:** `dev-A` local y `origin/dev-A` iguales (`0 0`). No había PRs abiertos.
+
+### B-024 · Revisión del remoto (15 de noviembre, 06:00)
+- **PR #5 `dev-A → main`:** fusionado por el usuario a las 03:04 (hora local) con `dev-A` en `3183793`. Entró F4, F5 y 5.4 a **`main`**, no a `testing`. **No entraron F10 y F11** (`d083d7a`) ni la bitácora B-023 (`0611573`).
+- **`testing`:** sigue en el PR #4. No tiene F4 ni F5 de Dev A ni lo nuevo de Dev B.
+- **`dev-B`:** un commit nuevo (`f6d32b9`): el asistente de la interfaz pasa por el backend, n8n y Ollama. Su trabajo desde el PR #4 (F10 y F11 de interfaz, F14, el asistente) **no está en `main` ni en `testing`**.
+- **Interfaz:** solo el asistente llama a un backend real (`VITE_ASSISTANT_URL`). Tablero, nave, incidencias, tareas y panel de Tierra siguen con mocks; el único documento GraphQL es `dashboard.graphql`.
+- **Merge de prueba `dev-A` + `dev-B`:** sin conflictos.
+- **CI:** `dev-B` y `testing` en verde; `dev-A` (`0611573`) en curso al revisar.
+
+### B-025 · Decisión del flujo de ramas: se integra en `testing` y luego `main` para dockerizar
+- **Decisión del usuario:** las pruebas de integración se hacen en `testing`, para no romper el proyecto. Cuando funcione ahí, pasa a `main` y entonces se dockeriza (F9).
+- **Efecto en el plan:**
+  - **F9 queda después** de que `testing` funcione y se pase a `main`. No se adelanta.
+  - Los PRs van hacia **`testing`**: `dev-A → testing` (F4, F5, F10 y F11) y `dev-B → testing`. El PR #5 `dev-A → main` ya se había fusionado con F4 y F5, así que `main` va por delante de `testing`; al llegar `dev-A` a `testing` quedan al día.
+  - La integración con el front, el asistente y n8n se hace **dentro de `testing`**, con los dos backends ya juntos.
+- **CI de `dev-A`:** `0611573` en verde.
+- **Pendientes que salen de la revisión de `dev-B` y se resuelven al integrar en `testing`:**
+  1. **El asistente no está en `main.py`.** Dev B lo probó con su propio servidor de desarrollo (`devtools/assistant_server.py`, puerto 8000, «no es el servidor de la entrega»). El composition root es de Dev A, así que **conectar el módulo del asistente, n8n y Ollama a `main.py` es trabajo de integración de Dev A**, y depende de que su código esté en `testing`.
+  2. **Puerto 8000:** el workflow de n8n llama a `host.docker.internal:8000` (`backend_url`) para sus herramientas del RAG y de alertas. La app de Dev A debe escuchar en 8000 y exponer `/api/v1/assistant/tools/...`, o se cambia `backend_url` en un solo sitio.
+  3. **Interfaz sin proxy ni CORS:** `web/vite.config.ts` solo tiene proxy para `/dev`, y el backend no tiene CORS. Para consumir `/graphql`, `/api` y `/ws` hace falta proxy (con `ws: true` para `/ws`) o CORS.
+- **Sin cambios de código en este bloque.**
 
 ---
 
