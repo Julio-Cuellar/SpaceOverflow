@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 08:15.
+> Última actualización: 15 de noviembre de 2026, 08:45.
 
 ## Cómo se mantiene esta bitácora
 
@@ -443,6 +443,15 @@
 - **Verificación:** `git rev-list --left-right --count dev-A...origin/dev-A` → `0 0`.
 - **Efecto:** `dev-A` ya trae el contrato final y la especificación v2 para Dev B. `testing` y `main` no cambian: no se abrió ningún PR.
 - **Pendiente:** abrir y fusionar los PRs `dev-A → testing` y `dev-B → testing` (el usuario, desde la web).
+
+### B-031 · Segundo intento de abrir y fusionar los PRs hacia `testing`
+- **Pedido del usuario:** reconectar Git y abrir y fusionar los PRs `dev-A → testing` y `dev-B → testing` con descripciones en inglés.
+- **Git:** conectado. `git ls-remote`, `fetch` y `push` funcionan. Lo que falla es la parte de GitHub (crear y fusionar PRs).
+- **Caminos probados:** la extensión Claude in Chrome sigue sin conectarse; el navegador integrado **rechazó la navegación a github.com**; `gh` no está instalado; la sesión no tiene conector de GitHub y el registro de conectores no ofrece uno. No se usó ningún token del almacén de credenciales de git.
+- **Estado:** ningún PR abierto. `testing` no contiene ni `dev-A` ni `dev-B`.
+- **`dev-B` se movió** a `38a41ae` (RAG con búsqueda híbrida y vectores, y ajustes de pruebas del front). La fusión de prueba `dev-A` + `dev-B` y `testing` + `dev-A` sigue **sin conflictos**.
+- **Entregado:** `pr-dev-A-to-testing.md` y `pr-dev-B-to-testing.md` (título, enlace y descripción en inglés), enviados al usuario.
+- **Opción pendiente de autorización:** fusionar `dev-A` y luego `dev-B` en `testing` desde Git, verificando el árbol fusionado con `scripts/check.sh` antes de subir. Se salta los PRs, y no se hace sin la autorización expresa del usuario.
 
 ---
 
