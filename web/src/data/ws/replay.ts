@@ -10,7 +10,7 @@ export interface Replayer {
   stop: () => void
 }
 
-/** Emite mensajes grabados uno por intervalo, como si llegaran por el WebSocket. */
+/** Emits recorded messages one per interval, as if they arrived over the WebSocket. */
 export function createReplayer(
   messages: readonly WsMessage[],
   emit: (message: WsMessage) => void,

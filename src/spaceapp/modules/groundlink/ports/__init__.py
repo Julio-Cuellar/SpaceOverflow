@@ -1,4 +1,4 @@
-"""Puertos del Enlace con Tierra."""
+"""Ground link ports."""
 
 from __future__ import annotations
 
@@ -30,12 +30,12 @@ class LinkState:
 
 
 ShipTemplates = Callable[[], Awaitable[list[ShipTemplate]]]
-# Programa una entrega por el enlace dentro de `delay_s` segundos.
+# Schedules a delivery over the link within `delay_s` seconds.
 Schedule = Callable[[float, Callable[[], Awaitable[None]]], None]
 
 
 class GroundlinkRepository(Protocol):
-    # --- nave ---
+    # --- ship ---
     async def last_inbound_version(self) -> int | None: ...
 
     async def save_inbound(
@@ -53,7 +53,7 @@ class GroundlinkRepository(Protocol):
         self, plan_version: int, rejected: Sequence[dict[str, Any]], at: datetime
     ) -> UUID | None: ...
 
-    # --- Tierra ---
+    # --- Ground ---
     async def link(self) -> LinkState: ...
 
     async def set_link(self, online: bool, delay_s: float, at: datetime) -> None: ...

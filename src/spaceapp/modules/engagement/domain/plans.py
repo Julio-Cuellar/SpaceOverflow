@@ -1,4 +1,4 @@
-"""Qué hacer con cada ítem de un plan de Tierra (13.11). Un ítem inválido se rechaza solo él."""
+"""What to do with each item of a Ground plan (13.11). An invalid item is rejected on its own."""
 
 from __future__ import annotations
 
@@ -44,17 +44,17 @@ class Rejection:
 
 def _fields(item: PlanItem, zones: set[str], *, required: bool) -> str | None:
     if required and item.kind is None:
-        return "falta el tipo"
+        return "missing kind"
     if item.kind is not None and item.kind not in CREW_KINDS:
-        return f"tipo inválido {item.kind!r}: Tierra programa tareas de SALUD o NAVE"
+        return f"invalid kind {item.kind!r}: Ground schedules HEALTH or SHIP tasks"
     if item.title is not None and not item.title.strip():
-        return "el título está vacío"
+        return "the title is empty"
     if required and item.title is None:
-        return "falta el título"
+        return "missing title"
     if item.recurrence is not None and item.recurrence not in RECURRENCES:
-        return f"recurrencia desconocida {item.recurrence!r}"
+        return f"unknown recurrence {item.recurrence!r}"
     if item.zone_code is not None and item.zone_code not in zones:
-        return f"zona inexistente {item.zone_code!r}"
+        return f"nonexistent zone {item.zone_code!r}"
     return None
 
 
@@ -71,7 +71,7 @@ def plan_actions(
         target = templates.get(item.target_template_id) if item.target_template_id else None
         if item.change == "NEW":
             if target is not None:
-                reject(item, "la plantilla ya existe")
+                reject(item, "the template already exists")
                 continue
             error = _fields(item, zones, required=True)
             if error:
@@ -83,16 +83,16 @@ def plan_actions(
                     item.target_template_id or uuid4(),
                     item.kind,
                     (item.title or "").strip(),
-                    item.recurrence or "DIARIA",
+                    item.recurrence or "DAILY",
                     item.zone_code,
                 )
             )
         elif item.change in ("UPDATE", "CANCEL"):
             if target is None:
-                reject(item, "la plantilla no existe en la nave")
+                reject(item, "the template does not exist on the ship")
                 continue
-            if target.origin != "TIERRA":
-                reject(item, "Tierra solo cambia sus plantillas: las tareas locales prevalecen")
+            if target.origin != "GROUND":
+                reject(item, "Ground only changes its own templates: local tasks prevail")
                 continue
             error = _fields(item, zones, required=False) if item.change == "UPDATE" else None
             if error:
@@ -105,5 +105,5 @@ def plan_actions(
                 )
             )
         else:
-            reject(item, f"cambio desconocido {item.change!r}")
+            reject(item, f"unknown change {item.change!r}")
     return actions, rejected

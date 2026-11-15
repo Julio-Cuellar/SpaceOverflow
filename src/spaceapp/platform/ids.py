@@ -1,12 +1,13 @@
-"""Identificadores estables: el mismo nombre da siempre el mismo UUID.
+"""Stable identifiers: the same name always gives the same UUID.
 
-Así Telemetría (que simula zonas) y Nave (dueña del plano) coinciden sin importarse.
+This way Telemetry (which simulates zones) and Facility (owner of the floor plan)
+agree without importing each other.
 """
 
 from uuid import UUID, uuid5
 
 NAMESPACE = UUID("8d0b0e5a-4f1c-4a6e-9a39-2f6f7e1c5d11")
-DEFAULT_HABITAT_CODE = "nave-transito"
+DEFAULT_HABITAT_CODE = "transit-ship"
 
 
 def stable_uuid(*parts: str) -> UUID:

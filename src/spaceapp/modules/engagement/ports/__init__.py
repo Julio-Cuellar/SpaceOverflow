@@ -1,4 +1,4 @@
-"""Puertos de Misiones y tareas."""
+"""Missions and tasks ports."""
 
 from __future__ import annotations
 

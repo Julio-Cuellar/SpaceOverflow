@@ -5,18 +5,18 @@ on:
   push:
     branches: [main, dev-A, dev-B, testing]
 
-# El CI solo lee el código: no necesita permisos de escritura ni secretos.
+# CI only reads the code: it needs no write permissions or secrets.
 permissions:
   contents: read
 
-# Un push nuevo a la misma rama cancela la ejecución anterior.
+# A new push to the same branch cancels the previous run.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   web:
-    name: Web (lint, tipos, pruebas, build)
+    name: Web (lint, types, tests, build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -33,31 +33,31 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      # La cobertura mínima (80 %) está en vite.config.ts: si baja, este paso falla.
+      # The minimum coverage (80 %) is in vite.config.ts: if it drops, this step fails.
       - run: npm run test:coverage
       - run: npm run build
-      # Comprueba que el contrato de contracts/ sigue generando tipos.
+      # Checks that the contract in contracts/ still generates types.
       - run: npm run codegen
 
   python:
-    name: Python 3.12 (lint, tipos, arquitectura, pruebas)
+    name: Python 3.12 (lint, types, architecture, tests)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # pyproject.toml fija >=3.12,<3.13: es la única versión que prueba el equipo (Dev A y Dev B).
+      # pyproject.toml pins >=3.12,<3.13: it is the only version the team tests (Dev A and Dev B).
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - run: python -m pip install uv==0.13.8
-      # --frozen: si uv.lock no coincide con pyproject.toml, falla en vez de resolver otra vez.
+      # --frozen: if uv.lock does not match pyproject.toml, it fails instead of resolving again.
       - run: uv sync --frozen
 
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
       - run: uv run lint-imports
-      # Las pruebas de integración (outbox, migraciones) levantan PostgreSQL con testcontainers;
-      # el runner de GitHub trae Docker. La cobertura mínima es 80 %.
+      # Integration tests (outbox, migrations) start PostgreSQL with testcontainers;
+      # the GitHub runner ships with Docker. The minimum coverage is 80 %.
       - run: uv run pytest -q --cov --cov-fail-under=80

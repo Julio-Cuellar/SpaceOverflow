@@ -1,4 +1,4 @@
-"""Carga el catálogo de reglas desde un JSON versionado (la versión es el hash del contenido)."""
+"""Loads the rule catalog from a versioned JSON (the version is the content hash)."""
 
 import hashlib
 import json

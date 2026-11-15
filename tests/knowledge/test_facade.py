@@ -10,7 +10,7 @@ def test_action_catalog_returns_title_and_description_of_an_action(
 ) -> None:
     query = ActionCatalogQuery(demo_source)
 
-    info = query.get("revisar_ventilacion_y_filtros")
+    info = query.get("check_ventilation_and_filters")
 
     assert info is not None
     assert info.title
@@ -20,7 +20,7 @@ def test_action_catalog_returns_title_and_description_of_an_action(
 def test_knowledge_query_returns_citable_passages_as_contract_dtos(
     demo_source: DemoKnowledgeSource,
 ) -> None:
-    passages = KnowledgeQuery(demo_source).search("dolor de cabeza", k=2)
+    passages = KnowledgeQuery(demo_source).search("headache", k=2)
 
     assert passages
     assert all(isinstance(p, CitationDTO) for p in passages)
@@ -31,4 +31,4 @@ def test_knowledge_query_returns_citable_passages_as_contract_dtos(
 def test_action_catalog_returns_none_for_an_unknown_action(
     demo_source: DemoKnowledgeSource,
 ) -> None:
-    assert ActionCatalogQuery(demo_source).get("accion_inventada") is None
+    assert ActionCatalogQuery(demo_source).get("invented_action") is None

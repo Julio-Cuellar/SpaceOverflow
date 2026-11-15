@@ -1,4 +1,4 @@
-"""Plantillas del sistema (rutinas de salud y mantenimiento diario) desde `data/engagement/`."""
+"""System templates (daily health and maintenance routines) from `data/engagement/`."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def load_system_templates(path: Path | str) -> list[Template]:
             title=t["title"],
             recurrence=t["recurrence"],
             zone_code=t["zone_code"],
-            origin="SISTEMA",
+            origin="SYSTEM",
             active=True,
             due_time=t["due_time"],
         )

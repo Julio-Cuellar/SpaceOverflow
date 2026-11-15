@@ -1,7 +1,8 @@
-"""Lado de Tierra (demo): borrador del plan, publicación y enlace simulado con demora y corte.
+"""Ground side (demo): plan draft, publishing and a simulated link with delay and outages.
 
-El plan viaja por el enlace hasta la nave (`PlanReceiver`). Si el enlace está cortado queda en
-cola y se entrega al volver. La confirmación de la nave sube por el mismo enlace.
+The plan travels over the link to the ship (`PlanReceiver`). If the link is down it stays
+queued and is delivered when the link returns. The ship's acknowledgement goes back over the
+same link.
 """
 
 from __future__ import annotations
@@ -81,7 +82,7 @@ class GroundControl:
         self._habitat = habitat_id
         self._clock = clock
 
-    # --- Lectura -------------------------------------------------------------------------
+    # --- Reading -------------------------------------------------------------------------
 
     async def view(self) -> GroundView:
         active = await self._ship_templates()
@@ -90,9 +91,9 @@ class GroundControl:
             link = await repo.link()
             draft = await repo.draft()
             items = await repo.items(draft.id) if draft else []
-            published = [p for p in await repo.plans() if p.status != "BORRADOR"]
-            await session.commit()  # `link()` puede crear la fila del enlace
-        applied = [p.version for p in published if p.status in ("APLICADO", "CONFIRMADO")]
+            published = [p for p in await repo.plans() if p.status != "DRAFT"]
+            await session.commit()  # `link()` may create the link row
+        applied = [p.version for p in published if p.status in ("APPLIED", "CONFIRMED")]
         return GroundView(
             applied_version=max(applied, default=0),
             templates=draft_templates(active, []),
@@ -102,7 +103,7 @@ class GroundControl:
             link=link,
         )
 
-    # --- Borrador ------------------------------------------------------------------------
+    # --- Draft ------------------------------------------------------------------------
 
     async def save_template(
         self,
@@ -114,9 +115,9 @@ class GroundControl:
         template_id: UUID | None = None,
     ) -> GroundOutcome:
         if not title.strip():
-            return Refused("TITLE_REQUIRED", "la plantilla necesita un título")
-        if kind not in ("SALUD", "NAVE"):
-            return Refused("INVALID_KIND", "Tierra programa tareas de SALUD o NAVE")
+            return Refused("TITLE_REQUIRED", "the template needs a title")
+        if kind not in ("HEALTH", "SHIP"):
+            return Refused("INVALID_KIND", "Ground schedules HEALTH or SHIP tasks")
         active = {t.id for t in await self._ship_templates()}
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
@@ -129,7 +130,7 @@ class GroundControl:
             elif template_id is None:
                 change, template_id = "NEW", uuid4()
             else:
-                return Refused("NOT_FOUND", f"no existe la plantilla {template_id}")
+                return Refused("NOT_FOUND", f"template {template_id} does not exist")
             await repo.upsert_item(
                 draft.id,
                 change=change,
@@ -148,7 +149,7 @@ class GroundControl:
             draft = await self._draft(repo)
             in_draft = {i.template_id: i for i in await repo.items(draft.id)}
             if template_id in in_draft and in_draft[template_id].change == "NEW":
-                await repo.delete_item(draft.id, template_id)  # solo existía en el borrador
+                await repo.delete_item(draft.id, template_id)  # it only existed in the draft
             elif template_id in active:
                 await repo.upsert_item(
                     draft.id,
@@ -160,7 +161,7 @@ class GroundControl:
                     zone_code=None,
                 )
             else:
-                return Refused("NOT_FOUND", f"no existe la plantilla {template_id}")
+                return Refused("NOT_FOUND", f"template {template_id} does not exist")
         return Ok(draft.version)
 
     async def _draft(self, repo: GroundlinkRepository) -> GroundPlanRow:
@@ -171,18 +172,18 @@ class GroundControl:
         assert draft is not None
         return draft
 
-    # --- Publicación y enlace ------------------------------------------------------------
+    # --- Publishing and link ------------------------------------------------------------
 
     async def publish(self) -> GroundOutcome:
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
             if any(in_flight(p.status) for p in await repo.plans()):
-                return Refused("PLAN_IN_FLIGHT", "hay un plan publicado sin confirmar")
+                return Refused("PLAN_IN_FLIGHT", "a published plan is awaiting confirmation")
             draft = await repo.draft()
             if draft is None or not await repo.items(draft.id):
-                return Refused("NOTHING_TO_PUBLISH", "el borrador no tiene cambios")
+                return Refused("NOTHING_TO_PUBLISH", "the draft has no changes")
             link = await repo.link()
-            stage = "EN_EL_ENLACE" if link.online else "EN_COLA"
+            stage = "IN_TRANSIT" if link.online else "QUEUED"
             await repo.set_status(draft.id, stage, batch_id=uuid4(), at=self._clock())
         if link.online:
             self._send(draft.id, link.delay_s)
@@ -195,13 +196,13 @@ class GroundControl:
             current = await repo.link()
             delay = current.delay_s if delay_s is None else max(0.0, delay_s)
             await repo.set_link(online, delay, now)
-            queued = await repo.plans(["EN_COLA"])
+            queued = await repo.plans(["QUEUED"])
             if online:
                 for plan in queued:
-                    await repo.set_status(plan.id, "EN_EL_ENLACE", only_from=["EN_COLA"])
-                # Las confirmaciones retenidas suben al volver el enlace.
-                for plan in await repo.plans(["APLICADO"]):
-                    await repo.set_status(plan.id, "CONFIRMADO", only_from=["APLICADO"], at=now)
+                    await repo.set_status(plan.id, "IN_TRANSIT", only_from=["QUEUED"])
+                # Held acknowledgements go up when the link returns.
+                for plan in await repo.plans(["APPLIED"]):
+                    await repo.set_status(plan.id, "CONFIRMED", only_from=["APPLIED"], at=now)
             if online != current.online:
                 await uow.publish(
                     EventEnvelope.from_payload(
@@ -227,14 +228,14 @@ class GroundControl:
         self._schedule(delay_s, deliver)
 
     async def deliver(self, plan_id: UUID) -> None:
-        """Llega a la nave lo que estaba en el enlace. Si el enlace se cortó, vuelve a la cola."""
+        """Delivers to the ship what was on the link. If the link went down, back to the queue."""
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
             plan = await repo.plan(plan_id)
-            if plan is None or plan.status != "EN_EL_ENLACE" or plan.batch_id is None:
+            if plan is None or plan.status != "IN_TRANSIT" or plan.batch_id is None:
                 return
             if not (await repo.link()).online:
-                await repo.set_status(plan_id, "EN_COLA", only_from=["EN_EL_ENLACE"])
+                await repo.set_status(plan_id, "QUEUED", only_from=["IN_TRANSIT"])
                 return
             items = await repo.item_dicts(plan_id)
         received = await self._receiver.receive(
@@ -243,26 +244,24 @@ class GroundControl:
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
             if received.status == "received":
-                await repo.set_status(plan_id, "RECIBIDO", only_from=["EN_EL_ENLACE"])
+                await repo.set_status(plan_id, "RECEIVED", only_from=["IN_TRANSIT"])
             else:
-                reason = received.reason or "la nave ya tiene una versión igual o más nueva"
-                await repo.set_status(
-                    plan_id, "RECHAZADO", only_from=["EN_EL_ENLACE"], reason=reason
-                )
+                reason = received.reason or "the ship already has an equal or newer version"
+                await repo.set_status(plan_id, "REJECTED", only_from=["IN_TRANSIT"], reason=reason)
 
     async def on_batch_acknowledged(self, event: EventEnvelope, ctx: HandlerContext) -> None:
-        """La nave confirmó el lote. Si el enlace está cortado, la confirmación espera."""
+        """The ship acknowledged the batch. If the link is down, the acknowledgement waits."""
         ack = event.payload_as(BatchAcknowledged)
         if ctx.session is None:
-            raise RuntimeError("el Enlace con Tierra necesita la sesión del relay del outbox")
+            raise RuntimeError("the Ground link needs the outbox relay session")
         repo = self._repo(ctx.session)
         plan = await repo.plan_by_batch(ack.batch_id)
         if plan is None:
             return
         if (await repo.link()).online:
-            await repo.set_status(plan.id, "CONFIRMADO", at=ack.acked_at)
+            await repo.set_status(plan.id, "CONFIRMED", at=ack.acked_at)
         else:
-            await repo.set_status(plan.id, "APLICADO")
+            await repo.set_status(plan.id, "APPLIED")
 
 
 def ship_template(
@@ -272,6 +271,6 @@ def ship_template(
     task_status: str | None,
     blocked_reason: str | None,
 ) -> ShipTemplate:
-    """Estado que ve Tierra a partir de la última tarea de la plantilla en la nave."""
-    status = task_status if task_status in ("COMPLETADA", "BLOQUEADA") else "APLICADA"
+    """Status Ground sees, derived from the template's latest task on the ship."""
+    status = task_status if task_status in ("COMPLETED", "BLOCKED") else "APPLIED"
     return ShipTemplate(template_id, title, kind, status, blocked_reason)

@@ -1,4 +1,4 @@
-"""Entorno de Alembic del esquema `monitoring` (reglas y alertas)."""
+"""Alembic environment for the `monitoring` schema (rules and alerts)."""
 
 from spaceapp.platform.migrations_env import run
 

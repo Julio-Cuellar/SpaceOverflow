@@ -1,4 +1,4 @@
-"""Consultas de solo lectura de Nave e incidencias (para la interfaz y otros módulos)."""
+"""Read-only queries of Facility (for the interface and other modules)."""
 
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ _INCIDENT = (
 
 
 class ShipQuery:
-    """Zonas del hábitat con su color y sus tickets abiertos."""
+    """Habitat zones with their color and their open tickets."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory
@@ -74,7 +74,7 @@ class ShipQuery:
         sql = (
             "SELECT z.id, z.code, z.name, z.kind, z.deck, z.layout, z.status, "
             "(SELECT count(*) FROM facility.incident i WHERE i.zone_id = z.id "
-            " AND i.status <> 'resuelta') FROM facility.zone z WHERE z.habitat_id = :h "
+            " AND i.status <> 'resolved') FROM facility.zone z WHERE z.habitat_id = :h "
             "ORDER BY z.deck, (z.layout->>'x')::numeric, z.code"
         )
         async with self._sf() as session:
@@ -95,7 +95,7 @@ class ShipQuery:
 
 
 class IncidentQuery:
-    """Tickets de la más nueva a la más vieja, con paginación por llave."""
+    """Tickets from newest to oldest, with keyset pagination."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory

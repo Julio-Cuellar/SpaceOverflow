@@ -5,49 +5,49 @@ import type { Ticket, Zone } from '../features/ship/model'
 import type { ZoneSeries } from '../features/ship/ZoneCharts'
 import { type Severity, severityMeta } from '../shared/lib/severity'
 
-/** Escenarios que el modo demo puede provocar en una zona (plan, sección 7.7). */
+/** Scenarios that demo mode can trigger in a zone (architecture plan, section 7.7). */
 const DEMO_SCENARIOS: Record<string, { title: string; severity: Severity }> = {
-  'co2-alto': { title: 'CO₂ alto', severity: 'ALERTA' },
-  'fuga-presion': { title: 'Fuga de presión', severity: 'CRITICO' },
-  humedad: { title: 'Humedad fuera de rango', severity: 'ATENCION' },
-  'fallo-o2': { title: 'Fallo de O₂', severity: 'CRITICO' },
-  calor: { title: 'Temperatura fuera de rango', severity: 'ATENCION' },
+  'co2_slow': { title: 'High CO₂', severity: 'ALERT' },
+  'pressure_leak': { title: 'Pressure leak', severity: 'CRITICAL' },
+  humidity_high: { title: 'Humidity out of range', severity: 'ATTENTION' },
+  'o2_failure': { title: 'O₂ failure', severity: 'CRITICAL' },
+  heat: { title: 'Temperature out of range', severity: 'ATTENTION' },
 }
 
 const BASE_ZONES: Zone[] = [
-  { id: 'z-puente', name: 'Puente de control', layout: { x: 0, y: 0, w: 130, h: 60 }, status: 'NORMAL' },
-  { id: 'z-lab', name: 'Laboratorio', layout: { x: 140, y: 0, w: 130, h: 60 }, status: 'NORMAL' },
-  { id: 'z-esclusa', name: 'Esclusa', layout: { x: 280, y: 0, w: 130, h: 60 }, status: 'NORMAL' },
-  { id: 'z-cocina', name: 'Cocina y comedor', layout: { x: 0, y: 70, w: 130, h: 60 }, status: 'NORMAL' },
-  { id: 'z-dormitorios', name: 'Dormitorios', layout: { x: 140, y: 70, w: 130, h: 60 }, status: 'NORMAL' },
-  { id: 'z-almacen', name: 'Almacén', layout: { x: 280, y: 70, w: 130, h: 60 }, status: 'NORMAL' },
+  { id: 'z-bridge', name: 'Bridge', layout: { x: 0, y: 0, w: 130, h: 60 }, status: 'NORMAL' },
+  { id: 'z-lab', name: 'Laboratory', layout: { x: 140, y: 0, w: 130, h: 60 }, status: 'NORMAL' },
+  { id: 'z-airlock', name: 'Airlock', layout: { x: 280, y: 0, w: 130, h: 60 }, status: 'NORMAL' },
+  { id: 'z-galley', name: 'Galley and mess', layout: { x: 0, y: 70, w: 130, h: 60 }, status: 'NORMAL' },
+  { id: 'z-quarters', name: 'Crew quarters', layout: { x: 140, y: 70, w: 130, h: 60 }, status: 'NORMAL' },
+  { id: 'z-storage', name: 'Storage', layout: { x: 280, y: 70, w: 130, h: 60 }, status: 'NORMAL' },
 ]
 
-/** Alerta de CO₂ con sus acciones del catálogo DEMO (dato de demostración, no de NASA). */
+/** CO₂ alert with its actions from the DEMO catalog (demo data, not NASA data). */
 const CO2_ALERT: AlertView = {
-  severity: 'ALERTA',
-  ruleText: 'El promedio de 1 hora de ppCO₂ supera el límite de 3 mmHg de la norma.',
+  severity: 'ALERT',
+  ruleText: 'The 1-hour average ppCO₂ exceeds the standard limit of 3 mmHg.',
   measured: 'ppCO₂ 3.4 mmHg',
-  causeHint: 'AMBIENTE',
+  causeHint: 'ENVIRONMENT',
   actions: [
     {
-      key: 'revisar_ventilacion_y_filtros',
-      title: 'Revisar ventilación y filtros de CO₂',
-      description: 'Comprobar que los ventiladores y los filtros de CO₂ funcionan y no están saturados.',
+      key: 'check_ventilation_and_filters',
+      title: 'Check ventilation and CO₂ filters',
+      description: 'Check that the fans and CO₂ filters are working and not saturated.',
     },
     {
-      key: 'medir_co2_en_zonas_locales',
-      title: 'Medir CO₂ en zonas locales',
-      description: 'Usar un sensor portátil en la zona donde sube el valor.',
+      key: 'measure_co2_in_local_zones',
+      title: 'Measure CO₂ in local zones',
+      description: 'Use a portable sensor in the zone where the value is rising.',
     },
   ],
-  source: { documentCode: 'NASA-STD-3001 Vol. 2 Rev F', requirementRef: 'V2 6004', evidenceState: 'VERIFICADO' },
-  escalateWhen: 'Si el valor sigue por encima de 3 mmHg tras revisar la ventilación.',
-  body: 'Esta recomendación usa un dato de demostración, no de NASA.',
+  source: { documentCode: 'NASA-STD-3001 Vol. 2 Rev F', requirementRef: 'V2 6004', evidenceState: 'VERIFIED' },
+  escalateWhen: 'If the value stays above 3 mmHg after checking ventilation.',
+  body: 'This recommendation uses demo data, not NASA data.',
 }
 
 export interface AppState {
-  /** Clave del último escenario provocado, o 'normal'. */
+  /** Key of the last triggered scenario, or 'normal'. */
   scenario: string
   zones: Zone[]
   tickets: Ticket[]
@@ -58,12 +58,12 @@ export function initialState(): AppState {
   return { scenario: 'normal', zones: BASE_ZONES, tickets: [], acknowledged: false }
 }
 
-/** Código del ticket: INC-0001, INC-0002… en orden de llegada. */
+/** Ticket code: INC-0001, INC-0002… in order of arrival. */
 function nextCode(tickets: readonly Ticket[]): string {
   return `INC-${String(tickets.length + 1).padStart(4, '0')}`
 }
 
-export function provoke(state: AppState, scenarioKey: string, zoneId: string, now: string): AppState {
+export function trigger(state: AppState, scenarioKey: string, zoneId: string, now: string): AppState {
   const demo = DEMO_SCENARIOS[scenarioKey]
   if (!demo) return state
 
@@ -73,9 +73,9 @@ export function provoke(state: AppState, scenarioKey: string, zoneId: string, no
     code,
     title: demo.title,
     severity: demo.severity,
-    status: 'ABIERTO',
+    status: 'OPEN',
     zoneId,
-    source: 'ALERTA',
+    source: 'ALERT',
     openedAt: now,
     valuesInRange: false,
   }
@@ -87,12 +87,12 @@ export function provoke(state: AppState, scenarioKey: string, zoneId: string, no
   }
 }
 
-/** Devuelve las zonas a normal y deja los tickets automáticos listos para resolverse. */
+/** Returns the zones to normal and leaves the automatic tickets ready to be resolved. */
 export function normalize(state: AppState): AppState {
   return {
     scenario: 'normal',
     zones: state.zones.map((z) => ({ ...z, status: 'NORMAL' })),
-    tickets: state.tickets.map((t) => (t.source === 'ALERTA' ? { ...t, valuesInRange: true } : t)),
+    tickets: state.tickets.map((t) => (t.source === 'ALERT' ? { ...t, valuesInRange: true } : t)),
     acknowledged: false,
   }
 }
@@ -101,7 +101,7 @@ export function acknowledge(state: AppState): AppState {
   return { ...state, acknowledged: true }
 }
 
-/** Un reporte manual abre un ticket; la zona no cambia de estado porque no hay medida. */
+/** A manual report opens a ticket; the zone status does not change because there is no measurement. */
 export function addReportedTicket(state: AppState, payload: ReportPayload, now: string): AppState {
   const code = nextCode(state.tickets)
   const ticket: Ticket = {
@@ -109,7 +109,7 @@ export function addReportedTicket(state: AppState, payload: ReportPayload, now: 
     code,
     title: payload.title,
     severity: payload.severity,
-    status: 'ABIERTO',
+    status: 'OPEN',
     zoneId: payload.zoneId,
     source: 'MANUAL',
     openedAt: now,
@@ -119,24 +119,24 @@ export function addReportedTicket(state: AppState, payload: ReportPayload, now: 
 }
 
 export function dashboardFor(state: AppState): DashboardView {
-  return dashboardFixture(state.scenario === 'co2-alto' ? 'co2-alto' : 'normal')
+  return dashboardFixture(state.scenario === 'co2_slow' ? 'co2_slow' : 'normal')
 }
 
 export function alertFor(state: AppState): AlertView | null {
-  return state.scenario === 'co2-alto' ? CO2_ALERT : null
+  return state.scenario === 'co2_slow' ? CO2_ALERT : null
 }
 
 /**
- * Alertas automáticas abiertas con valores aún fuera de rango. El asistente puede nombrarlas;
- * no tiene forma de cambiarlas.
+ * Open automatic alerts whose values are still out of range. The assistant may name them;
+ * it has no way to change them.
  */
 export function activeAlertTitles(state: AppState): string[] {
   return state.tickets
-    .filter((t) => t.source === 'ALERTA' && !t.valuesInRange && t.status !== 'RESUELTO')
+    .filter((t) => t.source === 'ALERT' && !t.valuesInRange && t.status !== 'RESOLVED')
     .map((t) => `${t.title} (${severityMeta(t.severity).label})`)
 }
 
-/** Series de las seis métricas de una zona. Una zona en alerta muestra el CO₂ por encima del umbral. */
+/** Series for the six metrics of a zone. A zone in alert shows CO₂ above the threshold. */
 export function zoneSeriesFor(state: AppState, zoneId: string): Record<string, ZoneSeries> {
   const zone = state.zones.find((z) => z.id === zoneId)
   const inAlert = zone !== undefined && zone.status !== 'NORMAL'
@@ -147,18 +147,18 @@ export function zoneSeriesFor(state: AppState, zoneId: string): Record<string, Z
   ]
 
   return {
-    o2: { label: 'O₂ (PIO₂)', unit: 'mmHg', points: flat(149.7), evidenceState: 'VERIFICADO' },
+    o2: { label: 'O₂ (PIO₂)', unit: 'mmHg', points: flat(149.7), evidenceState: 'VERIFIED' },
     co2: {
       label: 'CO₂ (ppCO₂)',
       unit: 'mmHg',
       points: flat(inAlert ? 3.4 : 1.2),
-      evidenceState: 'VERIFICADO',
-      threshold: { value: 3, label: 'Umbral 3 mmHg' },
+      evidenceState: 'VERIFIED',
+      threshold: { value: 3, label: 'Threshold 3 mmHg' },
       anomaly: inAlert,
     },
     n2: { label: 'N₂', unit: '%', points: flat(78), evidenceState: 'DEMO' },
-    humedad: { label: 'Humedad', unit: '%', points: flat(45), evidenceState: 'DEMO' },
-    temperatura: { label: 'Temperatura', unit: '°C', points: flat(22), evidenceState: 'DEMO' },
-    presion: { label: 'Presión', unit: 'kPa', points: flat(101.3), evidenceState: 'DEMO' },
+    humidity: { label: 'Humidity', unit: '%', points: flat(45), evidenceState: 'DEMO' },
+    temperature: { label: 'Temperature', unit: '°C', points: flat(22), evidenceState: 'DEMO' },
+    pressure: { label: 'Pressure', unit: 'kPa', points: flat(101.3), evidenceState: 'DEMO' },
   }
 }

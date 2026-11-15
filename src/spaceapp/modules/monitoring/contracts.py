@@ -1,4 +1,4 @@
-"""Eventos públicos de Monitoreo y reglas."""
+"""Public Monitoring events and rules."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ class AlertRaised(EventPayload):
     rule_key: str
     severity: Severity
     evidence: dict[str, Any]
-    cause_hint: Literal["AMBIENTE", "CUERPO", "INDETERMINADO"] | None = None
+    cause_hint: Literal["ENVIRONMENT", "BODY", "UNDETERMINED"] | None = None
 
 
 class AlertAcknowledged(EventPayload):

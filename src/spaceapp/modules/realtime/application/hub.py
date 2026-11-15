@@ -1,4 +1,4 @@
-"""Reparto de mensajes a los clientes conectados, con una cola acotada por cliente."""
+"""Distribution of messages to connected clients, with a bounded queue per client."""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ def _tick_key(m: WsMessage) -> tuple[object, object]:
 
 
 class ClientQueue:
-    """Hasta `max_pending` mensajes. Se descartan ticks antes que cualquier otra cosa.
+    """Up to `max_pending` messages. Ticks are dropped before anything else.
 
-    Un tick reemplaza al pendiente de la misma zona y métrica (solo importa el último valor).
-    Los demás mensajes, alertas incluidas, nunca se descartan.
+    A tick replaces the pending one for the same zone and metric (only the latest value matters).
+    All other messages, alerts included, are never dropped.
     """
 
     def __init__(self, max_pending: int = 500) -> None:
@@ -32,7 +32,7 @@ class ClientQueue:
             key = _tick_key(message)
             self._items = [m for m in self._items if not (m.type == TICK and _tick_key(m) == key)]
             if len(self._items) >= self._max and not self._drop_oldest_tick():
-                self.dropped += 1  # no hay ticks que sacar: se descarta el que llega
+                self.dropped += 1  # there are no ticks to remove: the incoming one is dropped
                 return
         else:
             while len(self._items) >= self._max and self._drop_oldest_tick():
@@ -86,7 +86,7 @@ class Client:
 def _check(topics: list[str]) -> None:
     for t in topics:
         if t not in TOPICS:
-            raise ValueError(f"topic desconocido: {t}")
+            raise ValueError(f"unknown topic: {t}")
 
 
 class Hub:

@@ -1,4 +1,4 @@
-"""Suscripciones de Misiones: incidentes, recomendaciones y planes de Tierra."""
+"""Missions subscriptions: incidents, recommendations and Ground plans."""
 
 from __future__ import annotations
 

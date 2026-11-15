@@ -1,4 +1,4 @@
-"""Tipos y utilidades que comparten los fragmentos del esquema GraphQL."""
+"""Types and utilities shared by the GraphQL schema fragments."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from spaceapp.interfaces.graphql.context import Context
 from spaceapp.platform.ids import habitat_id as habitat_id_of
 
 MAX_PAGE = 100
-DEFAULT_HABITAT = "nave-transito"
+DEFAULT_HABITAT = "transit-ship"
 
 GqlInfo = Info[Context, None]
 
@@ -22,17 +22,17 @@ GqlInfo = Info[Context, None]
 @strawberry.enum
 class Severity(Enum):
     NORMAL = "normal"
-    ATENCION = "atencion"
-    ALERTA = "alerta"
-    CRITICO = "critico"
+    ATTENTION = "attention"
+    ALERT = "alert"
+    CRITICAL = "critical"
 
 
 @strawberry.enum
 class EvidenceState(Enum):
-    VERIFICADO = "VERIFICADO"
+    VERIFIED = "VERIFIED"
     TB = "TB"
     DEMO = "DEMO"
-    NO_VERIFICADO = "NO_VERIFICADO"
+    UNVERIFIED = "UNVERIFIED"
 
 
 @strawberry.type
@@ -42,7 +42,7 @@ class PageInfo:
 
 
 def habitat(value: str) -> UUID:
-    """Un hábitat se puede pedir por su UUID o por su código (`nave-transito`)."""
+    """A habitat can be requested by its UUID or by its code (`transit-ship`)."""
     try:
         return UUID(value)
     except ValueError:

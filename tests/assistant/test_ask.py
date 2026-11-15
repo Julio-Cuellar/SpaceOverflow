@@ -21,11 +21,11 @@ from spaceapp.modules.knowledge.contracts import CitationDTO
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
 DEMO_CATALOG = Path(__file__).resolve().parents[2] / "data" / "knowledge" / "demo_catalog.json"
-HEADACHE = "¿Por qué me duele la cabeza?"
+HEADACHE = "Why do I have a headache?"
 
 
 class FakeLlm:
-    """Modelo de prueba: emite tokens, puede tardar o fallar, y registra las llamadas."""
+    """Test model: emits tokens, can be slow or fail, and records the calls."""
 
     available = True
 
@@ -42,14 +42,14 @@ class FakeLlm:
     ) -> Iterator[str]:
         self.calls.append((question, tuple(passages), tuple(alerts)))
         if self._fail:
-            raise RuntimeError("el modelo no responde")
+            raise RuntimeError("the model does not respond")
         for token in self._tokens:
             time.sleep(self._delay_s)
             yield token
 
 
 class FakeAlerts:
-    """Solo lectura: el asistente no tiene ningún puerto para cambiar una alerta."""
+    """Read-only: the assistant has no port to change an alert."""
 
     def __init__(self, titles: Sequence[str] = ()) -> None:
         self._titles = list(titles)
@@ -82,25 +82,25 @@ def test_answers_a_headache_question_with_the_tb004_passage_and_its_citation() -
     result = assistant(uuid.uuid4(), HEADACHE)
 
     assert result.outcome is AskOutcome.ANSWERED
-    assert "dolor de cabeza entre 2.8 y 4.5 mmhg" in result.text.lower()
+    assert "headache between 2.8 and 4.5 mmhg" in result.text.lower()
     assert result.citations[0].document_code == "OCHMO-TB-004 CO₂"
     assert result.citations[0].evidence_state == "TB"
 
 
 def test_mentions_the_active_alert_without_changing_it() -> None:
-    assistant, _ = build(alerts=FakeAlerts(["CO₂ alto (Alerta)"]))
+    assistant, _ = build(alerts=FakeAlerts(["High CO₂ (Alert)"]))
 
     result = assistant(uuid.uuid4(), HEADACHE)
 
-    assert "Alerta activa: CO₂ alto (Alerta)" in result.text
-    assert "no cambia la alerta" in result.text
+    assert "Active alert: High CO₂ (Alert)" in result.text
+    assert "does not change the alert" in result.text
 
 
 def test_answers_no_information_without_calling_the_model_when_no_passage_is_relevant() -> None:
-    llm = FakeLlm(tokens=["esto no debe salir"])
+    llm = FakeLlm(tokens=["this must not come out"])
     assistant, _ = build(llm=llm)
 
-    result = assistant(uuid.uuid4(), "¿Cómo cambio el filtro de la esclusa?")
+    result = assistant(uuid.uuid4(), "How do I change the airlock filter?")
 
     assert result.outcome is AskOutcome.NO_INFO
     assert result.text == NO_INFO_TEXT
@@ -109,22 +109,22 @@ def test_answers_no_information_without_calling_the_model_when_no_passage_is_rel
 
 
 def test_uses_the_models_text_when_it_answers_in_time_and_keeps_the_citations() -> None:
-    assistant, _ = build(llm=FakeLlm(tokens=["Ventila ", "la zona."]))
+    assistant, _ = build(llm=FakeLlm(tokens=["Ventilate ", "the zone."]))
 
     result = assistant(uuid.uuid4(), HEADACHE)
 
     assert result.composed_by == "llm"
-    assert result.text.startswith("Ventila la zona.")
+    assert result.text.startswith("Ventilate the zone.")
     assert result.citations[0].document_code == "OCHMO-TB-004 CO₂"
 
 
 def test_falls_back_to_the_passages_when_the_model_exceeds_the_time_limit() -> None:
-    assistant, _ = build(llm=FakeLlm(tokens=["tarde", "muy tarde"], delay_s=0.5), timeout_s=0.05)
+    assistant, _ = build(llm=FakeLlm(tokens=["late", "very late"], delay_s=0.5), timeout_s=0.05)
 
     result = assistant(uuid.uuid4(), HEADACHE)
 
-    assert result.composed_by == "plantilla"
-    assert "dolor de cabeza entre 2.8 y 4.5 mmhg" in result.text.lower()
+    assert result.composed_by == "template"
+    assert "headache between 2.8 and 4.5 mmhg" in result.text.lower()
 
 
 def test_falls_back_to_the_passages_when_the_model_fails() -> None:
@@ -132,7 +132,7 @@ def test_falls_back_to_the_passages_when_the_model_fails() -> None:
 
     result = assistant(uuid.uuid4(), HEADACHE)
 
-    assert result.composed_by == "plantilla"
+    assert result.composed_by == "template"
     assert result.outcome is AskOutcome.ANSWERED
 
 
@@ -141,17 +141,17 @@ def test_works_without_any_language_model() -> None:
 
     result = assistant(uuid.uuid4(), HEADACHE)
 
-    assert result.composed_by == "plantilla"
+    assert result.composed_by == "template"
     assert result.citations
 
 
 def test_streams_the_model_tokens_to_the_caller_in_order() -> None:
-    assistant, _ = build(llm=FakeLlm(tokens=["Te ", "recomiendo ", "ventilar."]))
+    assistant, _ = build(llm=FakeLlm(tokens=["I ", "recommend ", "ventilating."]))
     received: list[str] = []
 
     assistant(uuid.uuid4(), HEADACHE, on_token=received.append)
 
-    assert received == ["Te ", "recomiendo ", "ventilar."]
+    assert received == ["I ", "recommend ", "ventilating."]
 
 
 def test_an_empty_question_is_refused_and_nothing_is_stored() -> None:
@@ -192,7 +192,7 @@ def test_publishes_the_no_information_answer_too_with_no_citations() -> None:
     publisher = ListPublisher()
     assistant, _ = build(publisher=publisher)
 
-    assistant(uuid.uuid4(), "¿Cómo cambio el filtro de la esclusa?")
+    assistant(uuid.uuid4(), "How do I change the airlock filter?")
 
     [event] = publisher.events
     assert event.text == NO_INFO_TEXT

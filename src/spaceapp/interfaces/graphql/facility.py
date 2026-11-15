@@ -1,4 +1,4 @@
-"""Fragmento GraphQL de Nave e incidencias: plano, tickets y catálogo de tipos."""
+"""GraphQL fragment for Facility and incidents: floor plan, tickets and type catalog."""
 
 from __future__ import annotations
 
@@ -29,14 +29,14 @@ from spaceapp.modules.facility.facade import IncidentUpdateView, IncidentView, Z
 
 @strawberry.enum
 class IncidentStatus(Enum):
-    ABIERTA = "abierta"
-    RECONOCIDA = "reconocida"
-    RESUELTA = "resuelta"
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    RESOLVED = "resolved"
 
 
 @strawberry.enum
 class IncidentSource(Enum):
-    ALERTA = "ALERTA"
+    ALERT = "ALERT"
     MANUAL = "MANUAL"
 
 
@@ -216,12 +216,12 @@ async def _result(info: GqlInfo, outcome: Outcome) -> IncidentPayload | Incident
     if not isinstance(outcome, Done):
         return IncidentError(code=IncidentErrorCode(outcome.code), message=outcome.message)
     view = await info.context.services.incidents.get(outcome.incident_id)
-    assert view is not None  # se acaba de escribir en la misma base
+    assert view is not None  # it was just written in the same database
     return IncidentPayload(incident=Incident.of(view), already_done=outcome.already)
 
 
 def _not_found(value: str) -> IncidentError:
-    return IncidentError(code=IncidentErrorCode.NOT_FOUND, message=f"no existe {value}")
+    return IncidentError(code=IncidentErrorCode.NOT_FOUND, message=f"{value} does not exist")
 
 
 @strawberry.type
@@ -305,12 +305,12 @@ class FacilityMutation:
         if zone is None:
             return IncidentError(
                 code=IncidentErrorCode.UNKNOWN_ZONE,
-                message=f"la zona {zone_id} no está en el plano",
+                message=f"zone {zone_id} is not on the floor plan",
             )
         if severity is Severity.NORMAL:
             return IncidentError(
                 code=IncidentErrorCode.INVALID_SEVERITY,
-                message="un ticket es de Atención, Alerta o Crítico",
+                message="a ticket is Attention, Alert or Critical",
             )
         outcome = await services.facility.report(
             zone,
@@ -325,7 +325,7 @@ class FacilityMutation:
     async def acknowledge_incident(self, info: GqlInfo, id: strawberry.ID) -> IncidentResult:
         incident_id = uuid_or_none(id)
         if incident_id is None:
-            return _not_found(f"la incidencia {id}")
+            return _not_found(f"incident {id}")
         services = info.context.services
         return await _result(
             info, await services.facility.acknowledge(incident_id, services.crew_member)
@@ -337,7 +337,7 @@ class FacilityMutation:
     ) -> IncidentResult:
         incident_id = uuid_or_none(id)
         if incident_id is None:
-            return _not_found(f"la incidencia {id}")
+            return _not_found(f"incident {id}")
         services = info.context.services
         outcome = await services.facility.resolve(incident_id, services.crew_member, note)
         return await _result(info, outcome)

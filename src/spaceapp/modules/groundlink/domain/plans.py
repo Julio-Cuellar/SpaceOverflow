@@ -1,4 +1,4 @@
-"""Planes de Tierra: integridad, versiones y etapas en el enlace (13.11). Sin E/S."""
+"""Ground plans: integrity, versions and stages on the link (13.11). No I/O."""
 
 from __future__ import annotations
 
@@ -9,15 +9,15 @@ from dataclasses import dataclass
 from typing import Any, Literal
 from uuid import UUID
 
-# Canalización de un plan publicado, tal como la ve Tierra.
-STAGES = ("BORRADOR", "EN_COLA", "EN_EL_ENLACE", "RECIBIDO", "APLICADO", "CONFIRMADO", "RECHAZADO")
-_IN_FLIGHT = {"EN_COLA", "EN_EL_ENLACE", "RECIBIDO", "APLICADO"}
+# Pipeline of a published plan, as Ground sees it.
+STAGES = ("DRAFT", "QUEUED", "IN_TRANSIT", "RECEIVED", "APPLIED", "CONFIRMED", "REJECTED")
+_IN_FLIGHT = {"QUEUED", "IN_TRANSIT", "RECEIVED", "APPLIED"}
 
 Decision = Literal["received", "ignored", "rejected"]
 
 
 def plan_hash(plan_version: int, items: Sequence[Mapping[str, Any]]) -> str:
-    """SHA-256 del JSON canónico de versión e ítems (claves ordenadas, sin espacios)."""
+    """SHA-256 of the canonical JSON of version and items (sorted keys, no spaces)."""
     canonical = json.dumps(
         {"plan_version": plan_version, "items": list(items)},
         sort_keys=True,
@@ -35,9 +35,9 @@ def inbound_decision(
     *,
     last_version: int | None,
 ) -> tuple[Decision, str | None]:
-    """Plan corrupto: se rechaza completo. Versión menor o repetida: se ignora."""
+    """Corrupt plan: rejected as a whole. Older or repeated version: ignored."""
     if plan_hash(plan_version, items) != received_hash:
-        return "rejected", "falla la integridad: el hash no coincide con el contenido del plan"
+        return "rejected", "integrity failure: the hash does not match the plan content"
     if last_version is not None and plan_version <= last_version:
         return "ignored", None
     return "received", None
@@ -49,12 +49,12 @@ def in_flight(stage: str) -> bool:
 
 @dataclass(frozen=True)
 class ShipTemplate:
-    """Plantilla de Tierra activa en la nave, con el estado de su última tarea."""
+    """Active Ground template on the ship, with the status of its latest task."""
 
     id: UUID
     title: str
     kind: str
-    status: str  # APLICADA, COMPLETADA o BLOQUEADA
+    status: str  # APPLIED, COMPLETED or BLOCKED
     blocked_reason: str | None
 
 
@@ -79,7 +79,7 @@ class ShownTemplate:
 def draft_templates(
     active: Sequence[ShipTemplate], items: Sequence[DraftItem]
 ) -> list[ShownTemplate]:
-    """Lo que ve Tierra al editar: las activas (marcadas si se cancelan) y las nuevas."""
+    """What Ground sees while editing: the active ones (flagged if cancelled) and the new ones."""
     cancelled = {i.template_id for i in items if i.change == "CANCEL"}
     renamed = {i.template_id: i.title for i in items if i.change == "UPDATE" and i.title}
     shown = [
@@ -94,7 +94,7 @@ def draft_templates(
         for t in active
     ]
     shown += [
-        ShownTemplate(i.template_id, i.title or "", i.kind or "SALUD", "PENDIENTE", None, False)
+        ShownTemplate(i.template_id, i.title or "", i.kind or "HEALTH", "PENDING", None, False)
         for i in items
         if i.change == "NEW"
     ]

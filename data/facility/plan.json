@@ -1,10 +1,10 @@
 {
   "evidence_state": "DEMO",
-  "note": "Plano de ejemplo (plan, sección 13.7). Cambiar de nave a base lunar es cambiar este archivo.",
+  "note": "Example floor plan (architecture plan, section 13.7). Switching from a ship to a lunar base means changing this file.",
   "habitat": {
-    "code": "nave-transito",
-    "name": "Nave de tránsito",
-    "kind": "nave",
+    "code": "transit-ship",
+    "name": "Transit ship",
+    "kind": "ship",
     "p_total_nominal_kpa": 101.3
   },
   "canvas": {
@@ -14,8 +14,8 @@
   "zones": [
     {
       "code": "eng",
-      "name": "Ingeniería y propulsión",
-      "kind": "ingenieria",
+      "name": "Engineering and propulsion",
+      "kind": "engineering",
       "deck": 1,
       "layout": {
         "x": 60,
@@ -26,8 +26,8 @@
     },
     {
       "code": "eclss",
-      "name": "Soporte vital (ECLSS)",
-      "kind": "soporte_vital",
+      "name": "Life support (ECLSS)",
+      "kind": "life_support",
       "deck": 1,
       "layout": {
         "x": 222,
@@ -38,8 +38,8 @@
     },
     {
       "code": "lab",
-      "name": "Laboratorio",
-      "kind": "laboratorio",
+      "name": "Laboratory",
+      "kind": "laboratory",
       "deck": 1,
       "layout": {
         "x": 384,
@@ -50,8 +50,8 @@
     },
     {
       "code": "med",
-      "name": "Enfermería",
-      "kind": "enfermeria",
+      "name": "Infirmary",
+      "kind": "infirmary",
       "deck": 1,
       "layout": {
         "x": 566,
@@ -62,8 +62,8 @@
     },
     {
       "code": "bridge",
-      "name": "Puente de control",
-      "kind": "puente",
+      "name": "Control bridge",
+      "kind": "bridge",
       "deck": 1,
       "layout": {
         "x": 718,
@@ -74,8 +74,8 @@
     },
     {
       "code": "air",
-      "name": "Esclusa",
-      "kind": "esclusa",
+      "name": "Airlock",
+      "kind": "airlock",
       "deck": 2,
       "layout": {
         "x": 60,
@@ -86,8 +86,8 @@
     },
     {
       "code": "store",
-      "name": "Almacén",
-      "kind": "almacen",
+      "name": "Storage",
+      "kind": "storage",
       "deck": 2,
       "layout": {
         "x": 202,
@@ -98,8 +98,8 @@
     },
     {
       "code": "gym",
-      "name": "Gimnasio",
-      "kind": "gimnasio",
+      "name": "Gym",
+      "kind": "gym",
       "deck": 2,
       "layout": {
         "x": 354,
@@ -110,8 +110,8 @@
     },
     {
       "code": "galley",
-      "name": "Cocina y comedor",
-      "kind": "cocina",
+      "name": "Galley and mess",
+      "kind": "galley",
       "deck": 2,
       "layout": {
         "x": 516,
@@ -122,8 +122,8 @@
     },
     {
       "code": "crew",
-      "name": "Dormitorios",
-      "kind": "dormitorios",
+      "name": "Crew quarters",
+      "kind": "crew_quarters",
       "deck": 2,
       "layout": {
         "x": 698,

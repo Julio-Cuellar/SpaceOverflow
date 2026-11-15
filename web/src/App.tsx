@@ -7,7 +7,7 @@ import {
   dashboardFor,
   initialState,
   normalize,
-  provoke,
+  trigger,
   zoneSeriesFor,
 } from './app/scenario'
 import { bodyIndicatorsFixture } from './data/mocks/body'
@@ -26,21 +26,21 @@ import { ZoneCharts } from './features/ship/ZoneCharts'
 import { Banner } from './shared/ui/Banner'
 import { SevPill } from './shared/ui/SevPill'
 
-/** Perfil de demo: el modo demo está visible en desarrollo y jurado (plan, sección 12). */
+/** Demo profile: demo mode is visible in development and jury (architecture plan, section 12). */
 const PROFILE = 'dev1'
-/** Hora fija de la demo: las pruebas no dependen del reloj. */
+/** Fixed demo time: tests do not depend on the clock. */
 const NOW = '2026-11-14T10:00:00Z'
 
-type View = 'cabina' | 'nave' | 'asistente'
+type View = 'cabin' | 'ship' | 'assistant'
 
 /**
- * Cableado de F6 y F7 con datos de demostración (sin backend). Cuando llegue el gateway (I2),
- * el estado vendrá de GraphQL y de /ws en lugar de `initialState`.
+ * F6 and F7 wiring with demo data (no backend). When the gateway arrives (I2),
+ * the state will come from GraphQL and /ws instead of `initialState`.
  */
 export function App() {
   const [state, setState] = useState(initialState)
-  const [view, setView] = useState<View>('cabina')
-  const [selectedZoneId, setSelectedZoneId] = useState('z-puente')
+  const [view, setView] = useState<View>('cabin')
+  const [selectedZoneId, setSelectedZoneId] = useState('z-bridge')
   const [presetTypeKey, setPresetTypeKey] = useState<string | undefined>(undefined)
   const [formRound, setFormRound] = useState(0)
 
@@ -52,36 +52,36 @@ export function App() {
     <main>
       <Banner />
 
-      <div role="tablist" aria-label="Vistas">
-        <button type="button" role="tab" aria-selected={view === 'cabina'} onClick={() => setView('cabina')}>
-          Cabina
+      <div role="tablist" aria-label="Views">
+        <button type="button" role="tab" aria-selected={view === 'cabin'} onClick={() => setView('cabin')}>
+          Cabin
         </button>
-        <button type="button" role="tab" aria-selected={view === 'nave'} onClick={() => setView('nave')}>
-          Nave
+        <button type="button" role="tab" aria-selected={view === 'ship'} onClick={() => setView('ship')}>
+          Ship
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={view === 'asistente'}
-          onClick={() => setView('asistente')}
+          aria-selected={view === 'assistant'}
+          onClick={() => setView('assistant')}
         >
-          Asistente
+          Assistant
         </button>
       </div>
 
-      {view === 'cabina' ? (
+      {view === 'cabin' ? (
         <>
           <CabinPanel dashboard={dashboardFor(state)} />
-          {/* La alerta va justo debajo del semáforo: acciones primero (plan, sección 13.2). */}
+          {/* The alert goes right below the status light: actions first (architecture plan, section 13.2). */}
           {alert &&
             (state.acknowledged ? (
-              <p>Alerta reconocida</p>
+              <p>Alert acknowledged</p>
             ) : (
               <AlertPanel alert={alert} onAcknowledge={() => setState(acknowledge)} />
             ))}
           <BodyMap indicators={bodyIndicatorsFixture} />
         </>
-      ) : view === 'asistente' ? (
+      ) : view === 'assistant' ? (
         <AssistantPanel
           mode="local"
           answerFor={(question) => mockAnswer(question, activeAlertTitles(state))}
@@ -91,7 +91,7 @@ export function App() {
           <DemoPanel
             profile={PROFILE}
             zones={zones}
-            onStart={(scenario, zoneId) => setState((s) => provoke(s, scenario, zoneId, NOW))}
+            onStart={(scenario, zoneId) => setState((s) => trigger(s, scenario, zoneId, NOW))}
             onNormalize={() => setState(normalize)}
           />
 

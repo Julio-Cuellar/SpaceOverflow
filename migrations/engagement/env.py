@@ -1,4 +1,4 @@
-"""Entorno de Alembic del esquema `engagement` (plantillas, tareas y planes aplicados)."""
+"""Alembic environment for the `engagement` schema (templates, tasks and applied plans)."""
 
 from spaceapp.platform.migrations_env import run
 

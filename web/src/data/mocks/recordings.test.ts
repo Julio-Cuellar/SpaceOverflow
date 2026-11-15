@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { normalRecording } from './ws/recordings'
 
-describe('grabación WS de ejemplo', () => {
+describe('example WS recording', () => {
   it('includes telemetry ticks, so the replayer can drive the cabin panel at 1 Hz', () => {
     expect(normalRecording.some((m) => m.type === 'telemetry.tick')).toBe(true)
   })

@@ -1,6 +1,6 @@
 import type { CodegenConfig } from '@graphql-codegen/cli'
 
-// Genera tipos desde el contrato. Falla si un documento no valida contra el esquema.
+// Generates types from the contract. Fails if a document does not validate against the schema.
 const config: CodegenConfig = {
   schema: '../contracts/schema.graphql',
   documents: ['src/data/graphql/documents/**/*.graphql'],

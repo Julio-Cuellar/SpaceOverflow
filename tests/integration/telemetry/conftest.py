@@ -17,7 +17,7 @@ OTHER = sensor_id(AIR, "co2_mmhg")
 
 
 def sensor(sid: UUID, zone: UUID, metric: str, unit: str = "u", period: int = 5) -> SensorInfo:
-    return SensorInfo(sid, HABITAT, zone, None, "cabina", metric, unit, period, "SIMULATED")
+    return SensorInfo(sid, HABITAT, zone, None, "cabin", metric, unit, period, "SIMULATED")
 
 
 @pytest.fixture

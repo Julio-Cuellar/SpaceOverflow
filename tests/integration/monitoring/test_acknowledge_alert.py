@@ -63,7 +63,7 @@ async def count(sf, table: str) -> int:  # type: ignore[no-untyped-def]
 
 async def test_acknowledging_marks_the_alert_and_publishes_one_event(session_factory):
     alert_id = await new_alert(session_factory)
-    result = await ack(session_factory, alert_id, note="revisando filtros")
+    result = await ack(session_factory, alert_id, note="checking filters")
     assert result == Acknowledged(alert_id)
     async with session_factory() as s:
         row = (await s.execute(text("SELECT status, acknowledged_at FROM monitoring.alert"))).one()
@@ -79,7 +79,7 @@ async def test_acknowledging_marks_the_alert_and_publishes_one_event(session_fac
     payload = AlertAcknowledged.model_validate(ev.payload)
     assert (payload.alert_id, payload.crew_member_id) == (alert_id, CREW)
     assert ev.aggregate_id == alert_id and ev.partition_key == f"habitat:{H}"
-    assert (note.note, note.crew_member_id) == ("revisando filtros", CREW)
+    assert (note.note, note.crew_member_id) == ("checking filters", CREW)
 
 
 async def test_acknowledging_twice_is_idempotent_and_publishes_nothing_more(session_factory):

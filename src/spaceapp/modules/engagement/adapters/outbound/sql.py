@@ -1,4 +1,4 @@
-"""Repositorio de Misiones y tareas sobre PostgreSQL. Trabaja en la transacción recibida."""
+"""Missions and tasks repository on PostgreSQL. Works inside the received transaction."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class SqlEngagementRepository:
             await self._s.execute(
                 text(
                     "INSERT INTO engagement.task_template (id, kind, title, recurrence, zone_code, "
-                    "origin, active, due_time) VALUES (:id, :k, :t, :r, :z, 'SISTEMA', :a, :d) "
+                    "origin, active, due_time) VALUES (:id, :k, :t, :r, :z, 'SYSTEM', :a, :d) "
                     "ON CONFLICT (id) DO UPDATE SET kind = EXCLUDED.kind, title = EXCLUDED.title, "
                     "recurrence = EXCLUDED.recurrence, zone_code = EXCLUDED.zone_code, "
                     "active = EXCLUDED.active, due_time = EXCLUDED.due_time, updated_at = now()"
@@ -114,7 +114,7 @@ class SqlEngagementRepository:
     async def complete(self, task_id: UUID, effective: bool | None, at: datetime) -> None:
         await self._s.execute(
             text(
-                "UPDATE engagement.task SET status = 'COMPLETADA', effective = :e, "
+                "UPDATE engagement.task SET status = 'COMPLETED', effective = :e, "
                 "completed_at = :t WHERE id = :i"
             ),
             {"e": effective, "t": at, "i": task_id},
@@ -123,7 +123,7 @@ class SqlEngagementRepository:
     async def block(self, task_id: UUID, reason: str) -> None:
         await self._s.execute(
             text(
-                "UPDATE engagement.task SET status = 'BLOQUEADA', blocked_reason = :r WHERE id = :i"
+                "UPDATE engagement.task SET status = 'BLOCKED', blocked_reason = :r WHERE id = :i"
             ),
             {"r": reason, "i": task_id},
         )
@@ -140,7 +140,7 @@ class SqlEngagementRepository:
     async def open_incident_task(self, incident_id: UUID) -> TaskRecord | None:
         row = (
             await self._s.execute(
-                text(_TASK + " WHERE incident_id = :i AND status <> 'COMPLETADA' FOR UPDATE"),
+                text(_TASK + " WHERE incident_id = :i AND status <> 'COMPLETED' FOR UPDATE"),
                 {"i": incident_id},
             )
         ).first()
@@ -158,7 +158,7 @@ class SqlEngagementRepository:
                 await self._s.execute(
                     text(
                         "INSERT INTO engagement.task_template (id, kind, title, recurrence, "
-                        "zone_code, origin, plan_version) VALUES (:id, :k, :t, :r, :z, 'TIERRA', :v)"
+                        "zone_code, origin, plan_version) VALUES (:id, :k, :t, :r, :z, 'GROUND', :v)"
                     ),
                     {
                         "id": a.template_id,
@@ -186,7 +186,7 @@ class SqlEngagementRepository:
                         "v": plan_version,
                     },
                 )
-            else:  # CANCEL: rige para el futuro; lo ya creado o completado se conserva
+            else:  # CANCEL: applies going forward; what was already created or completed is kept
                 await self._s.execute(
                     text(
                         "UPDATE engagement.task_template SET active = false, plan_version = :v, "

@@ -1,4 +1,4 @@
-"""R9: entrada de planes de Tierra. R5: corte y vuelta del enlace simulado."""
+"""R9: inbound Ground plans. R5: cut and restore of the simulated link."""
 
 from __future__ import annotations
 
@@ -31,8 +31,8 @@ class LinkChange(BaseModel):
 
 
 def build_router(services: Callable[[], tuple[PlanReceiver, GroundControl]]) -> APIRouter:
-    """`services` se llama en cada petición: los servicios se arman cuando ya hay base de datos."""
-    router = APIRouter(prefix="/api/v1/groundlink", tags=["enlace con Tierra"])
+    """`services` is called on every request: services are built once the database is up."""
+    router = APIRouter(prefix="/api/v1/groundlink", tags=["ground link"])
 
     @router.post("/inbound/plans", status_code=202)
     async def inbound_plan(plan: InboundPlan) -> JSONResponse:

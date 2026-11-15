@@ -1,4 +1,4 @@
-"""Caso de uso: la tripulación reconoce una alerta. Idempotente."""
+"""Use case: the crew acknowledges an alert. Idempotent."""
 
 from __future__ import annotations
 

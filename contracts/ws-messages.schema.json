@@ -165,9 +165,9 @@
                   },
                   "cause_hint": {
                     "enum": [
-                      "AMBIENTE",
-                      "CUERPO",
-                      "INDETERMINADO",
+                      "ENVIRONMENT",
+                      "BODY",
+                      "UNDETERMINED",
                       null
                     ]
                   },
@@ -179,9 +179,9 @@
                   },
                   "severity": {
                     "enum": [
-                      "ATENCION",
-                      "ALERTA",
-                      "CRITICO"
+                      "ATTENTION",
+                      "ALERT",
+                      "CRITICAL"
                     ]
                   },
                   "zone_id": {
@@ -310,10 +310,10 @@
                         },
                         "evidence_state": {
                           "enum": [
-                            "VERIFICADO",
+                            "VERIFIED",
                             "TB",
                             "DEMO",
-                            "NO_VERIFICADO"
+                            "UNVERIFIED"
                           ]
                         },
                         "excerpt": {
@@ -420,10 +420,10 @@
                         },
                         "evidence_state": {
                           "enum": [
-                            "VERIFICADO",
+                            "VERIFIED",
                             "TB",
                             "DEMO",
-                            "NO_VERIFICADO"
+                            "UNVERIFIED"
                           ]
                         },
                         "excerpt": {
@@ -485,7 +485,7 @@
               "data": {
                 "properties": {
                   "code": {
-                    "description": "Código legible del ticket, INC-0001",
+                    "description": "Human-readable ticket code, INC-0001",
                     "type": [
                       "string",
                       "null"
@@ -500,19 +500,19 @@
                   },
                   "severity": {
                     "enum": [
-                      "ATENCION",
-                      "ALERTA",
-                      "CRITICO"
+                      "ATTENTION",
+                      "ALERT",
+                      "CRITICAL"
                     ]
                   },
                   "source": {
                     "enum": [
-                      "ALERTA",
+                      "ALERT",
                       "MANUAL"
                     ]
                   },
                   "status": {
-                    "const": "ABIERTA"
+                    "const": "OPEN"
                   },
                   "title": {
                     "type": "string"
@@ -563,16 +563,16 @@
                   },
                   "severity": {
                     "enum": [
-                      "ATENCION",
-                      "ALERTA",
-                      "CRITICO"
+                      "ATTENTION",
+                      "ALERT",
+                      "CRITICAL"
                     ]
                   },
                   "status": {
                     "enum": [
-                      "ABIERTA",
-                      "RECONOCIDA",
-                      "RESUELTA"
+                      "OPEN",
+                      "ACKNOWLEDGED",
+                      "RESOLVED"
                     ]
                   }
                 },
@@ -610,7 +610,7 @@
                     "type": "string"
                   },
                   "status": {
-                    "const": "RESUELTA"
+                    "const": "RESOLVED"
                   },
                   "zone_id": {
                     "format": "uuid",
@@ -650,9 +650,9 @@
                   "status": {
                     "enum": [
                       "NORMAL",
-                      "ATENCION",
-                      "ALERTA",
-                      "CRITICO"
+                      "ATTENTION",
+                      "ALERT",
+                      "CRITICAL"
                     ]
                   },
                   "zone_id": {
@@ -701,16 +701,16 @@
                   },
                   "kind": {
                     "enum": [
-                      "SALUD",
-                      "NAVE",
-                      "INCIDENTE"
+                      "HEALTH",
+                      "SHIP",
+                      "INCIDENT"
                     ]
                   },
                   "origin": {
                     "enum": [
-                      "TIERRA",
-                      "SISTEMA",
-                      "TRIPULACION"
+                      "GROUND",
+                      "SYSTEM",
+                      "CREW"
                     ]
                   },
                   "task_id": {
@@ -747,16 +747,16 @@
                 "properties": {
                   "kind": {
                     "enum": [
-                      "SALUD",
-                      "NAVE",
-                      "INCIDENTE"
+                      "HEALTH",
+                      "SHIP",
+                      "INCIDENT"
                     ]
                   },
                   "origin": {
                     "enum": [
-                      "TIERRA",
-                      "SISTEMA",
-                      "TRIPULACION"
+                      "GROUND",
+                      "SYSTEM",
+                      "CREW"
                     ]
                   },
                   "task_id": {
@@ -842,9 +842,9 @@
                 "properties": {
                   "origin": {
                     "enum": [
-                      "TIERRA",
-                      "SISTEMA",
-                      "TRIPULACION"
+                      "GROUND",
+                      "SYSTEM",
+                      "CREW"
                     ]
                   },
                   "reason": {
@@ -1106,6 +1106,6 @@
   },
   "$id": "ws-messages.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "description": "Un solo canal de push. El servidor envía ServerMessage; el cliente, ClientMessage. `seq` es el id del outbox cuando el mensaje nace de un evento (se reenvía con `resume`); es null en los ticks y en el topic `system`. Con la cola llena se descartan ticks, nunca alertas. Sin mensajes durante 15 s el servidor envía `ping`.",
-  "title": "Mensajes de /ws"
+  "description": "A single push channel. The server sends ServerMessage; the client, ClientMessage. `seq` is the outbox id when the message originates from an event (it is resent with `resume`); it is null on ticks and on the `system` topic. When the queue is full, ticks are dropped, never alerts. With no messages for 15 s the server sends `ping`.",
+  "title": "/ws messages"
 }

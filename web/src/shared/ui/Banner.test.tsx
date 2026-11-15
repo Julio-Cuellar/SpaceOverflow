@@ -7,13 +7,13 @@ describe('Banner', () => {
     render(<Banner />)
 
     expect(
-      screen.getByText('Prototipo de apoyo a la decisión. No es un dispositivo médico'),
+      screen.getByText('Decision-support prototype. Not a medical device.'),
     ).toBeInTheDocument()
   })
 
   it('shows the simulated-data mark', () => {
     render(<Banner />)
 
-    expect(screen.getByText(/Datos simulados/)).toBeInTheDocument()
+    expect(screen.getByText(/Simulated data/)).toBeInTheDocument()
   })
 })

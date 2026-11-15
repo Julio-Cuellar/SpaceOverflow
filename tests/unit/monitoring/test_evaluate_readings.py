@@ -26,7 +26,7 @@ METRICS = {
 
 
 class FakeReadings:
-    """Fuente de lecturas en memoria: un valor por metrica y por segundo hasta `now`."""
+    """In-memory readings source: one value per metric and per second up to `now`."""
 
     def __init__(self) -> None:
         self.values: dict[UUID, dict[str, float]] = {}
@@ -83,8 +83,8 @@ async def test_a_high_co2_batch_raises_one_alert_with_its_evidence_and_ids():
     assert (p.rule_key, p.zone_id, p.severity, p.cause_hint) == (
         "env-co2-1h",
         ZONE,
-        "alerta",
-        "AMBIENTE",
+        "alert",
+        "ENVIRONMENT",
     )
     assert p.evidence["value"] == 3.5 and p.evidence["source_requirement"] == "V2 6004"
     assert raised[0].partition_key == f"habitat:{HABITAT}"
@@ -123,10 +123,10 @@ async def test_a_worse_band_replaces_the_milder_alert_right_away():
     await bus.publish(readings_event(ZONE, 101))
     kinds = [(x.type, x.payload.get("rule_key")) for x in published]
     assert ("monitoring.alert_raised", "env-pio2-low-pre") in kinds
-    # Con la ventana escalada, 121 mmHg ya cumple el límite absoluto (122), que es el más grave.
+    # With the scaled window, 121 mmHg already meets the absolute limit (122), which is the most severe.
     assert ("monitoring.alert_raised", "env-pio2-abs-low") in kinds
     resolved = [x for x in published if x.type == "monitoring.alert_resolved"]
-    assert len(resolved) == 1  # la banda leve se resuelve de inmediato, sin histéresis
+    assert len(resolved) == 1  # the mild band resolves immediately, without hysteresis
 
 
 async def test_alerts_of_different_zones_are_independent():

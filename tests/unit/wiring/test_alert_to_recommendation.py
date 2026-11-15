@@ -1,7 +1,7 @@
-"""El composition root suscribe Conocimiento (handler de Dev B) a las alertas de Monitoreo.
+"""The composition root subscribes Knowledge (Dev B's handler) to Monitoring alerts.
 
-El caso de uso y su adaptador al bus los prueba Dev B en `tests/knowledge/` y en
-`tests/integration/knowledge/`. Aquí solo se comprueba que `main.py` los conecta.
+The use case and its bus adapter are tested by Dev B in `tests/knowledge/` and in
+`tests/integration/knowledge/`. Here we only check that `main.py` wires them up.
 """
 
 from __future__ import annotations
@@ -26,9 +26,9 @@ def alert(rule_key: str = "env-co2-1h") -> EventEnvelope:
             alert_id=alert_id,
             zone_id=ZONE,
             rule_key=rule_key,
-            severity="alerta",
+            severity="alert",
             evidence={"value": 0.9},
-            cause_hint="AMBIENTE",
+            cause_hint="ENVIRONMENT",
         ),
         aggregate_type="alert",
         aggregate_id=alert_id,

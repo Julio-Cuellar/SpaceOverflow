@@ -90,7 +90,7 @@ async def test_a_repeated_delivery_of_the_same_event_does_not_duplicate_the_aler
     e = batch(100)
     await publish(session_factory, e)
     await relay.run_once()
-    async with session_factory() as s, s.begin():  # se vuelve a dejar pendiente el mismo evento
+    async with session_factory() as s, s.begin():  # the same event is left pending again
         await s.execute(
             text("UPDATE platform.outbox_event SET status='pending' WHERE event_id=:i"),
             {"i": e.event_id},
@@ -125,7 +125,7 @@ async def test_active_alerts_query_lists_what_other_modules_need(session_factory
     await relay.run_once()
     views = await ActiveAlertsQuery(session_factory).list(zone_id=Z)
     assert [(v.rule_key, v.zone_id, v.severity, v.status, v.evidence_state) for v in views] == [
-        ("env-co2-1h", Z, "alerta", "raised", "VERIFICADO")
+        ("env-co2-1h", Z, "alert", "raised", "VERIFIED")
     ]
     assert await ActiveAlertsQuery(session_factory).list(zone_id=uuid4()) == []
     assert len(await ActiveAlertsQuery(session_factory).list(habitat_id=H)) == 1
@@ -136,8 +136,8 @@ def test_rule_query_gives_the_rule_and_its_action_without_touching_the_database(
     v = q.get("env-co2-1h")
     assert v is not None
     assert (v.action_key, v.source_requirement, v.evidence_state) == (
-        "revisar_ventilacion_y_filtros",
+        "check_ventilation_and_filters",
         "V2 6004",
-        "VERIFICADO",
+        "VERIFIED",
     )
     assert q.get("no-existe") is None

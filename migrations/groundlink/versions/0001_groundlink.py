@@ -1,4 +1,4 @@
-"""Planes recibidos en la nave, planes y plantillas del lado de Tierra, y estado del enlace.
+"""Plans received on the ship, Ground-side plans and templates, and link state.
 
 Revision ID: 0001
 Revises:
@@ -14,7 +14,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS groundlink")
-    # Lado de la nave: cada plan que llega por el enlace (R9).
+    # Ship side: each plan that arrives over the link (R9).
     op.execute(
         """
         CREATE TABLE groundlink.inbound_plan (
@@ -27,33 +27,33 @@ def upgrade() -> None:
           rejected     jsonb,
           received_at  timestamptz NOT NULL,
           applied_at   timestamptz,
-          CONSTRAINT inbound_status_chk CHECK (status IN ('RECIBIDO', 'APLICADO', 'RECHAZADO'))
+          CONSTRAINT inbound_status_chk CHECK (status IN ('RECEIVED', 'APPLIED', 'REJECTED'))
         )
         """
     )
     op.execute(
         "CREATE UNIQUE INDEX inbound_plan_version ON groundlink.inbound_plan (plan_version) "
-        "WHERE status <> 'RECHAZADO'"
+        "WHERE status <> 'REJECTED'"
     )
-    # Lado de Tierra (solo en la demo o en el despliegue de Tierra).
+    # Ground side (only in the demo or in the Ground deployment).
     op.execute(
         """
         CREATE TABLE groundlink.ground_plan (
           id           uuid        PRIMARY KEY,
           version      int         NOT NULL UNIQUE,
-          status       text        NOT NULL DEFAULT 'BORRADOR',
+          status       text        NOT NULL DEFAULT 'DRAFT',
           batch_id     uuid        UNIQUE,
           reason       text,
           published_at timestamptz,
           acked_at     timestamptz,
-          CONSTRAINT ground_plan_status_chk CHECK (status IN ('BORRADOR', 'EN_COLA',
-            'EN_EL_ENLACE', 'RECIBIDO', 'APLICADO', 'CONFIRMADO', 'RECHAZADO'))
+          CONSTRAINT ground_plan_status_chk CHECK (status IN ('DRAFT', 'QUEUED',
+            'IN_TRANSIT', 'RECEIVED', 'APPLIED', 'CONFIRMED', 'REJECTED'))
         )
         """
     )
     op.execute(
         "CREATE UNIQUE INDEX ground_plan_one_draft ON groundlink.ground_plan ((true)) "
-        "WHERE status = 'BORRADOR'"
+        "WHERE status = 'DRAFT'"
     )
     op.execute(
         """

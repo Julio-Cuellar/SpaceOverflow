@@ -1,4 +1,4 @@
-"""Repositorio del Enlace con Tierra sobre PostgreSQL. Trabaja en la transacción recibida."""
+"""Ground link repository on PostgreSQL. Works inside the received transaction."""
 
 from __future__ import annotations
 
@@ -22,13 +22,13 @@ class SqlGroundlinkRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._s = session
 
-    # --- nave ----------------------------------------------------------------------------
+    # --- ship ---------------------------------------------------------------------------
 
     async def last_inbound_version(self) -> int | None:
         value = (
             await self._s.execute(
                 text(
-                    "SELECT max(plan_version) FROM groundlink.inbound_plan WHERE status <> 'RECHAZADO'"
+                    "SELECT max(plan_version) FROM groundlink.inbound_plan WHERE status <> 'REJECTED'"
                 )
             )
         ).scalar_one()
@@ -49,11 +49,11 @@ class SqlGroundlinkRepository:
                 text(
                     "INSERT INTO groundlink.inbound_plan (id, batch_id, plan_version, status, "
                     "payload_hash, reason, received_at) VALUES (:id, :b, :v, :s, :h, :r, :t) "
-                    # Un lote rechazado (corrupto) se puede reenviar corregido con el mismo id.
+                    # A rejected (corrupt) batch can be resent corrected with the same id.
                     "ON CONFLICT (batch_id) DO UPDATE SET plan_version = EXCLUDED.plan_version, "
                     "status = EXCLUDED.status, payload_hash = EXCLUDED.payload_hash, "
                     "reason = EXCLUDED.reason, received_at = EXCLUDED.received_at "
-                    "WHERE groundlink.inbound_plan.status = 'RECHAZADO' RETURNING id"
+                    "WHERE groundlink.inbound_plan.status = 'REJECTED' RETURNING id"
                 ),
                 {
                     "id": uuid4(),
@@ -74,8 +74,8 @@ class SqlGroundlinkRepository:
         batch = (
             await self._s.execute(
                 text(
-                    "UPDATE groundlink.inbound_plan SET status = 'APLICADO', applied_at = :t, "
-                    "rejected = CAST(:r AS jsonb) WHERE plan_version = :v AND status <> 'RECHAZADO' "
+                    "UPDATE groundlink.inbound_plan SET status = 'APPLIED', applied_at = :t, "
+                    "rejected = CAST(:r AS jsonb) WHERE plan_version = :v AND status <> 'REJECTED' "
                     "RETURNING batch_id"
                 ),
                 {"t": at, "r": json.dumps(list(rejected), ensure_ascii=False), "v": plan_version},
@@ -83,7 +83,7 @@ class SqlGroundlinkRepository:
         ).scalar_one_or_none()
         return batch if isinstance(batch, UUID) else None
 
-    # --- Tierra --------------------------------------------------------------------------
+    # --- Ground --------------------------------------------------------------------------
 
     async def link(self) -> LinkState:
         await self._s.execute(
@@ -118,7 +118,7 @@ class SqlGroundlinkRepository:
         return int(value)
 
     async def draft(self) -> GroundPlanRow | None:
-        row = (await self._s.execute(text(_PLAN + " WHERE status = 'BORRADOR'"))).first()
+        row = (await self._s.execute(text(_PLAN + " WHERE status = 'DRAFT'"))).first()
         return GroundPlanRow(*row) if row else None
 
     async def create_draft(self, plan_id: UUID, version: int) -> None:
@@ -157,7 +157,7 @@ class SqlGroundlinkRepository:
         return [DraftItem(*r) for r in rows]
 
     async def item_dicts(self, plan_id: UUID) -> list[dict[str, Any]]:
-        """Los ítems tal como viajan por el enlace (sin los campos vacíos)."""
+        """The items as they travel over the link (without empty fields)."""
         rows = await self._s.execute(
             text(
                 f"SELECT {', '.join(_ITEM_FIELDS)} FROM groundlink.ground_item "
@@ -231,7 +231,7 @@ class SqlGroundlinkRepository:
             sets.append("reason = :r")
             params["r"] = reason
         if at is not None:
-            column = "acked_at" if status == "CONFIRMADO" else "published_at"
+            column = "acked_at" if status == "CONFIRMED" else "published_at"
             sets.append(f"{column} = :t")
             params["t"] = at
         sql = f"UPDATE groundlink.ground_plan SET {', '.join(sets)} WHERE id = :i"

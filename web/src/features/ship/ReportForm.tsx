@@ -14,11 +14,11 @@ interface ReportFormProps {
   types: IncidentTypeView[]
   zones: { id: string; name: string }[]
   onReport: (payload: ReportPayload) => void
-  /** Tipo que llega desde el catálogo con «Reportar». Para cambiarlo, la app remonta el formulario. */
+  /** Type that arrives from the catalog via "Report". To change it, the app remounts the form. */
   presetTypeKey?: string
 }
 
-/** Reporte manual: categoría, tipo, zona y severidad propuesta por el tipo. */
+/** Manual report: category, type, zone and the severity proposed by the type. */
 export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportFormProps) {
   const ids = {
     category: useId(),
@@ -71,9 +71,9 @@ export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportForm
         submit()
       }}
     >
-      <label htmlFor={ids.category}>Categoría</label>
+      <label htmlFor={ids.category}>Category</label>
       <select id={ids.category} value={category} onChange={(e) => pickCategory(e.target.value)}>
-        <option value="">Elegir categoría</option>
+        <option value="">Choose category</option>
         {categories.map((c) => (
           <option key={c} value={c}>
             {c}
@@ -81,14 +81,14 @@ export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportForm
         ))}
       </select>
 
-      <label htmlFor={ids.type}>Tipo</label>
+      <label htmlFor={ids.type}>Type</label>
       <select
         id={ids.type}
         value={typeKey}
         disabled={category === ''}
         onChange={(e) => pickType(e.target.value)}
       >
-        <option value="">Elegir tipo</option>
+        <option value="">Choose type</option>
         {typesInCategory.map((t) => (
           <option key={t.key} value={t.key}>
             {t.name}
@@ -96,9 +96,9 @@ export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportForm
         ))}
       </select>
 
-      <label htmlFor={ids.zone}>Zona</label>
+      <label htmlFor={ids.zone}>Zone</label>
       <select id={ids.zone} value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
-        <option value="">Elegir zona</option>
+        <option value="">Choose zone</option>
         {zones.map((z) => (
           <option key={z.id} value={z.id}>
             {z.name}
@@ -106,13 +106,13 @@ export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportForm
         ))}
       </select>
 
-      <label htmlFor={ids.severity}>Severidad</label>
+      <label htmlFor={ids.severity}>Severity</label>
       <select
         id={ids.severity}
         value={severity}
         onChange={(e) => setSeverity(e.target.value as Severity)}
       >
-        <option value="">Elegir severidad</option>
+        <option value="">Choose severity</option>
         {SEVERITIES.map((s) => (
           <option key={s} value={s}>
             {severityMeta(s).label}
@@ -120,7 +120,7 @@ export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportForm
         ))}
       </select>
 
-      <label htmlFor={ids.title}>Título</label>
+      <label htmlFor={ids.title}>Title</label>
       <input
         id={ids.title}
         type="text"
@@ -129,7 +129,7 @@ export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportForm
         onChange={(e) => setTitle(e.target.value)}
       />
 
-      <label htmlFor={ids.description}>Descripción</label>
+      <label htmlFor={ids.description}>Description</label>
       <textarea
         id={ids.description}
         value={description}
@@ -137,7 +137,7 @@ export function ReportForm({ types, zones, onReport, presetTypeKey }: ReportForm
       />
 
       <button type="submit" disabled={!canSend}>
-        Enviar reporte
+        Submit report
       </button>
     </form>
   )

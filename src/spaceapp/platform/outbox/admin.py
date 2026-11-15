@@ -1,4 +1,4 @@
-"""Operación del outbox: reencolar un evento muerto y limpiar los ya entregados."""
+"""Outbox operations: requeue a dead event and purge those already delivered."""
 
 from __future__ import annotations
 
@@ -15,9 +15,9 @@ RETENTION = timedelta(hours=24)
 
 
 async def replay_event(session: AsyncSession, outbox_id: int) -> ReplayOutcome:
-    """Un evento `dead` vuelve a `pending` con los intentos en cero.
+    """A `dead` event goes back to `pending` with its attempts reset to zero.
 
-    Los consumidores que ya lo procesaron no lo repiten: su marca sigue en el inbox.
+    Consumers that already processed it do not repeat it: their mark stays in the inbox.
     """
     status = (
         await session.execute(
@@ -41,7 +41,7 @@ async def replay_event(session: AsyncSession, outbox_id: int) -> ReplayOutcome:
 
 
 async def purge_done(session: AsyncSession, older_than: timedelta = RETENTION) -> int:
-    """Borra los eventos `done` más viejos que la retención. Devuelve cuántos borró."""
+    """Deletes `done` events older than the retention period. Returns how many it deleted."""
     result = await session.execute(
         text(
             "DELETE FROM platform.outbox_event WHERE status = 'done' "

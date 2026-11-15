@@ -83,10 +83,10 @@ enum Detection {
 }
 
 enum EvidenceState {
-  VERIFICADO
+  VERIFIED
   TB
   DEMO
-  NO_VERIFICADO
+  UNVERIFIED
 }
 
 type GroundControlView {
@@ -139,10 +139,10 @@ type GroundTemplate {
 }
 
 enum GroundTemplateStatus {
-  PENDIENTE
-  APLICADA
-  COMPLETADA
-  BLOQUEADA
+  PENDING
+  APPLIED
+  COMPLETED
+  BLOCKED
 }
 
 type Incident {
@@ -192,14 +192,14 @@ type IncidentPayload {
 union IncidentResult = IncidentPayload | IncidentError
 
 enum IncidentSource {
-  ALERTA
+  ALERT
   MANUAL
 }
 
 enum IncidentStatus {
-  ABIERTA
-  RECONOCIDA
-  RESUELTA
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
 }
 
 type IncidentType {
@@ -256,13 +256,13 @@ type PageInfo {
 }
 
 enum PlanStage {
-  BORRADOR
-  EN_COLA
-  EN_EL_ENLACE
-  RECIBIDO
-  APLICADO
-  CONFIRMADO
-  RECHAZADO
+  DRAFT
+  QUEUED
+  IN_TRANSIT
+  RECEIVED
+  APPLIED
+  CONFIRMED
+  REJECTED
 }
 
 type PublishedPlan {
@@ -342,9 +342,9 @@ type Rule {
 
 enum Severity {
   NORMAL
-  ATENCION
-  ALERTA
-  CRITICO
+  ATTENTION
+  ALERT
+  CRITICAL
 }
 
 type Ship {
@@ -393,15 +393,15 @@ enum TaskErrorCode {
 }
 
 enum TaskKind {
-  SALUD
-  NAVE
-  INCIDENTE
+  HEALTH
+  SHIP
+  INCIDENT
 }
 
 enum TaskOrigin {
-  TIERRA
-  SISTEMA
-  TRIPULACION
+  GROUND
+  SYSTEM
+  CREW
 }
 
 type TaskPayload {
@@ -412,9 +412,9 @@ type TaskPayload {
 union TaskResult = TaskPayload | TaskError
 
 enum TaskStatus {
-  PENDIENTE
-  COMPLETADA
-  BLOQUEADA
+  PENDING
+  COMPLETED
+  BLOCKED
 }
 
 type Vital {

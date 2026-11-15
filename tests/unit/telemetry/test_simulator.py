@@ -44,9 +44,9 @@ def test_the_first_tick_emits_every_metric_of_every_zone():
 
 def test_each_metric_follows_the_sampling_period_of_the_norm():
     c = Counter((r.zone_code, r.metric) for r in run(make(), 120))
-    assert c[("lab", "pressure_kpa")] == 121  # cada 1 s
-    assert c[("lab", "o2_pct")] == c[("lab", "co2_mmhg")] == 25  # cada 5 s
-    assert c[("lab", "temperature_c")] == c[("lab", "humidity_pct")] == 3  # cada 1 min
+    assert c[("lab", "pressure_kpa")] == 121  # every 1 s
+    assert c[("lab", "o2_pct")] == c[("lab", "co2_mmhg")] == 25  # every 5 s
+    assert c[("lab", "temperature_c")] == c[("lab", "humidity_pct")] == 3  # every 1 min
 
 
 def test_the_simulation_is_deterministic_for_a_seed_and_differs_between_seeds():
@@ -86,7 +86,7 @@ def test_a_pressure_leak_drops_fast_enough_to_break_the_rate_limit():
         value_at(readings, "air", "pressure_kpa", 0),
         value_at(readings, "air", "pressure_kpa", 10),
     )
-    assert (p0 - p10) / 6.89476 > 1.0  # más de 1 psi en 10 s
+    assert (p0 - p10) / 6.89476 > 1.0  # more than 1 psi in 10 s
     assert value_at(readings, "air", "pressure_kpa", 60) < 70
     assert value_at(readings, "lab", "pressure_kpa", 60) > 100
 
@@ -139,7 +139,7 @@ def test_unknown_scenarios_and_zones_are_rejected_and_a_zone_is_required():
         sim.start("terremoto", "lab")
     with pytest.raises(UnknownZone):
         sim.start("co2_slow", "narnia")
-    with pytest.raises(ValueError, match="zona"):
+    with pytest.raises(ValueError, match="zone"):
         sim.start("co2_slow", None)
 
 

@@ -1,1 +1,1 @@
-"""Consultas de solo lectura que este módulo expone a otros módulos."""
+"""Read-only queries that this module exposes to other modules."""

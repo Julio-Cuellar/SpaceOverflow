@@ -1,4 +1,4 @@
-"""Entorno de Alembic del esquema `facility` (plano, zonas e incidencias)."""
+"""Alembic environment for the `facility` schema (floor plan, zones and incidents)."""
 
 from spaceapp.platform.migrations_env import run
 

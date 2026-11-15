@@ -57,8 +57,8 @@ def _rule(c) -> str:  # type: ignore[no-untyped-def]
         text(
             "INSERT INTO monitoring.rule (id, key, kind, parameter, operator, threshold, unit, "
             "window_s, severity, source_requirement, source_document, evidence_state, hrp_hazard, "
-            "action_key) VALUES (gen_random_uuid(), :k, 'umbral', 'ppco2', '>', 3, 'mmHg', 0, "
-            "'alerta', 'V2 6004', 'doc', 'VERIFICADO', 'h', 'a') RETURNING id"
+            "action_key) VALUES (gen_random_uuid(), :k, 'threshold', 'ppco2', '>', 3, 'mmHg', 0, "
+            "'alert', 'V2 6004', 'doc', 'VERIFIED', 'h', 'a') RETURNING id"
         ),
         {"k": "k-" + __import__("uuid").uuid4().hex},
     ).scalar_one()
@@ -69,7 +69,7 @@ def _alert(c, rule_id, dedupe: str, status: str = "raised") -> None:  # type: ig
         text(
             "INSERT INTO monitoring.alert (id, rule_id, habitat_id, severity, status, evidence, "
             "dedupe_key, raised_at) VALUES "
-            "(gen_random_uuid(), :r, gen_random_uuid(), 'alerta', :s, "
+            "(gen_random_uuid(), :r, gen_random_uuid(), 'alert', :s, "
             "'{}', :d, now())"
         ),
         {"r": rule_id, "s": status, "d": dedupe},
@@ -80,9 +80,9 @@ def test_only_one_active_alert_can_exist_per_rule_and_zone(pg_sync_url: str):
     eng = create_engine(pg_sync_url)
     with eng.begin() as c:
         rid = _rule(c)
-        _alert(c, rid, "env-co2-1h:zona-1")
+        _alert(c, rid, "env-co2-1h:zone-1")
     with pytest.raises(IntegrityError), eng.begin() as c:
-        _alert(c, rid, "env-co2-1h:zona-1")
+        _alert(c, rid, "env-co2-1h:zone-1")
     with eng.begin() as c:
         c.execute(text("TRUNCATE monitoring.alert, monitoring.rule CASCADE"))
 
@@ -91,8 +91,8 @@ def test_a_resolved_alert_does_not_block_a_new_one_with_the_same_key(pg_sync_url
     eng = create_engine(pg_sync_url)
     with eng.begin() as c:
         rid = _rule(c)
-        _alert(c, rid, "env-co2-1h:zona-2", status="resolved")
-        _alert(c, rid, "env-co2-1h:zona-2", status="raised")
+        _alert(c, rid, "env-co2-1h:zone-2", status="resolved")
+        _alert(c, rid, "env-co2-1h:zone-2", status="raised")
         c.execute(text("TRUNCATE monitoring.alert, monitoring.rule CASCADE"))
 
 

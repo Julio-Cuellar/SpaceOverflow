@@ -1,4 +1,4 @@
-"""Valores del asistente. Sin dependencias externas."""
+"""Assistant values. No external dependencies."""
 
 from __future__ import annotations
 

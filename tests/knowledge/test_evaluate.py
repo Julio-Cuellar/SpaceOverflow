@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from spaceapp.modules.knowledge.adapters.outbound.rag_source import load_glossary
 from spaceapp.modules.knowledge.domain.model import Citation, EvidenceState
 from spaceapp.modules.knowledge.evaluate import EvalCase, evaluate, load_cases, main
 from spaceapp.modules.knowledge.ingest.chunking import chunk_page
@@ -13,11 +12,11 @@ from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
 
 ROOT = Path(__file__).resolve().parents[2]
 QUESTIONS = ROOT / "data" / "knowledge" / "eval_questions.json"
-GLOSSARY = ROOT / "data" / "knowledge" / "glossary_es_en.json"
+VALIDATION = ROOT / "data" / "knowledge" / "eval_questions_validation.json"
 
 
 class FakeSearch:
-    """Devuelve lo que se le indique para cada pregunta."""
+    """Returns what it is told to for each question."""
 
     def __init__(self, answers: dict[str, list[Citation]]) -> None:
         self._answers = answers
@@ -26,7 +25,7 @@ class FakeSearch:
         return self._answers.get(text, [])[:k]
 
 
-def passage(document: str, text: str = "texto") -> Citation:
+def passage(document: str, text: str = "text") -> Citation:
     return Citation(document, None, 1, text, EvidenceState.TB)
 
 
@@ -66,7 +65,7 @@ def test_a_case_can_also_require_text_in_the_passage() -> None:
 
 
 def test_a_case_with_only_expected_text_accepts_any_document_that_has_it() -> None:
-    # Los Technical Brief citan los mismos requisitos que la norma: importa el contenido.
+    # The Technical Briefs cite the same requirements as the standard: the content matters.
     cases = [EvalCase("q1", expected_contains=("13.5 psi/min",))]
 
     found = {"q1": [passage("BRIEF", "...shall not exceed 13.5 psi/min.")]}
@@ -78,9 +77,9 @@ def test_a_case_with_only_expected_text_accepts_any_document_that_has_it() -> No
 
 def test_loading_a_case_without_any_expectation_is_an_error(tmp_path: Path) -> None:
     path = tmp_path / "questions.json"
-    path.write_text(json.dumps({"cases": [{"question": "¿qué?"}]}), encoding="utf-8")
+    path.write_text(json.dumps({"cases": [{"question": "what?"}]}), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="sin expectativa"):
+    with pytest.raises(ValueError, match="without expectation"):
         load_cases(path)
 
 
@@ -94,7 +93,7 @@ def test_an_out_of_scope_question_must_not_get_any_passage() -> None:
 
 def test_the_result_passes_only_with_enough_hits_and_no_answers_out_of_scope() -> None:
     in_scope = [EvalCase(f"q{i}", expected_documents=("D",)) for i in range(4)]
-    answers = {f"q{i}": [passage("D")] for i in range(3)}  # 3 de 4 aciertos
+    answers = {f"q{i}": [passage("D")] for i in range(3)}  # 3 of 4 hits
 
     result = evaluate(FakeSearch(answers), in_scope)
     assert result.passed(min_hit_rate=0.75)
@@ -115,24 +114,25 @@ def test_the_real_question_set_has_about_fifteen_cases_with_a_clear_expectation(
     assert any(c.out_of_scope for c in cases)
 
 
-def test_the_glossary_translates_something_in_every_question_of_the_set() -> None:
-    glossary = load_glossary(GLOSSARY)
+def test_the_validation_set_has_in_scope_and_out_of_scope_cases() -> None:
+    cases = load_cases(VALIDATION)
 
-    untranslated = [
-        case.question
-        for case in load_cases(QUESTIONS)
-        if not case.out_of_scope and not glossary.expand(case.question)
-    ]
-
-    assert untranslated == []
+    assert any(c.out_of_scope for c in cases)
+    assert any(not c.out_of_scope for c in cases)
+    assert all(c.out_of_scope or c.expected_documents or c.expected_contains for c in cases)
 
 
-def test_the_out_of_scope_questions_get_no_translation_so_they_cannot_match() -> None:
-    glossary = load_glossary(GLOSSARY)
+def test_the_questions_of_both_sets_are_written_in_english() -> None:
+    questions = [case.question for case in (*load_cases(QUESTIONS), *load_cases(VALIDATION))]
 
-    for case in load_cases(QUESTIONS):
-        if case.out_of_scope:
-            assert not glossary.expand(case.question), case.question
+    assert all(question.isascii() for question in questions)
+    assert all(question.endswith("?") for question in questions)
+
+
+def test_no_question_is_repeated_across_the_two_sets() -> None:
+    questions = [case.question for case in (*load_cases(QUESTIONS), *load_cases(VALIDATION))]
+
+    assert len(questions) == len(set(questions))
 
 
 class TestCommand:
@@ -149,8 +149,8 @@ class TestCommand:
             json.dumps(
                 {
                     "cases": [
-                        {"question": "¿Por qué me duele la cabeza?", "expected_documents": ["DOC"]},
-                        {"question": "¿Cuál es la capital de Francia?", "out_of_scope": True},
+                        {"question": "Why do I have a headache?", "expected_documents": ["DOC"]},
+                        {"question": "What is the capital of France?", "out_of_scope": True},
                     ]
                 }
             ),
@@ -165,15 +165,13 @@ class TestCommand:
             [
                 "--index",
                 str(self.build_index(tmp_path)),
-                "--glossary",
-                str(GLOSSARY),
                 "--questions",
                 str(self.write_questions(tmp_path)),
             ]
         )
 
         assert code == 0
-        assert "Aciertos: 1 de 1" in capsys.readouterr().out
+        assert "Hits: 1 of 1" in capsys.readouterr().out
 
     def test_fails_clearly_when_the_questions_file_does_not_exist(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -182,32 +180,13 @@ class TestCommand:
             [
                 "--index",
                 str(self.build_index(tmp_path)),
-                "--glossary",
-                str(GLOSSARY),
                 "--questions",
-                str(tmp_path / "no-existe.json"),
+                str(tmp_path / "missing.json"),
             ]
         )
 
         assert code == 2
-        assert "preguntas" in capsys.readouterr().err
-
-    def test_fails_clearly_when_the_glossary_does_not_exist(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        code = main(
-            [
-                "--index",
-                str(self.build_index(tmp_path)),
-                "--glossary",
-                str(tmp_path / "no-existe.json"),
-                "--questions",
-                str(self.write_questions(tmp_path)),
-            ]
-        )
-
-        assert code == 2
-        assert "glosario" in capsys.readouterr().err
+        assert "questions file" in capsys.readouterr().err
 
     def test_fails_clearly_when_there_is_no_index_yet(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
@@ -215,13 +194,11 @@ class TestCommand:
         code = main(
             [
                 "--index",
-                str(tmp_path / "no-existe.jsonl"),
-                "--glossary",
-                str(GLOSSARY),
+                str(tmp_path / "missing.jsonl"),
                 "--questions",
                 str(self.write_questions(tmp_path)),
             ]
         )
 
         assert code == 2
-        assert "ingesta" in capsys.readouterr().err
+        assert "ingestion" in capsys.readouterr().err

@@ -1,4 +1,4 @@
-"""Gateway sobre el outbox real: el seq es el id del outbox y `resume` lo reenvía."""
+"""Gateway on the real outbox: the seq is the outbox id and `resume` resends it."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ pytestmark = pytest.mark.integration
 def raised() -> EventEnvelope:
     aid = uuid4()
     return EventEnvelope.from_payload(
-        AlertRaised(alert_id=aid, zone_id=None, rule_key="r", severity="atencion", evidence={}),
+        AlertRaised(alert_id=aid, zone_id=None, rule_key="r", severity="attention", evidence={}),
         aggregate_type="alert",
         aggregate_id=aid,
         partition_key="p",
@@ -67,7 +67,7 @@ async def test_resume_returns_only_delivered_events_after_the_given_id(session_f
     register_realtime(registry, RealtimeEvents(hub, seq_of))
     await publish(session_factory, raised(), raised(), raised())
     await OutboxRelay(session_factory, registry).run_once()
-    await publish(session_factory, raised())  # este sigue pendiente: no se reenvía
+    await publish(session_factory, raised())  # this one is still pending: it is not resent
     replay = SqlOutboxReplay(session_factory)
     everything = await replay.after(0, 100)
     assert [m.seq for m in everything] == [1, 2, 3]

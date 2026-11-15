@@ -1,4 +1,4 @@
-"""Conversiones de presión. Las reglas de atmósfera trabajan en mmHg (presión parcial)."""
+"""Pressure conversions. Atmosphere rules work in mmHg (partial pressure)."""
 
 KPA_TO_MMHG = 7.50062
 PSI_TO_MMHG = 51.7149

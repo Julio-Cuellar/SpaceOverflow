@@ -1,4 +1,4 @@
-"""Entorno de Alembic del esquema `groundlink` (planes recibidos, lado de Tierra y enlace)."""
+"""Alembic environment for the `groundlink` schema (received plans, Ground side and link)."""
 
 from spaceapp.platform.migrations_env import run
 

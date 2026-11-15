@@ -13,18 +13,18 @@ CATALOG = ROOT / "rules" / "catalog" / "monitoring.json"
 def rule(**over) -> Rule:
     base = dict(
         key="x-1",
-        kind="umbral",
+        kind="threshold",
         parameter="ppco2",
         operator=">",
         threshold=3.0,
         unit="mmHg",
         window_s=0,
-        severity="alerta",
+        severity="alert",
         source_requirement="V2 6004",
         source_document="NASA-STD-3001 Vol. 2 Rev F",
-        evidence_state="VERIFICADO",
-        hrp_hazard="entornos_cerrados_hostiles",
-        action_key="revisar_ventilacion_y_filtros",
+        evidence_state="VERIFIED",
+        hrp_hazard="hostile_closed_environments",
+        action_key="check_ventilation_and_filters",
     )
     return Rule(**{**base, **over})
 
@@ -38,7 +38,7 @@ def test_a_valid_rule_is_created():
     [
         {"source_requirement": ""},
         {"source_document": " "},
-        {"evidence_state": "INVENTADO"},
+        {"evidence_state": "INVENTED"},
         {"severity": "rojo"},
         {"operator": "=="},
         {"kind": "magia"},
@@ -53,12 +53,12 @@ def test_a_rule_without_source_or_with_bad_fields_is_rejected(bad):
 
 def test_a_trend_rule_can_only_be_a_demo_rule():
     with pytest.raises(InvalidRule, match="DEMO"):
-        rule(kind="tendencia", evidence_state="VERIFICADO")
-    assert rule(kind="tendencia", evidence_state="DEMO").kind == "tendencia"
+        rule(kind="trend", evidence_state="VERIFIED")
+    assert rule(kind="trend", evidence_state="DEMO").kind == "trend"
 
 
 def test_catalog_rejects_duplicate_keys_and_unknown_supersedes():
-    with pytest.raises(InvalidRule, match="duplicad"):
+    with pytest.raises(InvalidRule, match="duplicate"):
         RuleCatalog(version="v", rules=(rule(), rule()))
     with pytest.raises(InvalidRule, match="supersedes"):
         RuleCatalog(version="v", rules=(rule(supersedes=("no-existe",)),))
@@ -69,7 +69,7 @@ def test_the_real_catalog_loads_and_every_rule_has_a_source_and_evidence_state()
     assert len(cat.rules) >= 20
     for r in cat.rules:
         assert r.source_requirement and r.source_document
-        assert r.evidence_state in {"VERIFICADO", "TB", "DEMO"}
+        assert r.evidence_state in {"VERIFIED", "TB", "DEMO"}
 
 
 def test_the_catalog_version_changes_when_the_content_changes(tmp_path):
@@ -86,13 +86,13 @@ def test_verified_limits_of_the_norm_are_in_the_catalog_with_the_right_numbers()
     cat = load_catalog(CATALOG)
     by = {r.key: r for r in cat.rules}
     assert (by["env-co2-1h"].threshold, by["env-co2-1h"].window_s) == (3.0, 3600)
-    assert by["env-co2-1h"].evidence_state == "VERIFICADO"
-    assert by["env-pio2-low"].threshold == 127 and by["env-pio2-low"].evidence_state == "VERIFICADO"
+    assert by["env-co2-1h"].evidence_state == "VERIFIED"
+    assert by["env-pio2-low"].threshold == 127 and by["env-pio2-low"].evidence_state == "VERIFIED"
     assert by["env-pio2-abs-low"].threshold == 122
     assert by["env-pio2-high"].threshold == 356
     assert by["env-ptotal-low"].threshold == 34.5 and by["env-ptotal-high"].threshold == 103
     assert by["env-dpdt"].threshold == 13.5 and by["env-dpdt"].params["min_change_psi"] == 1.0
-    assert by["env-dpdt"].window_s == 10  # ventana corta: una fuga real no se promedia en 60 s
+    assert by["env-dpdt"].window_s == 10  # short window: a real leak is not averaged over 60 s
     assert by["env-n2"].threshold == 30
 
 

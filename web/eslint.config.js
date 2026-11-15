@@ -5,7 +5,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig([
-  // Lo generado por codegen y las salidas de build no se revisan.
+  // Codegen output and build outputs are not linted.
   globalIgnores(['dist', 'coverage', 'src/data/graphql/generated']),
   {
     files: ['**/*.{ts,tsx}'],

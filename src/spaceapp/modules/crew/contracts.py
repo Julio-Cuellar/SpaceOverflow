@@ -1,4 +1,4 @@
-"""Eventos públicos de Tripulación."""
+"""Public events of Crew."""
 
 from __future__ import annotations
 

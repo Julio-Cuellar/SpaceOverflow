@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { App } from './App'
 
-const openTab = (name: 'Cabina' | 'Nave' | 'Asistente') => userEvent.click(screen.getByRole('tab', { name }))
+const openTab = (name: 'Cabin' | 'Ship' | 'Assistant') => userEvent.click(screen.getByRole('tab', { name }))
 
-async function provokeCo2InLab() {
-  await openTab('Nave')
-  await userEvent.selectOptions(screen.getByLabelText('Zona del escenario'), 'Laboratorio')
-  await userEvent.click(screen.getByRole('button', { name: 'Provocar: CO₂ alto' }))
+async function triggerCo2InLab() {
+  await openTab('Ship')
+  await userEvent.selectOptions(screen.getByLabelText('Scenario zone'), 'Laboratory')
+  await userEvent.click(screen.getByRole('button', { name: 'Trigger: High CO₂' }))
 }
 
 describe('App', () => {
@@ -16,98 +16,98 @@ describe('App', () => {
     render(<App />)
 
     expect(
-      screen.getByText('Prototipo de apoyo a la decisión. No es un dispositivo médico'),
+      screen.getByText('Decision-support prototype. Not a medical device.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('status', { name: 'Estado global' })).toHaveTextContent('Normal')
+    expect(screen.getByRole('status', { name: 'Global status' })).toHaveTextContent('Normal')
   })
 
   it('switches between the cabin and the ship panels', async () => {
     render(<App />)
 
-    await openTab('Nave')
-    expect(screen.getByRole('group', { name: 'Plano de la nave' })).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Panel de cabina' })).not.toBeInTheDocument()
+    await openTab('Ship')
+    expect(screen.getByRole('group', { name: 'Ship floor plan' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Cabin panel' })).not.toBeInTheDocument()
 
-    await openTab('Cabina')
-    expect(screen.getByRole('region', { name: 'Panel de cabina' })).toBeInTheDocument()
+    await openTab('Cabin')
+    expect(screen.getByRole('region', { name: 'Cabin panel' })).toBeInTheDocument()
   })
 
-  it('shows the CO₂ alert with its actions first when the crew provokes it in the lab', async () => {
+  it('shows the CO₂ alert with its actions first when the crew triggers it in the lab', async () => {
     render(<App />)
-    await provokeCo2InLab()
+    await triggerCo2InLab()
 
-    await openTab('Cabina')
+    await openTab('Cabin')
 
-    expect(screen.getByRole('status', { name: 'Estado global' })).toHaveTextContent('Alerta')
-    expect(screen.getByRole('heading', { name: 'Qué hacer' })).toBeInTheDocument()
-    expect(screen.getByText('Causa probable: aire')).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Global status' })).toHaveTextContent('Alert')
+    expect(screen.getByRole('heading', { name: 'What to do' })).toBeInTheDocument()
+    expect(screen.getByText('Probable cause: air')).toBeInTheDocument()
   })
 
   it('acknowledges the alert from the cabin panel', async () => {
     render(<App />)
-    await provokeCo2InLab()
-    await openTab('Cabina')
+    await triggerCo2InLab()
+    await openTab('Cabin')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Reconocer' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Acknowledge' }))
 
-    expect(screen.getByText('Alerta reconocida')).toBeInTheDocument()
+    expect(screen.getByText('Alert acknowledged')).toBeInTheDocument()
   })
 
-  it('returns the cabin and the plan to normal with Normalizar todo', async () => {
+  it('returns the cabin and the plan to normal with Normalize all', async () => {
     render(<App />)
-    await provokeCo2InLab()
-    await userEvent.click(screen.getByRole('button', { name: 'Normalizar todo' }))
+    await triggerCo2InLab()
+    await userEvent.click(screen.getByRole('button', { name: 'Normalize all' }))
 
-    await openTab('Cabina')
+    await openTab('Cabin')
 
-    expect(screen.getByRole('status', { name: 'Estado global' })).toHaveTextContent('Normal')
-    expect(screen.queryByText('Causa probable: aire')).not.toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Global status' })).toHaveTextContent('Normal')
+    expect(screen.queryByText('Probable cause: air')).not.toBeInTheDocument()
   })
 
   it('opens a ticket from the catalog, and the plan pins it on the chosen zone', async () => {
     render(<App />)
-    await openTab('Nave')
+    await openTab('Ship')
 
-    const row = screen.getByText('Hipoxia (PIO₂ baja)').closest('li') as HTMLElement
-    await userEvent.click(within(row).getByRole('button', { name: 'Reportar' }))
-    expect(screen.getByLabelText('Tipo')).toHaveValue('hypoxia')
+    const row = screen.getByText('Hypoxia (low PIO₂)').closest('li') as HTMLElement
+    await userEvent.click(within(row).getByRole('button', { name: 'Report' }))
+    expect(screen.getByLabelText('Type')).toHaveValue('hypoxia')
 
-    await userEvent.selectOptions(screen.getByLabelText('Zona'), 'Laboratorio')
-    await userEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+    await userEvent.selectOptions(screen.getByLabelText('Zone'), 'Laboratory')
+    await userEvent.click(screen.getByRole('button', { name: 'Submit report' }))
 
-    expect(screen.getByRole('button', { name: /Laboratorio/ })).toHaveTextContent('INC-0001')
+    expect(screen.getByRole('button', { name: /Laboratory/ })).toHaveTextContent('INC-0001')
   })
 
   it('shows the atmosphere charts of a zone when the crew selects it on the plan', async () => {
     render(<App />)
-    await openTab('Nave')
+    await openTab('Ship')
 
-    await userEvent.click(screen.getByRole('button', { name: /Laboratorio/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Laboratory/ }))
 
-    expect(screen.getByRole('region', { name: 'Atmósfera de Laboratorio' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Laboratory atmosphere' })).toBeInTheDocument()
   })
 
   it('answers a question from the assistant tab, citing its source', async () => {
     render(<App />)
-    await openTab('Asistente')
+    await openTab('Assistant')
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+    await userEvent.type(screen.getByLabelText('Question'), 'Why do I have a headache?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
 
     expect(screen.getByRole('link', { name: /OCHMO-TB-004 CO₂/ })).toBeInTheDocument()
   })
 
   it('mentions the active alert in its answer but never acknowledges or changes it', async () => {
     render(<App />)
-    await provokeCo2InLab()
-    await openTab('Asistente')
+    await triggerCo2InLab()
+    await openTab('Assistant')
 
-    await userEvent.type(screen.getByLabelText('Pregunta'), '¿Por qué me duele la cabeza?')
-    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
-    expect(screen.getByText(/Alerta activa: CO₂ alto \(Alerta\)/)).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Question'), 'Why do I have a headache?')
+    await userEvent.click(screen.getByRole('button', { name: 'Ask' }))
+    expect(screen.getByText(/Active alert: High CO₂ \((Alert)\)/)).toBeInTheDocument()
 
-    await openTab('Cabina')
-    expect(screen.getByRole('status', { name: 'Estado global' })).toHaveTextContent('Alerta')
-    expect(screen.getByRole('button', { name: 'Reconocer' })).toBeInTheDocument()
+    await openTab('Cabin')
+    expect(screen.getByRole('status', { name: 'Global status' })).toHaveTextContent('Alert')
+    expect(screen.getByRole('button', { name: 'Acknowledge' })).toBeInTheDocument()
   })
 })

@@ -1,6 +1,6 @@
-"""Casos de uso de Nave e incidencias: tickets desde alertas, reportes manuales y color de zonas.
+"""Facility use cases: tickets from alerts, manual reports and zone color.
 
-Cada cambio de ticket o de zona y su evento se escriben en la misma transacción.
+Every ticket or zone change and its event are written in the same transaction.
 """
 
 from __future__ import annotations
@@ -44,13 +44,13 @@ log = logging.getLogger(__name__)
 
 CONSUMER_RAISED = "facility.on_alert_raised"
 CONSUMER_RESOLVED = "facility.on_alert_resolved"
-VALUES_NORMAL_NOTE = "Valores normales: el ticket puede cerrarse."
+VALUES_NORMAL_NOTE = "Values normal: the ticket can be closed."
 
 Publish = Callable[[EventEnvelope], Awaitable[None]]
 RepositoryFactory = Callable[[AsyncSession], FacilityRepository]
 
 
-# --- Resultados de las mutaciones ----------------------------------------------------------
+# --- Mutation results ----------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -84,10 +84,10 @@ class FacilityService:
         self._active_alerts = active_alerts
         self._ready = False
 
-    # --- Arranque ------------------------------------------------------------------------
+    # --- Startup ------------------------------------------------------------------------
 
     async def ensure_ready(self) -> None:
-        """Una vez por proceso: sincroniza el plano y reconstruye el estado de las zonas."""
+        """Once per process: syncs the floor plan and rebuilds the zones' state."""
         if not self._ready:
             await self.rebuild()
             self._ready = True
@@ -103,13 +103,13 @@ class FacilityService:
             for zone in self.plan.zones:
                 await self._refresh_zone(repo, zone, uow.publish, now)
 
-    # --- Handlers del bus ----------------------------------------------------------------
+    # --- Bus handlers ----------------------------------------------------------------
 
     async def on_alert_raised(self, event: EventEnvelope, ctx: HandlerContext) -> None:
         alert = event.payload_as(AlertRaised)
         zone = self.plan.zone_by_id(alert.zone_id) if alert.zone_id else None
         if zone is None:
-            return  # alerta del cuerpo o de una zona que no está en el plano
+            return  # body alert, or an alert for a zone that is not in the floor plan
         await self.ensure_ready()
         repo = self._repo(_session(ctx))
         at = event.occurred_at
@@ -128,7 +128,7 @@ class FacilityService:
                 habitat_id=self.plan.habitat_id,
                 zone_id=zone.id,
                 type_key=incident_type.key if incident_type else alert.rule_key,
-                source="ALERTA",
+                source="ALERT",
                 source_alert_id=alert.alert_id,
                 reported_by=None,
                 title=title,
@@ -145,7 +145,7 @@ class FacilityService:
                         severity=alert.severity,
                         title=title,
                         description=description,
-                        source="ALERTA",
+                        source="ALERT",
                         code=incident_code(number),
                     ),
                     incident_id,
@@ -181,7 +181,7 @@ class FacilityService:
         at = resolved.resolved_at
         ticket = await repo.open_auto_ticket(zone.id)
         if ticket is not None and not await repo.alert_severities(zone.id):
-            # El ticket no se cierra solo: queda marcado para que la tripulación lo cierre.
+            # The ticket does not close itself: it is flagged so the crew closes it.
             await repo.mark_values_normal(ticket.id, at)
             await repo.add_update(ticket.id, "values_normal", VALUES_NORMAL_NOTE, None, at)
             await ctx.publish(
@@ -198,7 +198,7 @@ class FacilityService:
             )
         await self._refresh_zone(repo, zone, ctx.publish, at, cause=event)
 
-    # --- Mutaciones ----------------------------------------------------------------------
+    # --- Mutations ----------------------------------------------------------------------
 
     async def report(
         self,
@@ -212,12 +212,12 @@ class FacilityService:
         await self.ensure_ready()
         zone = self.plan.zone_by_id(zone_id)
         if zone is None:
-            return Failed("UNKNOWN_ZONE", f"la zona {zone_id} no está en el plano")
+            return Failed("UNKNOWN_ZONE", f"zone {zone_id} is not in the floor plan")
         incident_type = self.catalog.get(type_key)
         if incident_type is None:
-            return Failed("UNKNOWN_TYPE", f"no existe el tipo de incidencia {type_key!r}")
+            return Failed("UNKNOWN_TYPE", f"incident type {type_key!r} does not exist")
         sev = severity or incident_type.default_severity
-        text = description or f"{incident_type.name} en {zone.name}."
+        text = description or f"{incident_type.name} in {zone.name}."
         at = datetime.now(UTC)
         incident_id = uuid4()
         async with UnitOfWork(self._sf) as uow:
@@ -259,19 +259,19 @@ class FacilityService:
             repo = self._repo(uow.session)
             ticket = await repo.ticket(incident_id, lock=True)
             if ticket is None:
-                return Failed("NOT_FOUND", f"no existe la incidencia {incident_id}")
-            if ticket.status == "resuelta":
-                return Failed("ALREADY_RESOLVED", "la incidencia ya está resuelta")
-            if ticket.status == "reconocida":
+                return Failed("NOT_FOUND", f"incident {incident_id} does not exist")
+            if ticket.status == "resolved":
+                return Failed("ALREADY_RESOLVED", "the incident is already resolved")
+            if ticket.status == "acknowledged":
                 return Done(incident_id, already=True)
-            await repo.set_status(incident_id, "reconocida", at)
+            await repo.set_status(incident_id, "acknowledged", at)
             await repo.add_update(incident_id, "acknowledged", None, crew_member, at)
             await uow.publish(
                 self._event(
                     IncidentUpdated(
                         incident_id=incident_id,
                         severity=ticket.severity,
-                        status="reconocida",
+                        status="acknowledged",
                     ),
                     incident_id,
                 )
@@ -284,17 +284,17 @@ class FacilityService:
             repo = self._repo(uow.session)
             ticket = await repo.ticket(incident_id, lock=True)
             if ticket is None:
-                return Failed("NOT_FOUND", f"no existe la incidencia {incident_id}")
+                return Failed("NOT_FOUND", f"incident {incident_id} does not exist")
             active = len(await repo.alert_severities(ticket.zone_id))
             error = resolve_check(ticket.source, ticket.status, active_alerts=active)
             if error == "ALREADY_RESOLVED":
-                return Failed(error, "la incidencia ya está resuelta")
+                return Failed(error, "the incident is already resolved")
             if error == "ACTIVE_ALERTS":
                 return Failed(
                     error,
-                    f"la zona tiene {active} alerta(s) activa(s): valores aún fuera de rango",
+                    f"the zone has {active} active alert(s): values still out of range",
                 )
-            await repo.set_status(incident_id, "resuelta", at)
+            await repo.set_status(incident_id, "resolved", at)
             await repo.add_update(incident_id, "resolved", note, crew_member, at)
             await uow.publish(
                 self._event(
@@ -309,7 +309,7 @@ class FacilityService:
                 await self._refresh_zone(repo, zone, uow.publish, at)
         return Done(incident_id)
 
-    # --- Apoyo ---------------------------------------------------------------------------
+    # --- Support ---------------------------------------------------------------------------
 
     async def _refresh_zone(
         self,
@@ -320,7 +320,7 @@ class FacilityService:
         *,
         cause: EventEnvelope | None = None,
     ) -> None:
-        """Color de la zona: la peor severidad entre alertas activas y tickets abiertos."""
+        """Zone color: the worst severity among active alerts and open tickets."""
         current = await repo.zone_status(zone.id)
         tickets = await repo.open_ticket_severities(zone.id)
         status = zone_status(await repo.alert_severities(zone.id), tickets)
@@ -356,7 +356,7 @@ class FacilityService:
 
 def _session(ctx: HandlerContext) -> AsyncSession:
     if ctx.session is None:
-        raise RuntimeError("Nave e incidencias necesita la sesión del relay del outbox")
+        raise RuntimeError("Facility needs the outbox relay session")
     return ctx.session
 
 

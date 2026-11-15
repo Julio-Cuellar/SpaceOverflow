@@ -1,4 +1,4 @@
-"""Registro de todos los eventos del sistema. Lo usan el relay, el gateway y las pruebas."""
+"""Registry of every event in the system. Used by the relay, the gateway and the tests."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ def _merge(*parts: Mapping[str, type[EventPayload]]) -> dict[str, type[EventPayl
     for part in parts:
         for name, model in part.items():
             if name in merged:
-                raise ValueError(f"evento duplicado: {name}")
+                raise ValueError(f"duplicate event: {name}")
             merged[name] = model
     return merged
 

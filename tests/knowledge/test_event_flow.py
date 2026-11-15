@@ -1,4 +1,4 @@
-"""Recorrido de punta a punta sobre el bus de Dev A: alert_raised entra, recommendation_ready sale."""
+"""End-to-end flow over the Dev A bus: alert_raised comes in, recommendation_ready goes out."""
 
 from __future__ import annotations
 
@@ -23,9 +23,9 @@ def alert_envelope(rule_key: str) -> EventEnvelope:
         alert_id=uuid.uuid4(),
         zone_id=uuid.uuid4(),
         rule_key=rule_key,
-        severity="alerta",
+        severity="alert",
         evidence={"value": 3.4},
-        cause_hint="AMBIENTE",
+        cause_hint="ENVIRONMENT",
     )
     return EventEnvelope.from_payload(
         payload, aggregate_type="alert", aggregate_id=payload.alert_id, partition_key="habitat:h-1"
@@ -83,7 +83,7 @@ async def test_an_alert_for_an_unknown_rule_fails_visibly_on_the_bus(
     bus, repo, received = wire(demo_source)
 
     with contextlib.suppress(LookupError):
-        await bus.publish(alert_envelope("regla-que-no-existe"))
+        await bus.publish(alert_envelope("rule-that-does-not-exist"))
 
     assert [consumer for consumer, _ in bus.failures] == [CONSUMER]
     assert received == []

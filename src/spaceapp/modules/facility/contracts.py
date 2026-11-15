@@ -1,4 +1,4 @@
-"""Eventos públicos de Nave e incidencias."""
+"""Public events of Facility."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from uuid import UUID
 from spaceapp.platform.events import EventPayload
 from spaceapp.platform.vocab import Severity
 
-IncidentStatus = Literal["abierta", "reconocida", "resuelta"]
-ZoneStatus = Literal["normal", "atencion", "alerta", "critico"]
+IncidentStatus = Literal["open", "acknowledged", "resolved"]
+ZoneStatus = Literal["normal", "attention", "alert", "critical"]
 
 
 class IncidentOpened(EventPayload):
@@ -20,8 +20,8 @@ class IncidentOpened(EventPayload):
     severity: Severity
     title: str
     description: str
-    source: Literal["ALERTA", "MANUAL"]
-    # Código legible (INC-0001). Opcional: los eventos anteriores a esta versión no lo traen.
+    source: Literal["ALERT", "MANUAL"]
+    # Human-readable code (INC-0001). Optional: events from before this version do not carry it.
     code: str | None = None
 
 

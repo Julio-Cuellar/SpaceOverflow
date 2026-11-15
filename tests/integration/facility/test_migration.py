@@ -1,4 +1,4 @@
-"""La migración 0002 numera los tickets que ya existían, sin perder ninguno."""
+"""Migration 0002 numbers the tickets that already existed, without losing any."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def test_existing_tickets_get_distinct_numbers_when_the_column_is_added(pg_sync_
             )
             c.execute(
                 text(
-                    "INSERT INTO facility.habitat VALUES (gen_random_uuid(), 'h', 'H', 'nave', 101.3)"
+                    "INSERT INTO facility.habitat VALUES (gen_random_uuid(), 'h', 'H', 'ship', 101.3)"
                 )
             )
             c.execute(
@@ -38,9 +38,9 @@ def test_existing_tickets_get_distinct_numbers_when_the_column_is_added(pg_sync_
                     text(
                         "INSERT INTO facility.incident (id, habitat_id, zone_id, type_key, source, "
                         "title, description, severity, opened_at) SELECT gen_random_uuid(), z.habitat_id, "
-                        "z.id, 't', 'MANUAL', :t, 'd', 'alerta', now() FROM facility.zone z"
+                        "z.id, 't', 'MANUAL', :t, 'd', 'alert', now() FROM facility.zone z"
                     ),
-                    {"t": f"viejo {n}"},
+                    {"t": f"old {n}"},
                 )
         command.upgrade(cfg, "head")
         with engine.connect() as c:

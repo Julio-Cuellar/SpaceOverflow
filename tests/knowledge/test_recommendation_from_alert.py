@@ -22,7 +22,7 @@ from spaceapp.platform.events import EventEnvelope
 
 
 class CollectingContext:
-    """Contexto de handler que guarda lo publicado, como el bus en memoria pero sin entregarlo."""
+    """Handler context that stores what was published, like the in-memory bus but without delivery."""
 
     def __init__(self) -> None:
         self.published: list[EventEnvelope] = []
@@ -45,14 +45,14 @@ def build(source: DemoKnowledgeSource):  # type: ignore[no-untyped-def]
 
 
 def alert(rule_key: str = "env-co2-1h") -> EventEnvelope:
-    """El evento tal como lo publica Monitoreo (dev A): sobre con partición por hábitat."""
+    """The event as Monitoring (dev A) publishes it: envelope partitioned by habitat."""
     payload = AlertRaised(
         alert_id=uuid.uuid4(),
         zone_id=None,
         rule_key=rule_key,
-        severity="alerta",
+        severity="alert",
         evidence={"ppco2_1h_mmhg": 3.4},
-        cause_hint="AMBIENTE",
+        cause_hint="ENVIRONMENT",
     )
     return EventEnvelope.from_payload(
         payload,
@@ -81,7 +81,7 @@ async def test_co2_alert_gets_a_citation_with_document_requirement_and_evidence_
     [citation] = repo.all()[0].citations
     assert citation.document_code == "NASA-STD-3001 Vol. 2 Rev F"
     assert citation.requirement_ref == "V2 6004"
-    assert citation.evidence_state is EvidenceState.VERIFICADO
+    assert citation.evidence_state is EvidenceState.VERIFIED
 
 
 async def test_recommendation_is_labelled_as_demo_and_says_it_is_not_from_nasa(
@@ -93,7 +93,7 @@ async def test_recommendation_is_labelled_as_demo_and_says_it_is_not_from_nasa(
 
     recommendation = repo.all()[0]
     assert recommendation.source_kind == "DEMO"
-    assert "dato de demostración, no de NASA" in recommendation.body
+    assert "demonstration data, not NASA data" in recommendation.body
 
 
 async def test_publishes_recommendation_ready_with_action_keys_and_citations(
@@ -129,13 +129,13 @@ async def test_unknown_rule_raises_and_leaves_the_event_unprocessed(
     demo_source: DemoKnowledgeSource,
 ) -> None:
     handler, repo, c = build(demo_source)
-    event = alert("regla-que-no-existe")
+    event = alert("rule-that-does-not-exist")
 
     with pytest.raises(UnknownRuleError):
         await handler.handle(event, c.ctx)
 
     assert repo.all() == []
-    # El evento sigue sin marcar: un reintento del relay puede procesarlo después.
+    # The event is still unmarked: a relay retry can process it later.
     assert handler.inbox_has(event.event_id) is False
 
 
@@ -151,7 +151,7 @@ async def test_the_published_event_continues_the_trace_of_the_alert(
     assert published.type == "knowledge.recommendation_ready"
     assert published.aggregate_type == "recommendation"
     assert published.aggregate_id == repo.all()[0].id
-    # Misma partición que la alerta (hábitat) y la cadena causal queda enlazada.
+    # Same partition as the alert (habitat) and the causal chain stays linked.
     assert published.partition_key == cause.partition_key
     assert published.causation_id == cause.event_id
     assert published.correlation_id == cause.event_id

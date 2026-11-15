@@ -1,4 +1,4 @@
-"""Endpoint /ws: subscribe, unsubscribe, ping, resume y mensajes del servidor."""
+"""Endpoint /ws: subscribe, unsubscribe, ping, resume and server messages."""
 
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ def test_unsubscribe_and_subscribe_change_what_arrives(setup: Any) -> None:
         assert reply["data"]["topics"] == ["alerts", "assistant", "crew", "habitat"]
         push(client, hub, tick())
         push(client, hub, alert(1))
-        assert ws.receive_json()["type"] == "alert.raised"  # el tick no llegó
+        assert ws.receive_json()["type"] == "alert.raised"  # the tick did not arrive
         ws.send_json({"type": "subscribe", "topics": ["telemetry"]})
         assert ws.receive_json()["data"]["topics"] == [
             "alerts",
@@ -127,7 +127,7 @@ def test_bad_client_messages_get_an_error_and_keep_the_connection(setup: Any, ba
 def test_invalid_json_gets_an_error(setup: Any) -> None:
     client, _, _ = setup
     with client.websocket_connect("/ws") as ws:
-        ws.send_text("{no es json")
+        ws.send_text("{not json")
         assert ws.receive_json()["type"] == "error"
 
 

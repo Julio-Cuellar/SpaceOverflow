@@ -13,8 +13,8 @@ export interface AlertView {
   severity: Severity
   ruleText: string
   measured: string
-  causeHint: 'AMBIENTE' | 'CUERPO' | 'INDETERMINADO'
-  /** Acciones en el orden del catálogo: primero qué hacer. */
+  causeHint: 'ENVIRONMENT' | 'BODY' | 'UNDETERMINED'
+  /** Actions in catalog order: what to do first. */
   actions: AlertAction[]
   source: {
     documentCode: string
@@ -22,14 +22,14 @@ export interface AlertView {
     evidenceState: EvidenceState
   }
   escalateWhen: string
-  /** Texto de la recomendación; si viene del adaptador demo, incluye la aclaración. */
+  /** Recommendation text; if it comes from the demo adapter, it includes the disclaimer. */
   body: string
 }
 
 const CAUSE_LABEL: Record<AlertView['causeHint'], string> = {
-  AMBIENTE: 'aire',
-  CUERPO: 'cuerpo',
-  INDETERMINADO: 'indeterminada',
+  ENVIRONMENT: 'air',
+  BODY: 'body',
+  UNDETERMINED: 'undetermined',
 }
 
 interface AlertPanelProps {
@@ -42,14 +42,14 @@ export function AlertPanel({ alert, onAcknowledge }: AlertPanelProps) {
 
   return (
     <section
-      aria-label="Alerta"
-      aria-live={alert.severity === 'CRITICO' ? 'assertive' : 'off'}
+      aria-label="Alert"
+      aria-live={alert.severity === 'CRITICAL' ? 'assertive' : 'off'}
     >
       <p>
         <SevPill level={alert.severity} />
       </p>
 
-      <h3>Qué hacer</h3>
+      <h3>What to do</h3>
       <ol>
         {alert.actions.map((action) => (
           <li key={action.key}>
@@ -58,21 +58,21 @@ export function AlertPanel({ alert, onAcknowledge }: AlertPanelProps) {
         ))}
       </ol>
 
-      <h3>Por qué</h3>
+      <h3>Why</h3>
       <p>{alert.ruleText}</p>
-      <p>Medido: {alert.measured}</p>
-      <p>Causa probable: {CAUSE_LABEL[alert.causeHint]}</p>
+      <p>Measured: {alert.measured}</p>
+      <p>Probable cause: {CAUSE_LABEL[alert.causeHint]}</p>
       <p>
-        Fuente: {alert.source.documentCode}
+        Source: {alert.source.documentCode}
         {requirement} <EvidenceBadge state={alert.source.evidenceState} />
       </p>
       <p>{alert.body}</p>
 
-      <h3>Cuándo escalar</h3>
+      <h3>When to escalate</h3>
       <p>{alert.escalateWhen}</p>
 
       <button type="button" onClick={onAcknowledge}>
-        Reconocer
+        Acknowledge
       </button>
     </section>
   )

@@ -1,9 +1,9 @@
-# Dependencias y entornos
+# Dependencies and environments
 node_modules/
 .venv/
 .env
 
-# Salidas de build y de pruebas
+# Build and test outputs
 web/dist/
 web/coverage/
 web/src/data/graphql/generated/
@@ -18,11 +18,11 @@ htmlcov/
 dist/
 tools/docgen/out/
 
-# PDFs de NASA y su índice: la licencia de redistribución no está confirmada (ver manifest.json)
+# NASA PDFs and their index: the redistribution license is not confirmed (see manifest.json)
 data/knowledge/pdfs/
 data/knowledge/index/
 
-# Editor y sistema
+# Editor and system
 .DS_Store
 .idea/
 .vscode/

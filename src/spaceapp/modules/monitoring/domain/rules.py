@@ -1,4 +1,4 @@
-"""Reglas del catálogo. Cada regla lleva su fuente y su estado de evidencia."""
+"""Catalog rules. Each rule carries its source and its evidence state."""
 
 from __future__ import annotations
 
@@ -6,10 +6,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-SEVERITIES = ("atencion", "alerta", "critico")
-EVIDENCE_STATES = ("VERIFICADO", "TB", "DEMO")
+SEVERITIES = ("attention", "alert", "critical")
+EVIDENCE_STATES = ("VERIFIED", "TB", "DEMO")
 OPERATORS = ("<", "<=", ">", ">=")
-KINDS = ("umbral", "tendencia")
+KINDS = ("threshold", "trend")
 
 
 class InvalidRule(ValueError):
@@ -37,23 +37,21 @@ class Rule:
 
     def __post_init__(self) -> None:
         if not self.key.strip():
-            raise InvalidRule("la regla necesita una clave")
+            raise InvalidRule("the rule needs a key")
         if self.kind not in KINDS:
-            raise InvalidRule(f"{self.key}: tipo desconocido {self.kind!r}")
+            raise InvalidRule(f"{self.key}: unknown kind {self.kind!r}")
         if self.operator not in OPERATORS:
-            raise InvalidRule(f"{self.key}: operador desconocido {self.operator!r}")
+            raise InvalidRule(f"{self.key}: unknown operator {self.operator!r}")
         if self.severity not in SEVERITIES:
-            raise InvalidRule(f"{self.key}: severidad desconocida {self.severity!r}")
+            raise InvalidRule(f"{self.key}: unknown severity {self.severity!r}")
         if self.evidence_state not in EVIDENCE_STATES:
-            raise InvalidRule(
-                f"{self.key}: estado de evidencia desconocido {self.evidence_state!r}"
-            )
+            raise InvalidRule(f"{self.key}: unknown evidence state {self.evidence_state!r}")
         if not self.source_requirement.strip() or not self.source_document.strip():
-            raise InvalidRule(f"{self.key}: toda regla necesita requisito y documento de origen")
+            raise InvalidRule(f"{self.key}: every rule needs a requirement and a source document")
         if self.window_s < 0:
-            raise InvalidRule(f"{self.key}: la ventana no puede ser negativa")
-        if self.kind == "tendencia" and self.evidence_state != "DEMO":
-            raise InvalidRule(f"{self.key}: una regla de tendencia solo puede ser DEMO")
+            raise InvalidRule(f"{self.key}: the window cannot be negative")
+        if self.kind == "trend" and self.evidence_state != "DEMO":
+            raise InvalidRule(f"{self.key}: a trend rule can only be DEMO")
 
 
 @dataclass(frozen=True)
@@ -65,13 +63,13 @@ class RuleCatalog:
         keys = [r.key for r in self.rules]
         dup = sorted({k for k in keys if keys.count(k) > 1})
         if dup:
-            raise InvalidRule(f"claves duplicadas en el catálogo: {', '.join(dup)}")
+            raise InvalidRule(f"duplicate keys in the catalog: {', '.join(dup)}")
         known = set(keys)
         for r in self.rules:
             missing = set(r.supersedes) - known
             if missing:
                 raise InvalidRule(
-                    f"{r.key}: supersedes apunta a reglas inexistentes: {sorted(missing)}"
+                    f"{r.key}: supersedes points to nonexistent rules: {sorted(missing)}"
                 )
 
     def by_key(self) -> dict[str, Rule]:

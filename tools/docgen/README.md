@@ -1,34 +1,34 @@
-# Generador del plan y del artefacto
+# Plan and artifact generator
 
-Genera `docs/plan-arquitectura.md` y la página interactiva del plan desde una sola fuente, para que las tablas,
-los diagramas y el artefacto no se contradigan.
+Generates `docs/architecture-plan.md` and the interactive plan page from a single source, so that the tables,
+the diagrams and the artifact do not contradict each other.
 
-| Archivo | Qué es |
+| File | What it is |
 | --- | --- |
-| `data.py` | Datos: módulos, eventos, tablas, secuencias, fases, reparto, catálogo de incidencias |
-| `template.md` | Texto del documento, con marcadores `{{NOMBRE}}` que el generador rellena |
-| `page.html` | Artefacto interactivo (HTML, CSS y JS). Recibe los datos en `const D = …` |
-| `build.py` | Genera el documento y la página |
+| `data.py` | Data: modules, events, tables, sequences, phases, split, incident catalog |
+| `template.md` | Document text, with `{{NAME}}` placeholders that the generator fills in |
+| `page.html` | Interactive artifact (HTML, CSS and JS). Receives the data in `const D = …` |
+| `build.py` | Generates the document and the page |
 
-## Uso
+## Usage
 
 ```bash
-# regenera docs/plan-arquitectura.md y tools/docgen/out/plan.html
+# regenerates docs/architecture-plan.md and tools/docgen/out/plan.html
 uv run python tools/docgen/build.py --artifact-url https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8
 ```
 
-Opciones: `--template`, `--page`, `--out-md` y `--out-html`.
+Options: `--template`, `--page`, `--out-md` and `--out-html`.
 
-## Reglas
+## Rules
 
-- **No edite `docs/plan-arquitectura.md` a mano.** Cambie `data.py` o `template.md` y regenere.
-  La prueba `tests/unit/test_docgen.py` falla si el documento no coincide con lo que genera la fuente.
-- Una plantilla con un marcador desconocido hace fallar la generación y nombra el marcador.
-- `page.html` es la fuente del artefacto. Para publicar una versión nueva, regenere y publique
-  `tools/docgen/out/plan.html` sobre la misma dirección.
-- La carpeta `out/` está en `.gitignore`.
+- **Do not edit `docs/architecture-plan.md` by hand.** Change `data.py` or `template.md` and regenerate.
+  The test `tests/unit/test_docgen.py` fails if the document does not match what the source generates.
+- A template with an unknown placeholder makes the generation fail and names the placeholder.
+- `page.html` is the source of the artifact. To publish a new version, regenerate and publish
+  `tools/docgen/out/plan.html` over the same address.
+- The `out/` folder is in `.gitignore`.
 
-## Origen
+## Origin
 
-Estos archivos vivían en una carpeta temporal de la sesión de trabajo. Desde la entrada B-011 de
-`bitacora-dev-a.md` la fuente está aquí.
+These files used to live in a temporary folder of the working session. Since entry B-011 of
+`logbook-dev-a.md` the source is here.

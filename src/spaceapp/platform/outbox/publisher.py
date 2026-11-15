@@ -20,7 +20,7 @@ _INSERT = text(
 
 
 async def add_to_outbox(session: AsyncSession, event: EventEnvelope) -> None:
-    """Inserta el evento en la transacción de `session`. El NOTIFY sale al confirmar."""
+    """Inserts the event in the `session` transaction. The NOTIFY goes out on commit."""
     await session.execute(
         _INSERT,
         {

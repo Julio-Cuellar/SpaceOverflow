@@ -23,7 +23,7 @@ def test_a_valid_batch_passes():
 
 
 def test_an_empty_batch_is_rejected():
-    with pytest.raises(InvalidBatch, match="vacío"):
+    with pytest.raises(InvalidBatch, match="empty"):
         validate_batch([])
 
 
@@ -35,11 +35,11 @@ def test_a_batch_cannot_exceed_500_readings():
 
 
 def test_timestamps_must_carry_a_timezone():
-    with pytest.raises(InvalidBatch, match="zona horaria"):
+    with pytest.raises(InvalidBatch, match="timezone"):
         validate_batch([r(ts=datetime(2026, 11, 14, 12, 0))])
 
 
 @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
 def test_values_must_be_finite_numbers(bad):
-    with pytest.raises(InvalidBatch, match="finito"):
+    with pytest.raises(InvalidBatch, match="finite"):
         validate_batch([r(value=bad)])

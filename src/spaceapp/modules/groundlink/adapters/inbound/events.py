@@ -1,4 +1,4 @@
-"""Suscripciones del Enlace con Tierra: confirmar planes aplicados (nave) y recibirlos (Tierra)."""
+"""Ground link subscriptions: acknowledge applied plans (ship) and receive them (Ground)."""
 
 from __future__ import annotations
 

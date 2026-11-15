@@ -1,4 +1,4 @@
-"""Composition root: aquí se eligen los adaptadores según el perfil."""
+"""Composition root: this is where adapters are chosen according to the profile."""
 
 from __future__ import annotations
 
@@ -77,16 +77,16 @@ from spaceapp.platform.profiles import Profile
 
 DEV_PROFILES = (Profile.DEV1, Profile.DEV2)
 
-# Hasta que haya selección de perfil, las acciones se firman con un tripulante de demostración.
+# Until profile selection exists, actions are signed by a demo crew member.
 DEMO_CREW_MEMBER = stable_uuid("crew", "demo")
 
 
 def _with_session[T](factory: Callable[[AsyncSession], T]) -> Callable[[AsyncSession | None], T]:
-    """Los adaptadores SQL necesitan la sesión del handler; en memoria no aplican."""
+    """SQL adapters need the handler session; in-memory ones do not."""
 
     def build(session: AsyncSession | None) -> T:
         if session is None:
-            raise RuntimeError("este adaptador necesita la sesión del relay del outbox")
+            raise RuntimeError("this adapter needs the outbox relay session")
         return factory(session)
 
     return build
@@ -94,7 +94,7 @@ def _with_session[T](factory: Callable[[AsyncSession], T]) -> Callable[[AsyncSes
 
 @dataclass(frozen=True)
 class KnowledgeWiring:
-    """Conocimiento de Dev B con la fuente de demostración (todo lo que dice se etiqueta DEMO)."""
+    """Dev B Knowledge with the demo source (everything it says is labelled DEMO)."""
 
     source: DemoKnowledgeSource
     recommendations: InMemoryRecommendations
@@ -188,7 +188,7 @@ def build_groundlink(
 
 
 def background_schedule(tasks: set[asyncio.Task[None]]) -> Schedule:
-    """Entrega diferida del enlace simulado: espera la demora y ejecuta en segundo plano."""
+    """Deferred delivery of the simulated link: waits out the delay and runs in the background."""
 
     def schedule(delay_s: float, job: Callable[[], Awaitable[None]]) -> None:
         async def run() -> None:
@@ -320,7 +320,7 @@ def get_groundlink(app: FastAPI) -> GroundlinkWiring:
 
 
 class _AppReplay:
-    """El outbox se lee con la sesión de la app, que existe recién al arrancar."""
+    """The outbox is read with the app session, which only exists once the app starts."""
 
     def __init__(self, app: FastAPI) -> None:
         self._app = app
@@ -384,7 +384,7 @@ def create_app(
         if engine is not None:
             await engine.dispose()
 
-    app = FastAPI(title="Monitor de salud para astronautas", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Health monitor for astronauts", version="0.1.0", lifespan=lifespan)
     app.state.settings = settings
     app.state.session_factory = session_factory
     app.state.catalog = load_catalog(settings.rules_path)

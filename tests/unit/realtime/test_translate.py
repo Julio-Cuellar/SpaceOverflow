@@ -1,4 +1,4 @@
-"""Traducción de eventos del bus a mensajes del WebSocket (plan, sección 10.3)."""
+"""Translation of bus events into WebSocket messages (architecture plan, section 10.3)."""
 
 from __future__ import annotations
 
@@ -53,15 +53,15 @@ def test_alert_raised_carries_severity_in_uppercase_and_the_evidence_state() -> 
         alert_id=alert_id,
         zone_id=ZONE,
         rule_key="env-co2-1h",
-        severity="alerta",
-        evidence={"evidence_state": "VERIFICADO", "value": 0.9},
-        cause_hint="AMBIENTE",
+        severity="alert",
+        evidence={"evidence_state": "VERIFIED", "value": 0.9},
+        cause_hint="ENVIRONMENT",
     )
     (msg,) = translate(env(payload))
     assert (msg.topic, msg.type) == ("alerts", "alert.raised")
     assert msg.data["alert_id"] == str(alert_id)
-    assert msg.data["severity"] == "ALERTA"
-    assert msg.data["evidence_state"] == "VERIFICADO"
+    assert msg.data["severity"] == "ALERT"
+    assert msg.data["evidence_state"] == "VERIFIED"
     assert msg.data["rule_key"] == "env-co2-1h"
     assert msg.data["zone_id"] == str(ZONE)
 
@@ -121,10 +121,10 @@ def test_facility_events_reach_the_habitat_topic_in_upper_case() -> None:
         IncidentOpened(
             incident_id=incident,
             zone_id=zone,
-            severity="alerta",
-            title="CO₂ alto",
+            severity="alert",
+            title="High CO₂",
             description="d",
-            source="ALERTA",
+            source="ALERT",
             code="INC-0007",
         ),
         aggregate_type="incident",
@@ -135,12 +135,12 @@ def test_facility_events_reach_the_habitat_topic_in_upper_case() -> None:
     assert (m.topic, m.type, m.data["severity"], m.data["status"], m.data["code"]) == (
         "habitat",
         "incident.opened",
-        "ALERTA",
-        "ABIERTA",
+        "ALERT",
+        "OPEN",
         "INC-0007",
     )
     changed = EventEnvelope.from_payload(
-        ZoneStatusChanged(zone_id=zone, status="critico", open_incidents=2),
+        ZoneStatusChanged(zone_id=zone, status="critical", open_incidents=2),
         aggregate_type="zone",
         aggregate_id=zone,
         partition_key="p",
@@ -149,6 +149,6 @@ def test_facility_events_reach_the_habitat_topic_in_upper_case() -> None:
     assert (z.topic, z.type, z.data["status"], z.data["open_incidents"]) == (
         "habitat",
         "zone.status",
-        "CRITICO",
+        "CRITICAL",
         2,
     )

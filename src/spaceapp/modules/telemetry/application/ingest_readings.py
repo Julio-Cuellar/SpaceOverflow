@@ -1,4 +1,4 @@
-"""Caso de uso: guardar un lote de lecturas de forma idempotente y anunciarlo con un evento."""
+"""Use case: store a batch of readings idempotently and announce it with an event."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ class IngestResult:
 
 class UnknownSensors(Exception):
     def __init__(self, sensor_ids: list[UUID]) -> None:
-        super().__init__(f"sensores desconocidos: {', '.join(map(str, sensor_ids))}")
+        super().__init__(f"unknown sensors: {', '.join(map(str, sensor_ids))}")
         self.sensor_ids = sensor_ids
 
 

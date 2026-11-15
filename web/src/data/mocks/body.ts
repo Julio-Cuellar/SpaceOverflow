@@ -1,14 +1,14 @@
 import type { BodyIndicator } from '../../features/cabin/BodyMap'
 
 /**
- * Seis indicadores del cuerpo (plan, sección 13.6). Son valores de demostración y se muestran
- * como simulados; el backend los reemplazará cuando exista la telemetría real.
+ * Six body indicators (architecture plan, section 13.6). They are demo values and are shown
+ * as simulated; the backend will replace them once real telemetry exists.
  */
 export const bodyIndicatorsFixture: BodyIndicator[] = [
-  { key: 'cabeza', label: 'Cabeza', value: 'Ánimo estable, sin cefalea', severity: 'NORMAL', hazard: 'entorno', evidenceState: 'DEMO' },
-  { key: 'pulmones', label: 'Pulmones', value: 'SpO₂ 98 %', severity: 'NORMAL', hazard: 'entorno', evidenceState: 'DEMO' },
-  { key: 'corazon', label: 'Corazón', value: '72 lpm', severity: 'NORMAL', hazard: 'gravedad', evidenceState: 'DEMO' },
-  { key: 'sangre', label: 'Sangre y órganos', value: 'Radiación acumulada baja', severity: 'NORMAL', hazard: 'radiacion', evidenceState: 'DEMO' },
-  { key: 'temperatura', label: 'Temperatura', value: '36.6 °C', severity: 'NORMAL', hazard: 'entorno', evidenceState: 'DEMO' },
-  { key: 'huesos', label: 'Huesos y músculo', value: 'Línea base al 95 %', severity: 'NORMAL', hazard: 'gravedad', evidenceState: 'DEMO' },
+  { key: 'head', label: 'Head', value: 'Stable mood, no headache', severity: 'NORMAL', hazard: 'environment', evidenceState: 'DEMO' },
+  { key: 'lungs', label: 'Lungs', value: 'SpO₂ 98 %', severity: 'NORMAL', hazard: 'environment', evidenceState: 'DEMO' },
+  { key: 'heart', label: 'Heart', value: '72 bpm', severity: 'NORMAL', hazard: 'gravity', evidenceState: 'DEMO' },
+  { key: 'blood', label: 'Blood and organs', value: 'Low accumulated radiation', severity: 'NORMAL', hazard: 'radiation', evidenceState: 'DEMO' },
+  { key: 'temperature', label: 'Temperature', value: '36.6 °C', severity: 'NORMAL', hazard: 'environment', evidenceState: 'DEMO' },
+  { key: 'bones', label: 'Bones and muscle', value: 'Baseline at 95 %', severity: 'NORMAL', hazard: 'gravity', evidenceState: 'DEMO' },
 ]

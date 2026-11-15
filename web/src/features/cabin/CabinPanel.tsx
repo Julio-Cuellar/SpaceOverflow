@@ -6,15 +6,15 @@ interface CabinPanelProps {
   dashboard: DashboardView
 }
 
-/** Semáforo global y tarjetas de valores. Muestra lo que calcula el backend; no recalcula nada. */
+/** Global status light and value cards. Shows what the backend computes; recomputes nothing. */
 export function CabinPanel({ dashboard }: CabinPanelProps) {
   return (
-    <section aria-label="Panel de cabina">
-      <section role="status" aria-label="Estado global">
+    <section aria-label="Cabin panel">
+      <section role="status" aria-label="Global status">
         <SevPill level={dashboard.globalSeverity} />
       </section>
       {dashboard.vitals.length === 0 ? (
-        <p aria-live="polite">Esperando lecturas del simulador</p>
+        <p aria-live="polite">Waiting for simulator readings</p>
       ) : (
         <ul className="vitals">
           {dashboard.vitals.map((vital) => (
@@ -27,7 +27,7 @@ export function CabinPanel({ dashboard }: CabinPanelProps) {
 }
 
 function VitalCard({ vital }: { vital: Vital }) {
-  const isBodySimulated = vital.domain === 'cuerpo' && vital.origin === 'SIMULATED'
+  const isBodySimulated = vital.domain === 'body' && vital.origin === 'SIMULATED'
 
   return (
     <li className="vital-card">
@@ -39,7 +39,7 @@ function VitalCard({ vital }: { vital: Vital }) {
         <SevPill level={vital.severity} />
       </p>
       <EvidenceBadge state={vital.evidenceState} />
-      {isBodySimulated && <EvidenceBadge state="SIMULADO" />}
+      {isBodySimulated && <EvidenceBadge state="SIMULATED" />}
     </li>
   )
 }

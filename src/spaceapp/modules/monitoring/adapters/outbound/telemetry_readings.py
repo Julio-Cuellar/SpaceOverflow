@@ -1,4 +1,4 @@
-"""Lecturas para Monitoreo, tomadas de la fachada de Telemetría."""
+"""Readings for Monitoring, taken from the Telemetry facade."""
 
 from collections.abc import Sequence
 from datetime import datetime

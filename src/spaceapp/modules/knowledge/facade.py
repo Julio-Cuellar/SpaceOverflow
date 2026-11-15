@@ -1,4 +1,4 @@
-"""Fachada pública de solo lectura del módulo knowledge (ADR-5)."""
+"""Public read-only facade of the knowledge module (ADR-5)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from spaceapp.modules.knowledge.ports import KnowledgeSource, PassageSource
 
 
 class ActionCatalogQuery:
-    """Título y descripción de una acción. La usa Misiones (dev A)."""
+    """Title and description of an action. Used by Missions (dev A)."""
 
     def __init__(self, source: KnowledgeSource) -> None:
         self._source = source
@@ -18,7 +18,7 @@ class ActionCatalogQuery:
 
 
 class KnowledgeQuery:
-    """Pasajes citables para responder preguntas. La usa el asistente (dentro de este módulo)."""
+    """Citable passages to answer questions. Used by the assistant (inside this module)."""
 
     def __init__(self, source: PassageSource) -> None:
         self._source = source

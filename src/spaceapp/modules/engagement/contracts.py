@@ -1,4 +1,4 @@
-"""Eventos públicos de Misiones y tareas."""
+"""Public events of Missions and tasks."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from pydantic import BaseModel, ConfigDict
 
 from spaceapp.platform.events import EventPayload
 
-TaskKind = Literal["SALUD", "NAVE", "INCIDENTE"]
-TaskOrigin = Literal["TIERRA", "SISTEMA", "TRIPULACION"]
+TaskKind = Literal["HEALTH", "SHIP", "INCIDENT"]
+TaskOrigin = Literal["GROUND", "SYSTEM", "CREW"]
 
 
 class RejectedItem(BaseModel):

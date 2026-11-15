@@ -1,60 +1,63 @@
-# knowledge · conocimiento citable
+# knowledge · citable knowledge
 
-Convierte cada alerta en una **recomendación de plantilla con cita**, sin depender de ningún modelo, y busca pasajes citables para el asistente.
+Turns each alert into a **template recommendation with a citation**, without depending on any model, and looks up citable passages for the assistant. The whole module works in English only.
 
-## Contratos (`contracts.py`)
+## Contracts (`contracts.py`)
 
-- Consume `monitoring.alert_raised` (`AlertRaised`).
-- Publica `knowledge.recommendation_ready` (`RecommendationReady`): `alert_id`, `recommendation_id`, `action_keys[]`, `citations[]`.
-- Fachadas de solo lectura: `ActionCatalogQuery` (usada por Misiones) y `KnowledgeQuery` (usada por el asistente).
+- Consumes `monitoring.alert_raised` (`AlertRaised`).
+- Publishes `knowledge.recommendation_ready` (`RecommendationReady`): `alert_id`, `recommendation_id`, `action_keys[]`, `citations[]`.
+- Read-only facades: `ActionCatalogQuery` (used by Missions) and `KnowledgeQuery` (used by the assistant).
 
-## Cómo funciona
+## How it works
 
-- Caso de uso `HandleAlertRaised`: idempotente por `(consumidor, event_id)`; una regla desconocida lanza `UnknownRuleError` **sin** marcar el evento, para que el reintento pueda procesarlo.
-- Fuente `DemoKnowledgeSource` lee `data/knowledge/demo_catalog.json` (25 reglas, una por cada regla de Monitoreo de `rules/catalog/monitoring.json`; 17 acciones; 3 pasajes). `tests/knowledge/test_rule_coverage.py` cruza ambos catálogos: toda regla que Monitoreo puede levantar tiene recomendación, incluye la acción que Monitoreo nombra y ninguna cita dice más evidencia que la regla. Toda recomendación dice «dato de demostración, no de NASA».
-- Búsqueda de pasajes: términos sin acentos ni mayúsculas, umbral mínimo de relevancia; sin pasaje devuelve lista vacía.
+- Use case `HandleAlertRaised`: idempotent by `(consumer, event_id)`; an unknown rule raises `UnknownRuleError` **without** marking the event, so that the retry can process it.
+- Source `DemoKnowledgeSource` reads `data/knowledge/demo_catalog.json` (25 rules, one for each Monitoring rule in `rules/catalog/monitoring.json`; 17 actions; 3 passages). `tests/knowledge/test_rule_coverage.py` cross-checks both catalogs: every rule that Monitoring can raise has a recommendation, includes the action that Monitoring names, and no citation claims more evidence than the rule. Every recommendation says "This recommendation uses demonstration data, not NASA data."
+- Passage search: lowercase terms, minimum relevance threshold; with no passage it returns an empty list.
 
-## Pruebas
+## Tests
 
 ```bash
 .venv/bin/python -m pytest tests/knowledge -q
 ```
 
-## Ingesta de PDFs de NASA (F12)
+## Ingesting NASA PDFs (F12)
 
-El comando indexa los PDFs que haya en `data/knowledge/pdfs/` según `data/knowledge/manifest.json`. **No descarga nada**: los PDFs se ponen a mano (el manifiesto da la fuente y la licencia).
+The command indexes the PDFs found in `data/knowledge/pdfs/` according to `data/knowledge/manifest.json`. It **downloads nothing**: the PDFs are placed by hand (the manifest gives the source and the license).
 
 ```bash
-.venv/bin/python -m spaceapp.modules.knowledge.ingest --rebuild   # extrae, fragmenta y guarda en data/knowledge/index/chunks.jsonl
-.venv/bin/python -m spaceapp.modules.knowledge.evaluate           # conjunto principal
+.venv/bin/python -m spaceapp.modules.knowledge.ingest --rebuild   # extracts, chunks and saves to data/knowledge/index/chunks.jsonl
+.venv/bin/python -m spaceapp.modules.knowledge.evaluate           # main set
 .venv/bin/python -m spaceapp.modules.knowledge.evaluate --questions data/knowledge/eval_questions_validation.json
-.venv/bin/python -m spaceapp.modules.knowledge.evaluate --questions data/knowledge/eval_questions_en.json
 ```
 
-- Idempotente: reejecutarla no duplica. Usa `--rebuild` tras cambiar el fragmentado, o quedarán fragmentos viejos.
-- Un PDF que falta, roto o sin texto se avisa y no detiene a los demás.
-- Se fragmenta por referencia de requisito (`[V2 6004]`); una referencia citada a mitad de frase o dentro de un paréntesis abierto no parte el pasaje.
-- Búsqueda BM25 con raíces de palabra y umbral (`MIN_SCORE`, `MIN_MATCHED_TERMS`); sin pasaje relevante devuelve lista vacía. Pregunta en español → `data/knowledge/glossary_es_en.json` (40 entradas, pendiente de revisión del equipo).
-- **Los PDFs y el índice no se versionan:** la licencia de redistribución no está confirmada.
+- Idempotent: running it again does not duplicate. Use `--rebuild` after changing the chunking, or old chunks will remain. Rebuild as well after this translation: the document codes in the manifest are now in English (`OCHMO-TB-003 Habitable Atmosphere`, `OCHMO-TB-044 Medical Operations`, `Medical Kit Checklist`), so an index built earlier carries the old Spanish codes.
+- A missing, broken or textless PDF is reported and does not stop the others.
+- Chunking is by requirement reference (`[V2 6004]`); a reference cited mid-sentence or inside an open parenthesis does not split the passage.
+- BM25 search with word stems and a threshold (`MIN_SCORE`, `MIN_MATCHED_TERMS`) over English questions and English documents, with an English stop-word list; with no relevant passage it returns an empty list. There is no translation layer: the Spanish-English glossary (`glossary_es_en.json`) was removed.
+- **The PDFs and the index are not versioned:** the redistribution license is not confirmed.
 
-## Evaluación (métrica estricta, k=3)
+## Evaluation (strict metric, k=3)
 
-Un acierto exige que el texto esperado aparezca en el extracto de los 3 primeros pasajes. Mínimo del plan: 80 %. Con el Handbook de diseño indexado (`--include-optional`) baja a 8/16, 1/9 y 12/25, por eso no se indexa por defecto.
+A hit requires the expected text to appear in the excerpt of the top 3 passages. Minimum in the plan: 80 %.
 
-| Conjunto | Aciertos | Fuera de alcance respondidas |
+| Set | File | Cases |
 |---|---|---|
-| Principal (ES) | 9 de 16 (56 %) | 0 de 2 |
-| Validación (ES, no se afinó con él) | 1 de 9 (11 %) | 0 de 1 |
-| Diagnóstico (EN) | 13 de 25 (52 %) | 0 de 3 |
+| Main | `data/knowledge/eval_questions.json` | 16 in scope, 2 out of scope |
+| Validation (not used for tuning) | `data/knowledge/eval_questions_validation.json` | 9 in scope, 1 out of scope |
 
-**No se alcanza el 80 %.** Nunca se responde fuera de alcance, pero la búsqueda léxica falla con paráfrasis y con cifras de tablas.
+The former Spanish sets and the English diagnostic set were merged: the main and validation sets are now the English questions, with the same expectations as before. The results below were measured **before** the English-only change, so they must be re-measured with the real PDFs indexed (they are not in the repository):
 
-## Límites actuales
+- English questions of both sets together (the former diagnostic set): 13 of 25 hits (52 %), 0 of 3 out-of-scope answered.
+- The Spanish figures (main 9 of 16, validation 1 of 9) no longer apply.
 
-- Sin base de datos ni outbox: la idempotencia y el guardado son en memoria hasta el hito I1 (dev A).
-- El asistente aún usa los pasajes de demostración: falta cablear la fuente RAG por perfil en `main.py` (dev A).
-- La solución de fondo para la recuperación es un modelo de embeddings multilingüe (decisión pendiente; exige permiso para descargarlo).
-- Los Technical Brief salen como `TB` aunque el catálogo de demostración marca TB-003 como `VERIFICADO`: decisión de equipo.
-- Muchas cifras quedan sin `requirement_ref` propio: la cita lleva documento y página, no siempre número de requisito.
-- No se extraen las tablas que vienen como imagen.
-- `source_kind` (DEMO) no viaja en el evento: añadirlo exige pedírselo antes a Dev A.
+**The 80 % has not been reached.** An out-of-scope question is never answered, but lexical search fails on paraphrases and on figures in tables.
+
+## Current limits
+
+- No database or outbox: idempotency and storage are in memory until milestone I1 (dev A).
+- The assistant still uses the demonstration passages: wiring the RAG source per profile in `main.py` (dev A) is missing.
+- The underlying fix for retrieval is an embeddings model (pending decision; it requires permission to download it).
+- The Technical Briefs come out as `TB` although the demo catalog marks TB-003 as `VERIFIED`: team decision.
+- Many figures have no `requirement_ref` of their own: the citation carries document and page, not always a requirement number.
+- Tables that come as images are not extracted.
+- `source_kind` (DEMO) does not travel in the event: adding it requires asking Dev A first.

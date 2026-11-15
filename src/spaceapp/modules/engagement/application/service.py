@@ -1,6 +1,6 @@
-"""Casos de uso de Misiones y tareas: tareas del día, tareas propias, incidentes y planes de Tierra.
+"""Missions and tasks use cases: daily tasks, own tasks, incidents and Ground plans.
 
-Cada cambio y su evento se escriben en la misma transacción.
+Every change and its event are written in the same transaction.
 """
 
 from __future__ import annotations
@@ -62,10 +62,10 @@ class Failed:
 Outcome = Done | Failed
 
 _MESSAGES = {
-    "INVALID_KIND": "la tripulación crea tareas de SALUD o NAVE; las de incidente son del sistema",
-    "TITLE_REQUIRED": "la tarea necesita un título",
-    "REASON_REQUIRED": "para bloquear una tarea hay que dar el motivo",
-    "ALREADY_COMPLETED": "la tarea ya está completada",
+    "INVALID_KIND": "the crew creates HEALTH or SHIP tasks; incident tasks belong to the system",
+    "TITLE_REQUIRED": "the task needs a title",
+    "REASON_REQUIRED": "a reason is required to block a task",
+    "ALREADY_COMPLETED": "the task is already completed",
 }
 
 
@@ -101,10 +101,10 @@ class EngagementService:
     def today(self) -> date:
         return self._clock().astimezone(UTC).date()
 
-    # --- Tareas del día ------------------------------------------------------------------
+    # --- Daily tasks ------------------------------------------------------------------
 
     async def ensure_day(self, day: date | None = None) -> None:
-        """Crea, una sola vez, la tarea del día de cada plantilla activa."""
+        """Creates, once, the daily task of each active template."""
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
             if not self._seeded:
@@ -154,7 +154,7 @@ class EngagementService:
         cause: EventEnvelope | None = None,
     ) -> bool:
         if not await repo.insert_task(task):
-            return False  # ya existía (idempotencia por plantilla y día, incidente o alerta)
+            return False  # already existed (idempotent per template and day, incident or alert)
         await publish(
             self._event(
                 TaskAssigned(
@@ -171,7 +171,7 @@ class EngagementService:
         )
         return True
 
-    # --- Handlers del bus ----------------------------------------------------------------
+    # --- Bus handlers ----------------------------------------------------------------
 
     async def on_incident_opened(self, event: EventEnvelope, ctx: HandlerContext) -> None:
         incident = event.payload_as(IncidentOpened)
@@ -183,9 +183,9 @@ class EngagementService:
                 id=uuid4(),
                 crew_member_id=self.crew_member,
                 template_id=None,
-                origin="SISTEMA",
-                kind="INCIDENTE",
-                title=f"Atender: {incident.title}",
+                origin="SYSTEM",
+                kind="INCIDENT",
+                title=f"Attend to: {incident.title}",
                 zone_id=incident.zone_id,
                 day=now.astimezone(UTC).date(),
                 due_at=now,
@@ -208,7 +208,7 @@ class EngagementService:
         )
 
     async def on_recommendation_ready(self, event: EventEnvelope, ctx: HandlerContext) -> None:
-        """Cada acción recomendada para una alerta es una medida del día (no suma a la racha)."""
+        """Each action recommended for an alert is a task of the day (no streak credit)."""
         recommendation = event.payload_as(RecommendationReady)
         repo = self._repo(_session(ctx))
         now = event.occurred_at
@@ -220,8 +220,8 @@ class EngagementService:
                     id=uuid4(),
                     crew_member_id=self.crew_member,
                     template_id=None,
-                    origin="SISTEMA",
-                    kind="SALUD",
+                    origin="SYSTEM",
+                    kind="HEALTH",
                     title=self._action_title(key) or key,
                     zone_id=None,
                     day=now.astimezone(UTC).date(),
@@ -233,12 +233,12 @@ class EngagementService:
             )
 
     async def on_ground_plan_received(self, event: EventEnvelope, ctx: HandlerContext) -> None:
-        """Aplica el plan en una transacción. Lo completado o creado a bordo no se toca."""
+        """Applies the plan in one transaction. Whatever was completed or created on board stays."""
         plan = event.payload_as(GroundPlanReceived)
         repo = self._repo(_session(ctx))
         last = await repo.last_applied_plan()
         if last is not None and plan.plan_version <= last:
-            return  # versión menor o repetida: se ignora
+            return  # older or repeated version: ignored
         items = [
             PlanItem(c.change, c.kind, c.title, c.recurrence, c.zone_code, c.target_template_id)
             for c in plan.changes
@@ -262,10 +262,10 @@ class EngagementService:
                 aggregate_type="ground_plan",
             )
         )
-        # Las plantillas nuevas ya tienen su tarea de hoy; los cambios rigen para las siguientes.
+        # New templates already get today's task; changes apply to the following ones.
         await self._materialize(repo, ctx.publish, self.today(), cause=event)
 
-    # --- Mutaciones de la tripulación ----------------------------------------------------
+    # --- Crew mutations ----------------------------------------------------
 
     async def create(
         self, kind: str, title: str, zone_id: UUID | None, due_at: datetime | None
@@ -281,7 +281,7 @@ class EngagementService:
                     id=task_id,
                     crew_member_id=self.crew_member,
                     template_id=None,
-                    origin="TRIPULACION",
+                    origin="CREW",
                     kind=kind,
                     title=title.strip(),
                     zone_id=zone_id,
@@ -296,7 +296,7 @@ class EngagementService:
                         kind=kind,
                         title=title.strip(),
                         zone_id=zone_id,
-                        origin="TRIPULACION",
+                        origin="CREW",
                     ),
                     task_id,
                 )
@@ -312,7 +312,7 @@ class EngagementService:
             if task is None:
                 return _not_found(task_id)
             if not can_change(task.origin):
-                return Failed("NOT_EDITABLE", f"una tarea de {task.origin} no se edita")
+                return Failed("NOT_EDITABLE", f"a {task.origin} task cannot be edited")
             if title is not None and not title.strip():
                 return _failed("TITLE_REQUIRED")
             await repo.update_task(
@@ -331,7 +331,7 @@ class EngagementService:
                 return _not_found(task_id)
             if not can_change(task.origin):
                 return Failed(
-                    "NOT_DELETABLE", f"una tarea de {task.origin} no se borra: se puede bloquear"
+                    "NOT_DELETABLE", f"a {task.origin} task cannot be deleted: it can be blocked"
                 )
             await repo.delete_task(task_id)
         return Done(task_id)
@@ -342,7 +342,7 @@ class EngagementService:
             task = await repo.task(task_id, lock=True)
             if task is None:
                 return _not_found(task_id)
-            if task.status == "COMPLETADA":
+            if task.status == "COMPLETED":
                 return Done(task_id, already=True)
             await repo.complete(task_id, effective, self._clock())
             await uow.publish(
@@ -373,18 +373,18 @@ class EngagementService:
 
     async def snooze(self, task_id: UUID, minutes: int) -> Outcome:
         if not 1 <= minutes <= 24 * 60:
-            return Failed("INVALID_MINUTES", "se pospone entre 1 minuto y 24 horas")
+            return Failed("INVALID_MINUTES", "snooze must be between 1 minute and 24 hours")
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
             task = await repo.task(task_id, lock=True)
             if task is None:
                 return _not_found(task_id)
-            if task.status == "COMPLETADA":
+            if task.status == "COMPLETED":
                 return _failed("ALREADY_COMPLETED")
             await repo.snooze(task_id, minutes)
         return Done(task_id)
 
-    # --- Apoyo ---------------------------------------------------------------------------
+    # --- Support ---------------------------------------------------------------------------
 
     def _event(
         self,
@@ -405,12 +405,12 @@ class EngagementService:
 
 
 def _not_found(task_id: UUID) -> Failed:
-    return Failed("NOT_FOUND", f"no existe la tarea {task_id}")
+    return Failed("NOT_FOUND", f"task {task_id} does not exist")
 
 
 def _session(ctx: HandlerContext) -> AsyncSession:
     if ctx.session is None:
-        raise RuntimeError("Misiones necesita la sesión del relay del outbox")
+        raise RuntimeError("Missions needs the outbox relay session")
     return ctx.session
 
 

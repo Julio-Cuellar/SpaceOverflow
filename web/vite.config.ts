@@ -15,7 +15,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      // main.tsx solo monta la app; lo verifica el build y la prueba en navegador.
+      // main.tsx only mounts the app; the build and the browser test verify it.
       exclude: [
         'src/**/*.test.{ts,tsx}',
         'src/test/**',

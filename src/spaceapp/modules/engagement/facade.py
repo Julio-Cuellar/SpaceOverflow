@@ -1,4 +1,4 @@
-"""Consultas de solo lectura de Misiones y tareas (para la interfaz y el Enlace con Tierra)."""
+"""Read-only queries of Missions and tasks (for the interface and the Ground Link)."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ class TaskView:
 
 @dataclass(frozen=True)
 class GroundTemplateStatus:
-    """Una plantilla de Tierra tal como la ve Tierra: activa o cancelada y su última tarea."""
+    """A Ground template as Ground sees it: active or cancelled, and its latest task."""
 
     template_id: UUID
     title: str
@@ -95,7 +95,7 @@ class TaskQuery:
 
 
 class GroundTemplateQuery:
-    """Estado de las plantillas de Tierra. Lo lee el Enlace con Tierra para su panel."""
+    """Status of the Ground templates. The Ground Link reads it for its panel."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory
@@ -106,7 +106,7 @@ class GroundTemplateQuery:
             "FROM engagement.task_template t LEFT JOIN LATERAL ("
             "  SELECT status, blocked_reason FROM engagement.task WHERE template_id = t.id "
             "  ORDER BY day DESC, created_at DESC LIMIT 1"
-            ") k ON true WHERE t.origin = 'TIERRA' ORDER BY t.plan_version, t.title"
+            ") k ON true WHERE t.origin = 'GROUND' ORDER BY t.plan_version, t.title"
         )
         async with self._sf() as session:
             rows = (await session.execute(text(sql))).all()

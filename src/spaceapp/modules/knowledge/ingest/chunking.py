@@ -1,8 +1,8 @@
-"""Fragmenta el texto de una página en pasajes citables. Funciones puras, sin E/S.
+"""Splits the text of a page into citable passages. Pure functions, no I/O.
 
-Cada fragmento guarda documento, requisito, página, contenido y estado de evidencia, que es lo
-que hace falta para citar (plan, F12.2). Se corta en cada referencia `[V2 6004]`; el texto largo
-se parte en ventanas con solape corto para no perder contexto.
+Each chunk keeps document, requirement, page, content and evidence state, which is what is
+needed to cite (architecture plan, F12.2). The text is cut at each `[V2 6004]` reference; long
+text is split into windows with a short overlap so that no context is lost.
 """
 
 from __future__ import annotations
@@ -30,19 +30,19 @@ class Chunk:
 
 
 def clean(text: str) -> str:
-    """Une las palabras partidas por guion al final de línea y colapsa los espacios."""
+    """Joins words split by a hyphen at the end of a line and collapses the whitespace."""
     return " ".join(_HYPHEN_BREAK.sub("", text).split())
 
 
 def _starts_a_requirement(text: str, match: re.Match[str]) -> bool:
-    """Una referencia abre un requisito; si está citada dentro de una frase, no.
+    """A reference opens a requirement; if it is cited inside a sentence, it does not.
 
-    La norma cita otros requisitos a mitad de oración («…ver [V2 6004] Nominal…», «(… [V1 4033])»).
-    Partir ahí corta frases y atribuye texto al requisito equivocado. Una cita queda precedida por
-    una palabra en minúscula, un paréntesis o una coma; un requisito, por un punto, un corchete
-    de cierre, un número de página o el inicio del texto. Si hay un paréntesis sin cerrar antes
-    de la referencia («(… NASA-STD-3001, Volume 1 [V1 4030] Título)»), también es una cita aunque
-    la preceda un dígito.
+    The standard cites other requirements mid-sentence ("...see [V2 6004] Nominal...", "(... [V1
+    4033])"). Splitting there cuts sentences and attributes text to the wrong requirement. A
+    citation is preceded by a lowercase word, a parenthesis or a comma; a requirement, by a period,
+    a closing bracket, a page number or the start of the text. If there is an unclosed parenthesis
+    before the reference ("(... NASA-STD-3001, Volume 1 [V1 4030] Title)"), it is also a citation
+    even when a digit precedes it.
     """
     before = text[: match.start()].rstrip()
     if before == "":
@@ -53,7 +53,7 @@ def _starts_a_requirement(text: str, match: re.Match[str]) -> bool:
 
 
 def _inside_open_parenthesis(before: str) -> bool:
-    # Solo se mira el tramo reciente: un paréntesis olvidado muy atrás no puede decidir.
+    # Only the recent stretch is examined: a parenthesis forgotten far back cannot decide.
     recent = before[-_PARENTHESIS_WINDOW:]
     return recent.count("(") > recent.count(")")
 
@@ -66,7 +66,7 @@ def _split_long(text: str, max_chars: int, overlap: int) -> list[str]:
     while start < len(text):
         end = min(start + max_chars, len(text))
         if end < len(text):
-            # Se corta en un espacio dentro de la segunda mitad de la ventana, no a media palabra.
+            # Cut at a space within the second half of the window, not mid-word.
             space = text.rfind(" ", start + max_chars // 2, end)
             if space > start:
                 end = space

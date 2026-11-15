@@ -1,4 +1,4 @@
-/* Disposición de los paneles. Colores en tokens.css. Objetivos táctiles de 48 px (plan, sección 13.2). */
+/* Panel layout. Colors in tokens.css. 48 px touch targets (architecture plan, section 13.2). */
 main {
   max-width: 960px;
   margin: 0 auto;
@@ -98,7 +98,7 @@ svg [role='button'] {
   cursor: pointer;
 }
 
-/* Asistente: las líneas de la respuesta se respetan, y los enlaces de fuentes se leen en ambos temas. */
+/* Assistant: the answer's line breaks are kept, and source links are readable in both themes. */
 .answer-text {
   white-space: pre-line;
 }
@@ -128,7 +128,7 @@ form textarea {
   margin-bottom: 0.5rem;
 }
 
-/* El plano no se encoge por debajo de 480 px: se desplaza dentro de su panel (plan, sección 7.7). */
+/* The floor plan does not shrink below 480 px: it scrolls inside its panel (architecture plan, section 7.7). */
 .ship-plan {
   overflow-x: auto;
 }
@@ -138,7 +138,7 @@ form textarea {
   min-width: 480px;
 }
 
-/* Las etiquetas del plano caben en su zona a este tamaño (unidades del viewBox). */
+/* The floor plan labels fit in their zone at this size (viewBox units). */
 svg text {
   font-size: 11px;
 }

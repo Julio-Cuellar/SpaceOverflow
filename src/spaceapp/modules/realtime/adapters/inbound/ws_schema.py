@@ -1,4 +1,4 @@
-"""Esquema JSON de los mensajes de /ws. Se publica en contracts/ws-messages.schema.json."""
+"""JSON schema of the /ws messages. Published in contracts/ws-messages.schema.json."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from spaceapp.modules.realtime.domain.messages import SERVER_TYPES, SYSTEM_TYPES
 
 _UUID = {"type": "string", "format": "uuid"}
 _TIME = {"type": "string", "format": "date-time"}
-_SEVERITY = {"enum": ["ATENCION", "ALERTA", "CRITICO"]}
-_INCIDENT_STATUS = {"enum": ["ABIERTA", "RECONOCIDA", "RESUELTA"]}
-_TASK_KIND = {"enum": ["SALUD", "NAVE", "INCIDENTE"]}
-_TASK_ORIGIN = {"enum": ["TIERRA", "SISTEMA", "TRIPULACION"]}
+_SEVERITY = {"enum": ["ATTENTION", "ALERT", "CRITICAL"]}
+_INCIDENT_STATUS = {"enum": ["OPEN", "ACKNOWLEDGED", "RESOLVED"]}
+_TASK_KIND = {"enum": ["HEALTH", "SHIP", "INCIDENT"]}
+_TASK_ORIGIN = {"enum": ["GROUND", "SYSTEM", "CREW"]}
 _CITATION = {
     "type": "object",
     "required": ["document_code", "excerpt", "evidence_state"],
@@ -20,7 +20,7 @@ _CITATION = {
         "requirement_ref": {"type": ["string", "null"]},
         "page": {"type": ["integer", "null"]},
         "excerpt": {"type": "string"},
-        "evidence_state": {"enum": ["VERIFICADO", "TB", "DEMO", "NO_VERIFICADO"]},
+        "evidence_state": {"enum": ["VERIFIED", "TB", "DEMO", "UNVERIFIED"]},
     },
 }
 
@@ -29,7 +29,7 @@ def _obj(required: list[str], **properties: Any) -> dict[str, Any]:
     return {"type": "object", "required": required, "properties": properties}
 
 
-# `data` de cada tipo. Los campos que no se listan pueden venir (no se cierra el objeto).
+# `data` of each type. Fields that are not listed may come (the object is not closed).
 _DATA: dict[str, dict[str, Any]] = {
     "telemetry.tick": _obj(
         ["sensor_id", "metric", "value", "ts"],
@@ -48,7 +48,7 @@ _DATA: dict[str, dict[str, Any]] = {
         zone_id={"type": ["string", "null"], "format": "uuid"},
         rule_key={"type": "string"},
         severity=_SEVERITY,
-        cause_hint={"enum": ["AMBIENTE", "CUERPO", "INDETERMINADO", None]},
+        cause_hint={"enum": ["ENVIRONMENT", "BODY", "UNDETERMINED", None]},
         evidence={"type": "object"},
     ),
     "alert.updated": _obj(
@@ -82,9 +82,9 @@ _DATA: dict[str, dict[str, Any]] = {
         severity=_SEVERITY,
         title={"type": "string"},
         description={"type": "string"},
-        source={"enum": ["ALERTA", "MANUAL"]},
-        code={"type": ["string", "null"], "description": "Código legible del ticket, INC-0001"},
-        status={"const": "ABIERTA"},
+        source={"enum": ["ALERT", "MANUAL"]},
+        code={"type": ["string", "null"], "description": "Human-readable ticket code, INC-0001"},
+        status={"const": "OPEN"},
     ),
     "incident.updated": _obj(
         ["incident_id", "severity", "status"],
@@ -98,12 +98,12 @@ _DATA: dict[str, dict[str, Any]] = {
         incident_id=_UUID,
         zone_id=_UUID,
         resolved_at=_TIME,
-        status={"const": "RESUELTA"},
+        status={"const": "RESOLVED"},
     ),
     "zone.status": _obj(
         ["zone_id", "status", "open_incidents"],
         zone_id=_UUID,
-        status={"enum": ["NORMAL", "ATENCION", "ALERTA", "CRITICO"]},
+        status={"enum": ["NORMAL", "ATTENTION", "ALERT", "CRITICAL"]},
         open_incidents={"type": "integer", "minimum": 0},
     ),
     "task.assigned": _obj(
@@ -181,12 +181,13 @@ def ws_messages_schema() -> dict[str, Any]:
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "$id": "ws-messages.schema.json",
-        "title": "Mensajes de /ws",
+        "title": "/ws messages",
         "description": (
-            "Un solo canal de push. El servidor envía ServerMessage; el cliente, ClientMessage. "
-            "`seq` es el id del outbox cuando el mensaje nace de un evento (se reenvía con "
-            "`resume`); es null en los ticks y en el topic `system`. Con la cola llena se "
-            "descartan ticks, nunca alertas. Sin mensajes durante 15 s el servidor envía `ping`."
+            "A single push channel. The server sends ServerMessage; the client, ClientMessage. "
+            "`seq` is the outbox id when the message originates from an event (it is resent "
+            "with `resume`); it is null on ticks and on the `system` topic. When the queue is "
+            "full, ticks are dropped, never alerts. With no messages for 15 s the server sends "
+            "`ping`."
         ),
         "$defs": {
             "ServerMessage": {

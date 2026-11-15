@@ -1,4 +1,4 @@
-"""Lado de la nave: recibe planes de Tierra (R9) y confirma cuando Misiones los aplicó."""
+"""Ship side: receives Ground plans (R9) and acknowledges once Missions applied them."""
 
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ class PlanReceiver:
         try:
             changes = [PlanChange.model_validate(i) for i in items]
         except ValidationError as exc:
-            return Received("rejected", f"un ítem está mal formado: {exc.errors()[0]['msg']}")
+            return Received("rejected", f"an item is malformed: {exc.errors()[0]['msg']}")
         now = self._clock()
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
@@ -66,7 +66,7 @@ class PlanReceiver:
             )
             if decision == "ignored":
                 return Received("ignored")
-            status = "RECIBIDO" if decision == "received" else "RECHAZADO"
+            status = "RECEIVED" if decision == "received" else "REJECTED"
             fresh = await repo.save_inbound(
                 batch_id=batch_id,
                 plan_version=plan_version,
@@ -78,7 +78,7 @@ class PlanReceiver:
             if decision == "rejected":
                 return Received("rejected", reason)
             if not fresh:
-                return Received("ignored")  # el mismo lote, entregado otra vez
+                return Received("ignored")  # the same batch, delivered again
             await uow.publish(
                 EventEnvelope.from_payload(
                     GroundPlanReceived(
@@ -92,10 +92,10 @@ class PlanReceiver:
         return Received("received")
 
     async def on_plan_applied(self, event: EventEnvelope, ctx: HandlerContext) -> None:
-        """Misiones aplicó el plan: se marca y se confirma el lote hacia Tierra."""
+        """Missions applied the plan: it is marked and the batch is acknowledged to Ground."""
         applied = event.payload_as(GroundPlanApplied)
         if ctx.session is None:
-            raise RuntimeError("el Enlace con Tierra necesita la sesión del relay del outbox")
+            raise RuntimeError("the Ground link needs the outbox relay session")
         repo = self._repo(ctx.session)
         rejected = [r.model_dump() for r in applied.rejected]
         batch_id = await repo.mark_inbound_applied(

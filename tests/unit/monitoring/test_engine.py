@@ -61,7 +61,7 @@ def test_vector_2_o2_18_percent_is_a_proposed_band_warning_just_above_127():
     r = run(nominal(o2_pct=18.0))
     assert keys(r) == {"env-pio2-low-pre"}
     h = by_key(r, "env-pio2-low-pre")
-    assert (h.severity, h.evidence_state) == ("atencion", "DEMO")
+    assert (h.severity, h.evidence_state) == ("attention", "DEMO")
     assert h.value == pytest.approx(128.3, abs=0.2)
 
 
@@ -76,8 +76,8 @@ def test_vector_4_co2_one_hour_average_of_3_1_is_a_verified_alert():
     assert keys(r) == {"env-co2-1h"}
     h = by_key(r, "env-co2-1h")
     assert (h.severity, h.evidence_state, h.source_requirement) == (
-        "alerta",
-        "VERIFICADO",
+        "alert",
+        "VERIFIED",
         "V2 6004",
     )
     assert h.value == pytest.approx(3.1)
@@ -101,7 +101,7 @@ def test_vector_6_a_14_psi_drop_in_half_a_minute_is_a_rapid_depressurization():
     r = run({**nominal(), "pressure_kpa": p})
     h = by_key(r, "env-dpdt")
     assert h.value == pytest.approx(28.0, rel=0.02)
-    assert (h.severity, h.evidence_state) == ("alerta", "VERIFICADO")
+    assert (h.severity, h.evidence_state) == ("alert", "VERIFIED")
 
 
 def test_a_change_of_one_psi_or_less_is_exempt_even_if_it_is_fast():
@@ -120,10 +120,10 @@ def test_each_zone_is_evaluated_on_its_own():
 
 
 def test_a_worse_band_supersedes_the_milder_ones():
-    r = run(nominal(o2_pct=17.0))  # PIO2 ~121: bajo 127 (alerta), ventana de 1 h no cubierta
+    r = run(nominal(o2_pct=17.0))  # PIO2 ~121: below 127 (alert), 1 h window not covered
     assert "env-pio2-low" in keys(r) and "env-pio2-low-pre" not in keys(r)
     assert "env-pio2-low-pre" in r.superseded
-    full = run(hour(o2_pct=17.0))  # con 1 h de datos entra el límite absoluto
+    full = run(hour(o2_pct=17.0))  # with 1 h of data the absolute limit kicks in
     assert keys(full) == {"env-pio2-abs-low"}
     assert {"env-pio2-low", "env-pio2-low-pre"} <= full.superseded
 
@@ -157,9 +157,9 @@ def test_inactive_rules_are_ignored():
 
 
 def test_a_windowed_rule_needs_the_window_to_be_covered_by_data():
-    short = nominal(co2_mmhg=3.5)  # solo 60 s de datos
+    short = nominal(co2_mmhg=3.5)  # only 60 s of data
     assert "env-co2-1h" not in keys(run(short))
-    assert "env-co2-1h" in keys(run(short, scale=1 / 60))  # tiempo de demostración
+    assert "env-co2-1h" in keys(run(short, scale=1 / 60))  # demo time
 
 
 def test_a_trend_warns_before_any_threshold_is_crossed():
@@ -170,7 +170,7 @@ def test_a_trend_warns_before_any_threshold_is_crossed():
     r = run({**nominal(seconds=119), "co2_mmhg": series})
     assert keys(r) == {"env-trend-co2"}
     h = by_key(r, "env-trend-co2")
-    assert (h.severity, h.evidence_state) == ("atencion", "DEMO")
+    assert (h.severity, h.evidence_state) == ("attention", "DEMO")
 
 
 def test_a_trend_is_not_reported_when_a_threshold_rule_already_covers_that_parameter():
@@ -186,8 +186,8 @@ def test_every_hit_carries_its_source_and_auditable_evidence():
     h = by_key(run(hour(co2_mmhg=3.1)), "env-co2-1h")
     ev = h.as_evidence()
     assert ev["source_document"] == "NASA-STD-3001 Vol. 2 Rev F"
-    assert ev["hrp_hazard"] == "entornos_cerrados_hostiles"
-    assert ev["action_key"] == "revisar_ventilacion_y_filtros"
+    assert ev["hrp_hazard"] == "hostile_closed_environments"
+    assert ev["action_key"] == "check_ventilation_and_filters"
     assert {
         "parameter",
         "value",
@@ -210,7 +210,7 @@ def test_missing_metrics_do_not_break_the_evaluation():
 def test_hits_are_sorted_from_the_most_severe():
     r = run(nominal(humidity_pct=82.0, temperature_c=26.0))
     sev = [h.severity for h in r.hits]
-    order = {"critico": 0, "alerta": 1, "atencion": 2}
+    order = {"critical": 0, "alert": 1, "attention": 2}
     assert sev == sorted(sev, key=order.__getitem__)
 
 
@@ -221,22 +221,22 @@ def sampled(values: list[float], step: int) -> list[Sample]:
 
 def test_a_trend_is_detected_with_the_normative_5_second_atmosphere_sampling():
     rng = random.Random(11)
-    co2 = [0.7 + rng.gauss(0, 0.03) for _ in range(60)]  # 300 s a una muestra cada 5 s
-    co2[-3:] = [v + 1.5 for v in co2[-3:]]  # sube en los últimos 15 s
+    co2 = [0.7 + rng.gauss(0, 0.03) for _ in range(60)]  # 300 s at one sample every 5 s
+    co2[-3:] = [v + 1.5 for v in co2[-3:]]  # rises in the last 15 s
     r = run({**nominal(seconds=300, step=5), "co2_mmhg": sampled(co2, 5)})
     assert "env-trend-co2" in keys(r)
 
 
 def test_slow_temperature_sampling_every_minute_can_still_show_a_trend():
     rng = random.Random(5)
-    t = [22.0 + rng.gauss(0, 0.05) for _ in range(40)]  # 40 min, una muestra por minuto
+    t = [22.0 + rng.gauss(0, 0.05) for _ in range(40)]  # 40 min, one sample per minute
     t[-3:] = [v + 3.0 for v in t[-3:]]
     r = run({**nominal(seconds=2400, step=60), "temperature_c": sampled(t, 60)})
     assert "env-trend-t" in keys(r)
 
 
 def test_an_exponential_leak_like_the_simulator_makes_triggers_the_rate_rule_within_10_seconds():
-    # Primeros 10 s de la fuga: 46,3 kPa de caída total con constante de 0,05 por segundo.
+    # First 10 s of the leak: 46.3 kPa total drop with a constant of 0.05 per second.
     p = [
         Sample(NOW - timedelta(seconds=10 - i), 101.3 - 46.3 * (1 - 2.718281828 ** (-0.05 * i)))
         for i in range(11)
@@ -247,7 +247,7 @@ def test_an_exponential_leak_like_the_simulator_makes_triggers_the_rate_rule_wit
 
 
 def test_a_leak_that_has_already_slowed_down_is_exempt_by_the_one_psi_rule():
-    # Hacia el segundo 30 la caída de los últimos 10 s es de 0,97 psi: no supera 1,0 psi.
+    # Around second 30 the drop over the last 10 s is 0.97 psi: it does not exceed 1.0 psi.
     p = [
         Sample(
             NOW - timedelta(seconds=10 - i), 101.3 - 46.3 * (1 - 2.718281828 ** (-0.05 * (20 + i)))

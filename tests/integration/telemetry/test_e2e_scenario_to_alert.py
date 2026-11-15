@@ -1,4 +1,4 @@
-"""De un escenario simulado a la alerta, con el relay, los handlers y PostgreSQL reales."""
+"""From a simulated scenario to the alert, with the real relay, handlers and PostgreSQL."""
 
 from datetime import timedelta
 from pathlib import Path
@@ -66,11 +66,11 @@ async def test_a_slow_co2_scenario_warns_first_and_then_raises_the_verified_aler
     alerts = await run_scenario(session_factory, "co2_slow", "lab", start_at=150, until=330)
     lab = LAYOUT.zone_id("lab")
     keys = [a.key for a in alerts]
-    assert all(a.zone_id == lab for a in alerts)  # ninguna otra zona se alteró
+    assert all(a.zone_id == lab for a in alerts)  # no other zone was altered
     assert "env-trend-co2" in keys and "env-co2-1h" in keys
-    assert keys.index("env-trend-co2") < keys.index("env-co2-1h")  # primero la tendencia
+    assert keys.index("env-trend-co2") < keys.index("env-co2-1h")  # the trend first
     final = next(a for a in alerts if a.key == "env-co2-1h")
-    assert (final.severity, final.status) == ("alerta", "raised")
+    assert (final.severity, final.status) == ("alert", "raised")
 
 
 async def test_a_normal_run_raises_no_alerts_at_all(session_factory):

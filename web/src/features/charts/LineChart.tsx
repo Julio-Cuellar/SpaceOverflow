@@ -17,12 +17,12 @@ const WIDTH = 300
 const HEIGHT = 120
 
 /**
- * Gráfica de tendencia en SVG. Las marcas (umbral, anomalía) llevan texto, no solo color.
- * uPlot dibuja en canvas y no se puede probar en jsdom; por eso la gráfica es SVG.
+ * SVG trend chart. The marks (threshold, anomaly) carry text, not just color.
+ * uPlot draws on canvas and cannot be tested in jsdom; that is why the chart is SVG.
  */
 export function LineChart({ label, unit, points, threshold, anomaly = false }: LineChartProps) {
   if (points.length === 0) {
-    return <p>Esperando lecturas del simulador</p>
+    return <p>Waiting for simulator readings</p>
   }
 
   const values = points.map((p) => p.v)
@@ -41,7 +41,7 @@ export function LineChart({ label, unit, points, threshold, anomaly = false }: L
     <figure>
       <svg
         role="img"
-        aria-label={`${label}, último valor ${last} ${unit}`}
+        aria-label={`${label}, last value ${last} ${unit}`}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         width="100%"
       >
@@ -60,7 +60,7 @@ export function LineChart({ label, unit, points, threshold, anomaly = false }: L
           </g>
         )}
       </svg>
-      {anomaly && <figcaption>ANOMALÍA</figcaption>}
+      {anomaly && <figcaption>ANOMALY</figcaption>}
     </figure>
   )
 }

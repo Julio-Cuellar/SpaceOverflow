@@ -1,4 +1,4 @@
-"""Dominio de Nave e incidencias: plano, catálogo de tipos y decisiones sobre tickets y zonas."""
+"""Facility domain: floor plan, type catalog and decisions about tickets and zones."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ CATALOG = load_catalog(ROOT / "data" / "facility" / "incident_types.json")
 RULES = rules(ROOT / "rules" / "catalog" / "monitoring.json")
 
 
-# --- plano -------------------------------------------------------------------------------
+# --- floor plan -------------------------------------------------------------------------------
 
 
 def test_the_plan_has_the_ten_zones_the_simulator_uses() -> None:
@@ -40,17 +40,17 @@ def test_the_plan_has_the_ten_zones_the_simulator_uses() -> None:
 
 def test_zone_ids_are_the_stable_ids_telemetry_uses() -> None:
     lab = PLAN.zone("lab")
-    assert lab is not None and lab.id == zone_id("nave-transito", "lab")
+    assert lab is not None and lab.id == zone_id("transit-ship", "lab")
     assert PLAN.zone("nope") is None
 
 
 def test_a_plan_with_repeated_zone_codes_is_rejected() -> None:
-    z = ZonePlan("lab", "Laboratorio", "laboratorio", 1, {"x": 0, "y": 0, "w": 1, "h": 1})
+    z = ZonePlan("lab", "Laboratory", "laboratory", 1, {"x": 0, "y": 0, "w": 1, "h": 1})
     with pytest.raises(InvalidPlan, match="lab"):
-        Plan("h", "H", "nave", 101.3, (z, z))
+        Plan("h", "H", "ship", 101.3, (z, z))
 
 
-# --- catálogo ----------------------------------------------------------------------------
+# --- catalog ----------------------------------------------------------------------------
 
 
 def test_the_catalog_has_61_types_in_12_categories() -> None:
@@ -62,7 +62,7 @@ def test_every_rule_of_an_auto_type_exists_or_is_explicitly_pending() -> None:
     for t in CATALOG.types:
         for key in t.rule_keys:
             assert key in known or key in CATALOG.pending_rules, f"{t.key}: {key}"
-    assert not (CATALOG.pending_rules & known), "una regla que ya existe no puede seguir pendiente"
+    assert not (CATALOG.pending_rules & known), "a rule that already exists cannot stay pending"
 
 
 def test_every_monitoring_rule_maps_to_exactly_one_incident_type() -> None:
@@ -83,7 +83,7 @@ def _type(**kw: object) -> IncidentType:
         name="N",
         detection="MANUAL",
         rule_keys=(),
-        default_severity="alerta",
+        default_severity="alert",
         evidence_state="DEMO",
         typical_zones=("*",),
         suggested_actions=(),
@@ -94,16 +94,16 @@ def _type(**kw: object) -> IncidentType:
 @pytest.mark.parametrize(
     ("kw", "message"),
     [
-        ({"category": "zzz"}, "categoría"),
-        ({"default_severity": "grave"}, "severidad"),
-        ({"detection": "AUTO"}, "regla"),
+        ({"category": "zzz"}, "category"),
+        ({"default_severity": "grave"}, "severity"),
+        ({"detection": "AUTO"}, "rule"),
         ({"rule_keys": ("r",)}, "MANUAL"),
-        ({"evidence_state": "X"}, "evidencia"),
+        ({"evidence_state": "X"}, "evidence"),
     ],
 )
 def test_invalid_types_are_rejected(kw: dict[str, object], message: str) -> None:
     with pytest.raises(InvalidCatalog, match=message):
-        IncidentCatalog("v", {"atm": "Atmósfera"}, (_type(**kw),), frozenset())
+        IncidentCatalog("v", {"atm": "Atmosphere"}, (_type(**kw),), frozenset())
 
 
 def test_a_rule_cannot_belong_to_two_types() -> None:
@@ -113,40 +113,40 @@ def test_a_rule_cannot_belong_to_two_types() -> None:
         IncidentCatalog("v", {"atm": "A"}, (a, b), frozenset())
 
 
-# --- tickets y zonas ---------------------------------------------------------------------
+# --- tickets and zones ---------------------------------------------------------------------
 
 
-def test_only_alerta_or_worse_opens_a_ticket() -> None:
-    assert [opens_ticket(s) for s in ("atencion", "alerta", "critico")] == [False, True, True]
+def test_only_alert_or_worse_opens_a_ticket() -> None:
+    assert [opens_ticket(s) for s in ("attention", "alert", "critical")] == [False, True, True]
 
 
 def test_an_alert_opens_escalates_or_annotates_the_zone_ticket() -> None:
-    ticket = OpenTicket(severity="alerta", source="ALERTA", status="abierta")
-    assert on_alert(None, "atencion") == "ignore"
-    assert on_alert(None, "alerta") == "open"
-    assert on_alert(ticket, "alerta") == "note"
-    assert on_alert(ticket, "critico") == "escalate"
-    assert on_alert(OpenTicket("critico", "ALERTA", "reconocida"), "alerta") == "note"
+    ticket = OpenTicket(severity="alert", source="ALERT", status="open")
+    assert on_alert(None, "attention") == "ignore"
+    assert on_alert(None, "alert") == "open"
+    assert on_alert(ticket, "alert") == "note"
+    assert on_alert(ticket, "critical") == "escalate"
+    assert on_alert(OpenTicket("critical", "ALERT", "acknowledged"), "alert") == "note"
 
 
 def test_zone_status_is_the_worst_of_active_alerts_and_open_tickets() -> None:
     assert zone_status([], []) == "normal"
-    assert zone_status(["atencion"], []) == "atencion"
-    assert zone_status(["atencion"], ["critico"]) == "critico"
-    assert zone_status(["critico", "alerta"], ["alerta"]) == "critico"
+    assert zone_status(["attention"], []) == "attention"
+    assert zone_status(["attention"], ["critical"]) == "critical"
+    assert zone_status(["critical", "alert"], ["alert"]) == "critical"
 
 
 def test_an_automatic_ticket_cannot_be_resolved_while_its_zone_has_active_alerts() -> None:
-    assert resolve_check("ALERTA", "abierta", active_alerts=1) == "ACTIVE_ALERTS"
-    assert resolve_check("ALERTA", "reconocida", active_alerts=0) is None
-    assert resolve_check("MANUAL", "abierta", active_alerts=2) is None
-    assert resolve_check("MANUAL", "resuelta", active_alerts=0) == "ALREADY_RESOLVED"
+    assert resolve_check("ALERT", "open", active_alerts=1) == "ACTIVE_ALERTS"
+    assert resolve_check("ALERT", "acknowledged", active_alerts=0) is None
+    assert resolve_check("MANUAL", "open", active_alerts=2) is None
+    assert resolve_check("MANUAL", "resolved", active_alerts=0) == "ALREADY_RESOLVED"
 
 
 def test_the_description_says_what_where_value_limit_and_source() -> None:
     text = describe(
-        "CO₂ alto",
-        "Laboratorio",
+        "High CO₂",
+        "Laboratory",
         {
             "parameter": "ppco2",
             "value": 3.4,
@@ -156,17 +156,17 @@ def test_the_description_says_what_where_value_limit_and_source() -> None:
             "window_s": 3600,
             "source_requirement": "V2 6.2.1",
             "source_document": "NASA-STD-3001",
-            "evidence_state": "VERIFICADO",
+            "evidence_state": "VERIFIED",
         },
     )
     assert text == (
-        "CO₂ alto en Laboratorio: ppco2 = 3.4 mmHg (límite > 3.0, ventana 3600 s). "
-        "Fuente: NASA-STD-3001 V2 6.2.1 [VERIFICADO]."
+        "High CO₂ in Laboratory: ppco2 = 3.4 mmHg (limit > 3.0, window 3600 s). "
+        "Source: NASA-STD-3001 V2 6.2.1 [VERIFIED]."
     )
 
 
 def test_the_description_tolerates_missing_evidence() -> None:
-    assert describe("CO₂ alto", "Laboratorio", {}) == "CO₂ alto en Laboratorio."
+    assert describe("High CO₂", "Laboratory", {}) == "High CO₂ in Laboratory."
 
 
 def test_the_incident_code_is_a_padded_sequence_number() -> None:

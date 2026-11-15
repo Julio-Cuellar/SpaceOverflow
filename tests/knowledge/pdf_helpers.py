@@ -1,4 +1,4 @@
-"""Ayudante de pruebas: arma un PDF mínimo con una línea de texto por página, sin librerías."""
+"""Test helper: builds a minimal PDF with one line of text per page, without libraries."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ def _escape(text: str) -> str:
 
 
 def make_pdf(pages: list[str]) -> bytes:
-    """PDF 1.4 con fuente Helvetica. Cada elemento de `pages` es el texto de una página."""
+    """PDF 1.4 with Helvetica font. Each element of `pages` is the text of one page."""
     count = len(pages)
     kids = " ".join(f"{4 + 2 * i} 0 R" for i in range(count))
     objects: list[bytes] = [

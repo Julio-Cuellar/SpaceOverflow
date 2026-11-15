@@ -1,4 +1,4 @@
-"""Fixtures comunes. Las de integración levantan PostgreSQL real con testcontainers."""
+"""Common fixtures. The integration ones start a real PostgreSQL with testcontainers."""
 
 from __future__ import annotations
 
@@ -58,7 +58,7 @@ def alembic_config(module: str, url: str) -> Config:
 def pg_sync_url() -> Iterator[str]:
     try:
         from testcontainers.community.postgres import PostgresContainer
-    except ImportError:  # versiones anteriores de testcontainers
+    except ImportError:  # earlier versions of testcontainers
         from testcontainers.postgres import PostgresContainer
 
     _point_docker_to_desktop_socket()

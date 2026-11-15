@@ -76,9 +76,9 @@ async def test_add_persists_the_alert_with_evidence_and_dedupe_key(session_facto
         await repo.ensure_rules(CATALOG)
         alert_id = await repo.add(H, Z, hit(), T0)
     (row,) = await rows(session_factory, "SELECT * FROM monitoring.alert")
-    assert row["id"] == alert_id and row["status"] == "raised" and row["severity"] == "alerta"
+    assert row["id"] == alert_id and row["status"] == "raised" and row["severity"] == "alert"
     assert row["dedupe_key"] == f"env-co2-1h:{Z}" and row["evidence"]["value"] == 3.4
-    assert row["cause_hint"] == "AMBIENTE" and row["raised_at"] == T0
+    assert row["cause_hint"] == "ENVIRONMENT" and row["raised_at"] == T0
 
 
 async def test_the_database_refuses_a_second_active_alert_for_the_same_rule_and_zone(

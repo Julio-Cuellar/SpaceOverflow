@@ -1,4 +1,4 @@
-"""Caso de uso: evaluar las reglas con cada lote de lecturas y gestionar las alertas."""
+"""Use case: evaluate the rules on each batch of readings and manage the alerts."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from spaceapp.platform.bus import HandlerContext
 from spaceapp.platform.events import EventEnvelope, EventPayload
 
 METRICS = ("pressure_kpa", "o2_pct", "co2_mmhg", "temperature_c", "humidity_pct")
-TREND_BASELINE_S = 90  # historia que necesita el detector de tendencia
+TREND_BASELINE_S = 90  # history the trend detector needs
 
 
 class EvaluateReadings:
@@ -38,10 +38,10 @@ class EvaluateReadings:
         self._hysteresis = hysteresis
 
     def _lookback(self) -> timedelta:
-        """Historia necesaria: la mayor ventana (escalada) o la línea base de una tendencia."""
+        """Required history: the largest (scaled) window or the baseline of a trend."""
         spans = [
             float(r.params.get("baseline_from_s", TREND_BASELINE_S))
-            if r.kind == "tendencia"
+            if r.kind == "trend"
             else r.window_s * (self._scale if r.params.get("scalable", True) else 1.0)
             for r in self._catalog.active_rules()
         ]
@@ -97,12 +97,12 @@ class EvaluateReadings:
 
 
 def _raised(alert_id: UUID, zone: UUID, hit: RuleHit) -> AlertRaised:
-    # Todas las reglas actuales son ambientales: la causa probable es el aire.
+    # All current rules are environmental: the probable cause is the air.
     return AlertRaised(
         alert_id=alert_id,
         zone_id=zone,
         rule_key=hit.rule_key,
         severity=hit.severity,
         evidence=hit.as_evidence(),
-        cause_hint="AMBIENTE",
+        cause_hint="ENVIRONMENT",
     )

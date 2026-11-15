@@ -1,4 +1,4 @@
-"""Los contratos publicados para Dev B (tarea 5.4) están al día con el código."""
+"""The contracts published for Dev B (task 5.4) are up to date with the code."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_the_published_file_matches_what_the_code_generates(name: str) -> None:
     published = (ROOT / "contracts" / name).read_text(encoding="utf-8")
     assert published == render(name), (
-        f"contracts/{name} está desactualizado: uv run python -m spaceapp.interfaces.contracts_export"
+        f"contracts/{name} is stale: uv run python -m spaceapp.interfaces.contracts_export"
     )
 
 
@@ -24,7 +24,7 @@ def test_rendering_twice_gives_the_same_bytes() -> None:
 
 
 def test_the_frontend_draft_is_not_overwritten() -> None:
-    assert "schema.graphql" not in CONTRACTS, "contracts/schema.graphql es el borrador de Dev B"
+    assert "schema.graphql" not in CONTRACTS, "contracts/schema.graphql is Dev B's draft"
 
 
 def test_check_mode_fails_when_a_file_is_stale(tmp_path: Path) -> None:

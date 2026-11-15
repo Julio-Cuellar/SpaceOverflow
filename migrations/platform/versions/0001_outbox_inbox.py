@@ -1,4 +1,4 @@
-"""Outbox transaccional e inbox de idempotencia.
+"""Transactional outbox and idempotency inbox.
 
 Revision ID: 0001
 Revises:

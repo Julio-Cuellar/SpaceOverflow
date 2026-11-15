@@ -1,4 +1,4 @@
-"""Relay del outbox: entrega al menos una vez, con inbox, reintentos y eventos muertos."""
+"""Outbox relay: at-least-once delivery, with inbox, retries and dead events."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ _RETRY = text(
 
 
 def backoff_seconds(attempts: int) -> int:
-    """1, 2, 4, 8 … con tope de 60 s."""
+    """1, 2, 4, 8 … capped at 60 s."""
     return min(60, 1 << (attempts - 1))
 
 
@@ -67,7 +67,7 @@ class OutboxRelay:
         self.purge_interval = purge_interval
 
     async def run_once(self) -> int:
-        """Procesa un lote de pendientes en orden de id. Devuelve cuántos tomó."""
+        """Processes a batch of pending events in id order. Returns how many it took."""
         async with self._sf() as session, session.begin():
             rows = (await session.execute(_SELECT_PENDING, {"n": self.batch_size})).mappings().all()
             for row in rows:
@@ -93,7 +93,7 @@ class OutboxRelay:
             try:
                 await self._run_handler(sub, envelope)
             except Exception as exc:
-                log.warning("handler %s falló con %s: %r", sub.consumer, envelope.type, exc)
+                log.warning("handler %s failed with %s: %r", sub.consumer, envelope.type, exc)
                 errors.append(f"{sub.consumer}: {exc!r}")
         if not errors:
             await session.execute(_DONE, {"id": row["id"]})
@@ -111,10 +111,10 @@ class OutboxRelay:
         )
 
     async def _run_handler(self, sub: Subscription, envelope: EventEnvelope) -> None:
-        """Cada handler corre en su propia transacción junto con su marca en el inbox."""
+        """Each handler runs in its own transaction together with its mark in the inbox."""
         async with self._sf() as hs, hs.begin():
             fresh = (await hs.execute(_INBOX, {"c": sub.consumer, "e": envelope.event_id})).first()
-            if fresh is None:  # ya se procesó: se omite
+            if fresh is None:  # already processed: skipped
                 return
 
             async def publish(event: EventEnvelope) -> None:
@@ -123,7 +123,7 @@ class OutboxRelay:
             await sub.handler(envelope, HandlerContext(publish=publish, session=hs))
 
     async def run_forever(self, stop: asyncio.Event) -> None:
-        """Se despierta con LISTEN/NOTIFY y, como red de seguridad, por sondeo."""
+        """It wakes up on LISTEN/NOTIFY and, as a safety net, by polling."""
         wake = asyncio.Event()
         conn: asyncpg.Connection | None = None
         if self._listen_dsn:
@@ -141,21 +141,21 @@ class OutboxRelay:
                     if await self.run_once():
                         continue
                 except Exception:
-                    log.exception("el relay no pudo leer el outbox")
+                    log.exception("the relay could not read the outbox")
                 await self._sleep(wake, stop)
         finally:
             if conn is not None:
                 await conn.close()
 
     async def _purge(self) -> None:
-        """Los eventos entregados se conservan 24 h (para `resume`) y después se borran."""
+        """Delivered events are kept for 24 h (for `resume`) and then deleted."""
         try:
             async with self._sf() as session, session.begin():
                 purged = await purge_done(session, RETENTION)
             if purged:
-                log.info("se borraron %d eventos entregados del outbox", purged)
+                log.info("deleted %d delivered events from the outbox", purged)
         except Exception:
-            log.exception("no se pudo limpiar el outbox")
+            log.exception("could not purge the outbox")
 
     async def _sleep(self, wake: asyncio.Event, stop: asyncio.Event) -> None:
         tasks = {asyncio.create_task(wake.wait()), asyncio.create_task(stop.wait())}

@@ -34,7 +34,7 @@ def test_bounded_noise_never_triggers_below_the_minimum_change(base, seed):
 
 def test_a_sustained_drift_is_detected_with_its_numbers():
     values = noisy_flat(0.7, 0.04, 100)
-    values[-8:] = [v + 1.5 for v in values[-8:]]  # sube en los últimos 8 s
+    values[-8:] = [v + 1.5 for v in values[-8:]]  # rises in the last 8 s
     r = detect_trend(make(values), NOW, min_delta=0.6)
     assert r is not None
     assert r.delta > 1.0 and r.recent_mean > r.baseline_mean
@@ -50,7 +50,7 @@ def test_a_drop_is_also_a_trend():
 
 def test_a_single_spike_inside_the_baseline_does_not_count():
     values = noisy_flat(0.7, 0.04, 100)
-    values[50] += 5  # dentro de la línea base (de -60 a -20 s)
+    values[50] += 5  # inside the baseline (from -60 to -20 s)
     assert detect_trend(make(values), NOW, min_delta=0.6) is None
 
 
@@ -60,5 +60,5 @@ def test_without_enough_history_nothing_is_decided():
 
 
 def test_without_recent_samples_nothing_is_decided():
-    old = make(noisy_flat(0.7, 0.04, 100))[:-10]  # faltan los últimos 10 s
+    old = make(noisy_flat(0.7, 0.04, 100))[:-10]  # the last 10 s are missing
     assert detect_trend(old, NOW, min_delta=0.6) is None

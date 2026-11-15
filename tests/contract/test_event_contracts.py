@@ -38,7 +38,7 @@ CIT = {
     "document_code": "TB-004",
     "requirement_ref": None,
     "page": 3,
-    "excerpt": "dolor de cabeza",
+    "excerpt": "headache",
     "evidence_state": "TB",
 }
 
@@ -60,9 +60,9 @@ SAMPLES: dict[str, dict[str, Any]] = {
         "alert_id": UUID1,
         "zone_id": UUID2,
         "rule_key": "env-co2-1h",
-        "severity": "alerta",
+        "severity": "alert",
         "evidence": {"value": 3.4},
-        "cause_hint": "AMBIENTE",
+        "cause_hint": "ENVIRONMENT",
     },
     "monitoring.alert_acknowledged": {"alert_id": UUID1, "crew_member_id": UUID2, "at": NOW},
     "monitoring.alert_resolved": {"alert_id": UUID1, "resolved_at": NOW, "duration_s": 120},
@@ -72,28 +72,32 @@ SAMPLES: dict[str, dict[str, Any]] = {
         "action_keys": ["revisar_ventilacion"],
         "citations": [CIT],
     },
-    "knowledge.recommendation_enriched": {"recommendation_id": UUID1, "text": "texto"},
+    "knowledge.recommendation_enriched": {"recommendation_id": UUID1, "text": "text"},
     "engagement.task_assigned": {
         "task_id": UUID1,
         "crew_member_id": UUID2,
-        "kind": "INCIDENTE",
-        "origin": "SISTEMA",
+        "kind": "INCIDENT",
+        "origin": "SYSTEM",
         "action_key": None,
         "due_at": NOW,
     },
     "engagement.task_completed": {"task_id": UUID1, "action_key": None, "effective": True},
     "engagement.task_created": {
         "task_id": UUID1,
-        "kind": "NAVE",
-        "title": "Revisar filtro",
+        "kind": "SHIP",
+        "title": "Check filter",
         "zone_id": None,
-        "origin": "TRIPULACION",
+        "origin": "CREW",
     },
-    "engagement.task_blocked": {"task_id": UUID1, "origin": "TIERRA", "reason": "Zona inaccesible"},
+    "engagement.task_blocked": {
+        "task_id": UUID1,
+        "origin": "GROUND",
+        "reason": "Zone inaccessible",
+    },
     "engagement.ground_plan_applied": {"plan_version": 12, "applied": [UUID1], "rejected": []},
     "assistant.answer_ready": {"utterance_id": UUID1, "text": "respuesta", "citations": [CIT]},
     "crew.baseline_updated": {"crew_member_id": UUID1, "metric": "hr", "value": 62.0},
-    "crew.consent_changed": {"crew_member_id": UUID1, "category": "tareas", "shared": True},
+    "crew.consent_changed": {"crew_member_id": UUID1, "category": "tasks", "shared": True},
     "groundlink.link_state_changed": {"state": "DOWN", "since": NOW, "queued": 3},
     "groundlink.batch_acknowledged": {"batch_id": UUID1, "items": 4, "acked_at": NOW},
     "groundlink.ground_plan_received": {
@@ -102,9 +106,9 @@ SAMPLES: dict[str, dict[str, Any]] = {
         "changes": [
             {
                 "change": "NEW",
-                "kind": "SALUD",
-                "title": "Registrar masa corporal",
-                "recurrence": "Diaria",
+                "kind": "HEALTH",
+                "title": "Record body mass",
+                "recurrence": "Daily",
                 "zone_code": None,
                 "target_template_id": None,
             }
@@ -113,19 +117,19 @@ SAMPLES: dict[str, dict[str, Any]] = {
     "facility.incident_opened": {
         "incident_id": UUID1,
         "zone_id": UUID2,
-        "severity": "alerta",
-        "title": "CO2 alto",
+        "severity": "alert",
+        "title": "High CO2",
         "description": "ppCO2 3.4",
-        "source": "ALERTA",
+        "source": "ALERT",
     },
     "facility.incident_updated": {
         "incident_id": UUID1,
-        "severity": "critico",
-        "status": "reconocida",
+        "severity": "critical",
+        "status": "acknowledged",
         "note": None,
     },
     "facility.incident_resolved": {"incident_id": UUID1, "zone_id": UUID2, "resolved_at": NOW},
-    "facility.zone_status_changed": {"zone_id": UUID1, "status": "alerta", "open_incidents": 1},
+    "facility.zone_status_changed": {"zone_id": UUID1, "status": "alert", "open_incidents": 1},
 }
 
 
@@ -140,7 +144,7 @@ def test_every_event_name_is_module_dot_fact():
 
 def test_every_event_belongs_to_the_module_that_declares_it():
     for name, model in EVENT_MODELS.items():
-        module = model.__module__.split(".")[2]  # spaceapp.modules.<modulo>.contracts
+        module = model.__module__.split(".")[2]  # spaceapp.modules.<module>.contracts
         assert name.split(".")[0] == module, (name, module)
 
 
@@ -159,14 +163,14 @@ def test_sample_payload_validates_against_its_model(name: str):
 @pytest.mark.parametrize("name", sorted(EXPECTED))
 def test_unknown_fields_are_rejected(name: str):
     with pytest.raises(ValidationError):
-        EVENT_MODELS[name].model_validate({**SAMPLES[name], "campo_inventado": 1})
+        EVENT_MODELS[name].model_validate({**SAMPLES[name], "invented_field": 1})
 
 
 def test_severity_and_evidence_use_the_shared_vocabulary():
-    bad = {**SAMPLES["monitoring.alert_raised"], "severity": "rojo"}
+    bad = {**SAMPLES["monitoring.alert_raised"], "severity": "red"}
     with pytest.raises(ValidationError):
         EVENT_MODELS["monitoring.alert_raised"].model_validate(bad)
-    bad_cit = {**CIT, "evidence_state": "INVENTADO"}
+    bad_cit = {**CIT, "evidence_state": "INVENTED"}
     with pytest.raises(ValidationError):
         EVENT_MODELS["assistant.answer_ready"].model_validate(
             {**SAMPLES["assistant.answer_ready"], "citations": [bad_cit]}

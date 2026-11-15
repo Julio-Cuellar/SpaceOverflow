@@ -6,7 +6,7 @@ from spaceapp.modules.monitoring.domain.lifecycle import ActiveAlert, ack_decisi
 Z = uuid4()
 
 
-def hit(key: str = "env-co2-1h", zone=Z, severity: str = "alerta") -> RuleHit:
+def hit(key: str = "env-co2-1h", zone=Z, severity: str = "alert") -> RuleHit:
     return RuleHit(
         rule_key=key,
         zone_id=zone,
@@ -17,13 +17,13 @@ def hit(key: str = "env-co2-1h", zone=Z, severity: str = "alerta") -> RuleHit:
         operator=">",
         threshold=3.0,
         window_s=3600,
-        band="sobre 3 mmHg",
-        kind="umbral",
-        evidence_state="VERIFICADO",
+        band="above 3 mmHg",
+        kind="threshold",
+        evidence_state="VERIFIED",
         source_requirement="V2 6004",
         source_document="NASA-STD-3001 Vol. 2 Rev F",
-        hrp_hazard="entornos_cerrados_hostiles",
-        action_key="revisar_ventilacion_y_filtros",
+        hrp_hazard="hostile_closed_environments",
+        action_key="check_ventilation_and_filters",
     )
 
 
@@ -32,7 +32,7 @@ def active(key: str = "env-co2-1h", zone=Z, streak: int = 0, status: str = "rais
         id=uuid4(),
         rule_key=key,
         zone_id=zone,
-        severity="alerta",
+        severity="alert",
         status=status,
         clear_streak=streak,
     )

@@ -1,4 +1,4 @@
-"""Entorno de Alembic compartido: un esquema y una tabla de versión por módulo."""
+"""Shared Alembic environment: one schema and one version table per module."""
 
 from alembic import context
 from sqlalchemy import create_engine, pool, text
@@ -6,9 +6,11 @@ from sqlalchemy import create_engine, pool, text
 
 def run(schema: str) -> None:
     url = context.config.get_main_option("sqlalchemy.url")
-    assert url, "falta sqlalchemy.url (use el driver psycopg, por ejemplo postgresql+psycopg://...)"
+    assert url, (
+        "sqlalchemy.url is missing (use the psycopg driver, for example postgresql+psycopg://...)"
+    )
     if context.is_offline_mode():
-        raise RuntimeError("Las migraciones se aplican en línea")
+        raise RuntimeError("Migrations are applied online")
     engine = create_engine(url, poolclass=pool.NullPool)
     with engine.connect() as connection:
         connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))

@@ -1,4 +1,4 @@
-"""Puertos del asistente: lo que necesita del exterior. Las lecturas van por fachadas públicas."""
+"""Assistant ports: what it needs from the outside. Reads go through public facades."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ class StoredMessage:
 
 
 class LlmGateway(Protocol):
-    """Redacta con un modelo, solo con lo recuperado. `available` es False en el adaptador nulo."""
+    """Composes with a model, only from what was retrieved. `available` is False without one."""
 
     available: bool
 
@@ -35,7 +35,7 @@ class PassageSearch(Protocol):
 
 
 class ActiveAlerts(Protocol):
-    """Solo lectura. El asistente puede nombrar una alerta activa, nunca cambiarla."""
+    """Read-only. The assistant may name an active alert, never change it."""
 
     def titles(self) -> list[str]: ...
 
@@ -44,13 +44,13 @@ class ConversationRepository(Protocol):
     def add(
         self, conversation_id: UUID, role: str, text: str, citations: tuple[CitationDTO, ...]
     ) -> UUID:
-        """Guarda un mensaje y devuelve su id (el `utterance_id` del evento)."""
+        """Stores a message and returns its id (the event's `utterance_id`)."""
         ...
 
     def messages(self, conversation_id: UUID) -> list[StoredMessage]: ...
 
 
 class EventPublisher(Protocol):
-    """Publica por el outbox (en memoria hasta I1). No bloquea la respuesta al astronauta."""
+    """Publishes through the outbox (in memory until I1). It does not block the astronaut answer."""
 
     def publish(self, event: AnswerReady) -> None: ...

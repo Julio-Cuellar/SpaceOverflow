@@ -1,4 +1,4 @@
-"""Contexto de cada operación GraphQL: los servicios que arma el composition root."""
+"""Context of each GraphQL operation: the services assembled by the composition root."""
 
 from __future__ import annotations
 
@@ -36,9 +36,9 @@ class Services:
     engagement: EngagementService
     tasks: TaskQuery
     ground: GroundControl
-    # Quién firma las acciones hasta que exista la selección de perfil.
+    # Who signs actions until profile selection exists.
     crew_member: UUID
-    # Solo en los perfiles de desarrollo; en `jurado` es None y la consulta devuelve null.
+    # Only in the development profiles; in `jury` it is None and the query returns null.
     outbox_stats: Callable[[], Awaitable[OutboxStats]] | None = None
 
 

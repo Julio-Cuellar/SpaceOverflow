@@ -1,4 +1,4 @@
-"""Búsqueda de pasajes por términos, sin modelo. Umbral mínimo: por debajo no hay pasaje."""
+"""Passage search by terms, without a model. Minimum threshold: below it there is no passage."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ MIN_SCORE = 1
 
 
 def normalize(text: str) -> str:
-    """Minúsculas y sin acentos. «CO₂» queda como «co2»."""
+    """Lowercase and ASCII-folded. "CO₂" becomes "co2"."""
     decomposed = unicodedata.normalize("NFKD", text.lower())
     return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
 
@@ -31,7 +31,7 @@ class Indexed[T]:
 
 
 def rank[T](query: str, indexed: Sequence[Indexed[T]], k: int) -> list[T]:
-    """Los pasajes con más términos en común, hasta k. Empates: el orden del catálogo."""
+    """The passages with the most terms in common, up to k. Ties: catalog order."""
     query_terms = terms(query)
     scored = [
         (len(query_terms & entry.keywords), position, entry.item)

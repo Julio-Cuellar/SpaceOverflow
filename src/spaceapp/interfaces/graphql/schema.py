@@ -1,6 +1,6 @@
-"""Esquema GraphQL compuesto. Las consultas leen fachadas; las mutaciones llaman casos de uso.
+"""Composed GraphQL schema. Queries read facades; mutations call use cases.
 
-Los errores esperados son tipos del esquema (`union`), no excepciones.
+Expected errors are schema types (`union`), not exceptions.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ from spaceapp.platform.vocab import Citation as CitationDTO
 MAX_DEPTH = 10
 
 
-# --- Enumeraciones -------------------------------------------------------------------------
+# --- Enumerations --------------------------------------------------------------------------
 
 
 @strawberry.enum
@@ -70,7 +70,7 @@ class AlertErrorCode(Enum):
     ALREADY_RESOLVED = "ALREADY_RESOLVED"
 
 
-# --- Tablero -------------------------------------------------------------------------------
+# --- Dashboard -----------------------------------------------------------------------------
 
 
 @strawberry.type
@@ -93,7 +93,7 @@ class DashboardView:
     vitals: list[Vital]
 
 
-# --- Conocimiento --------------------------------------------------------------------------
+# --- Knowledge -----------------------------------------------------------------------------
 
 
 @strawberry.type(name="Citation")
@@ -147,7 +147,7 @@ class RecommendationType:
         )
 
 
-# --- Monitoreo -----------------------------------------------------------------------------
+# --- Monitoring ----------------------------------------------------------------------------
 
 
 @strawberry.type(name="Rule")
@@ -251,7 +251,7 @@ AcknowledgeAlertResult = Annotated[
 ]
 
 
-# --- Telemetría ----------------------------------------------------------------------------
+# --- Telemetry -----------------------------------------------------------------------------
 
 
 @strawberry.type(name="OutboxStats")
@@ -276,7 +276,7 @@ class ReadingSeries:
     points: list[ReadingPoint]
 
 
-# --- Raíces --------------------------------------------------------------------------------
+# --- Roots ---------------------------------------------------------------------------------
 
 
 @strawberry.type
@@ -363,7 +363,7 @@ class CoreQuery:
             for s in series
         ]
 
-    # Estado del outbox. Solo en perfiles de desarrollo; en `jurado` devuelve null.
+    # Outbox status. Only in development profiles; in `jury` it returns null.
     @strawberry.field
     async def outbox_stats(self, info: GqlInfo) -> OutboxStatsType | None:
         read = info.context.services.outbox_stats
@@ -389,16 +389,16 @@ class CoreMutation:
         services = info.context.services
         alert_id = uuid_or_none(id)
         if alert_id is None:
-            return AlertError(code=AlertErrorCode.NOT_FOUND, message=f"no existe la alerta {id}")
+            return AlertError(code=AlertErrorCode.NOT_FOUND, message=f"alert {id} does not exist")
         result = await services.acknowledge(alert_id, note)
         if isinstance(result, AlertNotFound):
-            return AlertError(code=AlertErrorCode.NOT_FOUND, message=f"no existe la alerta {id}")
+            return AlertError(code=AlertErrorCode.NOT_FOUND, message=f"alert {id} does not exist")
         if isinstance(result, AlertAlreadyResolved):
             return AlertError(
-                code=AlertErrorCode.ALREADY_RESOLVED, message="la alerta ya está resuelta"
+                code=AlertErrorCode.ALREADY_RESOLVED, message="the alert is already resolved"
             )
         view = await services.alerts.get(alert_id)
-        assert view is not None  # se acaba de reconocer en la misma base
+        assert view is not None  # it was just acknowledged in the same database
         return AlertAcknowledgedPayload(
             alert=AlertType.of(view), already_acknowledged=isinstance(result, AlreadyAcknowledged)
         )

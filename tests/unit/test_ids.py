@@ -2,14 +2,14 @@ from spaceapp.platform.ids import DEFAULT_HABITAT_CODE, habitat_id, sensor_id, s
 
 
 def test_the_same_names_always_give_the_same_uuid():
-    assert stable_uuid("zone", "nave", "lab") == stable_uuid("zone", "nave", "lab")
+    assert stable_uuid("zone", "ship", "lab") == stable_uuid("zone", "ship", "lab")
 
 
 def test_different_zones_and_habitats_never_collide():
     codes = ["eng", "eclss", "lab", "med", "bridge", "air", "store", "gym", "galley", "crew"]
     ids = {zone_id(DEFAULT_HABITAT_CODE, c) for c in codes}
     assert len(ids) == 10
-    assert zone_id("nave-a", "lab") != zone_id("nave-b", "lab")
+    assert zone_id("ship-a", "lab") != zone_id("ship-b", "lab")
     assert habitat_id() != zone_id(DEFAULT_HABITAT_CODE, "lab")
 
 

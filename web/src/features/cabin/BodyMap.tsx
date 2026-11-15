@@ -3,15 +3,15 @@ import type { EvidenceState } from '../../shared/lib/evidence'
 import { type Severity, severityMeta } from '../../shared/lib/severity'
 import { EvidenceBadge } from '../../shared/ui/EvidenceBadge'
 
-/** Peligros del programa de investigación humana de NASA (plan, sección 2). */
-export type HazardKey = 'radiacion' | 'aislamiento' | 'distancia' | 'gravedad' | 'entorno'
+/** Hazards of NASA's human research program (architecture plan, section 2). */
+export type HazardKey = 'radiation' | 'isolation' | 'distance' | 'gravity' | 'environment'
 
 const HAZARD_LABEL: Record<HazardKey, string> = {
-  radiacion: 'Radiación espacial',
-  aislamiento: 'Aislamiento y confinamiento',
-  distancia: 'Distancia de la Tierra',
-  gravedad: 'Campos gravitacionales',
-  entorno: 'Entorno cerrado hostil',
+  radiation: 'Space radiation',
+  isolation: 'Isolation and confinement',
+  distance: 'Distance from Earth',
+  gravity: 'Gravity fields',
+  environment: 'Hostile closed environment',
 }
 
 export interface BodyIndicator {
@@ -27,14 +27,14 @@ interface BodyMapProps {
   indicators: BodyIndicator[]
 }
 
-/** Indicadores del cuerpo. Los valores son de demostración y van marcados como simulados. */
+/** Body indicators. The values are demo values and are marked as simulated. */
 export function BodyMap({ indicators }: BodyMapProps) {
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const selected = indicators.find((i) => i.key === selectedKey)
 
   return (
-    <section aria-label="Cuerpo humano">
-      <p>Valores simulados, de demostración</p>
+    <section aria-label="Human body">
+      <p>Simulated values, for demonstration</p>
       <ul>
         {indicators.map((indicator) => {
           const meta = severityMeta(indicator.severity)
@@ -53,10 +53,10 @@ export function BodyMap({ indicators }: BodyMapProps) {
         })}
       </ul>
       {selected && (
-        <div role="region" aria-label="Detalle">
+        <div role="region" aria-label="Detail">
           <h3>{selected.label}</h3>
           <p>{selected.value}</p>
-          <p>Peligro del programa de NASA: {HAZARD_LABEL[selected.hazard]}</p>
+          <p>NASA program hazard: {HAZARD_LABEL[selected.hazard]}</p>
           <EvidenceBadge state={selected.evidenceState} />
         </div>
       )}

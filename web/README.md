@@ -1,36 +1,36 @@
-# web · interfaz del monitor de salud
+# web · health monitor interface
 
-Interfaz de la tripulación (SPA). **Prototipo de apoyo a la decisión: no es un dispositivo médico.** Todo valor sin fuente verificada se rotula `DEMO`, y los datos del cuerpo llevan además la marca «simulado».
+Crew interface (SPA). **Decision-support prototype: not a medical device.** Every value without a verified source is labeled `DEMO`, and body data additionally carries the "simulated" mark.
 
-## Estado
+## Status
 
-Funciona con **datos de demostración**: no hay backend conectado todavía (GraphQL y `/ws` llegan en el hito I2 con Dev A). Vistas: **Cabina**, **Nave** y **Asistente**.
+Runs on **demo data**: no backend is connected yet (GraphQL and `/ws` arrive at milestone I2 with Dev A). Views: **Cabin**, **Ship** and **Assistant**.
 
-## Comandos
+## Commands
 
 ```bash
-npm run dev            # servidor de desarrollo
-npm test               # pruebas (Vitest, jsdom)
-npm run test:coverage  # cobertura, umbral del 80 %
+npm run dev            # development server
+npm test               # tests (Vitest, jsdom)
+npm run test:coverage  # coverage, 80 % threshold
 npm run lint           # ESLint
-npm run typecheck      # TypeScript sin emitir
-npm run codegen        # tipos desde ../contracts/schema.graphql
-npm run build          # build de producción
+npm run typecheck      # TypeScript without emitting
+npm run codegen        # types from ../contracts/schema.graphql
+npm run build          # production build
 ```
 
-## Estructura
+## Structure
 
-- `src/app/`: estado puro de la demo (`scenario.ts`).
-- `src/features/cabin`, `ship`, `assistant`, `charts`: paneles por funcionalidad.
-- `src/shared/`: componentes base (`SevPill`, `EvidenceBadge`, `Banner`) y tokens de color.
-- `src/data/`: mocks (MSW, fixtures, grabaciones WS) y cola de mensajes `/ws`.
+- `src/app/`: pure demo state (`scenario.ts`).
+- `src/features/cabin`, `ship`, `assistant`, `charts`: panels by feature.
+- `src/shared/`: base components (`SevPill`, `EvidenceBadge`, `Banner`) and color tokens.
+- `src/data/`: mocks (MSW, fixtures, WS recordings) and the `/ws` message queue.
 
-## Reglas que cumple
+## Rules it follows
 
-- El color nunca va solo: cada estado lleva símbolo y texto (● Normal, ▲ Atención, ◆ Alerta, ■ Crítico).
-- La interfaz muestra lo que calcula el backend y no lo recalcula (por ejemplo PIO₂).
-- El asistente puede nombrar una alerta activa y nunca la cambia.
+- Color is never alone: every status carries a symbol and text (● Normal, ▲ Attention, ◆ Alert, ■ Critical).
+- The interface shows what the backend computes and does not recompute it (for example PIO₂).
+- The assistant may name an active alert and never changes it.
 
-## Pendiente
+## Pending
 
-Hook `useWs` y mutaciones GraphQL reales (I2), catálogo completo de 61 tipos de incidencia, silueta SVG del cuerpo, estados de error de red. El contrato `../contracts/schema.graphql` es un **borrador** pendiente de revisión de Dev A.
+`useWs` hook and real GraphQL mutations (I2), the full catalog of 61 incident types, the SVG body silhouette, network error states. The `../contracts/schema.graphql` contract is a **draft** pending Dev A's review.

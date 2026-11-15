@@ -10,12 +10,12 @@ describe('dashboardFixture', () => {
     expect(dashboard.vitals.every((v) => v.evidenceState)).toBe(true)
   })
 
-  it('raises the global severity to red (ALERTA) in the high CO2 scenario', () => {
-    expect(dashboardFixture('co2-alto').globalSeverity).toBe('ALERTA')
+  it('raises the global severity to red (ALERT) in the high CO2 scenario', () => {
+    expect(dashboardFixture('co2_slow').globalSeverity).toBe('ALERT')
   })
 
   it('marks body values as simulated, so the interface can say so', () => {
-    const bodyValues = dashboardFixture('normal').vitals.filter((v) => v.domain === 'cuerpo')
+    const bodyValues = dashboardFixture('normal').vitals.filter((v) => v.domain === 'body')
 
     expect(bodyValues.length).toBeGreaterThan(0)
     expect(bodyValues.every((v) => v.origin === 'SIMULATED')).toBe(true)

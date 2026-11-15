@@ -18,7 +18,7 @@ interface ZoneChartsProps {
   series: Record<string, ZoneSeries>
 }
 
-/** Seis métricas de una zona. Al pausar se congelan las lecturas; al reanudar se ponen al día. */
+/** Six metrics of a zone. Pausing freezes the readings; resuming catches them up. */
 export function ZoneCharts({ zoneName, series }: ZoneChartsProps) {
   const keys = Object.keys(series)
   const [selectedKey, setSelectedKey] = useState(keys[0])
@@ -29,8 +29,8 @@ export function ZoneCharts({ zoneName, series }: ZoneChartsProps) {
   const current = view[selectedKey]
 
   return (
-    <section aria-label={`Atmósfera de ${zoneName}`}>
-      <div role="tablist" aria-label="Métricas">
+    <section aria-label={`${zoneName} atmosphere`}>
+      <div role="tablist" aria-label="Metrics">
         {keys.map((key) => (
           <button
             key={key}
@@ -44,9 +44,9 @@ export function ZoneCharts({ zoneName, series }: ZoneChartsProps) {
         ))}
       </div>
 
-      <p>{paused ? 'En pausa' : 'En vivo'}</p>
+      <p>{paused ? 'Paused' : 'Live'}</p>
       <button type="button" onClick={() => setFrozen(paused ? null : series)}>
-        {paused ? 'Reanudar' : 'Pausar'}
+        {paused ? 'Resume' : 'Pause'}
       </button>
 
       <LineChart

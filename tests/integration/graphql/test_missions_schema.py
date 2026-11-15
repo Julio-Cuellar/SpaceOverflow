@@ -1,4 +1,4 @@
-"""Tareas y plan de Tierra por GraphQL sobre la app real (relay y enlace simulado con demora)."""
+"""Tasks and Ground plan over GraphQL on the real app (relay and simulated link with delay)."""
 
 from __future__ import annotations
 
@@ -33,23 +33,23 @@ def test_the_crew_works_its_daily_tasks(session_factory: Any, async_url: str) ->
     with TestClient(create_app(Settings(database_url=async_url, relay_enabled=True))) as client:
         tasks = gql(client, f"{{ tasks {{ {TASK} }} streak }}")
         assert len(tasks["tasks"]) == 7 and tasks["streak"] == 0
-        routine = next(t for t in tasks["tasks"] if t["kind"] == "SALUD")
-        ship = next(t for t in tasks["tasks"] if t["kind"] == "NAVE")
+        routine = next(t for t in tasks["tasks"] if t["kind"] == "HEALTH")
+        ship = next(t for t in tasks["tasks"] if t["kind"] == "SHIP")
 
         done = gql(
             client,
             f"mutation($id: ID!) {{ completeTask(id: $id, effective: true) {{ {TASK_RESULT} }} }}",
             id=routine["id"],
         )["completeTask"]
-        assert done["task"]["status"] == "COMPLETADA" and done["task"]["effective"] is True
+        assert done["task"]["status"] == "COMPLETED" and done["task"]["effective"] is True
         assert gql(client, "{ streak }")["streak"] == 1
 
         blocked = gql(
             client,
-            f'mutation($id: ID!) {{ blockTask(id: $id, reason: "Sin repuesto") {{ {TASK_RESULT} }} }}',
+            f'mutation($id: ID!) {{ blockTask(id: $id, reason: "No spare part") {{ {TASK_RESULT} }} }}',
             id=ship["id"],
         )["blockTask"]
-        assert blocked["task"]["blockedReason"] == "Sin repuesto"
+        assert blocked["task"]["blockedReason"] == "No spare part"
 
         refused = gql(
             client,
@@ -60,9 +60,9 @@ def test_the_crew_works_its_daily_tasks(session_factory: Any, async_url: str) ->
 
         own = gql(
             client,
-            f'mutation {{ createTask(kind: NAVE, title: "Ordenar el almacén") {{ {TASK_RESULT} }} }}',
+            f'mutation {{ createTask(kind: SHIP, title: "Tidy the storeroom") {{ {TASK_RESULT} }} }}',
         )["createTask"]["task"]
-        assert own["origin"] == "TRIPULACION"
+        assert own["origin"] == "CREW"
         deleted = gql(
             client,
             "mutation($id: ID!) { deleteTask(id: $id) { __typename ... on TaskDeleted { id } } }",
@@ -81,28 +81,28 @@ def test_ground_publishes_a_plan_that_reaches_the_crew(
         )
         saved = gql(
             client,
-            f'mutation {{ saveGroundTemplate(title: "Ejercicio de Tierra", kind: SALUD) {{ {GROUND_RESULT} }} }}',
+            f'mutation {{ saveGroundTemplate(title: "Ground exercise", kind: HEALTH) {{ {GROUND_RESULT} }} }}',
         )["saveGroundTemplate"]
         assert saved["draft"]["templates"] == [
-            {"title": "Ejercicio de Tierra", "status": "PENDIENTE", "cancelled": False}
+            {"title": "Ground exercise", "status": "PENDING", "cancelled": False}
         ]
         published = gql(client, f"mutation {{ publishGroundPlan {{ {GROUND_RESULT} }} }}")
-        assert published["publishGroundPlan"]["published"]["stage"] == "EN_EL_ENLACE"
+        assert published["publishGroundPlan"]["published"]["stage"] == "IN_TRANSIT"
 
         stage, deadline = None, time.monotonic() + 15
-        while stage != "CONFIRMADO" and time.monotonic() < deadline:
+        while stage != "CONFIRMED" and time.monotonic() < deadline:
             time.sleep(0.1)
             view = gql(client, f"{{ groundControl {{ {GROUND} }} }}")["groundControl"]
             stage = view["published"]["stage"]
-        assert stage == "CONFIRMADO", view
+        assert stage == "CONFIRMED", view
         assert view["appliedVersion"] == 1
         assert [(t["title"], t["status"]) for t in view["templates"]] == [
-            ("Ejercicio de Tierra", "APLICADA")
+            ("Ground exercise", "APPLIED")
         ]
         crew = gql(
             client, f"{{ tasks {{ {TASK} }} groundPlan {{ version rejected {{ reason }} }} }}"
         )
-        assert any(t["origin"] == "TIERRA" for t in crew["tasks"])
+        assert any(t["origin"] == "GROUND" for t in crew["tasks"])
         assert crew["groundPlan"] == {"version": 1, "rejected": []}
 
         busy = gql(client, f"mutation {{ publishGroundPlan {{ {GROUND_RESULT} }} }}")

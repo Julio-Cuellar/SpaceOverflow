@@ -1,4 +1,4 @@
-"""Alerta → recomendación sobre el outbox real de PostgreSQL (relay de Dev A, sin simulación)."""
+"""Alert -> recommendation over the real PostgreSQL outbox (Dev A relay, no simulation)."""
 
 from __future__ import annotations
 
@@ -32,9 +32,9 @@ def alert(rule_key: str) -> EventEnvelope:
         alert_id=uuid4(),
         zone_id=uuid4(),
         rule_key=rule_key,
-        severity="alerta",
+        severity="alert",
         evidence={"value": 3.4},
-        cause_hint="AMBIENTE",
+        cause_hint="ENVIRONMENT",
     )
     return EventEnvelope.from_payload(
         payload, aggregate_type="alert", aggregate_id=payload.alert_id, partition_key="habitat:h-1"
@@ -65,8 +65,8 @@ async def test_a_raised_alert_leaves_a_recommendation_ready_event_in_the_outbox(
         await uow.publish(cause)
     relay = OutboxRelay(session_factory, registry(repo))
 
-    await relay.run_once()  # entrega la alerta; el handler publica la recomendación
-    await relay.run_once()  # entrega la recomendación (nadie la consume todavía)
+    await relay.run_once()  # delivers the alert; the handler publishes the recommendation
+    await relay.run_once()  # delivers the recommendation (nobody consumes it yet)
 
     rows = await outbox(session_factory)
     assert [(r["type"], r["status"]) for r in rows] == [
@@ -77,8 +77,8 @@ async def test_a_raised_alert_leaves_a_recommendation_ready_event_in_the_outbox(
     payload = json.loads(payload) if isinstance(payload, str) else payload
     ready = RecommendationReady.model_validate(payload)
     assert ready.alert_id == cause.aggregate_id
-    assert "revisar_suministro_o2_y_presion" in ready.action_keys
-    assert {c.evidence_state for c in ready.citations} <= {"VERIFICADO"}
+    assert "check_o2_supply_and_pressure" in ready.action_keys
+    assert {c.evidence_state for c in ready.citations} <= {"VERIFIED"}
     assert len(repo.all()) == 1
 
 
@@ -86,11 +86,11 @@ async def test_an_alert_of_an_unknown_rule_stays_pending_with_the_error_recorded
     session_factory,  # type: ignore[no-untyped-def]
 ) -> None:
     async with UnitOfWork(session_factory) as uow:
-        await uow.publish(alert("regla-que-no-existe"))
+        await uow.publish(alert("rule-that-does-not-exist"))
 
     await OutboxRelay(session_factory, registry(InMemoryRecommendations())).run_once()
 
     [row] = await outbox(session_factory)
     assert row["status"] == "pending"
     assert row["attempts"] == 1
-    assert "regla-que-no-existe" in row["last_error"]
+    assert "rule-that-does-not-exist" in row["last_error"]

@@ -1,4 +1,4 @@
-"""Endpoint `/ws`: un solo canal de push. Las acciones del usuario van por GraphQL."""
+"""Endpoint `/ws`: a single push channel. User actions go through GraphQL."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from spaceapp.modules.realtime.domain.messages import system_message
 from spaceapp.modules.realtime.ports import OutboxReplay
 
 RESUME_LIMIT = 1000
-# Sin mensajes durante este tiempo el servidor envía `ping` para mantener viva la conexión.
+# With no messages for this long the server sends `ping` to keep the connection alive.
 PING_INTERVAL_S = 15
 
 
@@ -31,9 +31,9 @@ async def _handle(client: Client, raw: str, replay: OutboxReplay | None) -> None
     try:
         msg: Any = json.loads(raw)
     except json.JSONDecodeError:
-        return _error(client, "el mensaje no es JSON")
+        return _error(client, "the message is not JSON")
     if not isinstance(msg, dict):
-        return _error(client, "el mensaje debe ser un objeto JSON")
+        return _error(client, "the message must be a JSON object")
     kind = msg.get("type")
     match kind:
         case "ping":
@@ -41,7 +41,7 @@ async def _handle(client: Client, raw: str, replay: OutboxReplay | None) -> None
         case "subscribe" | "unsubscribe":
             topics = msg.get("topics")
             if not isinstance(topics, list) or not all(isinstance(t, str) for t in topics):
-                return _error(client, "topics debe ser una lista de textos")
+                return _error(client, "topics must be a list of strings")
             try:
                 (client.subscribe if kind == "subscribe" else client.unsubscribe)(topics)
             except ValueError as exc:
@@ -50,9 +50,11 @@ async def _handle(client: Client, raw: str, replay: OutboxReplay | None) -> None
         case "resume":
             after = msg.get("after_outbox_id")
             if not isinstance(after, int) or isinstance(after, bool) or after < 0:
-                return _error(client, "after_outbox_id debe ser un entero mayor o igual a 0")
+                return _error(
+                    client, "after_outbox_id must be an integer greater than or equal to 0"
+                )
             if replay is None:
-                return _error(client, "resume no está disponible sin outbox")
+                return _error(client, "resume is not available without an outbox")
             missed = [m for m in await replay.after(after, RESUME_LIMIT) if client.accepts(m)]
             for m in missed:
                 client.queue.push(m)
@@ -61,7 +63,7 @@ async def _handle(client: Client, raw: str, replay: OutboxReplay | None) -> None
                 system_message("resumed", {"count": len(missed), "last_seq": last}, _now())
             )
         case _:
-            _error(client, f"tipo de mensaje desconocido: {kind!r}")
+            _error(client, f"unknown message type: {kind!r}")
 
 
 def build_router(

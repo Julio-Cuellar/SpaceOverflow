@@ -10,15 +10,15 @@ interface Message {
 }
 
 interface AssistantPanelProps {
-  /** Responde una pregunta. Hoy es una simulación; en I2 será `askAssistant` por GraphQL. */
+  /** Answers a question. Today it is a simulation; in I2 it will be `askAssistant` over GraphQL. */
   answerFor: (question: string) => AssistantAnswer
-  /** Adaptador de redacción: Ollama local o nube. */
-  mode: 'local' | 'nube'
+  /** Wording adapter: local Ollama or cloud. */
+  mode: 'local' | 'cloud'
 }
 
-const EXAMPLES = ['¿Por qué me duele la cabeza?', '¿Cuánto dura el mareo espacial?']
+const EXAMPLES = ['Why do I have a headache?', 'How long does space sickness last?']
 
-/** Chat de texto. Cada respuesta cita sus fuentes; sin pasaje, dice que no tiene información. */
+/** Text chat. Each answer cites its sources; with no passage, it says it has no information. */
 export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
   const inputId = useId()
   const [draft, setDraft] = useState('')
@@ -37,12 +37,12 @@ export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
   }
 
   return (
-    <section aria-label="Asistente">
+    <section aria-label="Assistant">
       <p>
-        <span className="chip">Modo {mode}</span>
+        <span className="chip">{mode === 'local' ? 'Local mode' : 'Cloud mode'}</span>
       </p>
 
-      <ul aria-label="Preguntas de ejemplo">
+      <ul aria-label="Example questions">
         {EXAMPLES.map((example) => (
           <li key={example}>
             <button type="button" onClick={() => send(example)}>
@@ -52,21 +52,21 @@ export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
         ))}
       </ul>
 
-      <ol aria-label="Conversación">
+      <ol aria-label="Conversation">
         {messages.map((message) => (
           <li key={message.id}>
             {message.role === 'crew' ? (
               <p>
-                <strong>Tú:</strong> {message.text}
+                <strong>You:</strong> {message.text}
               </p>
             ) : (
               <>
                 <p className="answer-text">{message.text}</p>
                 {message.answer && message.answer.citations.length > 0 && (
-                  <ul aria-label="Fuentes">
+                  <ul aria-label="Sources">
                     {message.answer.citations.map((c) => (
                       <li key={c.documentCode}>
-                        <a href={`#pasaje/${encodeURIComponent(c.documentCode)}`}>
+                        <a href={`#passage/${encodeURIComponent(c.documentCode)}`}>
                           {c.documentCode}
                           {c.requirementRef ? ` · ${c.requirementRef}` : ''}
                         </a>{' '}
@@ -87,10 +87,10 @@ export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
           send(draft)
         }}
       >
-        <label htmlFor={inputId}>Pregunta</label>
+        <label htmlFor={inputId}>Question</label>
         <textarea id={inputId} value={draft} onChange={(e) => setDraft(e.target.value)} />
         <button type="submit" disabled={draft.trim() === ''}>
-          Preguntar
+          Ask
         </button>
       </form>
     </section>

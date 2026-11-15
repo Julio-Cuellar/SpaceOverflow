@@ -21,5 +21,5 @@ def test_a_client_with_the_current_version_gets_304_without_a_body():
         etag = client.get("/api/v1/rules/catalog.json").headers["etag"]
         r = client.get("/api/v1/rules/catalog.json", headers={"If-None-Match": etag})
         assert r.status_code == 304 and r.content == b""
-        other = client.get("/api/v1/rules/catalog.json", headers={"If-None-Match": '"viejo"'})
+        other = client.get("/api/v1/rules/catalog.json", headers={"If-None-Match": '"old"'})
         assert other.status_code == 200

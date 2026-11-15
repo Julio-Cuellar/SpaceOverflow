@@ -1,4 +1,4 @@
-"""Plantillas de tareas, tareas del día y planes de Tierra aplicados.
+"""Task templates, daily tasks and applied Ground plans.
 
 Revision ID: 0001
 Revises:
@@ -27,9 +27,9 @@ def upgrade() -> None:
           due_time     text        NOT NULL DEFAULT '12:00',
           plan_version int,
           updated_at   timestamptz NOT NULL DEFAULT now(),
-          CONSTRAINT template_kind_chk CHECK (kind IN ('SALUD', 'NAVE')),
-          CONSTRAINT template_origin_chk CHECK (origin IN ('TIERRA', 'SISTEMA', 'TRIPULACION')),
-          CONSTRAINT template_recurrence_chk CHECK (recurrence IN ('DIARIA', 'UNA_VEZ'))
+          CONSTRAINT template_kind_chk CHECK (kind IN ('HEALTH', 'SHIP')),
+          CONSTRAINT template_origin_chk CHECK (origin IN ('GROUND', 'SYSTEM', 'CREW')),
+          CONSTRAINT template_recurrence_chk CHECK (recurrence IN ('DAILY', 'ONCE'))
         )
         """
     )
@@ -45,7 +45,7 @@ def upgrade() -> None:
           zone_id         uuid,
           day             date        NOT NULL,
           due_at          timestamptz NOT NULL,
-          status          text        NOT NULL DEFAULT 'PENDIENTE',
+          status          text        NOT NULL DEFAULT 'PENDING',
           blocked_reason  text,
           effective       boolean,
           completed_at    timestamptz,
@@ -53,14 +53,14 @@ def upgrade() -> None:
           incident_id     uuid,
           action_key      text,
           created_at      timestamptz NOT NULL DEFAULT now(),
-          CONSTRAINT task_kind_chk CHECK (kind IN ('SALUD', 'NAVE', 'INCIDENTE')),
-          CONSTRAINT task_origin_chk CHECK (origin IN ('TIERRA', 'SISTEMA', 'TRIPULACION')),
-          CONSTRAINT task_status_chk CHECK (status IN ('PENDIENTE', 'COMPLETADA', 'BLOQUEADA'))
+          CONSTRAINT task_kind_chk CHECK (kind IN ('HEALTH', 'SHIP', 'INCIDENT')),
+          CONSTRAINT task_origin_chk CHECK (origin IN ('GROUND', 'SYSTEM', 'CREW')),
+          CONSTRAINT task_status_chk CHECK (status IN ('PENDING', 'COMPLETED', 'BLOCKED'))
         )
         """
     )
-    # Idempotencia de lo que crea el sistema: una tarea por plantilla y día, una por incidente
-    # y una por acción de cada alerta.
+    # Idempotency of what the system creates: one task per template and day, one per incident
+    # and one per action of each alert.
     op.execute(
         "CREATE UNIQUE INDEX task_template_day ON engagement.task (template_id, day) "
         "WHERE template_id IS NOT NULL"

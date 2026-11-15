@@ -1,28 +1,30 @@
-# assistant · asistente de texto
+# assistant · text assistant
 
-Responde preguntas de la tripulación **solo con pasajes recuperados** y los cita. **Nunca decide ni cambia una alerta**: solo puede nombrar las activas.
+Answers crew questions **only with retrieved passages** and cites them. It **never decides or changes an alert**: it can only name the active ones.
 
-## Política de respuesta (`application/ask.py`)
+## Answer policy (`application/ask.py`)
 
-1. Busca pasajes con `KnowledgeQuery`. Sin pasaje relevante responde «No tengo esa información en las fuentes cargadas.» y **no llama al modelo**.
-2. Con pasajes, redacta con un `LlmGateway` dentro de un **tiempo límite de 8 s**. Si el modelo tarda más, falla o no existe, responde con los pasajes en texto plano.
-3. Las **citas las pone el caso de uso**, no el modelo.
-4. Publica `assistant.answer_ready` (`AnswerReady`: `utterance_id`, `text`, `citations[]`). Una pregunta vacía no se guarda ni se publica.
+1. Looks up passages with `KnowledgeQuery`. With no relevant passage it answers "I don't have that information in the loaded sources." and **does not call the model**.
+2. With passages, it composes the answer with an `LlmGateway` within an **8 s time limit**. If the model takes longer, fails or does not exist, it answers with the passages as plain text.
+3. The **citations are set by the use case**, not by the model.
+4. Publishes `assistant.answer_ready` (`AnswerReady`: `utterance_id`, `text`, `citations[]`). An empty question is neither stored nor published.
 
-## Adaptadores de `LlmGateway`
+The assistant works in English only: questions, passages and answers.
 
-- `NullLlmGateway`: sin modelo; el caso de uso usa la plantilla. Es el que garantiza que todo funcione sin Ollama ni red.
-- `OllamaGateway`: Ollama local en streaming (NDJSON). El modelo se indica al crearlo; no hay uno elegido todavía.
+## `LlmGateway` adapters
 
-## Pruebas
+- `NullLlmGateway`: no model; the use case uses the template. It guarantees that everything works without Ollama or a network.
+- `OllamaGateway`: local Ollama with streaming (NDJSON). The model is given at creation; none has been chosen yet.
+
+## Tests
 
 ```bash
 .venv/bin/python -m pytest tests/assistant -q
 ```
 
-## Límites actuales
+## Current limits
 
-- Solo texto. La voz (F14) y la confirmación de lo transcrito no están hechas.
-- Conversaciones en memoria; falta el esquema `assistant` en PostgreSQL y su migración.
-- Faltan los resolvers GraphQL (`askAssistant`, `conversation`), que se registran en el esquema que compone Dev A.
-- La fuente de alertas activas es un puerto de solo lectura; hoy no hay adaptador real (`ActiveAlertsQuery` de Monitoreo).
+- Text only. Voice (F14) and confirmation of the transcribed text are not done.
+- Conversations live in memory; the `assistant` schema in PostgreSQL and its migration are missing.
+- The GraphQL resolvers (`askAssistant`, `conversation`) are missing; they are registered in the schema that Dev A composes.
+- The source of active alerts is a read-only port; today there is no real adapter (`ActiveAlertsQuery` of Monitoring).

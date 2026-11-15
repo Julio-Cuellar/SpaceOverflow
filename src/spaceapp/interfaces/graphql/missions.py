@@ -1,4 +1,4 @@
-"""Fragmento GraphQL de Misiones (tareas del día) y del panel de Tierra (planes y enlace)."""
+"""GraphQL fragment for Missions (tasks of the day) and the Ground panel (plans and link)."""
 
 from __future__ import annotations
 
@@ -20,23 +20,23 @@ from spaceapp.modules.groundlink.domain.plans import ShownTemplate
 
 @strawberry.enum
 class TaskKind(Enum):
-    SALUD = "SALUD"
-    NAVE = "NAVE"
-    INCIDENTE = "INCIDENTE"
+    HEALTH = "HEALTH"
+    SHIP = "SHIP"
+    INCIDENT = "INCIDENT"
 
 
 @strawberry.enum
 class TaskOrigin(Enum):
-    TIERRA = "TIERRA"
-    SISTEMA = "SISTEMA"
-    TRIPULACION = "TRIPULACION"
+    GROUND = "GROUND"
+    SYSTEM = "SYSTEM"
+    CREW = "CREW"
 
 
 @strawberry.enum
 class TaskStatus(Enum):
-    PENDIENTE = "PENDIENTE"
-    COMPLETADA = "COMPLETADA"
-    BLOQUEADA = "BLOQUEADA"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    BLOCKED = "BLOCKED"
 
 
 @strawberry.enum
@@ -53,21 +53,21 @@ class TaskErrorCode(Enum):
 
 @strawberry.enum
 class PlanStage(Enum):
-    BORRADOR = "BORRADOR"
-    EN_COLA = "EN_COLA"
-    EN_EL_ENLACE = "EN_EL_ENLACE"
-    RECIBIDO = "RECIBIDO"
-    APLICADO = "APLICADO"
-    CONFIRMADO = "CONFIRMADO"
-    RECHAZADO = "RECHAZADO"
+    DRAFT = "DRAFT"
+    QUEUED = "QUEUED"
+    IN_TRANSIT = "IN_TRANSIT"
+    RECEIVED = "RECEIVED"
+    APPLIED = "APPLIED"
+    CONFIRMED = "CONFIRMED"
+    REJECTED = "REJECTED"
 
 
 @strawberry.enum
 class GroundTemplateStatus(Enum):
-    PENDIENTE = "PENDIENTE"
-    APLICADA = "APLICADA"
-    COMPLETADA = "COMPLETADA"
-    BLOQUEADA = "BLOQUEADA"
+    PENDING = "PENDING"
+    APPLIED = "APPLIED"
+    COMPLETED = "COMPLETED"
+    BLOCKED = "BLOCKED"
 
 
 @strawberry.enum
@@ -79,7 +79,7 @@ class GroundErrorCode(Enum):
     PLAN_IN_FLIGHT = "PLAN_IN_FLIGHT"
 
 
-# --- Tareas --------------------------------------------------------------------------------
+# --- Tasks ---------------------------------------------------------------------------------
 
 
 def _id(value: UUID | None) -> strawberry.ID | None:
@@ -150,7 +150,7 @@ class RejectedPlanItem:
 
 @strawberry.type
 class GroundPlanOnBoard:
-    """El último plan de Tierra aplicado en la nave (lo que ve la tripulación)."""
+    """The latest Ground plan applied on the ship (what the crew sees)."""
 
     version: int
     applied_at: datetime
@@ -161,15 +161,15 @@ async def _task_result(info: GqlInfo, outcome: Outcome) -> TaskPayload | TaskErr
     if not isinstance(outcome, Done):
         return TaskError(code=TaskErrorCode(outcome.code), message=outcome.message)
     view = await info.context.services.tasks.get(outcome.task_id)
-    assert view is not None  # se acaba de escribir en la misma base
+    assert view is not None  # it was just written in the same database
     return TaskPayload(task=Task.of(view), already_done=outcome.already)
 
 
 def _missing(value: str) -> TaskError:
-    return TaskError(code=TaskErrorCode.NOT_FOUND, message=f"no existe la tarea {value}")
+    return TaskError(code=TaskErrorCode.NOT_FOUND, message=f"task {value} does not exist")
 
 
-# --- Panel de Tierra -----------------------------------------------------------------------
+# --- Ground panel --------------------------------------------------------------------------
 
 
 @strawberry.type
@@ -268,7 +268,7 @@ async def _ground_result(info: GqlInfo, outcome: GroundOutcome) -> GroundControl
     return GroundControlView.of(await info.context.services.ground.view())
 
 
-# --- Raíces --------------------------------------------------------------------------------
+# --- Roots ---------------------------------------------------------------------------------
 
 
 @strawberry.type
@@ -294,7 +294,7 @@ class MissionsQuery:
 
     @strawberry.field
     async def streak(self, info: GqlInfo, day: date | None = None) -> int:
-        """Rutinas de salud completadas en el día. Ni Tierra, ni incidentes, ni alertas suman."""
+        """Health routines completed during the day. Ground, incidents and alerts do not count."""
         services = info.context.services
         views = await services.tasks.day(
             day or services.engagement.today(), crew_member_id=services.crew_member
@@ -315,7 +315,7 @@ class MissionsQuery:
 
     @strawberry.field
     async def ground_control(self, info: GqlInfo) -> GroundControlView:
-        """Panel del centro de control (rol `ground`, sin autenticación en la demo)."""
+        """Mission control panel (role `ground`, no authentication in the demo)."""
         return GroundControlView.of(await info.context.services.ground.view())
 
 
@@ -403,7 +403,9 @@ class MissionsMutation:
     ) -> GroundResult:
         target = uuid_or_none(template_id) if template_id else None
         if template_id and target is None:
-            return GroundError(code=GroundErrorCode.NOT_FOUND, message=f"no existe {template_id}")
+            return GroundError(
+                code=GroundErrorCode.NOT_FOUND, message=f"{template_id} does not exist"
+            )
         outcome = await info.context.services.ground.save_template(
             title=title,
             kind=kind.value,
@@ -419,7 +421,9 @@ class MissionsMutation:
     ) -> GroundResult:
         target = uuid_or_none(template_id)
         if target is None:
-            return GroundError(code=GroundErrorCode.NOT_FOUND, message=f"no existe {template_id}")
+            return GroundError(
+                code=GroundErrorCode.NOT_FOUND, message=f"{template_id} does not exist"
+            )
         return await _ground_result(
             info, await info.context.services.ground.cancel_template(target)
         )

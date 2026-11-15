@@ -9,41 +9,41 @@ const readings = [
 
 describe('LineChart', () => {
   it('shows the empty state while there are no readings', () => {
-    render(<LineChart label="CO₂ promedio de 1 h" unit="mmHg" points={[]} />)
+    render(<LineChart label="1 h average CO₂" unit="mmHg" points={[]} />)
 
-    expect(screen.getByText('Esperando lecturas del simulador')).toBeInTheDocument()
+    expect(screen.getByText('Waiting for simulator readings')).toBeInTheDocument()
   })
 
   it('names the chart with its metric and its last value, for screen readers', () => {
-    render(<LineChart label="CO₂ promedio de 1 h" unit="mmHg" points={readings} />)
+    render(<LineChart label="1 h average CO₂" unit="mmHg" points={readings} />)
 
     expect(
-      screen.getByRole('img', { name: 'CO₂ promedio de 1 h, último valor 3.4 mmHg' }),
+      screen.getByRole('img', { name: '1 h average CO₂, last value 3.4 mmHg' }),
     ).toBeInTheDocument()
   })
 
   it('draws the threshold line and labels it with its value', () => {
     render(
       <LineChart
-        label="CO₂ promedio de 1 h"
+        label="1 h average CO₂"
         unit="mmHg"
         points={readings}
-        threshold={{ value: 3, label: 'Umbral 3 mmHg' }}
+        threshold={{ value: 3, label: 'Threshold 3 mmHg' }}
       />,
     )
 
-    expect(screen.getByText('Umbral 3 mmHg')).toBeInTheDocument()
+    expect(screen.getByText('Threshold 3 mmHg')).toBeInTheDocument()
   })
 
   it('marks an anomaly with a text label, not only with color', () => {
-    render(<LineChart label="Humedad" unit="%" points={readings} anomaly />)
+    render(<LineChart label="Humidity" unit="%" points={readings} anomaly />)
 
-    expect(screen.getByText('ANOMALÍA')).toBeInTheDocument()
+    expect(screen.getByText('ANOMALY')).toBeInTheDocument()
   })
 
   it('does not show the anomaly label when there is none', () => {
-    render(<LineChart label="Humedad" unit="%" points={readings} />)
+    render(<LineChart label="Humidity" unit="%" points={readings} />)
 
-    expect(screen.queryByText('ANOMALÍA')).not.toBeInTheDocument()
+    expect(screen.queryByText('ANOMALY')).not.toBeInTheDocument()
   })
 })

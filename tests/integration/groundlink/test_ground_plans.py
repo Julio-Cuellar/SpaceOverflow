@@ -1,4 +1,4 @@
-"""Plan desde Tierra de punta a punta (F11): borrador → enlace → nave → Misiones → confirmación."""
+"""Plan from Ground end to end (F11): draft → link → ship → Missions → acknowledgement."""
 
 from __future__ import annotations
 
@@ -56,7 +56,7 @@ class World(EngagementWorld):
         ]
 
     async def link_delivers(self) -> None:
-        """Pasa la demora del enlace: se entrega lo programado y la nave procesa sus eventos."""
+        """Lets the link delay elapse: what was scheduled is delivered and the ship processes its events."""
         jobs, self.scheduled = self.scheduled, []
         for job in jobs:
             await job()
@@ -68,7 +68,7 @@ class World(EngagementWorld):
         return view.published.status
 
     async def ground_tasks(self) -> list[Any]:
-        return [t for t in await self.today() if t.origin == "TIERRA"]
+        return [t for t in await self.today() if t.origin == "GROUND"]
 
 
 @pytest.fixture
@@ -77,119 +77,119 @@ def world(session_factory: Any) -> World:
 
 
 async def test_a_published_plan_travels_is_applied_and_confirmed(world: World) -> None:
-    assert await world.ground.save_template(title="Ejercicio de Tierra", kind="SALUD") == Ok(1)
+    assert await world.ground.save_template(title="Ground exercise", kind="HEALTH") == Ok(1)
     view = await world.ground.view()
-    assert view.draft_version == 1 and [t.status for t in view.draft or []] == ["PENDIENTE"]
+    assert view.draft_version == 1 and [t.status for t in view.draft or []] == ["PENDING"]
 
     assert await world.ground.publish() == Ok(1)
-    assert await world.stage() == "EN_EL_ENLACE"
+    assert await world.stage() == "IN_TRANSIT"
     await world.link_delivers()
-    assert await world.stage() == "CONFIRMADO"
+    assert await world.stage() == "CONFIRMED"
 
     [task] = await world.ground_tasks()
-    assert task.title == "Ejercicio de Tierra"
+    assert task.title == "Ground exercise"
     view = await world.ground.view()
     assert view.applied_version == 1 and view.draft is None
-    assert [(t.title, t.status) for t in view.templates] == [("Ejercicio de Tierra", "APLICADA")]
+    assert [(t.title, t.status) for t in view.templates] == [("Ground exercise", "APPLIED")]
 
 
 async def test_with_the_link_down_the_plan_waits_and_arrives_when_it_returns(world: World) -> None:
     await world.ground.set_link(False)
-    await world.ground.save_template(title="Hidratación", kind="SALUD")
+    await world.ground.save_template(title="Hydration", kind="HEALTH")
     await world.ground.publish()
-    assert await world.stage() == "EN_COLA" and world.scheduled == []
+    assert await world.stage() == "QUEUED" and world.scheduled == []
     assert await world.ground_tasks() == []
 
     await world.ground.set_link(True)
-    assert await world.stage() == "EN_EL_ENLACE"
+    assert await world.stage() == "IN_TRANSIT"
     await world.link_delivers()
-    assert await world.stage() == "CONFIRMADO"
-    assert [t.title for t in await world.ground_tasks()] == ["Hidratación"]
+    assert await world.stage() == "CONFIRMED"
+    assert [t.title for t in await world.ground_tasks()] == ["Hydration"]
 
 
 async def test_a_cut_while_in_flight_returns_the_plan_to_the_queue(world: World) -> None:
-    await world.ground.save_template(title="Sueño", kind="SALUD")
+    await world.ground.save_template(title="Sleep", kind="HEALTH")
     await world.ground.publish()
     await world.ground.set_link(False)
     await world.link_delivers()
-    assert await world.stage() == "EN_COLA"
+    assert await world.stage() == "QUEUED"
     await world.ground.set_link(True)
     await world.link_delivers()
-    assert await world.stage() == "CONFIRMADO"
+    assert await world.stage() == "CONFIRMED"
 
 
 async def test_the_confirmation_waits_for_the_link_too(world: World) -> None:
-    await world.ground.save_template(title="Sueño", kind="SALUD")
+    await world.ground.save_template(title="Sleep", kind="HEALTH")
     await world.ground.publish()
     jobs, world.scheduled = world.scheduled, []
     for job in jobs:
-        await job()  # llega a la nave
-    await world.ground.set_link(False)  # se corta antes de que suba la confirmación
+        await job()  # it reaches the ship
+    await world.ground.set_link(False)  # the link drops before the acknowledgement goes up
     await world.drain()
-    assert await world.stage() == "APLICADO"
+    assert await world.stage() == "APPLIED"
     await world.ground.set_link(True)
-    assert await world.stage() == "CONFIRMADO"
+    assert await world.stage() == "CONFIRMED"
 
 
 async def test_only_one_plan_in_flight_and_nothing_empty_is_published(world: World) -> None:
     empty = await world.ground.publish()
     assert isinstance(empty, Refused) and empty.code == "NOTHING_TO_PUBLISH"
-    await world.ground.save_template(title="A", kind="SALUD")
+    await world.ground.save_template(title="A", kind="HEALTH")
     await world.ground.publish()
-    await world.ground.save_template(title="B", kind="NAVE")
+    await world.ground.save_template(title="B", kind="SHIP")
     busy = await world.ground.publish()
     assert isinstance(busy, Refused) and busy.code == "PLAN_IN_FLIGHT"
 
 
 async def test_cancelling_keeps_what_the_crew_completed_and_shows_blocks(world: World) -> None:
-    await world.ground.save_template(title="Ejercicio", kind="SALUD")
-    await world.ground.save_template(title="Filtros", kind="NAVE", zone_code="lab")
+    await world.ground.save_template(title="Exercise", kind="HEALTH")
+    await world.ground.save_template(title="Filters", kind="SHIP", zone_code="lab")
     await world.ground.publish()
     await world.link_delivers()
     exercise, filters = sorted(await world.ground_tasks(), key=lambda t: t.title)
     await world.service.complete(exercise.id, True)
-    await world.service.block(filters.id, "Sin repuesto")
+    await world.service.block(filters.id, "No spare part")
 
     shown = {t.title: t for t in (await world.ground.view()).templates}
-    assert shown["Ejercicio"].status == "COMPLETADA"
-    assert (shown["Filtros"].status, shown["Filtros"].blocked_reason) == (
-        "BLOQUEADA",
-        "Sin repuesto",
+    assert shown["Exercise"].status == "COMPLETED"
+    assert (shown["Filters"].status, shown["Filters"].blocked_reason) == (
+        "BLOCKED",
+        "No spare part",
     )
 
     assert exercise.template_id is not None
     await world.ground.cancel_template(exercise.template_id)
     draft = {t.title: t for t in (await world.ground.view()).draft or []}
-    assert draft["Ejercicio"].cancelled and not draft["Filtros"].cancelled
+    assert draft["Exercise"].cancelled and not draft["Filters"].cancelled
     await world.ground.publish()
     await world.link_delivers()
-    assert await world.stage() == "CONFIRMADO"
+    assert await world.stage() == "CONFIRMED"
     done = await world.tasks.get(exercise.id)
-    assert done is not None and done.status == "COMPLETADA", "lo completado no se pierde"
-    assert [t.title for t in (await world.ground.view()).templates] == ["Filtros"]
+    assert done is not None and done.status == "COMPLETED", "what was completed is not lost"
+    assert [t.title for t in (await world.ground.view()).templates] == ["Filters"]
 
 
 async def test_an_invalid_item_is_rejected_alone_and_the_plan_is_still_confirmed(
     world: World,
 ) -> None:
-    await world.ground.save_template(title="Bien", kind="SALUD")
-    await world.ground.save_template(title="Fuera", kind="NAVE", zone_code="marte")
+    await world.ground.save_template(title="Good", kind="HEALTH")
+    await world.ground.save_template(title="Outside", kind="SHIP", zone_code="mars")
     await world.ground.publish()
     await world.link_delivers()
-    assert await world.stage() == "CONFIRMADO"
-    assert [t.title for t in await world.ground_tasks()] == ["Bien"]
+    assert await world.stage() == "CONFIRMED"
+    assert [t.title for t in await world.ground_tasks()] == ["Good"]
     async with world.sf() as s:
         rejected = (
             await s.execute(text("SELECT rejected FROM groundlink.inbound_plan"))
         ).scalar_one()
     rejected = rejected if isinstance(rejected, list) else json.loads(rejected)
-    assert rejected == [{"title": "Fuera", "reason": "zona inexistente 'marte'"}]
+    assert rejected == [{"title": "Outside", "reason": "nonexistent zone 'mars'"}]
 
 
 async def test_r9_rejects_a_corrupt_plan_whole_and_ignores_repeats(world: World) -> None:
     app = FastAPI()
     app.include_router(build_router(lambda: (world.receiver, world.ground)))
-    items = [{"change": "NEW", "kind": "SALUD", "title": "Desde R9"}]
+    items = [{"change": "NEW", "kind": "HEALTH", "title": "From R9"}]
     good = {
         "batch_id": str(uuid4()),
         "plan_version": 5,
@@ -200,7 +200,7 @@ async def test_r9_rejects_a_corrupt_plan_whole_and_ignores_repeats(world: World)
         corrupt = await client.post(
             "/api/v1/groundlink/inbound/plans", json={**good, "hash": "0" * 64}
         )
-        assert corrupt.status_code == 422 and "integridad" in corrupt.json()["reason"]
+        assert corrupt.status_code == 422 and "integrity" in corrupt.json()["reason"]
         first = await client.post("/api/v1/groundlink/inbound/plans", json=good)
         again = await client.post("/api/v1/groundlink/inbound/plans", json=good)
         older = {**good, "batch_id": str(uuid4()), "plan_version": 4, "hash": plan_hash(4, items)}
@@ -210,7 +210,7 @@ async def test_r9_rejects_a_corrupt_plan_whole_and_ignores_repeats(world: World)
             {"status": "ignored"},
             {"status": "ignored"},
         )
-        bad_item = [{"change": "NEW", "kind": "SALUD", "title": "x", "extra": 1}]
+        bad_item = [{"change": "NEW", "kind": "HEALTH", "title": "x", "extra": 1}]
         malformed = await client.post(
             "/api/v1/groundlink/inbound/plans",
             json={
@@ -225,4 +225,4 @@ async def test_r9_rejects_a_corrupt_plan_whole_and_ignores_repeats(world: World)
         link = await client.put("/api/v1/groundlink/link", json={"state": "DOWN", "delay_s": 5})
         assert link.json() == {"state": "DOWN", "delay_s": 5.0}
     await world.drain()
-    assert [t.title for t in await world.ground_tasks()] == ["Desde R9"]
+    assert [t.title for t in await world.ground_tasks()] == ["From R9"]

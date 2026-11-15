@@ -1,9 +1,10 @@
-"""Evaluación de la búsqueda (plan, F12.5): ¿sale el pasaje esperado y nunca se responde sin fuente?
+"""Search evaluation (architecture plan, F12.5): is the expected passage found, never unsourced?
 
-Mide dos cosas: el acierto del documento esperado entre los `k` primeros, y que ninguna pregunta
-fuera de alcance reciba un pasaje (una respuesta sin fuente sería un protocolo inventado).
+It measures two things: whether the expected document or text is among the top `k`, and that no
+out-of-scope question receives a passage (an answer without a source would be an invented
+protocol).
 
-Comando: `python -m spaceapp.modules.knowledge.evaluate`.
+Command: `python -m spaceapp.modules.knowledge.evaluate`.
 """
 
 from __future__ import annotations
@@ -60,7 +61,7 @@ def load_cases(path: Path) -> list[EvalCase]:
     for case in cases:
         if not (case.out_of_scope or case.expected_documents or case.expected_contains):
             raise ValueError(
-                "caso sin expectativa (ni documento, ni texto, ni fuera de alcance): "
+                "case without expectation (no document, no text, not out of scope): "
                 f"{case.question}"
             )
     return cases
@@ -77,8 +78,8 @@ def evaluate(search: PassageSource, cases: Sequence[EvalCase], k: int = 3) -> Ev
             continue
 
         result.in_scope += 1
-        # Sin documentos esperados vale cualquiera: los Technical Brief citan los mismos requisitos
-        # que la norma, así que lo que importa es que el texto esperado esté en el extracto.
+        # With no expected documents any will do: the Technical Briefs cite the same requirements
+        # as the standard, so what matters is that the expected text is in the excerpt.
         hit = any(
             (not case.expected_documents or passage.document_code in case.expected_documents)
             and all(text.lower() in passage.excerpt.lower() for text in case.expected_contains)
@@ -92,9 +93,8 @@ def evaluate(search: PassageSource, cases: Sequence[EvalCase], k: int = 3) -> Ev
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Evalúa la búsqueda de pasajes sobre el índice.")
+    parser = argparse.ArgumentParser(description="Evaluates passage search over the index.")
     parser.add_argument("--index", type=Path, default=Path("data/knowledge/index/chunks.jsonl"))
-    parser.add_argument("--glossary", type=Path, default=Path("data/knowledge/glossary_es_en.json"))
     parser.add_argument(
         "--questions", type=Path, default=Path("data/knowledge/eval_questions.json")
     )
@@ -104,29 +104,25 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if not args.index.exists() or not JsonlChunkStore(args.index).all():
         print(
-            "No hay índice. Ejecuta primero la ingesta: "
+            "There is no index. Run the ingestion first: "
             "python -m spaceapp.modules.knowledge.ingest",
             file=sys.stderr,
         )
         return 2
 
-    for path, name in ((args.glossary, "glosario"), (args.questions, "archivo de preguntas")):
-        if not path.exists():
-            print(f"No existe el {name}: {path}", file=sys.stderr)
-            return 2
+    if not args.questions.exists():
+        print(f"The questions file does not exist: {args.questions}", file=sys.stderr)
+        return 2
 
-    source = RagKnowledgeSource.from_index(args.index, args.glossary)
+    source = RagKnowledgeSource.from_index(args.index)
     result = evaluate(source, load_cases(args.questions), k=args.k)
 
-    print(f"Aciertos: {result.hits} de {result.in_scope} ({result.hit_rate:.0%})")
+    print(f"Hits: {result.hits} of {result.in_scope} ({result.hit_rate:.0%})")
     for question in result.misses:
-        print(f"  Sin acierto: {question}")
-    print(
-        f"Fuera de alcance respondidas: {len(result.answered_out_of_scope)} "
-        f"de {result.out_of_scope}"
-    )
+        print(f"  Miss: {question}")
+    print(f"Out-of-scope answered: {len(result.answered_out_of_scope)} of {result.out_of_scope}")
     for question in result.answered_out_of_scope:
-        print(f"  Respondida sin tener fuente: {question}")
+        print(f"  Answered without a source: {question}")
     return 0 if result.passed(args.min_hit_rate) else 1
 
 

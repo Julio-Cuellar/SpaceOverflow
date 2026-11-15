@@ -1,4 +1,4 @@
-"""Repositorio de alertas sobre PostgreSQL. Trabaja en la transacción de la sesión recibida."""
+"""Alert repository on PostgreSQL. Works inside the transaction of the session it receives."""
 
 from __future__ import annotations
 
@@ -70,7 +70,7 @@ class SqlAlertRepository:
         self._rule_ids: dict[str, UUID] = {}
 
     async def ensure_rules(self, catalog: RuleCatalog) -> None:
-        """Sincroniza el catálogo con la tabla. Una regla que cambia sube su versión."""
+        """Syncs the catalog with the table. A rule that changes gets its version bumped."""
         existing = {
             r.key: r
             for r in (
@@ -121,7 +121,7 @@ class SqlAlertRepository:
                 )
             ).scalar_one_or_none()
             if found is None:
-                raise LookupError(f"la regla {key!r} no está sincronizada: llame a ensure_rules")
+                raise LookupError(f"rule {key!r} is not synced: call ensure_rules")
             self._rule_ids[key] = found
         return self._rule_ids[key]
 
@@ -145,7 +145,7 @@ class SqlAlertRepository:
             text(
                 "INSERT INTO monitoring.alert (id, rule_id, habitat_id, zone_id, severity, status, "
                 "cause_hint, evidence, dedupe_key, raised_at) VALUES (:id, :rule, :h, :z, :sev, "
-                "'raised', 'AMBIENTE', CAST(:ev AS jsonb), :dk, :at)"
+                "'raised', 'ENVIRONMENT', CAST(:ev AS jsonb), :dk, :at)"
             ),
             {
                 "id": alert_id,

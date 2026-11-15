@@ -1,26 +1,26 @@
-export const EVIDENCE_STATES = ['VERIFICADO', 'TB', 'DEMO', 'SIMULADO', 'NO_VERIFICADO'] as const
+export const EVIDENCE_STATES = ['VERIFIED', 'TB', 'DEMO', 'SIMULATED', 'UNVERIFIED'] as const
 
 export type EvidenceState = (typeof EVIDENCE_STATES)[number]
 
 export const EVIDENCE_META: Record<EvidenceState, { label: string; title: string }> = {
-  VERIFICADO: {
-    label: 'VERIFICADO',
-    title: 'Valor verificado en un documento de NASA',
+  VERIFIED: {
+    label: 'VERIFIED',
+    title: 'Value verified in a NASA document',
   },
   TB: {
     label: 'TB',
-    title: 'Technical Brief de NASA (OCHMO): referencia, no norma',
+    title: 'NASA Technical Brief (OCHMO): reference, not a standard',
   },
   DEMO: {
     label: 'DEMO',
-    title: 'Dato de demostración: no es de NASA ni está verificado',
+    title: 'Demo data: not from NASA and not verified',
   },
-  SIMULADO: {
-    label: 'SIMULADO',
-    title: 'Dato simulado para la demostración',
+  SIMULATED: {
+    label: 'SIMULATED',
+    title: 'Simulated data for the demonstration',
   },
-  NO_VERIFICADO: {
-    label: 'NO VERIFICADO',
-    title: 'Sin fuente verificada',
+  UNVERIFIED: {
+    label: 'UNVERIFIED',
+    title: 'No verified source',
   },
 }

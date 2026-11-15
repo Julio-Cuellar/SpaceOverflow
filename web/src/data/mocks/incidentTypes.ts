@@ -5,7 +5,7 @@ export interface IncidentTypeView {
   key: string
   category: string
   name: string
-  /** AUTO: lo detecta una regla. MANUAL: lo reporta la tripulación. */
+  /** AUTO: detected by a rule. MANUAL: reported by the crew. */
   detection: 'AUTO' | 'MANUAL'
   defaultSeverity: Severity
   evidenceState: EvidenceState
@@ -14,68 +14,68 @@ export interface IncidentTypeView {
 }
 
 /**
- * Muestra de 6 de los 61 tipos del catálogo (plan, sección 13.9).
- * El catálogo completo llega como dato versionado; aquí solo sirve para la interfaz.
+ * Sample of 6 of the 61 catalog types (architecture plan, section 13.9).
+ * The full catalog arrives as versioned data; here it only serves the interface.
  */
 export const incidentTypesFixture: IncidentTypeView[] = [
   {
     key: 'co2_high',
-    category: 'Atmósfera y soporte vital',
-    name: 'CO₂ alto',
+    category: 'Atmosphere and life support',
+    name: 'High CO₂',
     detection: 'AUTO',
-    defaultSeverity: 'ALERTA',
-    evidenceState: 'VERIFICADO',
-    typicalZones: ['Cualquiera'],
-    suggestedActions: ['Revisar ventilación y filtros de CO₂', 'Medir CO₂ en zonas locales'],
+    defaultSeverity: 'ALERT',
+    evidenceState: 'VERIFIED',
+    typicalZones: ['Any'],
+    suggestedActions: ['Check ventilation and CO₂ filters', 'Measure CO₂ in local zones'],
   },
   {
     key: 'hypoxia',
-    category: 'Atmósfera y soporte vital',
-    name: 'Hipoxia (PIO₂ baja)',
+    category: 'Atmosphere and life support',
+    name: 'Hypoxia (low PIO₂)',
     detection: 'AUTO',
-    defaultSeverity: 'CRITICO',
-    evidenceState: 'VERIFICADO',
-    typicalZones: ['Soporte vital', 'Cualquiera'],
-    suggestedActions: ['Revisar suministro de O₂ y presión', 'Reducir el esfuerzo físico'],
+    defaultSeverity: 'CRITICAL',
+    evidenceState: 'VERIFIED',
+    typicalZones: ['Life support', 'Any'],
+    suggestedActions: ['Check O₂ supply and pressure', 'Reduce physical exertion'],
   },
   {
     key: 'smoke_fire',
-    category: 'Fuego y humo',
-    name: 'Humo o incendio',
+    category: 'Fire and smoke',
+    name: 'Smoke or fire',
     detection: 'AUTO',
-    defaultSeverity: 'CRITICO',
+    defaultSeverity: 'CRITICAL',
     evidenceState: 'DEMO',
-    typicalZones: ['Cocina y comedor', 'Ingeniería y propulsión', 'Almacén'],
-    suggestedActions: ['Activar el procedimiento de incendio', 'Aislar la zona'],
+    typicalZones: ['Galley and mess', 'Engineering and propulsion', 'Storage'],
+    suggestedActions: ['Activate the fire procedure', 'Isolate the zone'],
   },
   {
     key: 'burning_smell',
-    category: 'Fuego y humo',
-    name: 'Olor a quemado o sobrecalentamiento',
+    category: 'Fire and smoke',
+    name: 'Burning smell or overheating',
     detection: 'MANUAL',
-    defaultSeverity: 'ALERTA',
+    defaultSeverity: 'ALERT',
     evidenceState: 'DEMO',
-    typicalZones: ['Cualquiera'],
-    suggestedActions: ['Desconectar el equipo sospechoso', 'Inspeccionar la zona'],
+    typicalZones: ['Any'],
+    suggestedActions: ['Disconnect the suspect equipment', 'Inspect the zone'],
   },
   {
     key: 'injury',
-    category: 'Salud de la tripulación',
-    name: 'Lesión o accidente',
+    category: 'Crew health',
+    name: 'Injury or accident',
     detection: 'MANUAL',
-    defaultSeverity: 'ALERTA',
+    defaultSeverity: 'ALERT',
     evidenceState: 'DEMO',
-    typicalZones: ['Cualquiera'],
-    suggestedActions: ['Atender y avisar al oficial médico (CMO)'],
+    typicalZones: ['Any'],
+    suggestedActions: ['Attend and notify the Crew Medical Officer (CMO)'],
   },
   {
     key: 'loose_cargo',
-    category: 'Carga, equipo y ciencia',
-    name: 'Carga mal sujeta o herramienta perdida',
+    category: 'Cargo, equipment and science',
+    name: 'Loose cargo or lost tool',
     detection: 'MANUAL',
-    defaultSeverity: 'ATENCION',
+    defaultSeverity: 'ATTENTION',
     evidenceState: 'DEMO',
-    typicalZones: ['Almacén'],
-    suggestedActions: ['Asegurar la carga y registrar el inventario'],
+    typicalZones: ['Storage'],
+    suggestedActions: ['Secure the cargo and log the inventory'],
   },
 ]

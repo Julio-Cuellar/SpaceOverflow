@@ -1,4 +1,4 @@
-"""Aplica las migraciones de un módulo: `python -m spaceapp.platform.migrate <modulo>`."""
+"""Applies a module's migrations: `python -m spaceapp.platform.migrate <module>`."""
 
 import sys
 from pathlib import Path
@@ -22,7 +22,7 @@ def main() -> None:
     module = sys.argv[1] if len(sys.argv) > 1 else "platform"
     url = Settings().database_url.replace("+asyncpg", "+psycopg")
     upgrade(module, url)
-    print(f"migraciones de {module!r} aplicadas")
+    print(f"migrations of {module!r} applied")
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
-"""Extremo a extremo (F5, tarea 5.5): escenario → alerta por /ws en menos de 1 s → reconocer por /graphql.
+"""End to end (F5, task 5.5): scenario → alert over /ws in under 1 s → acknowledge over /graphql.
 
-La app corre como en producción (relay con LISTEN/NOTIFY y su propio engine). La prueba empuja
-lecturas simuladas con reloj falso en la misma base, a ritmo real: un tick más solo cuando el relay
-terminó el anterior (en vivo llega como mucho un tick por segundo).
+The app runs as in production (relay with LISTEN/NOTIFY and its own engine). The test pushes
+simulated readings with a fake clock into the same database, at real pace: one more tick only when
+the relay has finished the previous one (live, at most one tick per second arrives).
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ LATENCY_GOAL_S = 1.0
 
 
 async def _drained(session_factory: Any, limit_s: float = 10) -> float:
-    """Segundos hasta que el relay deja el outbox sin pendientes."""
+    """Seconds until the relay leaves the outbox with nothing pending."""
     loop = asyncio.get_running_loop()
     start = loop.time()
     while loop.time() - start < limit_s:
@@ -37,7 +37,7 @@ async def _drained(session_factory: Any, limit_s: float = 10) -> float:
             if (await outbox_stats(session)).pending == 0:
                 return loop.time() - start
         await asyncio.sleep(0.02)
-    raise TimeoutError("el relay no vació el outbox")
+    raise TimeoutError("the relay did not empty the outbox")
 
 
 async def _receive(ws: Any, limit_s: float = 30) -> dict[str, Any]:
@@ -62,7 +62,7 @@ async def test_a_co2_scenario_reaches_a_websocket_client_and_is_acknowledged_by_
         assert (await _receive(ws))["data"]["topics"] == ["alerts"]
 
         def wait_for_alert() -> tuple[dict[str, Any], datetime]:
-            # Se lee en paralelo con la simulación para tomar la hora real de llegada.
+            # Read in parallel with the simulation to take the real arrival time.
             while True:
                 message = ws.receive_json()
                 if (
@@ -82,11 +82,11 @@ async def test_a_co2_scenario_reaches_a_websocket_client_and_is_acknowledged_by_
             slowest_tick = max(slowest_tick, await _drained(session_factory))
             if reader.done():
                 break
-        assert slowest_tick < 1.0, f"el relay tardó {slowest_tick:.3f} s en procesar un tick"
+        assert slowest_tick < 1.0, f"the relay took {slowest_tick:.3f} s to process a tick"
         raised, arrived = await asyncio.wait_for(reader, 30)
         latency = (arrived - datetime.fromisoformat(raised["at"])).total_seconds()
-        assert raised["seq"] is not None, "una alerta lleva el id del outbox para poder reanudar"
-        assert raised["data"]["severity"] == "ALERTA"
+        assert raised["seq"] is not None, "an alert carries the outbox id so it can be resumed"
+        assert raised["data"]["severity"] == "ALERT"
 
         ack = client.post(
             "/graphql",
@@ -105,7 +105,7 @@ async def test_a_co2_scenario_reaches_a_websocket_client_and_is_acknowledged_by_
         assert message["data"]["alert_id"] == raised["data"]["alert_id"]
         assert message["data"]["status"] == "acknowledged"
 
-        # Un cliente que se suscribe tarde recupera el ticket y el color de la zona con `resume`.
+        # A client that subscribes late recovers the ticket and the zone colour with `resume`.
         ws.send_json({"type": "subscribe", "topics": ["habitat"]})
         while (await _receive(ws))["type"] != "subscribed":
             pass
@@ -114,12 +114,14 @@ async def test_a_co2_scenario_reaches_a_websocket_client_and_is_acknowledged_by_
         while (message := await _receive(ws))["type"] != "resumed":
             replayed.append(message)
         seqs = [m["seq"] for m in replayed]
-        assert seqs == sorted(seqs) and len(seqs) == len(set(seqs)), "en orden y sin duplicados"
+        assert seqs == sorted(seqs) and len(seqs) == len(set(seqs)), (
+            "in order and without duplicates"
+        )
         habitat = {m["type"]: m["data"] for m in replayed if m["topic"] == "habitat"}
-        assert habitat["incident.opened"]["severity"] == "ALERTA"
-        assert habitat["zone.status"]["status"] == "ALERTA"
+        assert habitat["incident.opened"]["severity"] == "ALERT"
+        assert habitat["zone.status"]["status"] == "ALERT"
         assert habitat["zone.status"]["zone_id"] == raised["data"]["zone_id"]
 
-    # Desde que Monitoreo crea el evento hasta que llega al cliente (relay, outbox y gateway).
-    print(f"latencia de la alerta {latency:.3f} s; tick más lento {slowest_tick:.3f} s")
-    assert latency < LATENCY_GOAL_S, f"la alerta tardó {latency:.3f} s en llegar"
+    # From when Monitoring creates the event until it reaches the client (relay, outbox and gateway).
+    print(f"alert latency {latency:.3f} s; slowest tick {slowest_tick:.3f} s")
+    assert latency < LATENCY_GOAL_S, f"the alert took {latency:.3f} s to arrive"

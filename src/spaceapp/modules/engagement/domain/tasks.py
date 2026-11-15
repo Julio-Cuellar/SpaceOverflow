@@ -1,4 +1,4 @@
-"""Tareas del día: tipos, orígenes, permisos, racha e instancias de las plantillas. Sin E/S."""
+"""Daily tasks: kinds, origins, permissions, streak and template instances. No I/O."""
 
 from __future__ import annotations
 
@@ -7,11 +7,11 @@ from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
-KINDS = ("SALUD", "NAVE", "INCIDENTE")
-CREW_KINDS = ("SALUD", "NAVE")  # las de incidente las abre el sistema
-ORIGINS = ("TIERRA", "SISTEMA", "TRIPULACION")
-STATUSES = ("PENDIENTE", "COMPLETADA", "BLOQUEADA")
-RECURRENCES = ("DIARIA", "UNA_VEZ")
+KINDS = ("HEALTH", "SHIP", "INCIDENT")
+CREW_KINDS = ("HEALTH", "SHIP")  # incident tasks are opened by the system
+ORIGINS = ("GROUND", "SYSTEM", "CREW")
+STATUSES = ("PENDING", "COMPLETED", "BLOCKED")
+RECURRENCES = ("DAILY", "ONCE")
 
 
 @dataclass(frozen=True)
@@ -31,15 +31,15 @@ class Template:
     zone_code: str | None
     origin: str
     active: bool
-    due_time: str  # HH:MM, hora de la nave (UTC)
+    due_time: str  # HH:MM, ship time (UTC)
 
 
 def can_change(origin: str) -> bool:
-    """Solo las tareas propias de la tripulación se editan o borran.
+    """Only the crew's own tasks can be edited or deleted.
 
-    Las de Tierra y las del sistema se completan, se posponen o se bloquean con motivo.
+    Ground and system tasks are completed, snoozed or blocked with a reason.
     """
-    return origin == "TRIPULACION"
+    return origin == "CREW"
 
 
 def check_new_task(kind: str, title: str) -> str | None:
@@ -51,7 +51,7 @@ def check_new_task(kind: str, title: str) -> str | None:
 
 
 def check_block(status: str, reason: str) -> str | None:
-    if status == "COMPLETADA":
+    if status == "COMPLETED":
         return "ALREADY_COMPLETED"
     if not reason.strip():
         return "REASON_REQUIRED"
@@ -59,11 +59,11 @@ def check_block(status: str, reason: str) -> str | None:
 
 
 def counts_for_streak(task: TaskFacts) -> bool:
-    """Solo suman las rutinas de salud completadas. Ni Tierra, ni incidentes, ni alertas (13.8)."""
+    """Only completed health routines count. Not Ground tasks, incidents or alerts (13.8)."""
     return (
-        task.status == "COMPLETADA"
-        and task.kind == "SALUD"
-        and task.origin != "TIERRA"
+        task.status == "COMPLETED"
+        and task.kind == "HEALTH"
+        and task.origin != "GROUND"
         and task.source_alert_id is None
     )
 
@@ -75,13 +75,13 @@ def streak(tasks: Iterable[TaskFacts]) -> int:
 def due_instances(
     templates: Sequence[Template], day: date, *, today: set[UUID], ever: set[UUID]
 ) -> list[Template]:
-    """Plantillas que necesitan su tarea del día: diarias sin tarea hoy, de una vez sin ninguna."""
+    """Templates needing their daily task: daily with none today, one-time with none ever."""
     out: list[Template] = []
     for t in templates:
         if not t.active:
             continue
-        daily_missing = t.recurrence == "DIARIA" and t.id not in today
-        once_missing = t.recurrence == "UNA_VEZ" and t.id not in ever
+        daily_missing = t.recurrence == "DAILY" and t.id not in today
+        once_missing = t.recurrence == "ONCE" and t.id not in ever
         if daily_missing or once_missing:
             out.append(t)
     return out

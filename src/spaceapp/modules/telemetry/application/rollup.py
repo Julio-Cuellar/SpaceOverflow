@@ -1,4 +1,4 @@
-"""Mantiene reading_rollup_1m. Se recalcula el rango del lote, así que es idempotente."""
+"""Maintains reading_rollup_1m. The batch range is recomputed, so it is idempotent."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ class RecomputeRollup:
         self._repository = repository
 
     async def handle(self, event: EventEnvelope, ctx: HandlerContext) -> None:
-        if ctx.session is None:  # bus en memoria: no hay base de datos que resumir
+        if ctx.session is None:  # in-memory bus: there is no database to summarize
             return
         payload = event.payload_as(ReadingsRecorded)
         await self._repository(ctx.session).recompute_rollup(payload.ts_from, payload.ts_to)
