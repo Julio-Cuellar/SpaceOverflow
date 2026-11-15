@@ -7,7 +7,7 @@
 
 - **TDD por tarea:** RED (prueba escrita y ejecutada, falla por la razón esperada) → GREEN (implementación mínima, la misma prueba pasa) → REFACTOR (sin cambiar comportamiento, pruebas en verde) → cobertura.
 - **Evidencia:** cada ciclo registra el comando exacto y un extracto de la salida. Lo que no se ejecutó se marca como no verificado.
-- **Git:** el directorio del proyecto aún no es un repositorio. No se hacen commits de checkpoint; la evidencia vive en esta bitácora. Si se inicia git, los checkpoints serán RED, GREEN y REFACTOR por tarea.
+- **Git:** desde E08 el proyecto es un repositorio (`origin`: `Julio-Cuellar/SpaceOverflow`) y el trabajo de Dev B vive en la rama `dev-B`. Hasta E07 no hubo commits; la evidencia de esos cortes está en esta bitácora. De E08 en adelante se hace un commit por fase o corte.
 - **Estados:** `HECHO` (verificado con evidencia), `PARCIAL` (algo quedó fuera, con motivo), `PENDIENTE`, `BLOQUEADO` (depende de Dev A o de una decisión).
 - **Regla de honestidad del proyecto:** todo dato sin fuente verificada va marcado `DEMO`. El modelo de lenguaje nunca decide una alerta.
 
@@ -343,3 +343,22 @@ En el caso de uso, 2 pruebas fallaron por un error **de mi prueba**: comparaba `
 - Voz con Whisper y confirmación de lo transcrito (F14).
 
 **Estado:** F13 PARCIAL. El flujo de texto funciona de punta a punta con datos de demostración y está probado.
+
+### 2026-11-14 · E08 · Primer commit y ramas en GitHub
+
+**Qué:** el trabajo de Dev B se subió a GitHub (`https://github.com/Julio-Cuellar/SpaceOverflow`).
+
+- **Estado previo:** el directorio ya era un repositorio (alguien del equipo lo inicializó mientras se trabajaba) con un solo commit, `2d38c34 first commit`, que solo traía un `README.md`. `main` estaba sincronizada con `origin/main`. Hasta aquí esta bitácora decía que no era un repositorio; ya no es cierto.
+- **Ramas creadas:** `dev-B`, `dev-A` y `testing`. **Git no permite espacios en nombres de rama**, así que `dev B` y `dev A` se llaman `dev-B` y `dev-A`.
+- **Contenido:** `dev-B` tiene el commit `4babd3c` con 109 archivos (`web` 67, `src` 29, `tests` 8 y los de la raíz). `dev-A` y `testing` están en `2d38c34`, igual que `main`, sin cambios; quedan listas para que Dev A y las pruebas trabajen sobre ellas.
+- **Antes de subir:** se revisó que no entrara ningún secreto ni archivo grande. El escaneo solo encontró falsos positivos (la palabra `token` de los tokens de diseño CSS). Ningún archivo supera 500 KB. `node_modules`, `.venv`, `dist`, `coverage` y las cachés están en el `.gitignore`.
+- **Verificación en GitHub** (no solo en la terminal): `git ls-remote` y la API de GitHub muestran las tres ramas y `dev-B` en `4babd3c`, con 110 archivos (los 109 más el `README.md`).
+
+**Para quien clone el repositorio:**
+
+- Los tipos de `web/src/data/graphql/generated/` **no se versionan**. Se generan con `npm run codegen`. Ninguna prueba los importa, así que `npm install` y `npm test` bastan.
+- El entorno de Python (`.venv`) tampoco se versiona: hay que crearlo e instalar `pydantic`, `pytest`, `ruff` y `mypy`. `pyproject.toml` lista las dependencias.
+
+**Pendiente que ahora sí se puede hacer:** CODEOWNERS y el job de CI de F0 (antes bloqueados por no haber repositorio).
+
+**Estado:** F0 sigue PARCIAL. Lo único que le falta es CODEOWNERS y CI.
