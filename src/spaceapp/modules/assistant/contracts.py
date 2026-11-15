@@ -1,4 +1,4 @@
-"""Eventos públicos del Asistente (dueño: Dev B). El gateway traduce `AnswerReady` a WebSocket."""
+"""Eventos públicos del Asistente. Otros módulos solo pueden importar esto y la fachada."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from spaceapp.platform.vocab import Citation
 
 
 class AnswerReady(EventPayload):
+    """`assistant.answer_ready`. El gateway lo traduce a un mensaje de WebSocket."""
+
     event_type: ClassVar[str] = "assistant.answer_ready"
     utterance_id: UUID
     text: str

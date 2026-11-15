@@ -18,7 +18,7 @@ class ActionCatalogQuery:
 
 
 class KnowledgeQuery:
-    """Pasajes citables para responder preguntas. La usa el asistente (dentro de este mismo módulo)."""
+    """Pasajes citables para responder preguntas. La usa el asistente (dentro de este módulo)."""
 
     def __init__(self, source: PassageSource) -> None:
         self._source = source

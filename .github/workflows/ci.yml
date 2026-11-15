@@ -40,17 +40,24 @@ jobs:
       - run: npm run codegen
 
   python:
-    name: Python (ruff, mypy, import-linter, pruebas con PostgreSQL)
+    name: Python 3.12 (lint, tipos, arquitectura, pruebas)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v5
+      # pyproject.toml fija >=3.12,<3.13: es la única versión que prueba el equipo (Dev A y Dev B).
+      - uses: actions/setup-python@v5
         with:
-          enable-cache: true
+          python-version: "3.12"
 
-      # uv instala la versión de Python que fija pyproject.toml (3.12) y las dependencias de uv.lock.
+      - run: python -m pip install uv==0.13.8
+      # --frozen: si uv.lock no coincide con pyproject.toml, falla en vez de resolver otra vez.
       - run: uv sync --frozen
-      # ruff, mypy, import-linter y pytest con cobertura mínima del 80 %.
-      # Las pruebas de integración levantan PostgreSQL con testcontainers (Docker ya viene en ubuntu-latest).
-      - run: scripts/check.sh
+
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - run: uv run lint-imports
+      # Las pruebas de integración (outbox, migraciones) levantan PostgreSQL con testcontainers;
+      # el runner de GitHub trae Docker. La cobertura mínima es 80 %.
+      - run: uv run pytest -q --cov --cov-fail-under=80

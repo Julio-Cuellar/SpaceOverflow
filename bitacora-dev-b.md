@@ -19,7 +19,7 @@
 | F8 | Conocimiento con datos de demo | PARCIAL | Dominio, caso de uso idempotente, catálogo DEMO, fachadas y búsqueda de pasajes probados (29 pruebas). Falta persistencia y outbox de A |
 | F6 | Interfaz de cabina | PARCIAL | Semáforo, tarjetas, cuerpo humano, gráficas SVG con umbral y anomalía, estado de espera, panel de alerta y cola WS, todo cableado en `App` con datos de demostración. Falta el hook `useWs` conectado a `/ws` (I2) y la tendencia de CO₂ en la cabina |
 | F7 | Panel de la nave | PARCIAL | Plano desde `zone.layout`, pins de ticket, orden y regla de «resolver», gráficas por zona con pausa, formulario de reporte, catálogo filtrable y modo demo por perfil. Falta el catálogo completo de 61 tipos y el backend |
-| F12 | RAG sobre PDFs de NASA | PARCIAL | Manifiesto con licencias, fragmentación por requisito, lectura de PDF, ingesta idempotente, búsqueda con glosario es→en, respaldo a demo y evaluación, probados con PDFs sintéticos (51 pruebas). **Faltan la ingesta y la evaluación reales** (PDFs sin descargar: necesita permiso), el buscador de pasajes en la web (12.6) y la decisión del modelo de embeddings |
+| F12 | RAG sobre PDFs de NASA | PARCIAL | Manifiesto con licencias, fragmentación por requisito, lectura de PDF, ingesta idempotente, búsqueda con glosario es→en, respaldo a demo y evaluación, probados con PDFs sintéticos y luego con los 7 PDFs reales (2 087 fragmentos, E10). **Recuperación por debajo del umbral del plan:** 56 % en el conjunto principal, 11 % en el retenido, 0 respuestas sin fuente. Faltan el buscador de pasajes en la web (12.6) y la decisión del modelo de embeddings |
 | F13 | Asistente texto y Ollama | PARCIAL | Backend: caso de uso con límite de 8 s, adaptadores nulo y Ollama, evento `answer_ready` (15 pruebas). Web: pestaña Asistente con datos de demostración. Falta GraphQL, persistencia SQL, Ollama real probado y n8n opcional |
 | F14 | Voz con Whisper | PENDIENTE | |
 | F9 | Entrega (Docker, sin internet) | PENDIENTE | conjunta con A |
@@ -416,3 +416,141 @@ En el caso de uso, 2 pruebas fallaron por un error **de mi prueba**: comparaba `
 - **CODEOWNERS** solo cubre las carpetas de Dev B. Falta el usuario de GitHub de Dev A (se dejó anotado como pendiente en el propio archivo).
 
 **Estado:** F12 PARCIAL (pipeline probado; falta la ingesta y la evaluación reales). CI y CODEOWNERS creados; pendiente su primera ejecución en GitHub.
+
+### 2026-11-14 · E10 · F12 con los PDFs reales: descarga, ingesta y evaluación
+
+**Permiso:** el usuario autorizó con nombre, origen y tamaño la descarga de los 7 PDFs (14,56 MB). Se descargaron a `data/knowledge/pdfs/` (ignorada por git) y se comprobó que los 7 empiezan con `%PDF-`. No se descargó nada más.
+
+**Ingesta real:** 2 087 fragmentos (Vol. 2: 1 456; Vol. 1: 291; TB-002: 116; TB-003: 76; TB-004: 56; TB-044: 52; botiquín: 40). Solo 665 llevan referencia de requisito: el resto es texto de tablas, listas y secciones sin `[V# ####]` propio.
+
+**Defectos que solo aparecieron con los PDFs reales** (cada uno se reprodujo con una prueba en RED antes de corregirlo)
+
+| Defecto | Causa | Corrección |
+| --- | --- | --- |
+| Una cita dentro de una frase partía el fragmento | `[V2 6004]` precedido de una letra minúscula, «(» o «,» es una cita en línea, no el comienzo de un requisito | `_starts_a_requirement` |
+| Fragmentos viejos quedaban en el índice tras cambiar las reglas de corte | Los ids cambian al recortar distinto; la ingesta solo añade | Opción `--rebuild` (reconstruye en memoria y reemplaza de forma atómica; si no se indexó nada, conserva el índice anterior) |
+| Una tabla que lista «headache» entre decenas de términos ganaba a un pasaje enfocado | El puntaje contaba coincidencias sin normalizar por longitud | BM25 (K1 1,5; B 0,75) |
+| «dura» → `lasts`, pero el texto dice `last` | Faltaba normalizar plurales y terceras personas | `stem` |
+| Con 500 caracteres de extracto la cifra quedaba fuera en la mitad de los casos | Recorte al comienzo del fragmento | El extracto es el fragmento completo (≤ 1 200) |
+| «Who won the last football world cup?» recibía una respuesta | Coincidía solo en «world», dentro de una lista de siglas | Se exigen al menos 2 términos coincidentes (con 1 término de pregunta, 1) |
+| Títulos y entradas de índice salían como pasajes | Fragmentos de 2 o 3 palabras | Se descartan los de menos de 6 palabras de contenido |
+| Una referencia cruzada tras un dígito («…Volume 1 [V1 4030] Título)») partía V1 4033 y la cifra de 1,3 mSv/día se citaba como V1 4030 | La regla de «número de página» la tomaba por requisito | Dentro de un paréntesis sin cerrar es una cita (prueba en RED observada; 120 pruebas pasan) |
+| El comando de evaluación fallaba con un traceback si faltaba un archivo | — | Mensaje claro y código de salida 2 |
+
+**Cómo se evaluó (y por qué se cambió)**
+
+- Mis preguntas de la entrada E09 eran hipótesis basadas en el documento de contexto (esperaban un documento concreto). Se reemplazaron por **anclas de contenido**: texto que debe aparecer en el pasaje devuelto, verificado a mano en el texto crudo de los PDFs.
+- Se añadió un conjunto **de validación retenido** (`eval_questions_validation.json`, 9 + 1 fuera de alcance). **No se ajusta el código mirando ese conjunto**: sirve para medir si lo corregido generaliza.
+- Se añadió un conjunto **en inglés** (`eval_questions_en.json`, 25 + 3 fuera de alcance), de diagnóstico: separa el fallo de traducción del fallo de búsqueda.
+- La métrica es **estricta**: acierta solo si en los 3 primeros hay un pasaje con las anclas (y, si se pide, el documento).
+
+**Resultados medidos** (k = 3, índice de 2 087 fragmentos)
+
+| Conjunto | Aciertos | Fuera de alcance respondidas |
+| --- | --- | --- |
+| Principal, español (16 + 2) | 9 de 16 (56 %) | 0 de 2 |
+| Validación retenido, español (9 + 1) | **1 de 9 (11 %)** | 0 de 1 |
+| Diagnóstico, inglés (25 + 3) | 13 de 25 (52 %) | 0 de 3 |
+
+El umbral del plan (80 %) **no se cumple** y el comando de evaluación sale con código 1. No se bajó el umbral ni se ajustaron las preguntas para que pasara.
+
+**Lectura honesta de los números**
+
+1. **Cero respuestas sin fuente:** ninguna pregunta fuera de alcance recibió pasaje (0 de 6 entre los tres conjuntos: 2, 1 y 3 casos fuera de alcance). Es el criterio que más importa para no inventar protocolos, y se cumple.
+2. **La recuperación es débil.** El conjunto en inglés también falla en la mitad: el problema no es solo el idioma. Es búsqueda léxica sobre un documento de ~300 páginas con vocabulario técnico: una paráfrasis («energía diaria» frente a *energy requirements*) o una cifra en una tabla no se encuentran por coincidencia de palabras.
+3. **La brecha entre 56 % y 11 %** es el sobreajuste esperado: el glosario (40 entradas) se afinó mirando el conjunto principal. El conjunto retenido muestra el rendimiento sin ese ajuste, y ese es el número que hay que creer.
+4. **Fallos concretos** (posición del pasaje correcto en el ranking, en una medición intermedia): dolor de cabeza, puesto 21; síntomas del CO₂, 27; presión mínima de cabina, 19; botiquín, 26.
+
+**Verificado contra el texto fuente** (consultando los fragmentos indexados)
+
+- Ruido de sueño: `[V2 6079]` y NC-40, para misiones de más de 30 días (Vol. 2, p. 98). Coincide con el documento de contexto. La fila de la tabla resumen (p. 94) cita «V2 6077; V2 6078; V2 6080; V2 6083» porque agrupa otros límites: no es una discrepancia.
+- Las cifras clave del contexto (1,3 mSv/día, 600 mSv de carrera, 250 mSv por evento solar, 80 % de capacidad aeróbica, 95 % de hueso, 30 % de diluyente, 95 dBA en alarmas) aparecen en el texto indexado con los números de requisito que el contexto indica en el texto cercano. Los fragmentos largos rara vez llevan el requisito propio en su campo `requirement_ref` (la mayoría de las cifras están en fragmentos sin él), así que **la cita sale con documento y página, no siempre con número de requisito.**
+- **Limitación abierta, sin corregir:** si el título de la sección que precede a `[V1 4033]` termina en minúscula («…Galactic Cosmic Radiation [V1 4033]»), la regla lo toma por cita y el requisito queda sin `requirement_ref` (Vol. 1, p. 44). Antes de la corrección de paréntesis esa cifra se citaba con el número equivocado (V1 4030); ahora se cita sin número, que es más honesto, pero incompleto.
+
+**Decisiones que quedan para el equipo (no las tomé)**
+
+1. **Modelo de embeddings multilingüe** (decisión pendiente n.º 5). Es la solución de fondo a la recuperación débil. Cuesta: descargar un modelo (requiere permiso explícito), dependencias pesadas (PyTorch u ONNX), y empaquetarlo sin conexión en Docker. Alternativa barata y parcial: ampliar el glosario revisándolo con el equipo, sabiendo que no generaliza.
+2. **Estado de evidencia.** El RAG da `TB` a todo Technical Brief; el catálogo de demostración marca TB-003 como `VERIFICADO`. Hay que decidir cuál vale.
+3. **Revisión del glosario** (40 entradas, mías, sin revisar por nadie del equipo).
+4. **Licencia de los PDFs:** sigue `no_verificada`; por eso nada se empaqueta ni se versiona.
+
+**Qué no cambió:** el asistente sigue sin decidir alertas y solo responde con pasajes citados; ante la duda no responde («sin información»). La debilidad de recuperación se traduce en que **no responde más veces de las debidas**, no en que invente.
+
+**Lo que sigue sin hacerse en F12:** buscador de pasajes en la web (12.6), tablas como imagen sin transcribir, selección de fuente por perfil (depende de `main.py`, de Dev A).
+
+**Estado:** F12 PARCIAL. Ingesta y evaluación reales hechas; el umbral de recuperación del plan (80 %) no se cumple.
+
+**Verificación al cierre:** 120 pruebas de Python pasan; `ruff check`, `ruff format --check` y `mypy` estrictos limpios.
+
+## E11 · Human Integration Design Handbook (15 nov 2026)
+
+**Qué se hizo:** con permiso explícito del usuario se descargó el Handbook (rev. 1, 25,3 MB, `nasa.gov`, PDF válido) a `data/knowledge/pdfs/`, ignorado por git. Se indexó con `--include-optional` (el manifiesto lo marca opcional, `NO_VERIFICADO`, licencia `no_verificada`; no se modificó).
+
+**Resultado:** aporta 3 261 fragmentos (5 347 en total) y **empeora** la recuperación: principal 9→8 de 16, validación 1 de 9 sin cambio, EN 13→12 de 25. Sin respuestas a preguntas fuera de alcance en ningún conjunto.
+
+**Causa:** el Handbook pesa más que el resto junto y sus pasajes parecidos a los de la norma desplazan al correcto de los 3 primeros. Es el mismo límite de la búsqueda léxica, no un fallo del PDF. No se revisó la calidad de su texto (tablas, columnas).
+
+**Decisión:** el índice queda **sin** el Handbook (2 086 fragmentos). Incluirlo es opt-in. Reevaluar cuando haya embeddings, o ponderar por documento.
+
+**Corrección:** en el informe anterior las preguntas fuera de alcance se dieron como «0 de 6» por conjunto; son 2, 1 y 3 casos (6 entre los tres). README y bitácora corregidos.
+
+## E12 · Integración con la rama de Dev A (15 nov 2026)
+
+Rama de trabajo `integration/a-b`, cortada de `dev-B` (ec2e298). Etiqueta local de respaldo `backup/dev-B-pre-integracion`. Decisiones que se tomaron por defecto al ejecutar el plan, a falta de respuesta explícita: D1 reglas nuevas solo con las 15 acciones existentes y `DEMO` salvo cita verificada; D2 Python `>=3.12,<3.13` como A; D3 PR nuevo hacia `testing`; D4 no se edita `main.py` de A, se le pide la llamada a `register_knowledge`.
+
+### Fase 0 · Base medida (sin tocar código)
+
+- **Descarga autorizada por el usuario:** `uv` 0.13.8 (pip, en un entorno aparte fuera del repositorio) y Python 3.12.16 (lo descarga uv), más las dependencias de A (`uv sync`). Nada de esto se versiona.
+- **Pruebas de A, en una copia de `origin/dev-A` (9fb8bfe):** 293 pasan en 79 s con Python 3.12 y Docker (testcontainers con `pgvector/pgvector:pg16`). Coincide con lo que dice su bitácora.
+- **Pruebas mías en `dev-B`:** 120 de Python y 123 de la web pasan.
+- **Lo leído de A:** los handlers son `handler(envelope, ctx)`; se publica con `ctx.publish(EventEnvelope.from_payload(payload, aggregate_type, aggregate_id, partition_key, correlation_id, causation_id))`; Monitoreo usa `aggregate_type="alert"`, `aggregate_id=alert_id`, `partition_key="habitat:<id>"` y `causation_id` = evento causante. Su prueba de contratos (`tests/contract/test_event_contracts.py`) tiene una lista fija de 22 eventos y una muestra por evento.
+
+### Fase 1 · Fusión mecánica de `origin/dev-A` (9fb8bfe)
+
+- **Conflictos (5) y resolución:** `.gitignore` unión de ambos; `pyproject.toml` base de A más `pypdf>=5` (Python `>=3.12,<3.13`, hatchling, grupos de dependencias de uv); `knowledge/contracts.py`, `knowledge/facade.py` y `assistant/contracts.py` se quedan con mi versión más un `EVENTS = {}` **provisional** para que importe el registro de eventos de A. `uv.lock` regenerado (`pypdf` 7.1.0).
+- **Ajustes de formato, sin cambiar comportamiento:** la configuración de ruff de A activa `E501` y `RUF100`; 10 líneas largas mías se partieron y se quitó un `noqa: BLE001` que A no activa.
+- **Verificación sobre Python 3.12.16:** ruff y `ruff format` limpios; mypy estricto sin errores en 135 archivos; **import-linter: 4 contratos cumplidos, 0 rotos** (mis módulos cumplen la independencia y las capas de A sin cambios); pytest **405 pasan y 8 fallan**.
+- **Las 8 fallas son la prueba en RED de la fase 2**, todas en `tests/contract/test_event_contracts.py`: el registro no tiene los eventos `knowledge.*` ni `assistant.*` porque mi `EVENTS` está vacío a propósito. Cuentas: 293 de A − 8 + 120 mías = 405.
+
+### Fase 2 · Contratos alineados con los de Dev A (TDD)
+
+- **RED observado:** las 8 fallas de la fase 1 más 2 errores de colección en pruebas nuevas (`cannot import name 'RecommendationEnriched'` y `No module named 'spaceapp.modules.knowledge.adapters.inbound'`), ambos por la implementación que faltaba.
+- **GREEN:** `uv run pytest` → **422 pasan** (293 de A + 129 mías); ruff, mypy estricto (137 archivos) e import-linter (4 cumplidos, 0 rotos) limpios.
+- **Cambios:**
+  - `knowledge/contracts.py` y `assistant/contracts.py`: `RecommendationReady`, `RecommendationEnriched` y `AnswerReady` son `EventPayload` (`extra="forbid"`, `event_type`), con `EVENTS`. Mi copia de `AlertRaised` se borró: el caso de uso importa la de `monitoring.contracts`, así no hay deriva.
+  - La cita es `platform.vocab.Citation` (campos idénticos a mi `CitationDTO`); `CitationDTO` queda como alias del mismo tipo.
+  - `HandleAlertRaised.handle(envelope, ctx)` es asíncrono como los de A. Publica con `ctx.publish(EventEnvelope.from_payload(...))`: `aggregate_type="recommendation"`, la misma `partition_key` que la alerta, `causation_id` = evento de la alerta y `correlation_id` heredado o, si no había, el id de la alerta. Se eliminó el puerto `EventPublisher` y `ListPublisher` de Conocimiento. `process` devuelve `RECORDED` o `DUPLICATE`.
+  - `knowledge/adapters/inbound/events.py`: `register_knowledge(bus, handler)` suscribe `monitoring.alert_raised` con el consumidor `knowledge.on_alert_raised`.
+- **Pruebas nuevas:** recorrido por el `InMemoryEventBus` de A (alerta → recomendación con citas, mismo evento dos veces → una, regla desconocida → falla visible en `bus.failures` y el evento sigue sin marcar), cadena causal y de correlación, y rechazo de un evento de otro tipo.
+- **Límites que quedan (no son de esta fase):**
+  - `main.py` es de A y todavía no llama a `register_knowledge`: se le pide (D4).
+  - Con el relay real del outbox, la recomendación se guarda en memoria, no en PostgreSQL, así que no sobrevive a un reinicio. Falta un repositorio SQL (módulo propio, esquema `knowledge`).
+  - `AnswerReady` ya es un `EventPayload`, pero el asistente sigue publicando por su puerto propio; falta un adaptador hacia el bus.
+
+### Fase 3 · Catálogo de 25 reglas (TDD)
+
+- **El hueco:** Monitoreo (A) emite 25 claves de regla; mi catálogo demo conocía 8 y solo 3 coincidían (`env-co2-1h`, `env-dpdt`, `env-n2`). Para las otras 22 el handler habría lanzado `UnknownRuleError` y el evento habría terminado como fallido en el outbox.
+- **RED:** `tests/knowledge/test_rule_coverage.py` (cruza `rules/catalog/monitoring.json` con mi catálogo) → **96 pruebas fallan**: 22 reglas sin recomendación, 5 reglas mías que Monitoreo nunca emite (`env-pio2`, `env-ptotal`, `env-rh`, `env-t`, `env-tendencia`) y las dependientes. Se borró la prueba antigua `test_the_catalog_covers_the_rules_of_the_plan`, que fijaba las claves viejas.
+- **GREEN:** `tests/knowledge` → 237 pasan, 19 omitidas a propósito (reglas sin número de requisito o con respaldo; no aplican a ese caso).
+- **Qué garantizan las pruebas de cruce:** toda regla de Monitoreo tiene recomendación; no hay reglas huérfanas; la acción que nombra Monitoreo (`action_key`) está entre las recomendadas y existe en el catálogo de acciones; **ninguna cita afirma más evidencia que su regla** (orden DEMO < NO_VERIFICADO < TB < VERIFICADO); el requisito que nombra Monitoreo es el citado; una regla DEMO solo tiene citas DEMO.
+- **Cómo se escribió el contenido:** un script (fuera del repositorio) genera las 22 reglas nuevas desde el catálogo de A: el texto sale de sus umbrales, operadores y unidades; la cita sale de su `source_document`, `source_requirement` y `evidence_state` (el `excerpt` es la descripción de A, no una cita textual); las 3 reglas que ya tenían texto y cita curados se conservan. Se quitó el campo `severity` de mi catálogo (nadie lo usaba y la severidad es de la regla de A).
+- **Acciones:** cada regla lleva la acción de A más una segunda acción de las que ya existían, por grupo (CO₂, PIO₂ baja/alta, presión, N₂, humedad, temperatura, tendencia). **Se añadieron 2 acciones** porque A las nombra y no existían: `verificar_estanqueidad_y_sellos` y `revisar_sensor_y_tendencia` (texto de demostración, parecido a las existentes, sin contenido médico). Esto se aparta de lo previsto en D1 («solo las 15 existentes»): sin ellas, 8 reglas de A se quedaban sin su acción.
+- **Honestidad:** 16 de las 25 reglas tienen respaldo DEMO en A (los umbrales de humedad, temperatura, avisos previos y tendencia no vienen de la norma); sus recomendaciones salen `DEMO`.
+
+### Fase 4 · Verificación completa
+
+- **Prueba nueva contra el outbox real** (`tests/integration/knowledge/test_alert_to_recommendation.py`, PostgreSQL con testcontainers): una alerta publicada con `UnitOfWork` → el relay de A la entrega → Conocimiento publica `knowledge.recommendation_ready` en el outbox, y las dos filas quedan `done`; una alerta de una regla desconocida queda `pending` con `attempts=1` y el error registrado. **No hubo RED:** verifica comportamiento ya implementado en la fase 2, no añade comportamiento nuevo.
+- **Resultados** (equivalente a `scripts/check.sh`, en Python 3.12.16): ruff y formato limpios; mypy estricto en 137 archivos sin errores; import-linter 4 cumplidos, 0 rotos; **547 pruebas pasan** y 19 se omiten a propósito; **cobertura 97,27 %** (mínimo 80 %).
+- **El RAG no cambió:** reingesta con `--rebuild` (2 086 fragmentos) y las tres evaluaciones dan lo mismo que antes: 9 de 16, 1 de 9 y 13 de 25; ninguna pregunta fuera de alcance respondida.
+- **Web:** 123 pruebas pasan (25 archivos).
+
+### Fase 5 · CI y cierre
+
+- **CI:** el job de Python deja de usar `pip install -e ".[dev]"` (los extras ya no existen tras tomar el `pyproject.toml` de A) y la matriz 3.12 + 3.14. Ahora: Python 3.12, `pip install uv==0.13.8`, `uv sync --frozen` (falla si `uv.lock` no coincide), `ruff check`, `ruff format --check`, `mypy`, `lint-imports` y `pytest --cov --cov-fail-under=80`. El runner de GitHub trae Docker, que necesitan las pruebas de integración de A y la mía.
+- **Ensayo en copia limpia** (worktree de `HEAD`, `uv sync --frozen`): ruff, formato, mypy estricto (137 archivos) e import-linter (4 cumplidos) limpios; 547 pruebas pasan, 19 omitidas; cobertura 97,27 %. **Lo que no se ha visto:** la primera ejecución real en GitHub Actions (versión de `uv`, Docker del runner).
+- **Hallazgo sin resolver:** hay dos `CODEOWNERS`, el de A en la raíz (con `@dev-a` y `@dev-b` de ejemplo) y el mío en `.github/` (con el usuario real). GitHub da prioridad a `.github/CODEOWNERS`, así que el de la raíz no se usa hasta que se unifiquen. No lo toqué: el de la raíz es de A.
+- **Pendiente con Dev A:**
+  - Que `build_registry` de `main.py` llame a `register_knowledge` (Conocimiento no recibe alertas hasta entonces).
+  - `source_kind` (DEMO) no viaja en `recommendation_ready`; sigue siendo una solicitud abierta.
+  - Un repositorio SQL de recomendaciones (esquema `knowledge`) para que sobrevivan a un reinicio.
+- **Pendiente mío:** adaptador de `assistant.answer_ready` hacia el bus, buscador de pasajes en la web, y la decisión de embeddings.

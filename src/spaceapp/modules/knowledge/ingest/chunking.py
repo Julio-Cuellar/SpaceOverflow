@@ -16,6 +16,7 @@ OVERLAP = 150
 
 _REQUIREMENT = re.compile(r"\[(V[12] \d{4})\]")
 _HYPHEN_BREAK = re.compile(r"-\s*\n\s*")
+_PARENTHESIS_WINDOW = 200
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,30 @@ class Chunk:
 def clean(text: str) -> str:
     """Une las palabras partidas por guion al final de línea y colapsa los espacios."""
     return " ".join(_HYPHEN_BREAK.sub("", text).split())
+
+
+def _starts_a_requirement(text: str, match: re.Match[str]) -> bool:
+    """Una referencia abre un requisito; si está citada dentro de una frase, no.
+
+    La norma cita otros requisitos a mitad de oración («…ver [V2 6004] Nominal…», «(… [V1 4033])»).
+    Partir ahí corta frases y atribuye texto al requisito equivocado. Una cita queda precedida por
+    una palabra en minúscula, un paréntesis o una coma; un requisito, por un punto, un corchete
+    de cierre, un número de página o el inicio del texto. Si hay un paréntesis sin cerrar antes
+    de la referencia («(… NASA-STD-3001, Volume 1 [V1 4030] Título)»), también es una cita aunque
+    la preceda un dígito.
+    """
+    before = text[: match.start()].rstrip()
+    if before == "":
+        return True
+    if before[-1].islower() or before[-1] in "(,":
+        return False
+    return not _inside_open_parenthesis(before)
+
+
+def _inside_open_parenthesis(before: str) -> bool:
+    # Solo se mira el tramo reciente: un paréntesis olvidado muy atrás no puede decidir.
+    recent = before[-_PARENTHESIS_WINDOW:]
+    return recent.count("(") > recent.count(")")
 
 
 def _split_long(text: str, max_chars: int, overlap: int) -> list[str]:
@@ -73,7 +98,7 @@ def chunk_page(
         return []
 
     segments: list[tuple[str | None, str]] = []
-    matches = list(_REQUIREMENT.finditer(cleaned))
+    matches = [m for m in _REQUIREMENT.finditer(cleaned) if _starts_a_requirement(cleaned, m)]
     if not matches:
         segments.append((None, cleaned))
     else:
