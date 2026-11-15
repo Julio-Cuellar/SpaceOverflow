@@ -1,4 +1,4 @@
-"""Eventos públicos del Asistente (dueño: Dev B)."""
+"""Eventos públicos del Asistente (dueño: Dev B). El gateway traduce `AnswerReady` a WebSocket."""
 
 from __future__ import annotations
 

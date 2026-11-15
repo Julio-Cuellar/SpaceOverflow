@@ -1,13 +1,30 @@
+# Dependencias y entornos
+node_modules/
 .venv/
-__pycache__/
-*.pyc
+
+# Salidas de build y de pruebas
+web/dist/
+web/coverage/
+web/src/data/graphql/generated/
 .pytest_cache/
-.mypy_cache/
 .ruff_cache/
+.mypy_cache/
+__pycache__/
+*.egg-info/
+
+# PDFs de NASA y su índice: la licencia de redistribución no está confirmada (ver manifest.json)
+data/knowledge/pdfs/
+data/knowledge/index/
+
+# Editor y sistema
+.DS_Store
+.idea/
+.vscode/
+
+# Herramientas de Dev A
+*.pyc
 .coverage
 htmlcov/
 dist/
-*.egg-info/
-node_modules/
 .env
 tools/docgen/out/

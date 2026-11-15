@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 14 de noviembre de 2026, 18:10.
+> Última actualización: 14 de noviembre de 2026, 18:45.
 
 ## Cómo se mantiene esta bitácora
 
@@ -227,6 +227,24 @@
 - **Aviso:** Dev A y Dev B crearon cada uno su propio `pyproject.toml`, `.gitignore`, `README.md` y `src/spaceapp/__init__.py`. Al unir las ramas habrá conflictos en esos archivos y hay que resolverlos a mano.
 - **Verificación:** la copia se comparó con el origen (`diff -r`) y el commit se subió después con `git push origin dev-A` (`2d38c34..8ddbad7`). Las pruebas no se volvieron a ejecutar en el clon (no cambió ningún archivo de código).
 - **Pendiente:** resolver los conflictos con `dev-B` al unir las ramas.
+
+
+### B-015 · Fusión de `dev-B` en `dev-A` (solo en local)
+- **Qué:** se trajo `origin/dev-B` (F0, F6 a F8, F12 y F13 de Dev B, con la interfaz web) a `dev-A` con `git merge`. `origin/test-B` ya contiene `dev-A` (PR #3), así que no aportó nada nuevo a esta fusión. **No se subió nada**: el commit de la fusión está solo en el equipo.
+- **Resultado:** 115 archivos de Dev B entraron sin conflicto y hubo 5 conflictos de «agregar/agregar», resueltos así:
+
+| Archivo | Resolución |
+| --- | --- |
+| `pyproject.toml` | Se conserva el de Dev A (hatchling, uv, reglas de lint y contratos de arquitectura) y se añade `pypdf>=5`, que necesita la ingesta de PDFs de Dev B |
+| `.gitignore` | Unión de los dos |
+| `knowledge/contracts.py`, `assistant/contracts.py` | Los eventos son `EventPayload` registrados (los exige el registro de eventos y su prueba de contratos). Se mantiene la copia local de `AlertRaised` de Dev B. `CitationDTO` pasa a ser un alias de `platform.vocab.Citation` (mismos campos y estados), así que el código de Dev B no cambió |
+| `knowledge/facade.py` | La de Dev B (la mía era solo un esqueleto) |
+
+- **Otros cambios por la fusión:**
+  - `.github/workflows/ci.yml`: el trabajo de Python usaba `pip install -e ".[dev]"` y Python 3.14, que no funcionan con el `pyproject.toml` de Dev A. Ahora usa `astral-sh/setup-uv`, `uv sync --frozen` y `scripts/check.sh` con Python 3.12. El trabajo web no se tocó. Es un archivo compartido: Dev B debe revisarlo.
+  - Se borró el `CODEOWNERS` de la raíz (marcadores de posición `@dev-a`/`@dev-b`). Manda el de `.github/` de Dev B, que sigue sin carpetas de Dev A.
+- **Verificación** (`scripts/check.sh` en el árbol fusionado): ruff, mypy estricto, import-linter y **388 pruebas** (293 de Dev A y 95 de Dev B) con 97,22 % de cobertura. No se ejecutó la parte web (`npm`) ni el CI real en GitHub.
+- **Pendiente:** subir la fusión (a `dev-A` o por PR hacia `testing`) cuando el usuario lo confirme; que Dev B revise el CI; completar el `CODEOWNERS` con las carpetas de Dev A; probar la interfaz web contra el backend.
 
 ---
 

@@ -1,0 +1,122 @@
+{
+  "_nota": "Manifiesto de documentos para el RAG (F12). Ningún PDF se empaqueta sin licencia confirmada: todos quedan con licencia no verificada y se indexan solo en local. Fuente: spaceapps-health-monitor-context.md, sección 6.2.",
+  "documents": [
+    {
+      "code": "NASA-STD-3001 Vol. 1 Rev C",
+      "title": "NASA-STD-3001 Vol. 1 Rev C: salud de la tripulación",
+      "url": "https://www.nasa.gov/wp-content/uploads/2023/11/nasa-std-3001-vol-1-rev-c-with-signature.pdf",
+      "kind": "norma",
+      "evidence_state": "VERIFICADO",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": true,
+      "optional": false,
+      "note": "Leído en las secciones 3 y 4."
+    },
+    {
+      "code": "NASA-STD-3001 Vol. 2 Rev F",
+      "title": "NASA-STD-3001 Vol. 2 Rev F: factores humanos, hábitat y medio ambiente",
+      "url": "https://www.nasa.gov/wp-content/uploads/2025/05/nasa-std-3001-vol-2.pdf",
+      "kind": "norma",
+      "evidence_state": "VERIFICADO",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": true,
+      "optional": false,
+      "note": "Leído en la sección 6 y parte de la 7.1. Algunas tablas vienen como imagen."
+    },
+    {
+      "code": "OCHMO-TB-002 ECLSS",
+      "title": "OCHMO-TB-002: soporte vital y control ambiental",
+      "url": "https://www.nasa.gov/wp-content/uploads/2023/07/eclss-technical-brief-ochmo.pdf",
+      "kind": "technical_brief",
+      "evidence_state": "TB",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": true,
+      "optional": false,
+      "note": "Daba una presión mínima de cabina de 26.2 kPa; la norma vigente dice 34.5 kPa."
+    },
+    {
+      "code": "OCHMO-TB-003 atmósfera habitable",
+      "title": "OCHMO-TB-003: atmósfera habitable",
+      "url": "https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-003-habitable-atmosphere.pdf",
+      "kind": "technical_brief",
+      "evidence_state": "TB",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": true,
+      "optional": false,
+      "note": "La Tabla 6.2-1 y las figuras vienen como imagen."
+    },
+    {
+      "code": "OCHMO-TB-004 CO₂",
+      "title": "OCHMO-TB-004: dióxido de carbono",
+      "url": "https://www.nasa.gov/wp-content/uploads/2023/03/co2-technical-brief-ochmo.pdf",
+      "kind": "technical_brief",
+      "evidence_state": "TB",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": true,
+      "optional": false
+    },
+    {
+      "code": "OCHMO-TB-044 operaciones médicas",
+      "title": "OCHMO-TB-044: operaciones médicas",
+      "url": "https://www.nasa.gov/wp-content/uploads/2025/08/ochmo-tb-044-medical-operations.pdf",
+      "kind": "technical_brief",
+      "evidence_state": "TB",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": true,
+      "optional": false
+    },
+    {
+      "code": "Checklist del botiquín médico",
+      "title": "Checklist del botiquín médico (liberación completa)",
+      "url": "https://www.nasa.gov/wp-content/uploads/2015/03/medical_kit_checklist_-_full_release.pdf",
+      "kind": "checklist",
+      "evidence_state": "VERIFICADO",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": true,
+      "optional": false
+    },
+    {
+      "code": "Human Integration Design Handbook",
+      "title": "Human Integration Design Handbook (revisión 1)",
+      "url": "https://www.nasa.gov/wp-content/uploads/2015/03/human_integration_design_handbook_revision_1.pdf",
+      "kind": "handbook",
+      "evidence_state": "NO_VERIFICADO",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": false,
+      "optional": true,
+      "note": "Nadie lo ha abierto."
+    },
+    {
+      "code": "OCHMO-STD-100.1A",
+      "title": "OCHMO-STD-100.1A: evaluaciones médicas",
+      "url": "https://www.nasa.gov/wp-content/uploads/2023/04/ochmo-std-100.1a.pdf",
+      "kind": "norma",
+      "evidence_state": "NO_VERIFICADO",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": false,
+      "optional": true,
+      "note": "Nadie lo ha abierto."
+    },
+    {
+      "code": "Manual de emergencias médicas de la ISS (2016)",
+      "title": "Manual de emergencias médicas de la ISS (2016)",
+      "url": "https://www.governmentattic.org/19docs/NASA-ISSmedicalEmergManual_2016.pdf",
+      "kind": "manual",
+      "evidence_state": "NO_VERIFICADO",
+      "license_status": "no_verificada",
+      "packageable": false,
+      "read": false,
+      "optional": true,
+      "note": "Viene de una liberación por transparencia, no de un sitio oficial de NASA. Revisar licencia y vigencia antes de redistribuirlo."
+    }
+  ]
+}

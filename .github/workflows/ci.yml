@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev-A, dev-B, testing]
+
+# El CI solo lee el código: no necesita permisos de escritura ni secretos.
+permissions:
+  contents: read
+
+# Un push nuevo a la misma rama cancela la ejecución anterior.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web (lint, tipos, pruebas, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      # La cobertura mínima (80 %) está en vite.config.ts: si baja, este paso falla.
+      - run: npm run test:coverage
+      - run: npm run build
+      # Comprueba que el contrato de contracts/ sigue generando tipos.
+      - run: npm run codegen
+
+  python:
+    name: Python (ruff, mypy, import-linter, pruebas con PostgreSQL)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # uv instala la versión de Python que fija pyproject.toml (3.12) y las dependencias de uv.lock.
+      - run: uv sync --frozen
+      # ruff, mypy, import-linter y pytest con cobertura mínima del 80 %.
+      # Las pruebas de integración levantan PostgreSQL con testcontainers (Docker ya viene en ubuntu-latest).
+      - run: scripts/check.sh
