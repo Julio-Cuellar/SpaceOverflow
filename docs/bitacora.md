@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 02:00.
+> Última actualización: 15 de noviembre de 2026, 02:30.
 
 ## Cómo se mantiene esta bitácora
 
@@ -322,6 +322,20 @@
 - **Hallazgo en los datos:** la validación del catálogo encontró reglas futuras compartidas entre tipos (`power-bus` en dos, `sensor-health` en tres). Se separaron (`power-bus-fault`, `power-bus-low`, `sensor-health-down`, `-calibration` y `-dosimeter`).
 - **Diferencias con el plan:** no hay tabla `incident_type` (el catálogo se carga en memoria, como el plano); hay una tabla nueva, `zone_alert`; `typicalZones` devuelve códigos de zona (`*` = cualquiera), mientras el mock de Dev B usa nombres; no hay DataLoaders.
 - **Riesgo:** con Nave conectada, el tick más lento de la prueba de extremo a extremo subió de 0,27 a 0,64 s (incluye la reconstrucción inicial). Sigue bajo 1 s.
+
+### B-020 · Revisión del remoto (15 de noviembre, 02:30)
+- **Qué:** `git fetch --all --prune` y comparación de ramas, sin cambiar nada del repositorio.
+- **`dev-A`:** 21 commits por delante de `origin/dev-A` y ninguno subido. Incluye las fusiones B-015 y B-016, F5, 5.4 y F4.
+- **`testing`:** sin cambios desde el PR #4 (`880c416`), que ya está fusionado en `dev-A`.
+- **`dev-B`:** 14 commits nuevos que todavía no están en `testing`:
+  - interfaz de F10 (tareas del día) y F11 (panel de Tierra), contra mocks (`web/src/data/mocks/tasks.ts`);
+  - F14 (voz con Whisper en Docker);
+  - asistente con n8n y Ollama (fases 1 a 6), más `src/spaceapp/devtools/`.
+- **Dev B no tocó carpetas de Dev A.** Fuera de su zona solo cambió `.gitignore` y una excepción de mypy para `faster_whisper` en `pyproject.toml`. `n8n/credentials/ollama.json` solo trae una URL, sin secretos.
+- **Merge de prueba** (`git merge-tree dev-A origin/dev-B`): sin conflictos.
+- **PRs** (API pública de GitHub; `gh` no está instalado): #1 cerrado, y #2, #3 y #4 fusionados. No hay PRs abiertos.
+- **Pendiente de lo propuesto al usuario:** subir `dev-A`, abrir el PR hacia `testing`, revisar el CI real y hacer F9. Nuevo: el backend de F10 y F11 (de Dev A) es lo que espera la interfaz que Dev B ya hizo.
+- **Decisión que registró Dev B** (bitácora E18): n8n es obligatorio para el asistente. Eso responde la pregunta abierta 2 de la sección 2.3; falta que el usuario la confirme.
 
 ---
 
