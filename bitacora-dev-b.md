@@ -662,3 +662,15 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 - **Sin RED:** las 3 pruebas de la máquina de estados con el orquestador (`ANSWERED`, `TEMPLATE_ANSWER`, `FAILED`) se añadieron después de escribir la correspondencia de eventos y pasaron a la primera.
 - **Verificación (Python 3.12):** ruff, formato, mypy estricto (144 archivos) e import-linter limpios; **632 pruebas pasan**, 19 omitidas, cobertura 97,40 %.
 - **Límites:** el tiempo por defecto del orquestador (30 s) es una suposición hasta medir Ollama (fase 4). Un hilo que se pasa del límite sigue corriendo hasta terminar (no se puede cancelar una llamada HTTP bloqueada); su resultado se descarta.
+
+### E18 · Fase 3: herramientas REST del agente (TDD)
+
+- **RED observado:** `No module named 'spaceapp.modules.assistant.adapters.inbound'`.
+- **Qué se hizo** (`assistant/adapters/inbound/rest.py`, `build_router(log, passages, alerts)`):
+  - `POST /api/v1/assistant/tools/{turn_id}/search_passages` con `{query, k}` (`k` de 1 a 5, por defecto 3): devuelve `{passages: [{passage_id, text, source}]}` y **anota lo devuelto** en el `RetrievalLog`. Sin pasajes: lista vacía y el mensaje «No hay pasajes que respalden esta pregunta.», sin anotar nada.
+  - `GET /api/v1/assistant/tools/{turn_id}/active_alerts`: los títulos de las alertas activas (solo lectura).
+- **Seguridad probada:** un turno que no existe, ya terminó o se cortó por tiempo recibe 404 y no registra nada; un `turn_id` que no es UUID, una consulta vacía o de solo espacios, o un `k` fuera de rango, reciben 422. Una prueba fija que el router expone **exactamente esas dos rutas**: nada aquí puede cambiar una alerta.
+- **Dónde viven:** las herramientas están en el módulo `assistant`, no en `knowledge`, porque usan la fachada `KnowledgeQuery` y el registro del turno; así se mantiene la independencia entre módulos.
+- **Verificación (Python 3.12):** ruff, formato, mypy estricto (146 archivos) e import-linter limpios; **646 pruebas pasan** (14 nuevas), cobertura 97 %+.
+- **No cableado todavía:** el router no está montado en ninguna aplicación. `main.py` es de Dev A; para la prueba punta a punta (fase 6) se usará un servidor de desarrollo propio.
+- **Riesgo anotado:** los pasajes salen de PDFs y llegan al agente como texto; un PDF con instrucciones podría intentar dirigir al modelo. Mitigación: herramientas de solo lectura, citas puestas por el backend y la instrucción del sistema del workflow (fase 5).
