@@ -1,4 +1,4 @@
-# Odyssey frontend: architecture review and Dev A integration
+# SYRA frontend: architecture review and Dev A integration
 
 ## Delivered application
 

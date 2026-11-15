@@ -1,4 +1,4 @@
-# Odyssey web application
+# SYRA web application
 
 English React / Vite / TypeScript mission console and personal astronaut workspace, built from the approved mockups. Fonts, portraits and styles are bundled locally.
 

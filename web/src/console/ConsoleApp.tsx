@@ -60,7 +60,7 @@ export function ConsoleApp({
     return () => removeEventListener("popstate", onPop);
   }, []);
   useEffect(() => {
-    document.title = `Odyssey · ${personal ? "My crew workspace" : (route?.[2] ?? "Page not found")}`;
+    document.title = `SYRA · ${personal ? "My crew workspace" : (route?.[2] ?? "Page not found")}`;
   }, [personal, route]);
   const navigate = (e: React.MouseEvent<HTMLAnchorElement>, target: string) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -102,14 +102,24 @@ export function ConsoleApp({
       {!personal && (
         <aside className={`mission-sidebar ${menu ? "open" : ""}`}>
           <a className="brand" href="/" onClick={(e) => navigate(e, "/")}>
-            <span className="brand-mark">O</span>
+            <span className="brand-mark">S</span>
             <span>
-              <b>ODYSSEY</b>
-              <small>CREW HEALTH SYSTEM</small>
+              <b>SYRA</b>
+              <small>Spaceflight sYstem for Remote Assessment</small>
             </span>
           </a>
           <span className="nav-label">MISSION CONTROL</span>
           {navigation}
+          <span className="nav-label">ASTRONAUTS</span>
+          <nav className="mission-nav" aria-label="Astronaut access">
+            <a
+              href="/dashboard-tripulation"
+              onClick={(e) => navigate(e, "/dashboard-tripulation")}
+            >
+              <span aria-hidden="true">◎</span>
+              Astronaut portal
+            </a>
+          </nav>
           <div className="sidebar-bottom">
             <div className="mission-state">
               <i className="dot online" />
@@ -135,9 +145,9 @@ export function ConsoleApp({
                 href="/dashboard-tripulation"
                 onClick={(e) => navigate(e, "/dashboard-tripulation")}
               >
-                <span className="brand-mark">O</span>
+                <span className="brand-mark">S</span>
                 <span>
-                  <b>ODYSSEY</b>
+                  <b>SYRA</b>
                   <small>MY CREW WORKSPACE</small>
                 </span>
               </a>
@@ -156,6 +166,14 @@ export function ConsoleApp({
                   </button>
                 ))}
               </nav>
+              <a
+                className="switch-link"
+                href="/"
+                onClick={(e) => navigate(e, "/")}
+              >
+                <span aria-hidden="true">←</span>
+                Mission control
+              </a>
             </>
           ) : (
             <>
@@ -168,7 +186,7 @@ export function ConsoleApp({
                 ☰
               </button>
               <div className="breadcrumb">
-                ODYSSEY / <b>{title}</b>
+                SYRA / <b>{title}</b>
               </div>
             </>
           )}
@@ -260,7 +278,7 @@ export function ConsoleApp({
           ) : !route ? (
             <>
               <Heading
-                eyebrow="ODYSSEY"
+                eyebrow="SYRA"
                 title="Page not found"
                 subtitle="This workspace route does not exist."
               />
@@ -375,7 +393,7 @@ export function ConsoleApp({
             }
           />
           <footer className="mission-footer">
-            <span>ODYSSEY HEALTH MONITOR · UX CONCEPT</span>
+            <span>SYRA HEALTH MONITOR · UX CONCEPT</span>
             <span>
               {mode === "demo" ? "DEMONSTRATION DATA" : "BACKEND DATA ADAPTER"}
             </span>

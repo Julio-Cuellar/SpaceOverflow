@@ -1,4 +1,4 @@
-# Odyssey · Health monitor for astronauts
+# SYRA · Health monitor for astronauts
 
 NASA International Space Apps Challenge 2026 · Theme: *The Next Frontier* · Challenge: **Create Health
 Monitoring Software for Astronauts on Space Missions**
@@ -8,7 +8,7 @@ Monitoring Software for Astronauts on Space Missions**
 
 ## What it is
 
-Odyssey is a health and habitat monitor for a crew on a long mission. It reads the habitat's sensors, checks
+SYRA (Spaceflight sYstem for Remote Assessment) is a health and habitat monitor for a crew on a long mission. It reads the habitat's sensors, checks
 them against rules that cite their source, raises alerts with a probable cause and a recommended action, tracks
 the crew's daily health routines, and lets the astronaut ask questions that are answered only from loaded
 documents. It is built so that **it keeps working on board with no link to Earth**.
