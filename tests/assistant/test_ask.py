@@ -110,6 +110,16 @@ def test_a_model_answer_with_a_figure_the_passages_do_not_have_is_replaced_by_th
     assert "2.8" in result.text
 
 
+def test_a_model_answer_in_spanish_is_replaced_by_the_passages() -> None:
+    llm = FakeLlm(tokens=["El dolor de cabeza aparece ", "entre 2.8 y 4.5 mmHg en la cabina."])
+    assistant, _ = build(llm=llm)
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert result.composed_by == "plantilla"
+    assert "en la cabina" not in result.text
+
+
 def test_a_model_answer_that_only_uses_figures_from_the_passages_is_kept() -> None:
     llm = FakeLlm(tokens=["Headache appears ", "between 2.8 and 4.5 mmHg."])
     assistant, _ = build(llm=llm)

@@ -93,6 +93,18 @@ def test_an_agent_answer_with_an_invented_figure_is_not_delivered() -> None:
     assert result.citations
 
 
+def test_an_agent_answer_in_spanish_is_not_delivered() -> None:
+    text = "El dolor de cabeza puede deberse a un nivel de CO₂ alto en la cabina."
+    assistant, _, _, _ = build(lambda log: FakeAgent(log, text=text))
+
+    result = assistant(uuid.uuid4(), HEADACHE, turn_id=uuid.uuid4())
+
+    assert result.composed_by != "n8n"
+    assert result.degraded is True
+    assert "en la cabina" not in result.text
+    assert result.citations
+
+
 def test_the_answer_is_the_agents_text_with_citations_built_by_the_backend() -> None:
     assistant, _, _, _ = build(lambda log: FakeAgent(log))
 

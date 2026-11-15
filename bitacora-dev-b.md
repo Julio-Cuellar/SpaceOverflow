@@ -833,3 +833,52 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 - **GREEN:** 768 pruebas de Python (19 omitidas), `ruff`, `mypy` estricto e `import-linter` limpios; `knowledge` con 96 % de cobertura.
 
 **Lo que falta:** título del documento antepuesto a cada fragmento (exige recalcular vectores, ≈ 25 min), más candidatos de palabras (profundidad), latencia del agente de n8n, glosario por el equipo, reimportar el workflow de n8n (permiso).
+
+## E25 · Workflow de n8n reimportado y prueba de punta a punta (15 nov 2026)
+
+**Hecho (con permiso del usuario):** se arrancó `n8n`, se importó y publicó `space-apps-asistente.json` (ya con el prompt «Always answer in English…») y se reinició n8n. El workflow importado se exportó y contiene la instrucción. El servidor de desarrollo usa la búsqueda híbrida.
+
+**Prueba real (servidor → n8n → Ollama `spaceapp-asistente` → verificadores):**
+- Pregunta en inglés: respuesta del agente en inglés con citas del backend.
+- Pregunta en español («¿Cuál es el límite de CO₂ promedio de una hora?»): **el modelo contestó en español** aunque el prompt lo prohíbe; el prompt no basta con `llama3.2:3b`. Tiempo ≈ 32 s.
+
+**Corrección (TDD, RED observado):** `assistant/application/language.py` (`is_english`, cuenta palabras de función de inglés y de español) y `AskAssistant._acceptable` (inglés **y** cifras respaldadas) en los dos caminos (agente y modelo local). Una redacción en español no se entrega: se responde con la plantilla, que está en inglés. Tras el cambio la misma pregunta devuelve la plantilla en inglés en ≈ 14 s (`degraded: true`). **Límite:** el español solo se detecta con ≥ 2 palabras de función; una frase corta puede pasar.
+
+**Hallazgo (sin arreglar):** para esa pregunta el primer pasaje es irrelevante (límite de horas de O₂ enriquecido); los pasajes correctos (V2 6004) son el 2.º y el 3.º. Recall@1 sigue bajo (31 % en el principal): la plantilla muestra primero el pasaje equivocado.
+
+**GREEN:** 778 pruebas de Python (19 omitidas), `ruff`, `mypy` estricto e `import-linter` limpios; `language.py` al 100 %. Sin commit todavía.
+
+## E26 · Primer puesto: empates de coseno resueltos por las palabras (15 nov 2026)
+
+**Motivo:** «arreglar top-1». El recall@1 estaba en 31 % (principal) y 36 % (inglés); la pregunta del límite de CO₂ de una hora ponía primero un pasaje de horas de oxígeno enriquecido.
+
+**Diagnóstico:** el coseno de los pasajes correctos y el del irrelevante diferían en 0,005 a 0,02: ruido del modelo. Muchos primeros puestos equivocados son páginas vecinas del tema con el encabezado de la norma.
+
+**Probado solo con los conjuntos de ajuste (50 preguntas, @1 · @3 · MRR; solo coseno: 38 % · 74 % · 0,54):** prior de puesto léxico 1/(1+i): @1 hasta 52 % pero @3 baja a 68–70 %; mezcla de z-scores con BM25: @1 52 %, @3 66 %; bonus a fragmentos con referencia de requisito: empeora; **empate dentro de 0,02 del mejor coseno, ordenado por las palabras: 50 % · 74 % · 0,60** (con 0,03 el @3 baja a 66 %; con 0,01 el @1 es 40 %: el margen está en un borde, por eso se mide también en el reservado). Ordenar el empate por cobertura de términos da lo mismo.
+
+**Hecho (TDD, RED observado):** `NEAR_BEST = 0,02` en `hybrid_source._reorder`.
+
+**Resultado, recall@1 (antes → después; @3 sin cambios):** principal 31 → 44 %, validación 56 %, inglés 36 → 48 %, reservado 53 → 57 %. Fuera de alcance: 0 de 8.
+
+**No arreglado:** la pregunta que motivó el cambio **sigue** con el pasaje de oxígeno en primer lugar: su coseno (0,704) supera por 0,001 al correcto y el empate se ordena por las palabras, donde ese pasaje es el 4.º y los correctos el 9.º y 14.º. Ninguna variante probada lo resuelve sin perder @3. Arreglarlo de verdad pide un reordenador (modelo cruzado, descarga) o fragmentos con título antepuesto (recalcular vectores). El reservado se ha medido ya cinco veces: su cifra es de confirmación, no virgen.
+
+**GREEN:** 779 pruebas de Python (19 omitidas), `ruff`, `mypy` estricto e `import-linter` limpios. Sin commit (tampoco el verificador de idioma de E25).
+
+## E27 · Título del documento antepuesto a cada fragmento: probado y descartado (15 nov 2026)
+
+**Qué se probó:** el texto que se convierte en vector llevaba solo el contenido del fragmento. Se escribió `embedding_text` (con pruebas, RED observado) que antepone el título del documento en inglés (por ejemplo «NASA-STD-3001 Volume 2: Human Factors, Habitability, and Environmental Health») y quita el encabezado de página repetido («NASA-STD-3001, VOLUME 2, REVISION F 125 of 126»). Se recalcularon los 1 588 vectores a otro archivo (≈ 27 min) y se compararon con los anteriores, con la misma búsqueda.
+
+**Resultado (recall@1 · @3 · @10; sin título → con título):**
+
+| Conjunto | Sin título | Con título |
+|---|---|---|
+| Principal ES | 44 · 81 · 81 % | 38 · 75 · 81 % |
+| Validación ES | 56 · 67 · 78 % | 67 · 67 · 78 % |
+| Inglés | 48 · 68 · 80 % | 48 · 68 · 76 % |
+| Reservado | 57 · 80 · 87 % | 57 · 80 · 87 % |
+
+**Veredicto:** sin mejora neta. Principal empeora (−1 caso en @1 y −1 en @3 de 16), validación mejora un caso en @1 de 9, inglés pierde un caso en @10 y el reservado queda idéntico. Un cambio de ±1 caso es ruido. **Causa probable:** el 93 % de los fragmentos son de la norma, así que el título es casi el mismo en todos y no distingue entre ellos; lo que distinguiría es el encabezado de la sección (por ejemplo «7.1.1.3 Food Caloric Content»), que el fragmentador no conserva en cada fragmento.
+
+**Decisión:** se descarta; se queda el registro, no el código (módulo, pruebas y vectores borrados; los vectores en uso siguen siendo los de E23). El reservado se ha medido ya seis veces.
+
+**Idea que queda:** anteponer el **encabezado de sección** más cercano (exige que el fragmentador lo extraiga) o un reordenador de modelo cruzado (descarga con permiso). Ninguno se ha hecho.

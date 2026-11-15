@@ -15,6 +15,7 @@ from dataclasses import dataclass, replace
 from uuid import UUID, uuid4
 
 from spaceapp.modules.assistant.application.grounding import unsupported_figures
+from spaceapp.modules.assistant.application.language import is_english
 from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
 from spaceapp.modules.assistant.contracts import AnswerReady
 from spaceapp.modules.assistant.domain.model import AskOutcome
@@ -155,7 +156,7 @@ class AskAssistant:
             executor.shutdown(wait=False, cancel_futures=True)
         if not composed or not cited:
             return None
-        if not self._figures_supported(composed, question, cited, self._alerts.titles()):
+        if not self._acceptable(composed, question, cited, self._alerts.titles()):
             return None
         sources = "Sources: " + "; ".join(source_label(p) for p in cited)
         return f"{composed}\n\n{sources}", cited
@@ -169,10 +170,17 @@ class AskAssistant:
     ) -> tuple[str, str]:
         if self._llm.available:
             composed = self._stream_within_limit(question, passages, alerts, on_token)
-            if composed and self._figures_supported(composed, question, passages, alerts):
+            if composed and self._acceptable(composed, question, passages, alerts):
                 sources = "Sources: " + "; ".join(source_label(p) for p in passages)
                 return f"{composed}\n\n{sources}", "llm"
         return _template(passages, alerts), "plantilla"
+
+    @classmethod
+    def _acceptable(
+        cls, text: str, question: str, passages: tuple[CitationDTO, ...], alerts: list[str]
+    ) -> bool:
+        """En inglés y con cifras de las fuentes; si no, se entregan los pasajes tal cual."""
+        return is_english(text) and cls._figures_supported(text, question, passages, alerts)
 
     @staticmethod
     def _figures_supported(

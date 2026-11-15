@@ -118,6 +118,17 @@ def test_meaning_decides_the_order_even_when_the_words_prefer_another_passage() 
     assert source.search(question, k=3)[0].document_code == BRIEF
 
 
+def test_passages_almost_as_close_in_meaning_as_the_best_keep_the_order_of_the_words() -> None:
+    question = "ppCO2 mmHg"
+    lexical = RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3)
+    assert lexical[0].document_code == STANDARD
+    # El pasaje del dolor de cabeza se parece un poco más (0,714 frente a 0,700), pero la
+    # diferencia es ruido del modelo: manda el orden de las palabras.
+    source, _ = hybrid({question: [1.0, 1.02, 0.0]})
+
+    assert source.search(question, k=3)[0].document_code == STANDARD
+
+
 def test_a_passage_the_words_did_not_find_is_not_added_by_meaning() -> None:
     question = "ppCO2 mmHg"
     lexical = RagKnowledgeSource(CHUNKS, GLOSSARY).search(question, k=3)
