@@ -1,4 +1,4 @@
-import { passagesFixture, type PassageFixture } from '../../data/mocks/passages'
+import { passagesFixture } from '../../data/mocks/passages'
 import type { EvidenceState } from '../../shared/lib/evidence'
 
 export const NO_INFO_TEXT = "I don't have that information in the loaded sources."
@@ -14,12 +14,14 @@ export interface AssistantCitation {
 }
 
 export interface AssistantAnswer {
+  degraded?: boolean
+  composedBy?: string
   outcome: 'ANSWERED' | 'NO_INFO'
   text: string
   citations: AssistantCitation[]
 }
 
-/** Lowercase and accent-free. "CO₂" becomes "co2" (same as the backend search). */
+/** Lowercase and without accents. 'CO₂' becomes 'co2' (same as the backend search). */
 function normalize(text: string): string {
   return text
     .toLowerCase()
@@ -32,13 +34,8 @@ function terms(text: string): Set<string> {
   return new Set(words.filter((w) => w.length >= MIN_TERM_LENGTH))
 }
 
-function sourceLabel(p: PassageFixture): string {
-  const requirement = p.requirementRef ? ` · ${p.requirementRef}` : ''
-  return `${p.documentCode}${requirement} · ${p.evidenceState}`
-}
-
 /**
- * Same policy as the backend use case: only retrieved passages, with a citation; with no passage,
+ * Same policy as the backend use case: only retrieved passages, with a citation; without a passage,
  * "I don't have that information"; an active alert is named but never changed.
  */
 export function mockAnswer(question: string, activeAlerts: string[]): AssistantAnswer {
@@ -59,7 +56,7 @@ export function mockAnswer(question: string, activeAlerts: string[]): AssistantA
 
   const lines = [
     'According to the loaded sources:',
-    ...found.map((p) => `- ${p.excerpt} (${sourceLabel(p)})`),
+    ...found.map((p) => `- ${p.excerpt}`),
     ...activeAlerts.map((title) => `Active alert: ${title}. ${ALERT_NOTE}`),
   ]
   return {

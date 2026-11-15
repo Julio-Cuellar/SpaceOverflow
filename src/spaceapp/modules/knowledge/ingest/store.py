@@ -1,6 +1,6 @@
-"""Chunk store. In memory for tests and in a JSONL file for local ingestion.
+"""Fragment store. In memory for tests and in a JSONL file for the local ingestion.
 
-Once PostgreSQL exists (dev A, I1), the `knowledge` schema (`document`, `chunk`) replaces the
+When PostgreSQL exists (dev A, I1), the `knowledge` schema (`document`, `chunk`) replaces the
 file: this port is the point of change.
 """
 
@@ -16,7 +16,7 @@ from spaceapp.modules.knowledge.ingest.chunking import Chunk
 
 class ChunkStore(Protocol):
     def add(self, chunks: list[Chunk]) -> int:
-        """Stores the new chunks and returns how many were new (idempotent ingestion)."""
+        """Stores the new fragments and returns how many were new (idempotent ingestion)."""
         ...
 
     def all(self) -> list[Chunk]: ...
@@ -37,7 +37,7 @@ class InMemoryChunkStore:
 
 
 class JsonlChunkStore(InMemoryChunkStore):
-    """Same as the in-memory one, but keeps the chunks in a file between runs."""
+    """Same as the in-memory one, but it keeps the fragments in a file between runs."""
 
     def __init__(self, path: Path) -> None:
         super().__init__()

@@ -19,7 +19,7 @@ def test_splits_a_page_at_each_requirement_reference() -> None:
 
 
 def test_a_reference_quoted_inside_a_sentence_does_not_split_the_requirement() -> None:
-    # Real case: the standard cites other requirements inside a sentence ("see [V2 6004] ...").
+    # Real case: the standard cites other requirements inside a sentence ('see [V2 6004] ...').
     text = (
         "[V2 6006] The system shall maintain pressure between 34.5 and 103 kPa, "
         "see also [V2 6004] Nominal Levels for the limit. "
@@ -41,7 +41,7 @@ def test_a_reference_in_parentheses_or_after_a_comma_is_a_citation_not_a_require
 
 
 def test_a_reference_inside_an_unclosed_parenthesis_is_a_citation_even_after_a_digit() -> None:
-    # Real case (Vol. 1, p. 44): "(as defined in NASA-STD-3001, Volume 1 [V1 4030] Career ...)" is
+    # Real case (Vol. 1, p. 44): '(as defined in NASA-STD-3001, Volume 1 [V1 4030] Career ...)' is
     # preceded by a digit, but the figure of 1.3 mSv/day belongs to V1 4033, not to V1 4030.
     text = (
         "[V1 4033] The program shall protect crewmembers from GCR to less than a NASA effective "

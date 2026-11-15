@@ -2,10 +2,23 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Protocol
 from uuid import UUID
 
 from spaceapp.modules.knowledge.domain.model import Action, Citation, Guidance, Recommendation
+
+
+class EmbeddingError(Exception):
+    """The embeddings model did not answer or returned something invalid. Search goes on without."""
+
+
+class Embedder(Protocol):
+    """Turns texts into vectors. `model` identifies the vectors it produces."""
+
+    model: str
+
+    def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
 
 class PassageSource(Protocol):
@@ -27,7 +40,7 @@ class RecommendationRepository(Protocol):
 
 
 class Inbox(Protocol):
-    """Idempotency by (consumer, event_id). In I1 the platform inbox replaces it."""
+    """Idempotency per (consumer, event_id). In I1 the platform's inbox replaces it."""
 
     def mark_once(self, consumer: str, event_id: UUID) -> bool: ...
 

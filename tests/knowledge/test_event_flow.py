@@ -1,4 +1,4 @@
-"""End-to-end flow over the Dev A bus: alert_raised comes in, recommendation_ready goes out."""
+"""End-to-end walk over Dev A's bus: alert_raised comes in, recommendation_ready goes out."""
 
 from __future__ import annotations
 

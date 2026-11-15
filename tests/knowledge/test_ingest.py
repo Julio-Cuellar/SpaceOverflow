@@ -20,9 +20,9 @@ def entry(code: str, filename: str, *, read: bool = True, optional: bool = False
         code=code,
         title=code,
         url=f"https://example.org/{filename}",
-        kind="standard",
+        kind="norma",
         evidence_state="VERIFIED",
-        license_status="unverified",
+        license_status="no_verificada",
         packageable=False,
         read=read,
         optional=optional,
@@ -136,9 +136,9 @@ class TestCommand:
                             "code": "GOOD",
                             "title": "GOOD",
                             "url": "https://example.org/good.pdf",
-                            "kind": "standard",
+                            "kind": "norma",
                             "evidence_state": "VERIFIED",
-                            "license_status": "unverified",
+                            "license_status": "no_verificada",
                             "packageable": False,
                             "read": True,
                             "optional": False,
@@ -182,9 +182,9 @@ class TestCommand:
                             "code": "X",
                             "title": "X",
                             "url": "https://example.org/x.pdf",
-                            "kind": "standard",
+                            "kind": "norma",
                             "evidence_state": "VERIFIED",
-                            "license_status": "unverified",
+                            "license_status": "no_verificada",
                             "packageable": True,
                             "read": True,
                             "optional": False,
@@ -226,7 +226,7 @@ class TestCommand:
         assert {c.document_code for c in JsonlChunkStore(out).all()} == {"STALE", "GOOD"}
 
     def test_rebuild_drops_the_chunks_of_a_previous_run(self, tmp_path: Path) -> None:
-        # If the splitting rules change, the ids change and the old chunks would be orphaned.
+        # If the cutting rules change, the ids change and the old fragments would be left orphaned.
         out = tmp_path / "chunks.jsonl"
         JsonlChunkStore(out).add(chunk_page("STALE", 1, "obsolete text from an old run", "TB"))
 
@@ -237,7 +237,8 @@ class TestCommand:
     def test_a_rebuild_that_indexes_nothing_does_not_destroy_the_existing_index(
         self, tmp_path: Path
     ) -> None:
-        # With no PDFs in the folder, rebuilding would leave the index empty: the old one is kept.
+        # With no PDFs in the folder, rebuilding would leave the index empty: the previous one is
+        # kept.
         self.write_manifest(tmp_path / "manifest.json")
         out = tmp_path / "chunks.jsonl"
         JsonlChunkStore(out).add(

@@ -13,7 +13,7 @@ MIN_SCORE = 1
 
 
 def normalize(text: str) -> str:
-    """Lowercase and ASCII-folded. "CO₂" becomes "co2"."""
+    """Lowercase and without accents. 'CO₂' becomes 'co2'."""
     decomposed = unicodedata.normalize("NFKD", text.lower())
     return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
 
@@ -31,7 +31,7 @@ class Indexed[T]:
 
 
 def rank[T](query: str, indexed: Sequence[Indexed[T]], k: int) -> list[T]:
-    """The passages with the most terms in common, up to k. Ties: catalog order."""
+    """The passages with the most terms in common, up to k. Ties: the catalog order."""
     query_terms = terms(query)
     scored = [
         (len(query_terms & entry.keywords), position, entry.item)

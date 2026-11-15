@@ -1,4 +1,4 @@
-"""Null adapter: no model. The use case answers with the passages, uncomposed."""
+"""Null adapter: no model. The use case answers with the passages, unwritten."""
 
 from __future__ import annotations
 

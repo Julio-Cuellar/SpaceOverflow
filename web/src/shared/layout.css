@@ -142,3 +142,14 @@ form textarea {
 svg text {
   font-size: 11px;
 }
+
+/* Current stage of the plan pipeline and the chosen filter: visible without relying on color (plan, 11.3). */
+[aria-current='step'] {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+button[aria-pressed='true'] {
+  font-weight: bold;
+  text-decoration: underline;
+}

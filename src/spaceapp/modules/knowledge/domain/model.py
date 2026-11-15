@@ -15,7 +15,7 @@ class EvidenceState(StrEnum):
 
 
 class UnknownRuleError(LookupError):
-    """The alert carries a rule unknown to the catalog. The event is not marked as processed."""
+    """The alert carries a rule the catalog does not know. The event is not marked as processed."""
 
 
 @dataclass(frozen=True)

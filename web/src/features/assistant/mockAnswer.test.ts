@@ -21,9 +21,10 @@ describe('mockAnswer', () => {
   })
 
   it('names the active alert without changing it', () => {
-    const answer = mockAnswer('Why do I have a headache?', ['High CO₂ (Alert)'])
+    const answer = mockAnswer('Why do I have a headache?', ['CO₂ alto (Alerta)'])
 
-    expect(answer.text).toContain('Active alert: High CO₂ (Alert)')
+    expect(answer.text).toContain('According to the loaded sources:')
+    expect(answer.text).toContain('Active alert: CO₂ alto (Alerta)')
     expect(answer.text).toContain('does not change the alert')
   })
 })

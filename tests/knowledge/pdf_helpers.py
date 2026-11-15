@@ -8,7 +8,7 @@ def _escape(text: str) -> str:
 
 
 def make_pdf(pages: list[str]) -> bytes:
-    """PDF 1.4 with Helvetica font. Each element of `pages` is the text of one page."""
+    """PDF 1.4 with a Helvetica font. Each element of `pages` is the text of one page."""
     count = len(pages)
     kids = " ".join(f"{4 + 2 * i} 0 R" for i in range(count))
     objects: list[bytes] = [

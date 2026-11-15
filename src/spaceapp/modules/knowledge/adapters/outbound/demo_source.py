@@ -1,4 +1,4 @@
-"""Demo adapter: reads the versioned JSON catalog. Every output is labelled DEMO."""
+"""Demo adapter: reads the versioned JSON catalog. All output is labeled DEMO."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from spaceapp.modules.knowledge.domain.model import (
 )
 from spaceapp.modules.knowledge.domain.search import Indexed, normalize, rank
 
-DEMO_NOTICE = "This recommendation uses demonstration data, not NASA data."
+DEMO_NOTICE = "This recommendation uses demo data, not NASA data."
 
 
 class DemoKnowledgeSource:

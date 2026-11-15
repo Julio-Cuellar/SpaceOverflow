@@ -1,0 +1,347 @@
+# Frontend integration TARGET based on V2. Not an export of the current backend.
+# Replace validation input with schema.generated.graphql after Dev A merges F4/F5/F10/F11.
+scalar DateTime
+scalar Date
+enum Severity {
+  NORMAL
+  ATTENTION
+  ALERT
+  CRITICAL
+}
+enum EvidenceState {
+  VERIFIED
+  TB
+  DEMO
+  UNVERIFIED
+}
+enum DataOrigin {
+  REAL
+  SIMULATED
+  REPLAY
+}
+enum AlertStatus {
+  RAISED
+  ACKNOWLEDGED
+  RESOLVED
+}
+enum TaskKind {
+  HEALTH
+  SHIP
+  INCIDENT
+}
+enum TaskOrigin {
+  GROUND
+  SYSTEM
+  CREW
+}
+enum TaskStatus {
+  PENDING
+  COMPLETED
+  BLOCKED
+}
+enum IncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+enum IncidentSource {
+  ALERT
+  MANUAL
+}
+enum Resolution {
+  MINUTE
+  RAW
+}
+enum PlanStage {
+  DRAFT
+  QUEUED
+  IN_TRANSIT
+  RECEIVED
+  APPLIED
+  CONFIRMED
+  REJECTED
+}
+type Vital {
+  key: String!
+  label: String!
+  value: Float!
+  unit: String!
+  domain: String!
+  severity: Severity!
+  evidenceState: EvidenceState!
+  origin: DataOrigin!
+  zoneId: ID
+}
+type DashboardView {
+  habitatId: ID!
+  globalSeverity: Severity!
+  vitals: [Vital!]!
+}
+type Citation {
+  documentCode: String!
+  requirementRef: String
+  page: Int
+  excerpt: String!
+  evidenceState: EvidenceState!
+}
+type Action {
+  key: String!
+  title: String!
+  description: String!
+}
+type Recommendation {
+  body: String!
+  composedBy: String!
+  sourceKind: String!
+  actions: [Action!]!
+  citations: [Citation!]!
+}
+type AlertRule {
+  sourceRequirement: String!
+  sourceDocument: String!
+  evidenceState: EvidenceState!
+  parameter: String!
+}
+type Alert {
+  id: ID!
+  ruleKey: String!
+  zoneId: ID
+  severity: Severity!
+  status: AlertStatus!
+  causeHint: String!
+  raisedAt: DateTime!
+  rule: AlertRule!
+  recommendation: Recommendation
+}
+type PageInfo {
+  hasNextPage: Boolean!
+  endCursor: String
+}
+type AlertConnection {
+  nodes: [Alert!]!
+  pageInfo: PageInfo!
+}
+type Canvas {
+  width: Float!
+  height: Float!
+}
+type Layout {
+  x: Float!
+  y: Float!
+  w: Float!
+  h: Float!
+}
+type Zone {
+  id: ID!
+  code: String!
+  name: String!
+  kind: String!
+  deck: String!
+  layout: Layout!
+  status: Severity!
+  openIncidents: Int!
+}
+type Ship {
+  id: ID!
+  name: String!
+  canvas: Canvas!
+  zones: [Zone!]!
+}
+type IncidentUpdate {
+  kind: String!
+  note: String!
+  at: DateTime!
+}
+type Incident {
+  id: ID!
+  code: String!
+  title: String!
+  description: String!
+  severity: Severity!
+  status: IncidentStatus!
+  source: IncidentSource!
+  zoneId: ID!
+  openedAt: DateTime!
+  valuesNormal: Boolean!
+  sourceAlertId: ID
+  updates: [IncidentUpdate!]!
+}
+type IncidentConnection {
+  nodes: [Incident!]!
+  pageInfo: PageInfo!
+}
+type IncidentType {
+  key: String!
+  name: String!
+  category: String!
+  categoryName: String!
+  detection: String!
+  defaultSeverity: Severity!
+  evidenceState: EvidenceState!
+  typicalZones: [String!]!
+  suggestedActions: [String!]!
+}
+type Task {
+  id: ID!
+  kind: TaskKind!
+  origin: TaskOrigin!
+  title: String!
+  zoneId: ID
+  status: TaskStatus!
+  dueAt: DateTime
+  blockedReason: String
+  effective: Boolean
+  sourceAlertId: ID
+  incidentId: ID
+  templateId: ID
+}
+type RejectedTask {
+  title: String!
+  reason: String!
+}
+type GroundPlanView {
+  version: Int!
+  appliedAt: DateTime
+  rejected: [RejectedTask!]!
+}
+type GroundTemplate {
+  zoneCode: String
+  recurrence: String!
+  id: ID!
+  title: String!
+  kind: TaskKind!
+  status: String!
+  blockedReason: String
+  cancelled: Boolean!
+}
+type GroundDraft {
+  version: Int!
+  templates: [GroundTemplate!]!
+}
+type PublishedPlan {
+  version: Int!
+  stage: PlanStage!
+  reason: String
+  publishedAt: DateTime!
+  ackedAt: DateTime
+}
+type GroundLink {
+  online: Boolean!
+  delaySeconds: Int!
+  changedAt: DateTime!
+}
+type GroundControlView {
+  appliedVersion: Int!
+  templates: [GroundTemplate!]!
+  draft: GroundDraft
+  published: PublishedPlan
+  link: GroundLink!
+}
+type ReadingPoint {
+  ts: DateTime!
+  avg: Float!
+  min: Float!
+  max: Float!
+}
+type MetricSeries {
+  metric: String!
+  unit: String!
+  points: [ReadingPoint!]!
+}
+type Query {
+  dashboard(habitatId: ID!): DashboardView!
+  alerts(first: Int = 20, after: String, status: AlertStatus): AlertConnection!
+  alert(id: ID!): Alert
+  ship(habitatId: ID!): Ship!
+  incidents(
+    first: Int = 20
+    after: String
+    status: IncidentStatus
+    zoneId: ID
+  ): IncidentConnection!
+  incident(id: ID!): Incident
+  incidentTypes(category: String): [IncidentType!]!
+  tasks(day: Date!, kind: TaskKind, status: TaskStatus): [Task!]!
+  streak(day: Date!): Int!
+  groundPlan: GroundPlanView!
+  groundControl: GroundControlView!
+  zoneReadings(
+    zoneId: ID!
+    metrics: [String!]!
+    from: DateTime!
+    to: DateTime!
+    resolution: Resolution = MINUTE
+  ): [MetricSeries!]!
+}
+type AlertError {
+  code: String!
+  message: String!
+}
+type IncidentError {
+  code: String!
+  message: String!
+}
+type TaskError {
+  code: String!
+  message: String!
+}
+type GroundError {
+  code: String!
+  message: String!
+}
+type AlertAcknowledgedPayload {
+  alert: Alert!
+  alreadyAcknowledged: Boolean!
+}
+type IncidentPayload {
+  incident: Incident!
+}
+type TaskPayload {
+  task: Task
+}
+type SyncPayload {
+  queued: Int!
+}
+union AlertResult = AlertAcknowledgedPayload | AlertError
+union IncidentResult = IncidentPayload | IncidentError
+union TaskResult = TaskPayload | TaskError
+union GroundResult = GroundControlView | GroundError
+type CrewError { code: String! message: String! }
+type CrewPayload { success: Boolean! }
+union CrewResult = CrewPayload | CrewError
+
+type Mutation {
+  setConsent(category: String!, shared: Boolean!): CrewResult!
+  recordBaseline(metric: String!, value: Float!): CrewResult!
+  acknowledgeAlert(id: ID!, note: String): AlertResult!
+  reportIncident(
+    zoneId: ID!
+    typeKey: String!
+    description: String
+    severity: Severity
+  ): IncidentResult!
+  acknowledgeIncident(id: ID!, note: String): IncidentResult!
+  resolveIncident(id: ID!, note: String!): IncidentResult!
+  completeTask(id: ID!, effective: Boolean): TaskResult!
+  snoozeTask(id: ID!, minutes: Int = 15): TaskResult!
+  blockTask(id: ID!, reason: String!): TaskResult!
+  createTask(
+    kind: TaskKind!
+    title: String!
+    zoneId: ID
+    dueAt: DateTime
+  ): TaskResult!
+  updateTask(id: ID!, title: String!, zoneId: ID, dueAt: DateTime): TaskResult!
+  deleteTask(id: ID!): TaskResult!
+  saveGroundTemplate(
+    title: String!
+    kind: TaskKind!
+    zoneCode: String
+    recurrence: String = "DAILY"
+    templateId: ID
+  ): GroundResult!
+  cancelGroundTemplate(templateId: ID!): GroundResult!
+  publishGroundPlan: GroundResult!
+  setGroundLink(online: Boolean!, delaySeconds: Int!): GroundResult!
+  syncGroundLinkNow: SyncPayload!
+}

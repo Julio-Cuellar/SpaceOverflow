@@ -1,6 +1,6 @@
 # knowledge · citable knowledge
 
-Turns each alert into a **template recommendation with a citation**, without depending on any model, and looks up citable passages for the assistant. The whole module works in English only.
+Turns each alert into a **template recommendation with a citation**, without depending on any model, and searches for citable passages for the assistant.
 
 ## Contracts (`contracts.py`)
 
@@ -10,9 +10,9 @@ Turns each alert into a **template recommendation with a citation**, without dep
 
 ## How it works
 
-- Use case `HandleAlertRaised`: idempotent by `(consumer, event_id)`; an unknown rule raises `UnknownRuleError` **without** marking the event, so that the retry can process it.
-- Source `DemoKnowledgeSource` reads `data/knowledge/demo_catalog.json` (25 rules, one for each Monitoring rule in `rules/catalog/monitoring.json`; 17 actions; 3 passages). `tests/knowledge/test_rule_coverage.py` cross-checks both catalogs: every rule that Monitoring can raise has a recommendation, includes the action that Monitoring names, and no citation claims more evidence than the rule. Every recommendation says "This recommendation uses demonstration data, not NASA data."
-- Passage search: lowercase terms, minimum relevance threshold; with no passage it returns an empty list.
+- Use case `HandleAlertRaised`: idempotent per `(consumer, event_id)`; an unknown rule raises `UnknownRuleError` **without** marking the event, so that the retry can process it.
+- Source `DemoKnowledgeSource` reads `data/knowledge/demo_catalog.json` (25 rules, one for each Monitoring rule in `rules/catalog/monitoring.json`; 17 actions; 3 passages). `tests/knowledge/test_rule_coverage.py` cross-checks both catalogs: every rule Monitoring can raise has a recommendation, includes the action Monitoring names and no citation claims more evidence than the rule. Every recommendation says "demo data, not NASA data". The rule and action keys (`env-co2-pre`, `revisar_ventilacion_y_filtros`...) are identifiers shared with Monitoring and Missions: they stay as they are; only their texts are in English.
+- Passage search: terms without accents or capitals, minimum relevance threshold; without a passage it returns an empty list.
 
 ## Tests
 
@@ -20,44 +20,46 @@ Turns each alert into a **template recommendation with a citation**, without dep
 .venv/bin/python -m pytest tests/knowledge -q
 ```
 
-## Ingesting NASA PDFs (F12)
+## Ingesting the NASA PDFs (F12)
 
-The command indexes the PDFs found in `data/knowledge/pdfs/` according to `data/knowledge/manifest.json`. It **downloads nothing**: the PDFs are placed by hand (the manifest gives the source and the license).
+The command indexes the PDFs in `data/knowledge/pdfs/` according to `data/knowledge/manifest.json`. **It downloads nothing**: the PDFs are put there by hand (the manifest gives the source and the license).
 
 ```bash
-.venv/bin/python -m spaceapp.modules.knowledge.ingest --rebuild   # extracts, chunks and saves to data/knowledge/index/chunks.jsonl
+.venv/bin/python -m spaceapp.modules.knowledge.ingest --rebuild   # extracts, chunks and stores in data/knowledge/index/chunks.jsonl
 .venv/bin/python -m spaceapp.modules.knowledge.evaluate           # main set
 .venv/bin/python -m spaceapp.modules.knowledge.evaluate --questions data/knowledge/eval_questions_validation.json
+.venv/bin/python -m spaceapp.modules.knowledge.evaluate --questions data/knowledge/eval_questions_reserved.json
 ```
 
-- Idempotent: running it again does not duplicate. Use `--rebuild` after changing the chunking, or old chunks will remain. Rebuild as well after this translation: the document codes in the manifest are now in English (`OCHMO-TB-003 Habitable Atmosphere`, `OCHMO-TB-044 Medical Operations`, `Medical Kit Checklist`), so an index built earlier carries the old Spanish codes.
+- Idempotent: running it again does not duplicate. Use `--rebuild` after changing the chunking, or old chunks will remain.
 - A missing, broken or textless PDF is reported and does not stop the others.
-- Chunking is by requirement reference (`[V2 6004]`); a reference cited mid-sentence or inside an open parenthesis does not split the passage.
-- BM25 search with word stems and a threshold (`MIN_SCORE`, `MIN_MATCHED_TERMS`) over English questions and English documents, with an English stop-word list; with no relevant passage it returns an empty list. There is no translation layer: the Spanish-English glossary (`glossary_es_en.json`) was removed.
+- It chunks by requirement reference (`[V2 6004]`); a reference cited mid-sentence or inside an open parenthesis does not split the passage.
+- BM25 search with word stems and a threshold (`MIN_SCORE`, `MIN_MATCHED_TERMS`); without a relevant passage it returns an empty list. It works over English questions and English documents, with an English stop-word list; there is no translation layer (the Spanish-English glossary `glossary_es_en.json` was removed, and so were the Spanish evaluation questions).
+- **Hybrid search (words + meaning):** `python -m spaceapp.modules.knowledge.ingest.embed` computes the vectors with `bge-m3` (local Ollama, 1,024 dimensions; it is incremental and stores `embeddings.json` and `.f32` next to the index). `build_knowledge_source` lets the words (BM25) propose the 50 best candidates and the cosine reorder them; those within 0.02 of the best cosine count as a tie and keep the word order. Meaning alone does not decide that there is an answer: if the words find nothing, or no candidate is similar enough (cosine ≥ 0.5), nothing is cited. Without vectors, with another model or without Ollama, it searches by words only. It costs ≈ 0.1 to 0.2 s per new question (embedding included).
 - **The PDFs and the index are not versioned:** the redistribution license is not confirmed.
 
 ## Evaluation (strict metric, k=3)
 
-A hit requires the expected text to appear in the excerpt of the top 3 passages. Minimum in the plan: 80 %.
+A hit requires the expected text to appear in the excerpt of the first 3 passages. Plan minimum: 80%. `evaluate --mode lexical|hybrid --diagnose` prints recall@1/3/5/10, MRR and the rank at which each miss ended up. The reserved set (`eval_questions_reserved.json`, 15 useful questions and 4 out of scope) is frozen: it is not used to tune anything.
 
-| Set | File | Cases |
-|---|---|---|
-| Main | `data/knowledge/eval_questions.json` | 16 in scope, 2 out of scope |
-| Validation (not used for tuning) | `data/knowledge/eval_questions_validation.json` | 9 in scope, 1 out of scope |
+**Historical figures, measured before the RAG became English-only.** They used the Spanish-English glossary and the Spanish questions, which no longer exist in the repository, so **they no longer apply**. Re-measure with the real PDFs indexed (`ingest --rebuild`, `ingest.embed`, then `evaluate`) before quoting any number.
 
-The former Spanish sets and the English diagnostic set were merged: the main and validation sets are now the English questions, with the same expectations as before. The results below were measured **before** the English-only change, so they must be re-measured with the real PDFs indexed (they are not in the repository):
+| Set | Lexical @3 | Hybrid @1 | Hybrid @3 | Hybrid @10 | Out of scope answered (hybrid) |
+|---|---|---|---|---|---|
+| Main ES (16) | 56% | 44% | 81% | 81% | 0 of 2 |
+| Validation ES (9) | 67% | 56% | 67% | 78% | 0 of 1 |
+| Diagnosis EN (25) | 56% | 48% | 68% | 80% | 0 of 3 |
+| Reserved (30) | 60% | 57% | **80%** | 87% | 0 of 8 |
 
-- English questions of both sets together (the former diagnostic set): 13 of 25 hits (52 %), 0 of 3 out-of-scope answered.
-- The Spanish figures (main 9 of 16, validation 1 of 9) no longer apply.
-
-**The 80 % has not been reached.** An out-of-scope question is never answered, but lexical search fails on paraphrases and on figures in tables.
+Back then, 80% at @3 was reached in the main and reserved sets, **not** in validation (67%, only 9 questions) nor in English (68%). The ceiling is recall@10: passages the words do not find in their first 50 are not retrieved. The reserved set has been measured several times (see logbook E24): its figure is no longer from a single measurement.
 
 ## Current limits
 
 - No database or outbox: idempotency and storage are in memory until milestone I1 (dev A).
-- The assistant still uses the demonstration passages: wiring the RAG source per profile in `main.py` (dev A) is missing.
-- The underlying fix for retrieval is an embeddings model (pending decision; it requires permission to download it).
+- The assistant still uses the demo passages: the RAG source per profile must be wired in `main.py` (dev A).
+- The vectors are not versioned (like the index): each machine computes them with `ingest.embed` (≈ 25 min on CPU for 1,588 chunks).
 - The Technical Briefs come out as `TB` although the demo catalog marks TB-003 as `VERIFIED`: team decision.
-- Many figures have no `requirement_ref` of their own: the citation carries document and page, not always a requirement number.
-- Tables that come as images are not extracted.
+- The evidence states (`VERIFIED`, `UNVERIFIED`, `TB`, `DEMO`) are shared vocabulary with Monitoring and the web.
+- Many figures are left without their own `requirement_ref`: the citation carries document and page, not always a requirement number.
+- Tables that come as an image are not extracted.
 - `source_kind` (DEMO) does not travel in the event: adding it requires asking Dev A first.

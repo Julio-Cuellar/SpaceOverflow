@@ -10,10 +10,14 @@ import {
   trigger,
   zoneSeriesFor,
 } from './app/scenario'
+import { addCrewTask, blockTask, completeTask, deleteCrewTask, snoozeTask, updateCrewTask } from './app/tasks'
 import { bodyIndicatorsFixture } from './data/mocks/body'
 import { incidentTypesFixture } from './data/mocks/incidentTypes'
+import { tasksFixture } from './data/mocks/tasks'
 import { AssistantPanel } from './features/assistant/AssistantPanel'
-import { mockAnswer } from './features/assistant/mockAnswer'
+import { mockAnswer, type AssistantAnswer } from './features/assistant/mockAnswer'
+import { SIMULATED_TRANSCRIPT_NOTICE, mockTranscribe } from './features/assistant/mockTranscribe'
+import { startMicrophoneRecording } from './features/assistant/microphone'
 import { AlertPanel } from './features/cabin/AlertPanel'
 import { BodyMap } from './features/cabin/BodyMap'
 import { CabinPanel } from './features/cabin/CabinPanel'
@@ -23,6 +27,9 @@ import { ReportForm } from './features/ship/ReportForm'
 import { ShipPlan } from './features/ship/ShipPlan'
 import { sortTickets } from './features/ship/model'
 import { ZoneCharts } from './features/ship/ZoneCharts'
+import { ConsentToggle } from './features/tasks/ConsentToggle'
+import { NewTaskForm } from './features/tasks/NewTaskForm'
+import { TaskList } from './features/tasks/TaskList'
 import { Banner } from './shared/ui/Banner'
 import { SevPill } from './shared/ui/SevPill'
 
@@ -31,18 +38,44 @@ const PROFILE = 'dev1'
 /** Fixed demo time: tests do not depend on the clock. */
 const NOW = '2026-11-14T10:00:00Z'
 
-type View = 'cabin' | 'ship' | 'assistant'
+type View = 'cabin' | 'ship' | 'assistant' | 'tasks'
 
 /**
  * F6 and F7 wiring with demo data (no backend). When the gateway arrives (I2),
  * the state will come from GraphQL and /ws instead of `initialState`.
  */
-export function App() {
+export interface AppProps {
+  /** Notice from Ground, e.g. "Plan v4 applied" (architecture plan, 11.4). */
+  planNotice?: string
+  /** Consent for the "tasks" category. If it is not passed, the app keeps it on its own. */
+  tasksShared?: boolean
+  onTasksSharedChange?: (shared: boolean) => void
+  /** Real assistant (backend, n8n and Ollama). Without it, the tab uses the local simulation. */
+  askAssistant?: (question: string) => Promise<AssistantAnswer>
+  /** Real voice (backend and Whisper). Without it, the tab uses a simulated transcript and says so. */
+  transcribeVoice?: (audio: Blob) => Promise<{ text: string } | null>
+  /** Reads an answer aloud (backend and Kokoro). Without it, answers are text only. */
+  speak?: (text: string) => Promise<void>
+}
+
+export function App({
+  planNotice,
+  tasksShared: sharedProp,
+  onTasksSharedChange,
+  askAssistant,
+  transcribeVoice,
+  speak,
+}: AppProps = {}) {
   const [state, setState] = useState(initialState)
   const [view, setView] = useState<View>('cabin')
   const [selectedZoneId, setSelectedZoneId] = useState('z-bridge')
   const [presetTypeKey, setPresetTypeKey] = useState<string | undefined>(undefined)
   const [formRound, setFormRound] = useState(0)
+  const [tasks, setTasks] = useState(tasksFixture)
+  const [localShared, setLocalShared] = useState(true)
+  const tasksShared = sharedProp ?? localShared
+  const setTasksShared = onTasksSharedChange ?? setLocalShared
+  const [nextTaskNumber, setNextTaskNumber] = useState(1)
 
   const alert = alertFor(state)
   const zones = state.zones.map(({ id, name }) => ({ id, name }))
@@ -51,6 +84,7 @@ export function App() {
   return (
     <main>
       <Banner />
+      {planNotice && <p role="status" aria-label="Ground plan">{planNotice}</p>}
 
       <div role="tablist" aria-label="Views">
         <button type="button" role="tab" aria-selected={view === 'cabin'} onClick={() => setView('cabin')}>
@@ -67,6 +101,14 @@ export function App() {
         >
           Assistant
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'tasks'}
+          onClick={() => setView('tasks')}
+        >
+          Tasks
+        </button>
       </div>
 
       {view === 'cabin' ? (
@@ -81,10 +123,36 @@ export function App() {
             ))}
           <BodyMap indicators={bodyIndicatorsFixture} />
         </>
+      ) : view === 'tasks' ? (
+        <>
+          <TaskList
+            tasks={tasks}
+            zones={zones}
+            onComplete={(id, effective) => setTasks((t) => completeTask(t, id, effective))}
+            onBlock={(id, reason) => setTasks((t) => blockTask(t, id, reason))}
+            onSnooze={(id, minutes) => setTasks((t) => snoozeTask(t, id, minutes))}
+            onUpdate={(id, changes) => setTasks((t) => updateCrewTask(t, id, changes))}
+            onDelete={(id) => setTasks((t) => deleteCrewTask(t, id))}
+          />
+          <NewTaskForm
+            zones={zones}
+            onCreate={(draft) => {
+              setTasks((t) => addCrewTask(t, draft, `task-crew-${nextTaskNumber}`))
+              setNextTaskNumber((n) => n + 1)
+            }}
+          />
+          <ConsentToggle shared={tasksShared} onChange={setTasksShared} />
+        </>
       ) : view === 'assistant' ? (
         <AssistantPanel
           mode="local"
-          answerFor={(question) => mockAnswer(question, activeAlertTitles(state))}
+          speak={speak}
+          answerFor={askAssistant ?? ((question) => mockAnswer(question, activeAlertTitles(state)))}
+          voice={{
+            startRecording: startMicrophoneRecording,
+            transcribe: transcribeVoice ?? mockTranscribe,
+            notice: transcribeVoice ? undefined : SIMULATED_TRANSCRIPT_NOTICE,
+          }}
         />
       ) : (
         <>

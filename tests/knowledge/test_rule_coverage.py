@@ -1,7 +1,7 @@
-"""Cross-checks the Monitoring rule catalog (dev A) with the Knowledge one.
+"""Cross-checks Monitoring's rule catalog (dev A) with Knowledge's.
 
-An alert from a rule that Knowledge does not know is left without a recommendation, and the event
-ends up in the outbox as failed. These tests detect it when either of the two changes.
+An alert of a rule that Knowledge does not know is left without a recommendation, and the event
+ends in the outbox as failed. These tests detect it when either of the two changes.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ MONITORING_RULES = json.loads(
 )["rules"]
 BY_KEY: dict[str, dict[str, Any]] = {rule["key"]: rule for rule in MONITORING_RULES}
 
-# From least to most backing. A recommendation never says more than the rule that originated it.
+# From less to more backing. A recommendation can never say more than the rule that originated it.
 STRENGTH = {"DEMO": 0, "UNVERIFIED": 1, "TB": 2, "VERIFIED": 3}
 REQUIREMENT = re.compile(r"^(V[12] \d{4})\b")
 
@@ -65,7 +65,7 @@ def test_a_requirement_named_by_monitoring_is_the_one_cited(
 ) -> None:
     match = REQUIREMENT.match(BY_KEY[rule_key]["source_requirement"])
     if match is None:
-        pytest.skip("the rule does not cite a requirement number")
+        pytest.skip("the rule cites no requirement number")
 
     cited = {c.requirement_ref for c in demo_source.guidance_for(rule_key).citations}
 

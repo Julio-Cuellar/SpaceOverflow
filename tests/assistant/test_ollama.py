@@ -17,7 +17,7 @@ PASSAGE = CitationDTO(
 
 
 def fake_opener(lines: Sequence[dict[str, object]], sent: list[dict[str, object]]):  # type: ignore[no-untyped-def]
-    """Imitates urlopen: stores the sent body and returns the NDJSON response lines."""
+    """Imitates urlopen: records the body sent and returns the NDJSON response lines."""
 
     def opener(request):  # type: ignore[no-untyped-def]
         sent.append(json.loads(request.data.decode("utf-8")))
@@ -30,21 +30,21 @@ def fake_opener(lines: Sequence[dict[str, object]], sent: list[dict[str, object]
 def test_yields_the_response_tokens_of_the_ndjson_stream() -> None:
     sent: list[dict[str, object]] = []
     gateway = OllamaGateway(
-        model="small-model",
+        model="modelo-pequeno",
         opener=fake_opener(
             [
-                {"response": "Hello", "done": False},
-                {"response": " world", "done": False},
+                {"response": "Hola", "done": False},
+                {"response": " mundo", "done": False},
                 {"response": "", "done": True},
             ],
             sent,
         ),
     )
 
-    tokens = list(gateway.stream("What is happening?", [PASSAGE], []))
+    tokens = list(gateway.stream("What happens?", [PASSAGE], []))
 
-    assert tokens == ["Hello", " world"]
-    assert sent[0]["model"] == "small-model"
+    assert tokens == ["Hola", " mundo"]
+    assert sent[0]["model"] == "modelo-pequeno"
     assert sent[0]["stream"] is True
 
 
@@ -52,9 +52,21 @@ def test_the_prompt_contains_only_the_retrieved_passages_and_the_no_information_
     sent: list[dict[str, object]] = []
     gateway = OllamaGateway(model="m", opener=fake_opener([{"response": "", "done": True}], sent))
 
-    list(gateway.stream("What is happening?", [PASSAGE], ["High CO₂ (Alert)"]))
+    list(gateway.stream("What happens?", [PASSAGE], ["High CO₂ (Alert)"]))
 
     prompt = str(sent[0]["prompt"])
     assert "Headache between 2.8 and 4.5 mmHg of ppCO₂." in prompt
     assert "I don't have that information in the loaded sources" in prompt
     assert "High CO₂ (Alert)" in prompt
+
+
+def test_the_prompt_demands_english_even_when_the_question_is_in_spanish() -> None:
+    sent: list[dict[str, object]] = []
+    gateway = OllamaGateway(model="m", opener=fake_opener([{"response": "", "done": True}], sent))
+
+    list(gateway.stream("Why do I have a headache?", [PASSAGE], []))
+
+    prompt = str(sent[0]["prompt"])
+    instructions = prompt.split("Question:")[0]
+    assert "Answer in English" in instructions
+    assert "español" not in instructions.lower()

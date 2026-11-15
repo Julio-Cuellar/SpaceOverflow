@@ -1,4 +1,4 @@
-"""Ingestion: from PDF to citable chunks. Idempotent: running it again duplicates nothing."""
+"""Ingestion: from the PDF to citable fragments. Idempotent: running it again duplicates nothing."""
 
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def ingest_manifest(
             continue
 
         if result.chunks == 0:
-            # No extractable text: usually a scan. It is flagged instead of ignored.
+            # No extractable text: it is usually a scan. A warning is given instead of ignoring it.
             report.empty.append(entry.code)
         else:
             report.ingested.append(entry.code)

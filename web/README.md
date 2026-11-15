@@ -1,36 +1,51 @@
-# web · health monitor interface
+# Odyssey web application
 
-Crew interface (SPA). **Decision-support prototype: not a medical device.** Every value without a verified source is labeled `DEMO`, and body data additionally carries the "simulated" mark.
-
-## Status
-
-Runs on **demo data**: no backend is connected yet (GraphQL and `/ws` arrive at milestone I2 with Dev A). Views: **Cabin**, **Ship** and **Assistant**.
-
-## Commands
+English React / Vite / TypeScript mission console and personal astronaut workspace, built from the approved mockups. Fonts, portraits and styles are bundled locally.
 
 ```bash
-npm run dev            # development server
-npm test               # tests (Vitest, jsdom)
-npm run test:coverage  # coverage, 80 % threshold
-npm run lint           # ESLint
-npm run typecheck      # TypeScript without emitting
-npm run codegen        # types from ../contracts/schema.graphql
-npm run build          # production build
+npm ci
+npm run dev
 ```
 
-## Structure
+Open `/` for Mission Control and `/dashboard-tripulation` directly for the personal astronaut dashboard. The personal dashboard is not a control-center sidebar entry. Other routes: `/crew`, `/habitat`, `/tasks`, `/assistant`, `/ground`, `/settings`.
 
-- `src/app/`: pure demo state (`scenario.ts`).
-- `src/features/cabin`, `ship`, `assistant`, `charts`: panels by feature.
-- `src/shared/`: base components (`SevPill`, `EvidenceBadge`, `Banner`) and color tokens.
-- `src/data/`: mocks (MSW, fixtures, WS recordings) and the `/ws` message queue.
+## Data adapters
 
-## Rules it follows
+The header shows the current source. **Demo** is an explicit in-memory simulation. **Backend** consumes the configured GraphQL, REST and WebSocket services; failures never silently become demo data. The assistant/voice adapter is configured separately and can use the real service while mission telemetry remains simulated.
 
-- Color is never alone: every status carries a symbol and text (● Normal, ▲ Attention, ◆ Alert, ■ Critical).
-- The interface shows what the backend computes and does not recompute it (for example PIO₂).
-- The assistant may name an active alert and never changes it.
+Copy `.env.example` to `.env` and set the available services. No frontend environment variable may contain a secret. The current checkout has the assistant development server and core telemetry/rules REST adapters; Dev A's complete GraphQL gateway and crew authentication are not yet in this checkout.
 
-## Pending
+```bash
+SPACEAPP_API_PROXY=http://127.0.0.1:8002 \
+SPACEAPP_ASSISTANT_PROXY=http://127.0.0.1:8000 npm run dev
+```
 
-`useWs` hook and real GraphQL mutations (I2), the full catalog of 61 incident types, the SVG body silhouette, network error states. The `../contracts/schema.graphql` contract is a **draft** pending Dev A's review.
+Backend personal mode requires `VITE_SESSION_URL`, implementing the authenticated current-user response documented in [the integration handoff](../docs/FRONTEND_INTEGRATION.md). Until then, no personal data is inferred from the global dashboard. Route visibility alone does not enforce authorization.
+
+## Checks
+
+```bash
+npm run codegen               # exported backend schema, or explicit integration target
+npm run contracts:check       # query/mutation consistency
+npm run contracts:merge-check # additionally requires Dev A's real schema export
+npm run typecheck
+npm run lint
+npm test
+npm run build                 # includes codegen; output in dist/
+```
+
+`npm run format` formats the new application and configuration. Node 22.18 or newer is required. The build includes local fonts and illustrative portraits. The static host must use an SPA history fallback; Vite's development proxy is not part of the production bundle.
+
+## Code layout
+
+- `src/console/model.ts`: view models, gateway port, commands and English enum labels.
+- `src/console/data/`: backend adapter, demonstration adapter, operation documents, state loading, realtime and voice.
+- `src/console/pages/`: mission overview, habitat, Ground, personal dashboard and settings.
+- `src/console/ui/`: cards, body outline, dialogs, tasks, incidents, trends and agent.
+- `src/features/assistant/`: existing backend text/voice adapters and microphone support.
+- `src/LegacyRoot.tsx`, `src/App.tsx`: unmounted previous implementation retained for regression tests.
+- `mockup/`, `dashboard-tripulation/`: original HTML review artifacts; the active clean personal route serves the React SPA.
+
+Voice recording works on localhost or HTTPS. Transcripts must be reviewed and confirmed. Without voice or read-aloud services, text remains available. The assistant shows retrieved citations and cannot decide or mutate alerts. The interface does not calculate clinical thresholds or confidence scores.
+
+See [the architecture review and Dev A handoff](../docs/FRONTEND_INTEGRATION.md) for current availability, exact integration boundaries, production serving and merge acceptance checks.

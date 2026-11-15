@@ -80,6 +80,11 @@ plugins = ["pydantic.mypy"]
 module = ["asyncpg", "asyncpg.*"]
 ignore_missing_imports = true
 
+# Voz local (Dev B): se instala solo donde hay Whisper o Kokoro; sin ellas usa el adaptador nulo.
+[[tool.mypy.overrides]]
+module = ["faster_whisper", "faster_whisper.*", "kokoro_onnx", "kokoro_onnx.*"]
+ignore_missing_imports = true
+
 [tool.importlinter]
 root_package = "spaceapp"
 include_external_packages = true

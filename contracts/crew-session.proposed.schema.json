@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Proposed authenticated crew-session read model",
+  "description": "Not an existing backend endpoint. Identity and ownership must be resolved and enforced by the server.",
+  "type": "object",
+  "required": ["crewMember", "zoneId", "tasks", "incidents", "sharedTasks"],
+  "properties": {
+    "crewMember": {
+      "type": "object",
+      "required": ["id", "name", "role", "portrait", "state", "vitals"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string"},
+        "role": {"type": "string"},
+        "portrait": {"type": "integer", "minimum": 1, "maximum": 4},
+        "state": {"enum": ["NORMAL", "ATTENTION", "ALERT", "CRITICAL"]},
+        "vitals": {"type": "array", "items": {"$ref": "#/$defs/vital"}},
+        "bloodPressure": {
+          "type": "object",
+          "required": ["systolic", "diastolic", "unit", "origin", "evidenceState"],
+          "properties": {
+            "systolic": {"type": "number"}, "diastolic": {"type": "number"}, "unit": {"type": "string"},
+            "origin": {"enum": ["REAL", "SIMULATED", "REPLAY"]},
+            "evidenceState": {"enum": ["VERIFIED", "TB", "DEMO", "UNVERIFIED"]}
+          }
+        }
+      }
+    },
+    "zoneId": {"type": "string", "minLength": 1},
+    "tasks": {"type": "array", "description": "Current-user scoped Task entries matching frontend-integration.graphql."},
+    "incidents": {"type": "array", "description": "Current-user scoped Incident entries matching frontend-integration.graphql. Shared zone incidents are queried separately."},
+    "sharedTasks": {"type": "boolean"},
+    "baselines": {"type": "array", "items": {"type": "object", "required": ["metric", "value", "recordedAt"], "properties": {"metric": {"type": "string"}, "value": {"type": "number"}, "recordedAt": {"type": "string", "format": "date-time"}}}}
+  },
+  "$defs": {
+    "vital": {
+      "type": "object",
+      "required": ["key", "label", "value", "unit", "severity", "evidenceState", "origin", "zoneId"],
+      "properties": {
+        "key": {"type": "string"}, "label": {"type": "string"}, "value": {"type": "number"}, "unit": {"type": "string"},
+        "severity": {"enum": ["NORMAL", "ATTENTION", "ALERT", "CRITICAL"]},
+        "evidenceState": {"enum": ["VERIFIED", "TB", "DEMO", "UNVERIFIED"]},
+        "origin": {"enum": ["REAL", "SIMULATED", "REPLAY"]}, "zoneId": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

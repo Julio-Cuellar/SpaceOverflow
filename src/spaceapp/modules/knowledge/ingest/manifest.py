@@ -1,7 +1,7 @@
 """Document manifest: what is indexed, where it comes from and what license it has.
 
-Rule of the architecture plan (F12.1): **no PDF is packaged without a confirmed license**.
-Doubtful ones are indexed only locally and documented.
+Plan rule (F12.1): **no PDF is packaged without a confirmed license**. The doubtful ones are
+indexed locally only and documented.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ _REQUIRED = (
 
 
 class ManifestError(ValueError):
-    """The manifest breaks the license rules or is missing fields."""
+    """The manifest does not meet the license rules or is missing fields."""
 
 
 @dataclass(frozen=True)
@@ -57,9 +57,9 @@ class DocumentEntry:
 def _entry(raw: dict[str, Any]) -> DocumentEntry:
     missing = [key for key in _REQUIRED if key not in raw]
     if missing:
-        raise ManifestError(f"{raw.get('code', '?')}: missing fields {missing}")
+        raise ManifestError(f"{raw.get('code', '?')}: faltan campos {missing}")
     if raw["evidence_state"] not in EVIDENCE_STATES:
-        raise ManifestError(f"{raw['code']}: unknown evidence state")
+        raise ManifestError(f"{raw['code']}: estado de evidencia desconocido")
     if raw["packageable"] and raw["license_status"] != LICENSE_CONFIRMED:
         raise ManifestError(f"{raw['code']}: cannot be packaged without a confirmed license")
     return DocumentEntry(
@@ -81,5 +81,5 @@ def load_manifest(path: Path) -> list[DocumentEntry]:
     entries = [_entry(item) for item in raw["documents"]]
     codes = [entry.code for entry in entries]
     if len(codes) != len(set(codes)):
-        raise ManifestError("there are duplicate document codes")
+        raise ManifestError("there are repeated document codes")
     return entries

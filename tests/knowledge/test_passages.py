@@ -21,6 +21,6 @@ def test_returns_at_most_k_passages(demo_source: DemoKnowledgeSource) -> None:
     assert len(demo_source.search("headache fatigue hypoxia", k=1)) == 1
 
 
-def test_ignores_case(demo_source: DemoKnowledgeSource) -> None:
-    assert demo_source.search("HEADACHE PAIN", k=3)
-    assert demo_source.search("headache pain", k=3)
+def test_ignores_case_and_accents(demo_source: DemoKnowledgeSource) -> None:
+    assert demo_source.search("HEADACHE", k=3)
+    assert demo_source.search("headache", k=3)

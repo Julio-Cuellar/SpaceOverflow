@@ -1,4 +1,4 @@
-"""Local Ollama adapter. Talks to its HTTP API in streaming mode (NDJSON)."""
+"""Local Ollama adapter. It talks to its HTTP API in streaming (NDJSON)."""
 
 from __future__ import annotations
 
@@ -15,13 +15,14 @@ NO_INFO_RULE = "I don't have that information in the loaded sources."
 
 def build_prompt(question: str, passages: Sequence[CitationDTO], alerts: Sequence[str]) -> str:
     lines = [
-        "Answer in English using ONLY the following passages.",
+        "Answer in English using ONLY the passages below, even if the question is in another "
+        "language.",
         f"If no passage supports the answer, say exactly: {NO_INFO_RULE}",
         "Passages:",
     ]
     lines += [f"- {p.excerpt} ({source_label(p)})" for p in passages]
     if alerts:
-        lines.append("Active alert (only to mention it, do not change it): " + "; ".join(alerts))
+        lines.append("Active alert (mention it only, do not change it): " + "; ".join(alerts))
     lines.append(f"Question: {question}")
     return "\n".join(lines)
 

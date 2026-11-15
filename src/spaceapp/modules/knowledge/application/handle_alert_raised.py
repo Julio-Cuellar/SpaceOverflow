@@ -1,8 +1,8 @@
 """Use case: an alert arrives and a template recommendation with citations is stored.
 
-It does not wait for any language model. It is idempotent by (consumer, event_id): the bus and the
-platform outbox already deliver each event once per consumer, and this use case reinforces it
-because an unknown rule must leave the event unmarked so that it is retried.
+It waits for no language model. It is idempotent per (consumer, event_id): the platform's bus and
+outbox already deliver each event once per consumer, and this use case reinforces it because an
+unknown rule must leave the event unmarked so that it is retried.
 """
 
 from __future__ import annotations
@@ -43,12 +43,13 @@ class HandleAlertRaised:
         return self._inbox.is_marked(CONSUMER, event_id)
 
     async def handle(self, event: EventEnvelope, ctx: HandlerContext) -> None:
-        """Signature required by the bus: returns nothing."""
+        """Signature required by the bus: it returns nothing."""
         await self.process(event, ctx)
 
     async def process(self, event: EventEnvelope, ctx: HandlerContext) -> HandleResult:
         alert = event.payload_as(AlertRaised)
-        # Guidance first: for an unknown rule the error is raised and the event stays unmarked.
+        # The guidance first: if the rule does not exist the error is raised and the event stays
+        # unmarked.
         guidance = self._source.guidance_for(alert.rule_key)
 
         if not self._inbox.mark_once(CONSUMER, event.event_id):

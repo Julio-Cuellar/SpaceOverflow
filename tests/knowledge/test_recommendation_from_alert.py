@@ -22,7 +22,7 @@ from spaceapp.platform.events import EventEnvelope
 
 
 class CollectingContext:
-    """Handler context that stores what was published, like the in-memory bus but without delivery."""
+    """Handler context that stores what is published, like the in-memory bus but without delivering it."""
 
     def __init__(self) -> None:
         self.published: list[EventEnvelope] = []
@@ -45,7 +45,7 @@ def build(source: DemoKnowledgeSource):  # type: ignore[no-untyped-def]
 
 
 def alert(rule_key: str = "env-co2-1h") -> EventEnvelope:
-    """The event as Monitoring (dev A) publishes it: envelope partitioned by habitat."""
+    """The event as Monitoring (dev A) publishes it: an envelope partitioned by habitat."""
     payload = AlertRaised(
         alert_id=uuid.uuid4(),
         zone_id=None,
@@ -93,7 +93,7 @@ async def test_recommendation_is_labelled_as_demo_and_says_it_is_not_from_nasa(
 
     recommendation = repo.all()[0]
     assert recommendation.source_kind == "DEMO"
-    assert "demonstration data, not NASA data" in recommendation.body
+    assert "demo data, not NASA data" in recommendation.body
 
 
 async def test_publishes_recommendation_ready_with_action_keys_and_citations(
@@ -135,7 +135,7 @@ async def test_unknown_rule_raises_and_leaves_the_event_unprocessed(
         await handler.handle(event, c.ctx)
 
     assert repo.all() == []
-    # The event is still unmarked: a relay retry can process it later.
+    # The event stays unmarked: a relay retry can process it later.
     assert handler.inbox_has(event.event_id) is False
 
 

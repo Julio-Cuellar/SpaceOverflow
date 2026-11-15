@@ -1,4 +1,4 @@
-"""Search over the chunks of the NASA PDFs, falling back to the demo source.
+"""Search over the NASA PDF chunks, falling back to the demo source.
 
 No embeddings model: it scores by terms, weighted by their rarity. Questions and documents are
 both in English, so no translation is needed. If an embeddings model is chosen later, this
@@ -14,21 +14,14 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from spaceapp.modules.knowledge.domain.model import Citation, EvidenceState
-from spaceapp.modules.knowledge.domain.terms import (
-    content_word_count,
-    stem,
-    terms,
-    token_counts,
-)
-from spaceapp.modules.knowledge.ingest.chunking import MAX_CHARS, Chunk
+from spaceapp.modules.knowledge.domain.terms import stem, terms, token_counts
+from spaceapp.modules.knowledge.ingest.chunking import MAX_CHARS, Chunk, searchable_chunks
 from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
 from spaceapp.modules.knowledge.ports import PassageSource
 
 # Below this score there is no passage: a word present in almost every chunk is not enough.
 MIN_SCORE = 1.0
 MIN_MATCHED_TERMS = 2
-# Below this number of words, a chunk is a title or an index entry.
-MIN_CONTENT_WORDS = 6
 BM25_K1 = 1.5
 BM25_B = 0.75
 # The whole chunk is cited: trimming to 500 characters hid the figure in half of the cases
@@ -63,6 +56,7 @@ _STOPWORDS = frozenset(
         "why",
         "who",
         "whom",
+        "whose",
         "what",
         "when",
         "where",
@@ -93,6 +87,7 @@ _STOPWORDS = frozenset(
         "all",
         "need",
         "needs",
+        "needed",
         "required",
         "require",
         "must",
@@ -152,7 +147,7 @@ def _snippet(content: str, query: set[str], idf: dict[str, float]) -> str:
 class RagKnowledgeSource:
     def __init__(self, chunks: Sequence[Chunk]) -> None:
         # Stray titles and index entries are not citable passages: they are discarded.
-        self._chunks = [c for c in chunks if content_word_count(c.content) >= MIN_CONTENT_WORDS]
+        self._chunks = searchable_chunks(chunks)
         self._counts = [token_counts(chunk.content) for chunk in self._chunks]
         self._lengths = [sum(counts.values()) for counts in self._counts]
         self._average_length = (sum(self._lengths) / len(self._lengths)) if self._lengths else 1.0
@@ -181,11 +176,24 @@ class RagKnowledgeSource:
     def from_index(cls, index_path: Path) -> RagKnowledgeSource:
         return cls(JsonlChunkStore(index_path).all())
 
+    @property
+    def chunks(self) -> list[Chunk]:
+        """The citable chunks, in the order of the positions that `rank` returns."""
+        return self._chunks
+
     def search(self, text: str, k: int) -> list[Citation]:
         """Citable passages, from most to least relevant. Empty if none passes the threshold."""
+        positions, query = self.rank(text)
+        return [self.citation(position, query) for position in positions[:k]]
+
+    def rank(self, text: str) -> tuple[list[int], set[str]]:
+        """Positions of the chunks that pass the thresholds, from most to least relevant.
+
+        It also returns the query terms, which `citation` uses to pick the excerpt.
+        """
         query = {term for term in terms(text, _QUERY_MIN_LENGTH) if term not in _STOPWORDS}
         if not self._chunks or not query:
-            return []
+            return [], set()
 
         # An isolated match is not an answer: with several terms in the question, the chunk
         # must match at least two (e.g. "world" in a list of acronyms).
@@ -200,9 +208,10 @@ class RagKnowledgeSource:
                 scored.append((-score, position))
         scored.sort()
 
-        return [self._citation(self._chunks[position], query) for _, position in scored[:k]]
+        return [position for _, position in scored], query
 
-    def _citation(self, chunk: Chunk, query: set[str]) -> Citation:
+    def citation(self, position: int, query: set[str]) -> Citation:
+        chunk = self._chunks[position]
         return Citation(
             document_code=chunk.document_code,
             requirement_ref=chunk.requirement_ref,

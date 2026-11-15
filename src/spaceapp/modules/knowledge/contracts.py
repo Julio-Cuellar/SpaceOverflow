@@ -8,8 +8,8 @@ from uuid import UUID
 from spaceapp.platform.events import EventPayload
 from spaceapp.platform.vocab import Citation
 
-# The citation belongs to the shared kernel (`platform/vocab`): one definition for all modules.
-# The alias keeps the name the assistant uses.
+# The citation belongs to the shared kernel (`platform/vocab`): a single definition for all
+# modules. The alias keeps the name the assistant uses it with.
 CitationDTO = Citation
 
 
@@ -24,7 +24,7 @@ class RecommendationReady(EventPayload):
 
 
 class RecommendationEnriched(EventPayload):
-    """`knowledge.recommendation_enriched`: the same recommendation composed by the local model."""
+    """`knowledge.recommendation_enriched`: the same recommendation written by the local model."""
 
     event_type: ClassVar[str] = "knowledge.recommendation_enriched"
     recommendation_id: UUID

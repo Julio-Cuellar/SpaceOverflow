@@ -11,7 +11,7 @@ export interface PassageFixture {
 
 /**
  * Demo passages for the assistant without a backend. They are a copy of those in the Knowledge catalog
- * and are removed once the interface consumes `askAssistant` (milestone I2).
+ * and are removed when the interface consumes `askAssistant` (milestone I2).
  */
 export const passagesFixture: PassageFixture[] = [
   {
@@ -20,13 +20,13 @@ export const passagesFixture: PassageFixture[] = [
     excerpt:
       'Headache between 2.8 and 4.5 mmHg of ppCO₂; fatigue, poor sleep and nausea above 4.5 mmHg.',
     evidenceState: 'TB',
-    keywords: ['headache', 'pain', 'co2', 'ppco2', 'fatigue', 'sleep', 'nausea'],
+    keywords: ['headache', 'head', 'pain', 'co2', 'ppco2', 'fatigue', 'sleep', 'nausea'],
   },
   {
     documentCode: 'OCHMO-TB-003 Habitable Atmosphere',
     requirementRef: null,
     excerpt:
-      'Hypoxia can cause mental changes that are sometimes imperceptible to the astronaut, reduced vision, fatigue, nausea, headache, dizziness and hyperventilation.',
+      'Hypoxia can cause mental changes sometimes imperceptible to the astronaut, reduced vision, fatigue, nausea, headache, dizziness and hyperventilation.',
     evidenceState: 'VERIFIED',
     keywords: ['hypoxia', 'headache', 'dizziness', 'vision', 'fatigue', 'nausea'],
   },
@@ -35,6 +35,6 @@ export const passagesFixture: PassageFixture[] = [
     requirementRef: null,
     excerpt: 'Space motion sickness lasts about 3 days on average.',
     evidenceState: 'TB',
-    keywords: ['motion', 'sickness', 'space', 'days'],
+    keywords: ['motion', 'sickness', 'space', 'days', 'dizziness'],
   },
 ]
