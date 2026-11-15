@@ -56,7 +56,9 @@ async def test_a_co2_scenario_reaches_a_websocket_client_and_is_acknowledged_by_
         seed=7,
     )
     with TestClient(create_app(settings)) as client, client.websocket_connect("/ws") as ws:
-        ws.send_json({"type": "unsubscribe", "topics": ["telemetry", "assistant", "habitat"]})
+        ws.send_json(
+            {"type": "unsubscribe", "topics": ["telemetry", "assistant", "habitat", "crew"]}
+        )
         assert (await _receive(ws))["data"]["topics"] == ["alerts"]
 
         def wait_for_alert() -> tuple[dict[str, Any], datetime]:

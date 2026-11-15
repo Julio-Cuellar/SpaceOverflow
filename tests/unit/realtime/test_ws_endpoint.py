@@ -69,7 +69,7 @@ def test_unsubscribe_and_subscribe_change_what_arrives(setup: Any) -> None:
         ws.send_json({"type": "unsubscribe", "topics": ["telemetry"]})
         reply = ws.receive_json()
         assert reply["type"] == "subscribed"
-        assert reply["data"]["topics"] == ["alerts", "assistant", "habitat"]
+        assert reply["data"]["topics"] == ["alerts", "assistant", "crew", "habitat"]
         push(client, hub, tick())
         push(client, hub, alert(1))
         assert ws.receive_json()["type"] == "alert.raised"  # el tick no llegó
@@ -77,6 +77,7 @@ def test_unsubscribe_and_subscribe_change_what_arrives(setup: Any) -> None:
         assert ws.receive_json()["data"]["topics"] == [
             "alerts",
             "assistant",
+            "crew",
             "habitat",
             "telemetry",
         ]

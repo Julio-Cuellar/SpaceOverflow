@@ -50,6 +50,72 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InboundPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "batch_id": {
+            "format": "uuid",
+            "title": "Batch Id",
+            "type": "string"
+          },
+          "hash": {
+            "title": "Hash",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "plan_version": {
+            "minimum": 1.0,
+            "title": "Plan Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "batch_id",
+          "plan_version",
+          "items",
+          "hash"
+        ],
+        "title": "InboundPlan",
+        "type": "object"
+      },
+      "LinkChange": {
+        "additionalProperties": false,
+        "properties": {
+          "delay_s": {
+            "anyOf": [
+              {
+                "maximum": 60.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay S"
+          },
+          "state": {
+            "enum": [
+              "UP",
+              "DOWN"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "LinkChange",
+        "type": "object"
+      },
       "ReadingBody": {
         "properties": {
           "quality": {
@@ -193,6 +259,88 @@
         "summary": "Replay",
         "tags": [
           "operación"
+        ]
+      }
+    },
+    "/api/v1/groundlink/inbound/plans": {
+      "post": {
+        "operationId": "inbound_plan_api_v1_groundlink_inbound_plans_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InboundPlan"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Inbound Plan",
+        "tags": [
+          "enlace con Tierra"
+        ]
+      }
+    },
+    "/api/v1/groundlink/link": {
+      "put": {
+        "operationId": "set_link_api_v1_groundlink_link_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Set Link Api V1 Groundlink Link Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Link",
+        "tags": [
+          "enlace con Tierra"
         ]
       }
     },

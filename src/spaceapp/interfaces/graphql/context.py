@@ -8,8 +8,11 @@ from uuid import UUID
 
 from strawberry.fastapi import BaseContext
 
+from spaceapp.modules.engagement.application.service import EngagementService
+from spaceapp.modules.engagement.facade import TaskQuery
 from spaceapp.modules.facility.application.service import FacilityService
 from spaceapp.modules.facility.facade import IncidentQuery, ShipQuery
+from spaceapp.modules.groundlink.application.ground import GroundControl
 from spaceapp.modules.knowledge.domain.model import Recommendation
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 from spaceapp.modules.monitoring.application.acknowledge_alert import AckResult
@@ -30,6 +33,9 @@ class Services:
     facility: FacilityService
     ship: ShipQuery
     incidents: IncidentQuery
+    engagement: EngagementService
+    tasks: TaskQuery
+    ground: GroundControl
     # Quién firma las acciones hasta que exista la selección de perfil.
     crew_member: UUID
     # Solo en los perfiles de desarrollo; en `jurado` es None y la consulta devuelve null.

@@ -45,6 +45,25 @@ SAMPLES: dict[str, dict[str, Any]] = {
     "facility.incident_updated": {"incident_id": "i", "severity": "critico", "status": "abierta"},
     "facility.incident_resolved": {"incident_id": "i", "zone_id": "z", "resolved_at": T},
     "facility.zone_status_changed": {"zone_id": "z", "status": "alerta", "open_incidents": 1},
+    "engagement.task_assigned": {
+        "task_id": "t",
+        "crew_member_id": "c",
+        "kind": "SALUD",
+        "origin": "SISTEMA",
+        "due_at": T,
+    },
+    "engagement.task_created": {
+        "task_id": "t",
+        "kind": "NAVE",
+        "title": "x",
+        "origin": "TRIPULACION",
+    },
+    "engagement.task_completed": {"task_id": "t", "effective": True},
+    "engagement.task_blocked": {"task_id": "t", "origin": "TIERRA", "reason": "r"},
+    "engagement.ground_plan_applied": {"plan_version": 2, "applied": [], "rejected": []},
+    "groundlink.ground_plan_received": {"batch_id": "b", "plan_version": 2, "changes": []},
+    "groundlink.batch_acknowledged": {"batch_id": "b", "items": 1, "acked_at": T},
+    "groundlink.link_state_changed": {"state": "DOWN", "since": T, "queued": 1},
 }
 
 

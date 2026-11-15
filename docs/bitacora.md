@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 02:45.
+> Última actualización: 15 de noviembre de 2026, 05:30.
 
 ## Cómo se mantiene esta bitácora
 
@@ -33,11 +33,11 @@
 | Reparto en dos desarrolladores | Redactado (sección 16 del plan) y detallado para Dev B |
 | Plan detallado de Dev A | `docs/tareas-dev-a.md` (F0 y F1 marcadas como hechas) |
 | Generador del plan y del artefacto | En el repositorio (`tools/docgen/`), con prueba que verifica que reproduce el documento |
-| Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F4 y F5 terminadas** (con pendientes menores: DataLoaders, límite de costo y lo que depende de Tripulación). Hitos I3 e I5 cubiertos del lado de A. El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
-| Pruebas | **662 pasan y 19 se omiten** (las omitidas son de Dev B), 96,84 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
+| Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F4, F5, F10 y F11 terminadas** del lado del backend (pendientes menores: DataLoaders, límite de costo, consentimiento y Tripulación). F9 queda para cuando la interfaz esté lista (decisión del usuario). El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
+| Pruebas | **707 pasan y 19 se omiten** (las omitidas son de Dev B), 95,89 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
 | Artefacto interactivo | Versión 4 publicada: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8 |
 | Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. **Subida a GitHub** (B-021): fusiones B-015 y B-016, F5, 5.4 y F4. Falta el PR hacia `testing` |
-| Siguiente bloque propuesto | F9 (Dockerfile, compose completo y migraciones al arrancar) para la entrega al jurado. Después F10 y F11 (P1) |
+| Siguiente bloque propuesto | Subir `dev-A` y que Dev B conecte tareas y panel de Tierra. F9 cuando la interfaz esté lista |
 
 ---
 
@@ -342,6 +342,33 @@
 - **Verificación:** `git rev-list --left-right --count dev-A...origin/dev-A` → `0 0`.
 - **Pendiente:** abrir el PR `dev-A → testing` (`gh` no está instalado: se crea desde la web), que Dev B abra el suyo `dev-B → testing` y revisar el CI de GitHub.
 
+### B-022 · F10 y F11: tareas del día y plan desde Tierra (backend)
+- **Pedido del usuario:** dejar F9 para cuando la interfaz esté lista y hacer mientras tanto el backend de F10 y F11.
+- **Alineado con la interfaz de Dev B** (`origin/dev-B`: `features/tasks/model.ts` y `features/ground/model.ts`): mismos tipos, orígenes, estados, `blockedReason`, `effective` y `sourceAlertId`, y las etapas del plan EN_COLA → EN_EL_ENLACE → RECIBIDO → APLICADO → CONFIRMADO.
+- **F10, módulo `engagement`:**
+  - **Tareas del día:** cada plantilla activa da una tarea por día, sin duplicados. Siete plantillas del sistema de demostración en `data/engagement/templates.json`: tres rutinas de salud y cuatro tareas de nave, tomadas del artefacto.
+  - **Tareas propias:** la tripulación crea, edita y borra las suyas (SALUD o NAVE). Las de Tierra y las del sistema devuelven `NOT_EDITABLE` o `NOT_DELETABLE`. Toda tarea se puede completar (con `effective`), posponer o bloquear con motivo; bloquear no la borra.
+  - **Handlers:** un ticket abierto crea una tarea INCIDENTE y su resolución la completa. Cada acción de una recomendación es una medida del día con `sourceAlertId`, que no suma a la racha. Todo es idempotente (índices únicos parciales).
+  - **Racha:** solo cuentan las rutinas de salud completadas; no suman ni Tierra, ni incidentes, ni alertas.
+  - **Aplicar un plan de Tierra** (una transacción): NEW, UPDATE y CANCEL sobre plantillas de origen TIERRA. Un ítem inválido se rechaza solo él, con motivo. Tierra no toca plantillas locales, y una versión repetida o menor se ignora. Lo completado o creado a bordo se conserva y la cancelación rige para el futuro. Publica `ground_plan_applied` con lo aplicado y lo rechazado.
+- **F11, módulo `groundlink`:**
+  - **Nave (R9, `POST /api/v1/groundlink/inbound/plans`):** valida la integridad (SHA-256 del JSON canónico de versión e ítems) y la forma de cada ítem. Un plan corrupto se rechaza completo con 422 y se puede reenviar corregido con el mismo lote. Una versión repetida o menor responde 200 `ignored`; una nueva, 202, y publica `ground_plan_received`. Cuando Misiones aplica el plan, se marca y se confirma (`batch_acknowledged`).
+  - **Tierra (demo):** un borrador, publicación con versión siguiente, una sola publicación en curso, y un enlace simulado con demora y corte (R5 `PUT /api/v1/groundlink/link` y `setGroundLink`). Con el enlace cortado el plan queda EN_COLA y sale al volver; si se corta en vuelo, vuelve a la cola; la confirmación también espera al enlace.
+- **GraphQL** (fragmento `interfaces/graphql/missions.py`): `tasks(day, kind, status)`, `streak`, `groundPlan`, `createTask`, `updateTask`, `deleteTask`, `completeTask`, `blockTask`, `snoozeTask`, `groundControl`, `saveGroundTemplate`, `cancelGroundTemplate`, `publishGroundPlan` y `setGroundLink`, con errores tipados.
+- **WebSocket:** topic nuevo `crew` con `task.assigned`, `task.created`, `task.completed`, `task.blocked`, `groundplan.received`, `groundplan.applied`, `groundplan.confirmed` y `groundlink.state`.
+- **Migraciones:** `migrations/engagement` y `migrations/groundlink`. Contratos regenerados.
+- **Verificación** (`scripts/check.sh`): ruff sin errores, mypy estricto sin errores en 182 archivos, 4 contratos de arquitectura cumplidos, **707 pruebas** (19 omitidas, de Dev B) y 95,89 % de cobertura. Hay una prueba por HTTP sobre la app real (relay encendido y enlace con 0,1 s de demora): Tierra publica, la nave aplica, Tierra ve CONFIRMADO y la tripulación ve la tarea.
+- **Criterios de aceptación de F10 y F11,** todos con prueba: tarea propia sin enlace; tarea de incidente completada al resolver el ticket; editar o borrar una tarea de Tierra da error tipado; `effective` sale en `task_completed`; plan en cola con el enlace cortado que llega, se aplica y se confirma al volver; el mismo plan dos veces deja las tareas una vez; lo completado o creado a bordo no se pierde. También las ocho reglas de conflicto de la sección 13.11.
+- **TDD:** los dominios de `engagement` y `groundlink` y los mensajes WebSocket empezaron en RED. **Los servicios, los repositorios y el GraphQL se escribieron antes que sus pruebas de integración.** Se hizo una mutación de control: sin la comprobación de versión repetida, la prueba de idempotencia falla.
+- **Error corregido en el camino:** al rechazar un plan corrupto se guardaba su lote, y eso bloqueaba el reenvío corregido con el mismo `batch_id`. Lo detectó la prueba de R9 y se arregló con un `ON CONFLICT ... WHERE status = 'RECHAZADO'`.
+- **Diferencias con el plan:**
+  - sin tablas de recordatorios ni de logros;
+  - `snoozeTask` en vez de `snoozeReminder`;
+  - el panel de Tierra no filtra por consentimiento (no existe aún el módulo de Tripulación) ni autentica el rol `ground`;
+  - Tierra comparte base con la nave en la demo;
+  - todas las tareas son del tripulante de demostración.
+- **Para Dev B:** cambiar los mocks de tareas y del panel de Tierra por estas operaciones y por el topic `crew`. La vista `groundControl` sigue la forma de su `GroundState` (`appliedVersion`, `templates`, `draft`, `published.stage` y `link`).
+
 ---
 
 ## 4. Archivos del proyecto por área
@@ -358,6 +385,7 @@
 | Backend de Dev A (Bloques 1 y 2) | `src/`, `tests/`, `migrations/`, `docker/`, `scripts/`, `rules/`, `data/` | Asistente |
 | GraphQL compuesto (F5) | `src/spaceapp/interfaces/graphql/` | Asistente |
 | Nave e incidencias (F4) | `src/spaceapp/modules/facility/`, `migrations/facility/`, `data/facility/` | Asistente |
+| Tareas y plan desde Tierra (F10, F11) | `src/spaceapp/modules/engagement/`, `src/spaceapp/modules/groundlink/`, `migrations/{engagement,groundlink}/`, `data/engagement/` | Asistente |
 | Contratos generados para Dev B | `contracts/schema.generated.graphql`, `contracts/openapi.json`, `contracts/ws-messages.schema.json` | Asistente (generados) |
 | Informes de evidencia TDD | `docs/tdd/f0-f1.tdd.md`, `docs/tdd/f2-f3.tdd.md` | Asistente |
 

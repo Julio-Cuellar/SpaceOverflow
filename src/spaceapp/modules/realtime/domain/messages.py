@@ -7,7 +7,7 @@ from typing import Any
 
 from spaceapp.platform.events import EventEnvelope
 
-TOPICS = ("telemetry", "alerts", "assistant", "habitat")
+TOPICS = ("telemetry", "alerts", "assistant", "habitat", "crew")
 
 # Eventos que producen mensajes con `seq` (id del outbox) y se pueden reenviar con `resume`.
 # Las lecturas no: son ticks sin `seq`, solo importa el último valor.
@@ -23,6 +23,14 @@ REPLAYABLE_TYPES = (
     "facility.incident_updated",
     "facility.incident_resolved",
     "facility.zone_status_changed",
+    "engagement.task_assigned",
+    "engagement.task_created",
+    "engagement.task_completed",
+    "engagement.task_blocked",
+    "engagement.ground_plan_applied",
+    "groundlink.ground_plan_received",
+    "groundlink.batch_acknowledged",
+    "groundlink.link_state_changed",
 )
 TRANSLATED_TYPES = ("telemetry.readings_recorded", *REPLAYABLE_TYPES)
 
@@ -40,6 +48,14 @@ SERVER_TYPES: dict[str, str] = {
     "incident.updated": "habitat",
     "incident.resolved": "habitat",
     "zone.status": "habitat",
+    "task.assigned": "crew",
+    "task.created": "crew",
+    "task.completed": "crew",
+    "task.blocked": "crew",
+    "groundplan.received": "crew",
+    "groundplan.applied": "crew",
+    "groundplan.confirmed": "crew",
+    "groundlink.state": "crew",
 }
 # Respuestas del servidor en el topic `system`. No llevan `seq` ni se reenvían.
 SYSTEM_TYPES = ("subscribed", "pong", "ping", "resumed", "error")
@@ -136,5 +152,21 @@ def translate(event: EventEnvelope) -> list[WsMessage]:
             return one("habitat", "incident.resolved", {**p, "status": "RESUELTA"})
         case "facility.zone_status_changed":
             return one("habitat", "zone.status", {**p, "status": str(p["status"]).upper()})
+        case "engagement.task_assigned":
+            return one("crew", "task.assigned", dict(p))
+        case "engagement.task_created":
+            return one("crew", "task.created", dict(p))
+        case "engagement.task_completed":
+            return one("crew", "task.completed", dict(p))
+        case "engagement.task_blocked":
+            return one("crew", "task.blocked", dict(p))
+        case "groundlink.ground_plan_received":
+            return one("crew", "groundplan.received", dict(p))
+        case "engagement.ground_plan_applied":
+            return one("crew", "groundplan.applied", dict(p))
+        case "groundlink.batch_acknowledged":
+            return one("crew", "groundplan.confirmed", dict(p))
+        case "groundlink.link_state_changed":
+            return one("crew", "groundlink.state", dict(p))
         case _:
             return []

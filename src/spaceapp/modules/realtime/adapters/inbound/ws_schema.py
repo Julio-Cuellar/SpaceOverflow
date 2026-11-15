@@ -10,6 +10,8 @@ _UUID = {"type": "string", "format": "uuid"}
 _TIME = {"type": "string", "format": "date-time"}
 _SEVERITY = {"enum": ["ATENCION", "ALERTA", "CRITICO"]}
 _INCIDENT_STATUS = {"enum": ["ABIERTA", "RECONOCIDA", "RESUELTA"]}
+_TASK_KIND = {"enum": ["SALUD", "NAVE", "INCIDENTE"]}
+_TASK_ORIGIN = {"enum": ["TIERRA", "SISTEMA", "TRIPULACION"]}
 _CITATION = {
     "type": "object",
     "required": ["document_code", "excerpt", "evidence_state"],
@@ -102,6 +104,59 @@ _DATA: dict[str, dict[str, Any]] = {
         zone_id=_UUID,
         status={"enum": ["NORMAL", "ATENCION", "ALERTA", "CRITICO"]},
         open_incidents={"type": "integer", "minimum": 0},
+    ),
+    "task.assigned": _obj(
+        ["task_id", "crew_member_id", "kind", "origin", "due_at"],
+        task_id=_UUID,
+        crew_member_id=_UUID,
+        kind=_TASK_KIND,
+        origin=_TASK_ORIGIN,
+        action_key={"type": ["string", "null"]},
+        due_at=_TIME,
+    ),
+    "task.created": _obj(
+        ["task_id", "kind", "title", "origin"],
+        task_id=_UUID,
+        kind=_TASK_KIND,
+        title={"type": "string"},
+        zone_id={"type": ["string", "null"], "format": "uuid"},
+        origin=_TASK_ORIGIN,
+    ),
+    "task.completed": _obj(
+        ["task_id"],
+        task_id=_UUID,
+        action_key={"type": ["string", "null"]},
+        effective={"type": ["boolean", "null"]},
+    ),
+    "task.blocked": _obj(
+        ["task_id", "origin", "reason"],
+        task_id=_UUID,
+        origin=_TASK_ORIGIN,
+        reason={"type": "string"},
+    ),
+    "groundplan.received": _obj(
+        ["batch_id", "plan_version", "changes"],
+        batch_id=_UUID,
+        plan_version={"type": "integer"},
+        changes={"type": "array", "items": {"type": "object"}},
+    ),
+    "groundplan.applied": _obj(
+        ["plan_version", "applied", "rejected"],
+        plan_version={"type": "integer"},
+        applied={"type": "array", "items": _UUID},
+        rejected={
+            "type": "array",
+            "items": _obj(["title", "reason"], title={"type": "string"}, reason={"type": "string"}),
+        },
+    ),
+    "groundplan.confirmed": _obj(
+        ["batch_id", "items", "acked_at"], batch_id=_UUID, items={"type": "integer"}, acked_at=_TIME
+    ),
+    "groundlink.state": _obj(
+        ["state", "since", "queued"],
+        state={"enum": ["UP", "DOWN", "DEGRADED"]},
+        since=_TIME,
+        queued={"type": "integer", "minimum": 0},
     ),
     "assistant.answer": _obj(
         ["utterance_id", "text", "citations"],

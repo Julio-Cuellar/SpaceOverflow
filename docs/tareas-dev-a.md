@@ -421,10 +421,10 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **10.1 Esquema (0,5 h):** `task_template`, `task` (con `kind`, `origin`, `template_id`, `blocked_reason`), `reminder`, `achievement`, `crew_achievement`.
-- [ ] **10.2 Handlers (0,75 h):** las tareas de incidente nacen al abrirse un ticket y se completan al cerrarlo. Las medidas de una alerta nacen de la recomendación.
-- [ ] **10.3 Tareas propias (0,75 h):** `TRIPULACION` puede crear, editar y borrar. **Una tarea de Tierra no se puede editar ni borrar:** devuelve un error tipado. Se puede completar, posponer o **bloquear con motivo** (no se borra).
-- [ ] **10.4 GraphQL (0,5 h):** resolvers y errores tipados. Solo las rutinas de salud suman a la racha y a los logros. **Las alertas críticas no se gamifican.**
+- [x] **10.1 Esquema (0,5 h):** *(B-022. Diferencia: sin tablas `reminder`, `achievement` ni `crew_achievement`; posponer mueve `due_at` y la racha se calcula de las tareas del día; se añadió `applied_plan`)* `task_template`, `task` (con `kind`, `origin`, `template_id`, `blocked_reason`), `reminder`, `achievement`, `crew_achievement`.
+- [x] **10.2 Handlers (0,75 h):** *(B-022)* las tareas de incidente nacen al abrirse un ticket y se completan al cerrarlo. Las medidas de una alerta nacen de la recomendación.
+- [x] **10.3 Tareas propias (0,75 h):** *(B-022)* `TRIPULACION` puede crear, editar y borrar. **Una tarea de Tierra no se puede editar ni borrar:** devuelve un error tipado. Se puede completar, posponer o **bloquear con motivo** (no se borra).
+- [x] **10.4 GraphQL (0,5 h):** *(B-022: `snoozeTask` en lugar de `snoozeReminder`; sin logros, solo `streak`)* resolvers y errores tipados. Solo las rutinas de salud suman a la racha y a los logros. **Las alertas críticas no se gamifican.**
 
 **Criterios de aceptación**
 
@@ -452,11 +452,11 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **11.1 Esquema (0,75 h):** `inbound_plan` (con `batch_id` y `plan_version` únicos, hash y estado), `ground_plan` y `ground_template` (lado de Tierra, solo en el despliegue de Tierra o en la demo).
-- [ ] **11.2 Recepción (0,75 h):** R9 valida versión e integridad (hash). Versión menor o repetida: se ignora. Plan corrupto: se rechaza completo con motivo. Responde `202` y publica `ground_plan_received`.
-- [ ] **11.3 Aplicación en Misiones (1,25 h):** una transacción. Crea, actualiza y cancela plantillas con origen `TIERRA`. Un ítem inválido (zona o asignado inexistentes) se rechaza solo él, con motivo, y el resto se aplica. Publica `ground_plan_applied` con lo aplicado y lo rechazado.
-- [ ] **11.4 Lado de Tierra y enlace simulado (1 h):** GraphQL de borrador y publicación. Adaptador `GroundLink` simulado con demora y corte configurables.
-- [ ] **11.5 Reglas de conflicto (0,25 h):** una prueba por cada una de las reglas de la sección 13.11 del plan.
+- [x] **11.1 Esquema (0,75 h):** *(B-022: `inbound_plan`, `ground_plan`, `ground_item` y `link_state`)* `inbound_plan` (con `batch_id` y `plan_version` únicos, hash y estado), `ground_plan` y `ground_template` (lado de Tierra, solo en el despliegue de Tierra o en la demo).
+- [x] **11.2 Recepción (0,75 h):** *(B-022)* R9 valida versión e integridad (hash). Versión menor o repetida: se ignora. Plan corrupto: se rechaza completo con motivo. Responde `202` y publica `ground_plan_received`.
+- [x] **11.3 Aplicación en Misiones (1,25 h):** *(B-022)* una transacción. Crea, actualiza y cancela plantillas con origen `TIERRA`. Un ítem inválido (zona o asignado inexistentes) se rechaza solo él, con motivo, y el resto se aplica. Publica `ground_plan_applied` con lo aplicado y lo rechazado.
+- [x] **11.4 Lado de Tierra y enlace simulado (1 h):** *(B-022: `groundControl`, `saveGroundTemplate`, `cancelGroundTemplate`, `publishGroundPlan`, `setGroundLink` y R5; sin filtro de consentimiento ni autenticación del rol `ground`)* GraphQL de borrador y publicación. Adaptador `GroundLink` simulado con demora y corte configurables.
+- [x] **11.5 Reglas de conflicto (0,25 h):** *(B-022: las ocho reglas tienen prueba)* una prueba por cada una de las reglas de la sección 13.11 del plan.
 
 **Reglas de conflicto (resumen)**
 

@@ -110,7 +110,7 @@ def test_events_without_a_ws_message_translate_to_nothing() -> None:
 
 
 def test_every_translated_topic_is_a_known_topic() -> None:
-    assert set(TOPICS) == {"telemetry", "alerts", "assistant", "habitat"}
+    assert set(TOPICS) == {"telemetry", "alerts", "assistant", "habitat", "crew"}
 
 
 def test_facility_events_reach_the_habitat_topic_in_upper_case() -> None:

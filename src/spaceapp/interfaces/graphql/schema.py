@@ -28,6 +28,7 @@ from spaceapp.interfaces.graphql.common import (
 )
 from spaceapp.interfaces.graphql.dashboard import build_dashboard
 from spaceapp.interfaces.graphql.facility import FacilityMutation, FacilityQuery
+from spaceapp.interfaces.graphql.missions import MissionsMutation, MissionsQuery
 from spaceapp.modules.knowledge.domain import model as knowledge
 from spaceapp.modules.monitoring.application.acknowledge_alert import (
     AlertAlreadyResolved,
@@ -393,8 +394,8 @@ class CoreMutation:
         )
 
 
-Query = merge_types("Query", (CoreQuery, FacilityQuery))
-Mutation = merge_types("Mutation", (CoreMutation, FacilityMutation))
+Query = merge_types("Query", (CoreQuery, FacilityQuery, MissionsQuery))
+Mutation = merge_types("Mutation", (CoreMutation, FacilityMutation, MissionsMutation))
 
 schema = strawberry.Schema(
     query=Query, mutation=Mutation, extensions=[lambda: QueryDepthLimiter(max_depth=MAX_DEPTH)]
