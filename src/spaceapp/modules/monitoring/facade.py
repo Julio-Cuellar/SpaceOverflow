@@ -36,6 +36,11 @@ class RuleView:
     evidence_state: str
     action_key: str
     hrp_hazard: str
+    kind: str
+    operator: str
+    threshold: float
+    unit: str
+    window_s: int
 
 
 class ActiveAlertsQuery:
@@ -163,4 +168,9 @@ class RuleQuery:
             r.evidence_state,
             r.action_key,
             r.hrp_hazard,
+            r.kind,
+            r.operator,
+            r.threshold,
+            r.unit,
+            r.window_s,
         )

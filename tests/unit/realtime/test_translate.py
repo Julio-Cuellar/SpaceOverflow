@@ -125,17 +125,19 @@ def test_facility_events_reach_the_habitat_topic_in_upper_case() -> None:
             title="CO₂ alto",
             description="d",
             source="ALERTA",
+            code="INC-0007",
         ),
         aggregate_type="incident",
         aggregate_id=incident,
         partition_key="p",
     )
     [m] = translate(opened)
-    assert (m.topic, m.type, m.data["severity"], m.data["status"]) == (
+    assert (m.topic, m.type, m.data["severity"], m.data["status"], m.data["code"]) == (
         "habitat",
         "incident.opened",
         "ALERTA",
         "ABIERTA",
+        "INC-0007",
     )
     changed = EventEnvelope.from_payload(
         ZoneStatusChanged(zone_id=zone, status="critico", open_incidents=2),

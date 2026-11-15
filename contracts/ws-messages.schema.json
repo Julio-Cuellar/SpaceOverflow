@@ -484,6 +484,13 @@
             "properties": {
               "data": {
                 "properties": {
+                  "code": {
+                    "description": "Código legible del ticket, INC-0001",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
                   "description": {
                     "type": "string"
                   },

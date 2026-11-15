@@ -18,6 +18,11 @@ class OpenTicket:
     status: str
 
 
+def incident_code(number: int) -> str:
+    """Código legible del ticket a partir de su número secuencial: INC-0001."""
+    return f"INC-{number:04d}"
+
+
 def opens_ticket(severity: str) -> bool:
     """Solo Alerta o más abre ticket automático. La tendencia (Atención) no."""
     return SEVERITY_ORDER[severity] >= SEVERITY_ORDER["alerta"]

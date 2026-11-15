@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -231,3 +232,28 @@ async def test_changing_the_plan_changes_the_zones_of_the_ship(session_factory: 
 
 async def _none(habitat_id: UUID) -> Sequence[ZoneAlert]:
     return []
+
+
+async def test_tickets_get_a_sequential_readable_code_that_also_travels_in_the_event(
+    world: World,
+) -> None:
+    await world.raise_alert(LAB.id, "alerta")
+    manual = await world.service.report(ENG.id, "burning_smell", CREW)
+    assert isinstance(manual, Done)
+    codes = {t.title: t.code for t in await world.tickets()}
+    assert sorted(codes.values()) == ["INC-0001", "INC-0002"]
+    assert codes["CO₂ alto"] == "INC-0001", "se numera en el orden en que se abren"
+    async with world.sf() as s:
+        payloads = (
+            (
+                await s.execute(
+                    text(
+                        "SELECT payload FROM platform.outbox_event WHERE type = 'facility.incident_opened' ORDER BY id"
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+    sent = [p if isinstance(p, dict) else json.loads(p) for p in payloads]
+    assert [p["code"] for p in sent] == ["INC-0001", "INC-0002"]

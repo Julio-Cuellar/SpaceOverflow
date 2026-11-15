@@ -156,6 +156,21 @@ async def test_an_unknown_alert_is_null(world: World) -> None:
     assert (await world.gql(DETAIL, id=str(uuid4())))["alert"] is None
 
 
+async def test_the_rule_catalog_exposes_the_limit_to_draw_it(world: World) -> None:
+    rules = (await world.gql("{ rules { key kind operator threshold unit windowS } }"))["rules"]
+    by_key = {r["key"]: r for r in rules}
+    assert by_key["env-co2-1h"] == {
+        "key": "env-co2-1h",
+        "kind": "umbral",
+        "operator": ">",
+        "threshold": 3.0,
+        "unit": "mmHg",
+        "windowS": 3600,
+    }
+    assert by_key["env-trend-co2"]["kind"] == "tendencia"
+    assert all(r["operator"] in ("<", "<=", ">", ">=") and r["unit"] for r in rules)
+
+
 async def test_the_rule_catalog_exposes_source_and_evidence_state(world: World) -> None:
     rules = (
         await world.gql("{ rules { key severity evidenceState sourceRequirement actionKey } }")

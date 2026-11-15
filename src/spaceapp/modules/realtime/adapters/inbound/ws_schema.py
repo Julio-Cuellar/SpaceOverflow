@@ -83,6 +83,7 @@ _DATA: dict[str, dict[str, Any]] = {
         title={"type": "string"},
         description={"type": "string"},
         source={"enum": ["ALERTA", "MANUAL"]},
+        code={"type": ["string", "null"], "description": "Código legible del ticket, INC-0001"},
         status={"const": "ABIERTA"},
     ),
     "incident.updated": _obj(

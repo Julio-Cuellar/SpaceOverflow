@@ -30,7 +30,9 @@ def cabin(zone: UUID, co2: float = 0.7) -> list[LatestReadingView]:
 
 
 def rule(key: str, parameter: str, severity: str, evidence: str = "VERIFICADO") -> RuleView:
-    return RuleView(key, parameter, severity, "req", "doc", evidence, "act", "hrp")
+    return RuleView(
+        key, parameter, severity, "req", "doc", evidence, "act", "hrp", "umbral", ">", 1.0, "u", 0
+    )
 
 
 RULES = {

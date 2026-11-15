@@ -11,6 +11,8 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from spaceapp.modules.facility.domain.incidents import incident_code
+
 
 @dataclass(frozen=True)
 class ZoneView:
@@ -40,6 +42,11 @@ class IncidentView:
     acknowledged_at: datetime | None
     resolved_at: datetime | None
     values_normal_at: datetime | None
+    number: int
+
+    @property
+    def code(self) -> str:
+        return incident_code(self.number)
 
 
 @dataclass(frozen=True)
@@ -52,7 +59,7 @@ class IncidentUpdateView:
 
 _INCIDENT = (
     "SELECT id, habitat_id, zone_id, type_key, source, source_alert_id, title, description, "
-    "severity, status, opened_at, acknowledged_at, resolved_at, values_normal_at "
+    "severity, status, opened_at, acknowledged_at, resolved_at, values_normal_at, number "
     "FROM facility.incident"
 )
 

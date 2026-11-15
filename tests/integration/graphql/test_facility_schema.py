@@ -38,7 +38,7 @@ def ship_world(session_factory: Any) -> ShipWorld:
 
 SHIP = "{ ship { code name zones { id code name status openIncidents layout { x y w h } } } }"
 INCIDENTS = """query($status: IncidentStatus) { incidents(first: 10, status: $status) {
-  nodes { id title severity status source typeKey valuesNormal zoneId
+  nodes { id code title severity status source typeKey valuesNormal zoneId
           type { key categoryName detection } updates { kind note } }
   pageInfo { hasNextPage } } }"""
 RESULT = """__typename

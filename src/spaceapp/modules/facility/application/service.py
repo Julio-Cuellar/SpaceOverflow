@@ -23,6 +23,7 @@ from spaceapp.modules.facility.domain.catalog import IncidentCatalog
 from spaceapp.modules.facility.domain.incidents import (
     OpenTicket,
     describe,
+    incident_code,
     on_alert,
     resolve_check,
     zone_status,
@@ -122,7 +123,7 @@ class FacilityService:
         description = describe(title, zone.name, alert.evidence)
         if decision == "open":
             incident_id = uuid4()
-            await repo.insert_ticket(
+            number = await repo.insert_ticket(
                 incident_id=incident_id,
                 habitat_id=self.plan.habitat_id,
                 zone_id=zone.id,
@@ -145,6 +146,7 @@ class FacilityService:
                         title=title,
                         description=description,
                         source="ALERTA",
+                        code=incident_code(number),
                     ),
                     incident_id,
                     cause=event,
@@ -220,7 +222,7 @@ class FacilityService:
         incident_id = uuid4()
         async with UnitOfWork(self._sf) as uow:
             repo = self._repo(uow.session)
-            await repo.insert_ticket(
+            number = await repo.insert_ticket(
                 incident_id=incident_id,
                 habitat_id=self.plan.habitat_id,
                 zone_id=zone.id,
@@ -243,6 +245,7 @@ class FacilityService:
                         title=incident_type.name,
                         description=text,
                         source="MANUAL",
+                        code=incident_code(number),
                     ),
                     incident_id,
                 )

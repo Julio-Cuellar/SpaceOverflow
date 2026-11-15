@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 07:15.
+> Última actualización: 15 de noviembre de 2026, 08:00.
 
 ## Cómo se mantiene esta bitácora
 
@@ -34,7 +34,7 @@
 | Plan detallado de Dev A | `docs/tareas-dev-a.md` (F0 y F1 marcadas como hechas) |
 | Generador del plan y del artefacto | En el repositorio (`tools/docgen/`), con prueba que verifica que reproduce el documento |
 | Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F4, F5, F10 y F11 terminadas** del lado del backend (pendientes menores: DataLoaders, límite de costo, consentimiento y Tripulación). F9 queda para cuando la interfaz esté lista (decisión del usuario). El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
-| Pruebas | **707 pasan y 19 se omiten** (las omitidas son de Dev B), 95,89 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
+| Pruebas | **711 pasan y 19 se omiten** (las omitidas son de Dev B), 95,90 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
 | Artefacto interactivo | Versión 4 publicada: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8 |
 | Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. **Subida a GitHub** (B-021): fusiones B-015 y B-016, F5, 5.4 y F4. Falta el PR hacia `testing` |
 | Siguiente bloque propuesto | PRs `dev-A → testing` y `dev-B → testing`; integrar en `testing` (asistente en `main.py`, proxy del front); luego `main` y F9 (B-025) |
@@ -422,6 +422,21 @@
   - el front muestra un código de ticket (`t.code`) que el backend no devuelve;
   - `Rule` en GraphQL no trae umbrales: salen de `/api/v1/rules/catalog.json`.
 - **Sin cambios de código.**
+
+### B-029 · Código legible del ticket y umbrales en `Rule`
+- **Pedido del usuario:** aplicar la recomendación sobre los desajustes con el front (puntos 4 y 5) y rehacer la especificación.
+- **Punto 4, código del ticket (`INC-0001`):**
+  - migración `migrations/facility/versions/0002_incident_number.py`: columna `number` con identidad y restricción única. Es una migración nueva porque la 0001 ya está en `main`;
+  - `incident_code(number)` en el dominio (cuatro dígitos como mínimo);
+  - `insert_ticket` devuelve el número y el servicio lo pone en el evento `IncidentOpened.code`, que es opcional para no invalidar eventos viejos;
+  - GraphQL: `Incident.code`; `/ws`: `incident.opened` lleva `code`, así que un ticket nuevo se pinta completo sin pedir la lista.
+- **Punto 5, umbrales:** `Rule` en GraphQL suma `kind`, `operator`, `threshold`, `unit` y `windowS`, para que las gráficas dibujen sus límites sin llamar a REST.
+- **Contratos regenerados** (`schema.generated.graphql` y `ws-messages.schema.json`). Cambio **aditivo**: ningún campo existente cambió ni se quitó, así que no rompe el front de Dev B.
+- **Especificación:** `docs/especificacion-front.md` pasó a la versión 2. Cambian la cabecera, la sección 2 (ya no depende de `catalog.json`), las gráficas y los límites de 4.2 (con cómo dibujarlos), la lista de tickets, el catálogo de `/ws`, la sección 7 y la sección 9 (se quitan los dos huecos resueltos). Los puntos 1 a 3 (claves de escenario, id de zona contra código y estados `RECIBIDA`/`RECHAZADO`) son del front y siguen descritos en la sección 7.
+- **Verificación** (`scripts/check.sh`): ruff sin errores, mypy estricto sin errores en 182 archivos, 4 contratos de arquitectura cumplidos, **711 pruebas** (19 omitidas, de Dev B) y 95,90 % de cobertura.
+- **Pruebas nuevas:** `incident_code`; códigos secuenciales en el orden de apertura, en GraphQL y en el evento; umbrales de `env-co2-1h` y regla de tendencia; `code` en el mensaje de `/ws`; y la migración contra una base con tres tickets previos (todos reciben un número distinto).
+- **TDD:** las pruebas se escribieron primero y fallaron (RED: `incident_code` no existía). Las del servicio y la migración se escribieron después del código y se verificaron en verde.
+- **Para Dev B:** el código del ticket tiene cuatro dígitos (`INC-0001`); si sus pruebas esperan `INC-001`, hay que ajustarlas.
 
 ---
 

@@ -149,12 +149,12 @@ class SqlFacilityRepository:
         description: str,
         severity: str,
         at: datetime,
-    ) -> None:
-        await self._s.execute(
+    ) -> int:
+        number = await self._s.execute(
             text(
                 "INSERT INTO facility.incident (id, habitat_id, zone_id, type_key, source, "
                 "source_alert_id, reported_by, title, description, severity, opened_at) VALUES "
-                "(:id, :h, :z, :t, :src, :a, :r, :title, :d, :sev, :at)"
+                "(:id, :h, :z, :t, :src, :a, :r, :title, :d, :sev, :at) RETURNING number"
             ),
             {
                 "id": incident_id,
@@ -170,6 +170,7 @@ class SqlFacilityRepository:
                 "at": at,
             },
         )
+        return int(number.scalar_one())
 
     async def set_severity(self, incident_id: UUID, severity: str) -> None:
         await self._s.execute(

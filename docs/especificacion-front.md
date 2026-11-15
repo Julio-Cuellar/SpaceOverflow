@@ -4,7 +4,7 @@
 > Qué pantallas tiene la interfaz, qué datos consume cada una y qué muestra.
 > Escrito por Dev A (backend) para que Dev B (interfaz) conecte el front al backend real.
 > Fuente de verdad de los contratos: `contracts/schema.generated.graphql`, `contracts/openapi.json` y `contracts/ws-messages.schema.json` (se regeneran con `uv run python -m spaceapp.interfaces.contracts_export`). Si este documento y los contratos discrepan, mandan los contratos.
-> Estado al 15 de noviembre de 2026. Lo que el backend **todavía no tiene** está en la sección 9.
+> Estado al 15 de noviembre de 2026 (versión 2: el backend ya devuelve el código del ticket y los umbrales de las reglas). Lo que el backend **todavía no tiene** está en la sección 9.
 
 ## 1. Reglas que valen para todas las pantallas
 
@@ -26,7 +26,7 @@
 | --- | --- | --- |
 | GraphQL | `POST /graphql` | Todas las lecturas y todas las acciones del usuario. |
 | WebSocket | `/ws` | Solo empuje del servidor (alertas, lecturas, tickets, tareas, plan). Las acciones **no** van por aquí. |
-| REST | `/health`, `/api/v1/sim/scenarios/{clave}:{start\|stop}`, `/api/v1/rules/catalog.json` | Perfil de ejecución, modo demo y catálogo completo de reglas. |
+| REST | `/health`, `/api/v1/sim/scenarios/{clave}:{start\|stop}` | Perfil de ejecución y modo demo. |
 
 **Desarrollo:** el servidor de Vite hoy solo redirige `/dev` al puerto 8000 y el backend no tiene CORS. Hay que añadir proxy para `/graphql`, `/api` y `/ws` (este último con `ws: true`), o pedir que se active CORS.
 
@@ -131,7 +131,9 @@ El plano es dato: si cambia el JSON del backend (`data/facility/plan.json`), cam
 | Resolución | `MINUTE` (promedio por minuto) o `RAW` (muestras) | argumento `resolution` |
 | Métricas disponibles | `pressure_kpa`, `o2_pct`, `co2_mmhg`, `temperature_c`, `humidity_pct` | argumento `metrics` |
 | Nuevos puntos en vivo | `zone_id`, `metric`, `value`, `ts` | `telemetry.tick` |
-| Líneas de límite | `operator`, `threshold`, `unit`, `window_s` de cada regla | `GET /api/v1/rules/catalog.json` (el tipo `Rule` de GraphQL **no** trae el umbral) |
+| Líneas de límite | `rules[]`: `parameter`, `kind`, `operator`, `threshold`, `unit`, `windowS`, `severity` | `rules` (una sola vez; el catálogo no cambia durante la sesión) |
+
+**Cómo dibujar los límites:** cada regla de `kind: "umbral"` es una línea horizontal en `threshold`, con `operator` indicando de qué lado está el peligro (`>` o `>=` arriba, `<` o `<=` abajo) y el color de su `severity`. Las reglas de `kind: "tendencia"` (solo `DEMO`) no tienen línea fija: no se dibujan. El parámetro `parameter` dice a qué métrica aplica: `ppco2` es `co2_mmhg`; `humidity_pct`, `temperature_c` y `pressure_kpa` coinciden con la métrica; `pio2`, `n2_pct` y `pressure_rate` son derivados y no tienen gráfica propia. `windowS` es la ventana en segundos durante la que debe sostenerse el valor (0 si es instantáneo).
 
 Las gráficas son por zona. `pio2` no se grafica (se deriva) a menos que el front lo calcule: `PIO₂ = (kPa × 7,50062 − 47) × O₂ % / 100`.
 
@@ -139,11 +141,11 @@ Las gráficas son por zona. `pio2` no se grafica (se deriva) a menos que el fron
 
 | Elemento | Dato | De dónde sale |
 | --- | --- | --- |
-| Lista de tickets, del más nuevo al más viejo | `nodes[]`: `id`, `title`, `severity`, `status`, `source`, `zoneId`, `openedAt`, `valuesNormal` | `incidents(first, after, status, zoneId)` |
+| Lista de tickets, del más nuevo al más viejo | `nodes[]`: `id`, **`code`** (`INC-0001`), `title`, `severity`, `status`, `source`, `zoneId`, `openedAt`, `valuesNormal` | `incidents(first, after, status, zoneId)` |
 | Detalle del ticket | `description`, `type { name, categoryName }`, `sourceAlertId`, `updates[] { kind, note, at }` | `incident(id)` |
 | Aviso «valores normales, puede cerrarse» | `valuesNormal: true` mientras el ticket sigue abierto | `incident` y `incident.updated` |
 
-Estados: `ABIERTA`, `RECONOCIDA`, `RESUELTA`. Origen: `ALERTA` (automático) o `MANUAL`. **Un ticket automático nunca se cierra solo:** al normalizarse se marca `valuesNormal` y la tripulación lo cierra.
+El `code` es secuencial y se asigna al abrir el ticket (`INC-0001`, `INC-0002`…); el mismo código viaja en el mensaje `incident.opened`, así que un ticket nuevo se pinta completo sin volver a pedir la lista. Estados: `ABIERTA`, `RECONOCIDA`, `RESUELTA`. Origen: `ALERTA` (automático) o `MANUAL`. **Un ticket automático nunca se cierra solo:** al normalizarse se marca `valuesNormal` y la tripulación lo cierra.
 
 **Acciones sobre un ticket**
 
@@ -295,7 +297,7 @@ El servidor envía `ping` si pasan 15 s sin mensajes.
 | `alerts` | `alert.resolved` | `alert_id`, `status` (`resolved`), `resolved_at`, `duration_s` |
 | `alerts` | `recommendation.ready` | `alert_id`, `recommendation_id`, `action_keys`, `citations`, `composed_by: "template"` |
 | `alerts` | `recommendation.enriched` | `recommendation_id`, `text`, `composed_by: "llm"` |
-| `habitat` | `incident.opened` | `incident_id`, `zone_id`, `severity`, `title`, `description`, `source`, `status` |
+| `habitat` | `incident.opened` | `incident_id`, `code`, `zone_id`, `severity`, `title`, `description`, `source`, `status` |
 | `habitat` | `incident.updated` | `incident_id`, `severity`, `status`, `note` |
 | `habitat` | `incident.resolved` | `incident_id`, `zone_id`, `resolved_at`, `status` |
 | `habitat` | `zone.status` | `zone_id`, `status`, `open_incidents` |
@@ -338,8 +340,9 @@ El servidor envía `ping` si pasan 15 s sin mensajes.
 | Tema | Front de Dev B hoy | Backend |
 | --- | --- | --- |
 | Id de zona | `z-lab`, `z-puente` (mock) | UUID de `ship.zones[].id`; `code` (`lab`) para plantillas y escenarios |
+| Umbrales de las reglas | Rangos fijos dentro del front (`bands` en el artefacto) | `rules { operator threshold unit windowS }`: la fuente es el backend |
 | Claves de escenario | `fuga-presion`, `co2-alto`, `humedad`, `fallo-o2`, `calor` | `pressure_leak`, `co2_slow`, `humidity_high`, `o2_failure`, `heat` |
-| Código visible del ticket | `t.code` (por ejemplo «INC-001») | **El backend no lo trae.** Se puede mostrar un código corto del `id`, o pedirlo (sección 9) |
+| Código visible del ticket | `t.code` (por ejemplo «INC-001») | `code` con **cuatro dígitos** (`INC-0001`). Ajustar si el front o sus pruebas esperan tres |
 | Estado de plantilla de Tierra | `PENDIENTE`, `RECIBIDA`, `APLICADA`, `COMPLETADA`, `BLOQUEADA` | `PENDIENTE`, `APLICADA`, `COMPLETADA`, `BLOQUEADA`: **no existe `RECIBIDA`** |
 | Etapa del plan | `EN_COLA`, `EN_EL_ENLACE`, `RECIBIDO`, `APLICADO`, `CONFIRMADO` | Las mismas, más `BORRADOR` y **`RECHAZADO`** (el front debe mostrarlo) |
 | Tipo de plantilla | `SALUD` o `NAVE` | `TaskKind` incluye `INCIDENTE`, pero una plantilla solo admite `SALUD` o `NAVE` |
@@ -368,8 +371,6 @@ En cada paso, quitar el mock correspondiente y dejar las pruebas contra respuest
 | **Línea base y perfiles de tripulante** (`crewMember`, `recordBaseline`, `setConsent`) | No existen. Todas las tareas pertenecen a un tripulante de demostración. | Pendiente de Tripulación (F15). |
 | **Autenticación del rol `ground`** | Cualquiera que abra `/ground` ve el panel. | Aceptable para la demo; se declara en la entrega. |
 | **Asistente en la app principal** | El front usa el servidor de desarrollo. | Integración en `testing`: Dev A lo conecta a `main.py`. |
-| **Código legible del ticket** | El backend solo devuelve `id`. | Mostrar un código corto del `id`; si Dev B lo quiere de verdad, se agrega un número secuencial al ticket. |
-| **Umbrales en GraphQL** | `Rule` no trae `threshold` ni `operator`. | Leerlos de `GET /api/v1/rules/catalog.json` (se puede cachear por versión). |
 | **DataLoaders y límite de costo** | `incident { updates }` hace una consulta por ticket. | No es problema con pocos tickets; se arregla si hace falta. |
 | **Filtro «alertas activas»** | No existe. | Pedir `RAISED` y `ACKNOWLEDGED`. |
 | **Recomendaciones en memoria** | Se pierden al reiniciar el backend. | Dev B es dueño de la persistencia. |

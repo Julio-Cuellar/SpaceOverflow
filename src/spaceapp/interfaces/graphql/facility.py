@@ -144,6 +144,7 @@ class IncidentUpdate:
 @strawberry.type
 class Incident:
     id: strawberry.ID
+    code: str
     habitat_id: strawberry.ID
     zone_id: strawberry.ID
     type_key: str
@@ -173,6 +174,7 @@ class Incident:
     def of(i: IncidentView) -> Incident:
         return Incident(
             id=strawberry.ID(str(i.id)),
+            code=i.code,
             habitat_id=strawberry.ID(str(i.habitat_id)),
             zone_id=strawberry.ID(str(i.zone_id)),
             type_key=i.type_key,

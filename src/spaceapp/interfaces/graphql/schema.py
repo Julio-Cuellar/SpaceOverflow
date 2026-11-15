@@ -160,6 +160,11 @@ class RuleType:
     evidence_state: EvidenceState
     action_key: str
     hrp_hazard: str
+    kind: str
+    operator: str
+    threshold: float
+    unit: str
+    window_s: int
 
     @staticmethod
     def of(r: RuleView) -> RuleType:
@@ -172,6 +177,11 @@ class RuleType:
             evidence_state=EvidenceState(r.evidence_state),
             action_key=r.action_key,
             hrp_hazard=r.hrp_hazard,
+            kind=r.kind,
+            operator=r.operator,
+            threshold=r.threshold,
+            unit=r.unit,
+            window_s=r.window_s,
         )
 
 

@@ -73,7 +73,9 @@ class FacilityRepository(Protocol):
         description: str,
         severity: str,
         at: datetime,
-    ) -> None: ...
+    ) -> int:
+        """Inserta el ticket y devuelve su número secuencial."""
+        ...
 
     async def set_severity(self, incident_id: UUID, severity: str) -> None: ...
 

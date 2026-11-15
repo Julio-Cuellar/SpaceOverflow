@@ -41,6 +41,7 @@ SAMPLES: dict[str, dict[str, Any]] = {
         "title": "CO₂ alto",
         "description": "d",
         "source": "ALERTA",
+        "code": "INC-0001",
     },
     "facility.incident_updated": {"incident_id": "i", "severity": "critico", "status": "abierta"},
     "facility.incident_resolved": {"incident_id": "i", "zone_id": "z", "resolved_at": T},

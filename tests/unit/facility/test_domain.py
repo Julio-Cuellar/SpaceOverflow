@@ -11,6 +11,7 @@ from spaceapp.modules.facility.domain.catalog import IncidentCatalog, IncidentTy
 from spaceapp.modules.facility.domain.incidents import (
     OpenTicket,
     describe,
+    incident_code,
     on_alert,
     opens_ticket,
     resolve_check,
@@ -166,3 +167,12 @@ def test_the_description_says_what_where_value_limit_and_source() -> None:
 
 def test_the_description_tolerates_missing_evidence() -> None:
     assert describe("CO₂ alto", "Laboratorio", {}) == "CO₂ alto en Laboratorio."
+
+
+def test_the_incident_code_is_a_padded_sequence_number() -> None:
+    assert [incident_code(n) for n in (1, 42, 9999, 12345)] == [
+        "INC-0001",
+        "INC-0042",
+        "INC-9999",
+        "INC-12345",
+    ]

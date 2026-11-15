@@ -147,6 +147,7 @@ enum GroundTemplateStatus {
 
 type Incident {
   id: ID!
+  code: String!
   habitatId: ID!
   zoneId: ID!
   typeKey: String!
@@ -332,6 +333,11 @@ type Rule {
   evidenceState: EvidenceState!
   actionKey: String!
   hrpHazard: String!
+  kind: String!
+  operator: String!
+  threshold: Float!
+  unit: String!
+  windowS: Int!
 }
 
 enum Severity {
