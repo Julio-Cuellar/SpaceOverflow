@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 05:30.
+> Última actualización: 15 de noviembre de 2026, 05:45.
 
 ## Cómo se mantiene esta bitácora
 
@@ -368,6 +368,11 @@
   - Tierra comparte base con la nave en la demo;
   - todas las tareas son del tripulante de demostración.
 - **Para Dev B:** cambiar los mocks de tareas y del panel de Tierra por estas operaciones y por el topic `crew`. La vista `groundControl` sigue la forma de su `GroundState` (`appliedVersion`, `templates`, `draft`, `published.stage` y `link`).
+
+### B-023 · Push de F10 y F11, y PR hacia `testing`
+- **Qué (pedido del usuario):** `git push origin dev-A` (`3183793..d083d7a`), con F10 y F11. Después se subió este registro.
+- **PR `dev-A → testing`:** no se pudo abrir desde aquí. `gh` no está instalado, la extensión Claude in Chrome no estaba conectada y el navegador integrado no tiene sesión de GitHub. Se le dio al usuario el enlace y la descripción en inglés para abrirlo desde la web.
+- **Verificación:** `dev-A` local y `origin/dev-A` iguales (`0 0`). No había PRs abiertos.
 
 ---
 
