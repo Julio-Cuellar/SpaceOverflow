@@ -10,8 +10,10 @@ import {
   provoke,
   zoneSeriesFor,
 } from './app/scenario'
+import { addCrewTask, blockTask, completeTask, deleteCrewTask, snoozeTask, updateCrewTask } from './app/tasks'
 import { bodyIndicatorsFixture } from './data/mocks/body'
 import { incidentTypesFixture } from './data/mocks/incidentTypes'
+import { tasksFixture } from './data/mocks/tasks'
 import { AssistantPanel } from './features/assistant/AssistantPanel'
 import { mockAnswer } from './features/assistant/mockAnswer'
 import { AlertPanel } from './features/cabin/AlertPanel'
@@ -23,6 +25,9 @@ import { ReportForm } from './features/ship/ReportForm'
 import { ShipPlan } from './features/ship/ShipPlan'
 import { sortTickets } from './features/ship/model'
 import { ZoneCharts } from './features/ship/ZoneCharts'
+import { ConsentToggle } from './features/tasks/ConsentToggle'
+import { NewTaskForm } from './features/tasks/NewTaskForm'
+import { TaskList } from './features/tasks/TaskList'
 import { Banner } from './shared/ui/Banner'
 import { SevPill } from './shared/ui/SevPill'
 
@@ -31,7 +36,7 @@ const PROFILE = 'dev1'
 /** Hora fija de la demo: las pruebas no dependen del reloj. */
 const NOW = '2026-11-14T10:00:00Z'
 
-type View = 'cabina' | 'nave' | 'asistente'
+type View = 'cabina' | 'nave' | 'asistente' | 'tareas'
 
 /**
  * Cableado de F6 y F7 con datos de demostración (sin backend). Cuando llegue el gateway (I2),
@@ -43,6 +48,9 @@ export function App() {
   const [selectedZoneId, setSelectedZoneId] = useState('z-puente')
   const [presetTypeKey, setPresetTypeKey] = useState<string | undefined>(undefined)
   const [formRound, setFormRound] = useState(0)
+  const [tasks, setTasks] = useState(tasksFixture)
+  const [tasksShared, setTasksShared] = useState(true)
+  const [nextTaskNumber, setNextTaskNumber] = useState(1)
 
   const alert = alertFor(state)
   const zones = state.zones.map(({ id, name }) => ({ id, name }))
@@ -67,6 +75,14 @@ export function App() {
         >
           Asistente
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'tareas'}
+          onClick={() => setView('tareas')}
+        >
+          Tareas
+        </button>
       </div>
 
       {view === 'cabina' ? (
@@ -80,6 +96,26 @@ export function App() {
               <AlertPanel alert={alert} onAcknowledge={() => setState(acknowledge)} />
             ))}
           <BodyMap indicators={bodyIndicatorsFixture} />
+        </>
+      ) : view === 'tareas' ? (
+        <>
+          <TaskList
+            tasks={tasks}
+            zones={zones}
+            onComplete={(id, effective) => setTasks((t) => completeTask(t, id, effective))}
+            onBlock={(id, reason) => setTasks((t) => blockTask(t, id, reason))}
+            onSnooze={(id, minutes) => setTasks((t) => snoozeTask(t, id, minutes))}
+            onUpdate={(id, changes) => setTasks((t) => updateCrewTask(t, id, changes))}
+            onDelete={(id) => setTasks((t) => deleteCrewTask(t, id))}
+          />
+          <NewTaskForm
+            zones={zones}
+            onCreate={(draft) => {
+              setTasks((t) => addCrewTask(t, draft, `task-crew-${nextTaskNumber}`))
+              setNextTaskNumber((n) => n + 1)
+            }}
+          />
+          <ConsentToggle shared={tasksShared} onChange={setTasksShared} />
         </>
       ) : view === 'asistente' ? (
         <AssistantPanel

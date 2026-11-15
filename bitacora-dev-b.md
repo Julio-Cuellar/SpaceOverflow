@@ -23,7 +23,7 @@
 | F13 | Asistente texto y Ollama | PARCIAL | Backend: caso de uso con límite de 8 s, adaptadores nulo y Ollama, evento `answer_ready` (15 pruebas). Web: pestaña Asistente con datos de demostración. Falta GraphQL, persistencia SQL, Ollama real probado y n8n opcional |
 | F14 | Voz con Whisper | PENDIENTE | |
 | F9 | Entrega (Docker, sin internet) | PENDIENTE | conjunta con A |
-| F10 | Tareas (interfaz) | PENDIENTE | |
+| F10 | Tareas (interfaz) | PARCIAL | Lista con filtros y etiqueta de origen, tarea propia, bloqueo con motivo, «¿Funcionó?», posponer, racha y consentimiento, con datos de demostración (E13). Falta `tasks`/`createTask` reales y `task.assigned` por WS (hito I5 de A) |
 | F11 | Panel del centro de control | PENDIENTE | |
 | F16 | Alexa como respaldo | PENDIENTE | solo si Whisper se traba |
 
@@ -554,3 +554,21 @@ Rama de trabajo `integration/a-b`, cortada de `dev-B` (ec2e298). Etiqueta local 
   - `source_kind` (DEMO) no viaja en `recommendation_ready`; sigue siendo una solicitud abierta.
   - Un repositorio SQL de recomendaciones (esquema `knowledge`) para que sobrevivan a un reinicio.
 - **Pendiente mío:** adaptador de `assistant.answer_ready` hacia el bus, buscador de pasajes en la web, y la decisión de embeddings.
+
+## E13 · F10 Tareas (interfaz) con datos de demostración (15 nov 2026)
+
+Rama `dev-B`, puesta al día con `testing` (880c416, incluye el PR nº 4). Plan: `tareas-dev-b.md`, F10.
+
+- **RED observado:** `Failed to resolve import "./model"` y `"./tasks"` (lógica pura); `"./TaskList"` y `"./NewTaskForm"` (componentes); `"./ConsentToggle"` y 6 fallas en `App.test.tsx` (pestaña sin cablear). Una prueba falló en GREEN por mi implementación (`Funcionó` estaba dentro de un texto más largo y no como elemento propio) y se corrigió el componente, no la prueba.
+- **Qué se hizo:**
+  - `features/tasks/model.ts`: tipos `Task`, `TaskKind`, `TaskOrigin`, `TaskStatus`; `filterTasks`, `canEdit`/`canDelete` (solo origen `TRIPULACION`), `countsForStreak` y `streakOf`, etiquetas de origen y tipo.
+  - `app/tasks.ts`: reductores puros `completeTask` (registra «¿funcionó?», también `null`), `blockTask` (exige motivo y no borra), `snoozeTask`, `addCrewTask` (salud o nave; título obligatorio), `updateCrewTask` y `deleteCrewTask` (rechazan las de Tierra y del sistema).
+  - `TaskList` (filtros Todas, Salud, Nave e Incidentes; etiqueta de origen; acciones por tarea; racha), `NewTaskForm` (solo Salud y Nave: los incidentes los abre el sistema), `ConsentToggle` («Enlace y privacidad», categoría «tareas»), y pestaña «Tareas» en `App` con `data/mocks/tasks.ts`.
+- **Reglas del plan que quedan probadas:** una tarea de Tierra no se edita ni se borra, solo se completa, pospone o bloquea con motivo; una tarea propia se crea sin enlace; **solo suman a la racha las rutinas de salud completadas que no vienen de Tierra ni de una alerta**; con el consentimiento apagado la pantalla avisa que Tierra no ve el estado.
+- **Verificación:** `npm run lint`, `typecheck` y `build` limpios; **173 pruebas web pasan** (eran 123; 30 archivos); cobertura 97,47 % de líneas. Revisada en el navegador (pestaña «Tareas»).
+- **No verificado / límites:**
+  - Los datos son de demostración; no hay `tasks`, `createTask` ni `task.assigned` reales (los entrega el backend de A en F10 de A).
+  - Las tareas nuevas usan una hora de vencimiento fija de la demo.
+  - El estilo es el mismo mínimo del resto de pantallas; no hay diseño propio de las tarjetas.
+  - La gamificación mide solo la racha; los logros del plan (`achievements`) no están.
+  - Descubierto: `web/tsconfig.tsbuildinfo` está versionado y `tsc` lo modifica en cada ejecución; debería ignorarse. No lo toqué en este commit.
