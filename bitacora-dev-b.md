@@ -511,3 +511,18 @@ Rama de trabajo `integration/a-b`, cortada de `dev-B` (ec2e298). Etiqueta local 
 - **Ajustes de formato, sin cambiar comportamiento:** la configuración de ruff de A activa `E501` y `RUF100`; 10 líneas largas mías se partieron y se quitó un `noqa: BLE001` que A no activa.
 - **Verificación sobre Python 3.12.16:** ruff y `ruff format` limpios; mypy estricto sin errores en 135 archivos; **import-linter: 4 contratos cumplidos, 0 rotos** (mis módulos cumplen la independencia y las capas de A sin cambios); pytest **405 pasan y 8 fallan**.
 - **Las 8 fallas son la prueba en RED de la fase 2**, todas en `tests/contract/test_event_contracts.py`: el registro no tiene los eventos `knowledge.*` ni `assistant.*` porque mi `EVENTS` está vacío a propósito. Cuentas: 293 de A − 8 + 120 mías = 405.
+
+### Fase 2 · Contratos alineados con los de Dev A (TDD)
+
+- **RED observado:** las 8 fallas de la fase 1 más 2 errores de colección en pruebas nuevas (`cannot import name 'RecommendationEnriched'` y `No module named 'spaceapp.modules.knowledge.adapters.inbound'`), ambos por la implementación que faltaba.
+- **GREEN:** `uv run pytest` → **422 pasan** (293 de A + 129 mías); ruff, mypy estricto (137 archivos) e import-linter (4 cumplidos, 0 rotos) limpios.
+- **Cambios:**
+  - `knowledge/contracts.py` y `assistant/contracts.py`: `RecommendationReady`, `RecommendationEnriched` y `AnswerReady` son `EventPayload` (`extra="forbid"`, `event_type`), con `EVENTS`. Mi copia de `AlertRaised` se borró: el caso de uso importa la de `monitoring.contracts`, así no hay deriva.
+  - La cita es `platform.vocab.Citation` (campos idénticos a mi `CitationDTO`); `CitationDTO` queda como alias del mismo tipo.
+  - `HandleAlertRaised.handle(envelope, ctx)` es asíncrono como los de A. Publica con `ctx.publish(EventEnvelope.from_payload(...))`: `aggregate_type="recommendation"`, la misma `partition_key` que la alerta, `causation_id` = evento de la alerta y `correlation_id` heredado o, si no había, el id de la alerta. Se eliminó el puerto `EventPublisher` y `ListPublisher` de Conocimiento. `process` devuelve `RECORDED` o `DUPLICATE`.
+  - `knowledge/adapters/inbound/events.py`: `register_knowledge(bus, handler)` suscribe `monitoring.alert_raised` con el consumidor `knowledge.on_alert_raised`.
+- **Pruebas nuevas:** recorrido por el `InMemoryEventBus` de A (alerta → recomendación con citas, mismo evento dos veces → una, regla desconocida → falla visible en `bus.failures` y el evento sigue sin marcar), cadena causal y de correlación, y rechazo de un evento de otro tipo.
+- **Límites que quedan (no son de esta fase):**
+  - `main.py` es de A y todavía no llama a `register_knowledge`: se le pide (D4).
+  - Con el relay real del outbox, la recomendación se guarda en memoria, no en PostgreSQL, así que no sobrevive a un reinicio. Falta un repositorio SQL (módulo propio, esquema `knowledge`).
+  - `AnswerReady` ya es un `EventPayload`, pero el asistente sigue publicando por su puerto propio; falta un adaptador hacia el bus.

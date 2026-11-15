@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Protocol
 from uuid import UUID
 
-from spaceapp.modules.knowledge.contracts import RecommendationReady
 from spaceapp.modules.knowledge.domain.model import Action, Citation, Guidance, Recommendation
 
 
@@ -33,7 +32,3 @@ class Inbox(Protocol):
     def mark_once(self, consumer: str, event_id: UUID) -> bool: ...
 
     def is_marked(self, consumer: str, event_id: UUID) -> bool: ...
-
-
-class EventPublisher(Protocol):
-    def publish(self, event: RecommendationReady) -> None: ...
