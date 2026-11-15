@@ -1061,3 +1061,17 @@ Without downloading anything: the real model and the library were not installed 
 **Not seeded (no storage in the backend):** crew members, wearable vitals and personal sessions. The Crew health page still says it awaits the crew service. The 1 h chart of the laboratory shows the plateau of the drift (it started 105 min before the end); a shorter drift made the pre-alert flap and created dozens of tasks, so it was kept long.
 
 **Open:** with the simulator on, the laboratory returns to nominal in minutes because the live simulator does not know the seeded history.
+
+## E37 · Crew on record: table, endpoint and seed (15 Nov 2026)
+
+**Goal:** the Crew health page should show the crew from the database, like the demo, without inventing health data.
+
+**Portraits:** the four photos the user sent are the atlas that was already in the repository (`web/public/assets/crew-portraits.png`, mean pixel difference 1.6 of 255, only webp recompression). Nothing was cut or replaced: the console picks the position with `portrait-1` to `portrait-4`, and the backend stores that number.
+
+**What was added:** the `crew` module (it only had event contracts). Table `crew.member` (migration `migrations/crew`, portrait 1 to 4, one row per member of a habitat, no foreign key to Facility), `CrewService.register` (idempotent), `CrewQuery.directory`, and `GET /api/v1/crew` returning `{crew: [{id, name, role, portrait, state, vitals}]}`, the shape the console already reads through `VITE_CREW_DIRECTORY_URL` (set in `web/.env.backend`). The roster is `data/crew/roster.json` (the four demo names and roles, fictional) and the mission seed registers it. TDD: domain tests and an integration test were written first and observed failing.
+
+**Honesty decision:** no wearable exists in this system, so the endpoint serves `state: null` and `vitals: []`; it never says "Nominal" for a person nobody measures. The console now shows a neutral "No wearable data" pill and a note instead of a state and an "Unverified" evidence badge; `CrewMember.state` is `Severity | null`, and the proposed session contract allows `null`. Blood pressure, heart rate, SpO₂ and radiation of the demo fixtures are not seeded.
+
+**Verified:** whole Python suite 1,028 passed (19 skipped) including integration; `mypy` strict clean; web 307 tests, `tsc` and `eslint` clean (new `CrewCard` test); in the browser the overview and the Crew health page list the four members with their portraits and "No wearable data".
+
+**Not done:** personal sessions (`/dashboard-tripulation`) need identity and stay pending; consent and baseline mutations are still not in the backend (the `crew.consent_changed` and `crew.baseline_updated` events exist as contracts only). `ruff check .` over the whole repository still reports one long line in `docker/voice/check_whisper.py`, which predates this work (`src` and `tests` are clean).

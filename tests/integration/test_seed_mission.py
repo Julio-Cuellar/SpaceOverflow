@@ -23,6 +23,8 @@ async def test_the_seed_replays_a_mission_and_refuses_to_run_over_it(
     # The air history raised the CO₂ alert through the rules, not by hand.
     assert "env-co2-1h ALERT RAISED" in summary.alerts
     assert summary.readings > 10_000
+    # The crew is on record, with no health data behind it.
+    assert len(summary.crew) == 4
     # The alert opened its incident; the second one was reported and acknowledged.
     assert any("High CO₂" in i and i.endswith("OPEN") for i in summary.incidents)
     assert any("ACKNOWLEDGED" in i for i in summary.incidents)

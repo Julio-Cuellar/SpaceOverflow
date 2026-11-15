@@ -429,6 +429,11 @@ button.primary {
   background: #ff4d5a15;
   border-color: #ff4d5a66;
 }
+.status-pill.sev-UNKNOWN {
+  color: #b9c7d6;
+  background: #8fa3b814;
+  border-color: #8fa3b855;
+}
 .origin-label {
   color: #a7d0dc;
   font-size: 9px;

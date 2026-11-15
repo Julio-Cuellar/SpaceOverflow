@@ -13,7 +13,7 @@
         "name": {"type": "string"},
         "role": {"type": "string"},
         "portrait": {"type": "integer", "minimum": 1, "maximum": 4},
-        "state": {"enum": ["NORMAL", "ATTENTION", "ALERT", "CRITICAL"]},
+        "state": {"enum": ["NORMAL", "ATTENTION", "ALERT", "CRITICAL", null], "description": "null when no wearable data exists: the state is unknown, not normal."},
         "vitals": {"type": "array", "items": {"$ref": "#/$defs/vital"}},
         "bloodPressure": {
           "type": "object",

@@ -60,8 +60,9 @@ and a Ground plan that went through the link and was confirmed. `--reset` emptie
 without it the seed refuses to run over existing readings. Run the API with the simulator on instead and it
 keeps generating live readings, but the laboratory returns to nominal.
 
-Not seeded because the backend has no storage for it yet: crew members, their wearable vitals and personal
-sessions (the Crew health page keeps saying it awaits the crew service).
+The crew (names, roles, portraits) is stored in `crew.member` from `data/crew/roster.json` and served at
+`GET /api/v1/crew`. Health data is not seeded or invented: no wearable exists, so each member's state is
+unknown (`null`) and `vitals` is empty. Personal sessions need identity and are still pending.
 
 With the real backend, consent, baseline and "Sync now" are refused (`NOT_AVAILABLE`) until the backend has them,
 and Ground templates show no zone or recurrence.

@@ -7,6 +7,8 @@ origin label (SIMULATED readings, DEMO recommendations).
 
     python -m spaceapp.devtools.seed_mission --reset        # about a minute
 
+It registers the crew from `data/crew/roster.json` (names and roles only: no wearable data exists).
+
 The history ends now: three hours of nominal air with a slow CO₂ drift in the laboratory that the
 rules turn into an alert, the incident and the follow-up tasks that come from it, one more incident
 reported by hand, a crew task, and a Ground plan that was delivered and confirmed. Run the API
@@ -30,11 +32,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from spaceapp.interfaces.graphql.context import Context
 from spaceapp.interfaces.graphql.schema import schema
-from spaceapp.main import create_app, get_services, get_simulation
+from spaceapp.main import create_app, get_crew, get_services, get_simulation
+from spaceapp.modules.crew.adapters.outbound.json_data import load_roster
 from spaceapp.platform.config import Settings
 from spaceapp.platform.outbox import outbox_stats
 
-SCHEMAS = ("platform", "monitoring", "telemetry", "facility", "engagement", "groundlink")
+SCHEMAS = ("platform", "monitoring", "telemetry", "facility", "engagement", "groundlink", "crew")
 HABITAT = "transit-ship"
 STEP_S = 30
 # The CO₂ drift starts this long before the end of the history and is slow on purpose: at speed
@@ -78,6 +81,7 @@ class SeedError(RuntimeError):
 @dataclass(frozen=True)
 class Summary:
     readings: int
+    crew: list[str]
     alerts: list[str]
     incidents: list[str]
     tasks: int
@@ -257,6 +261,9 @@ async def seed(
         on_progress("Habitat map")
         ship = (await gql.run(SHIP, {"h": HABITAT}))["ship"]
         zones = {z["code"]: z["id"] for z in ship["zones"]}
+        on_progress("Crew")
+        roster = load_roster(settings.crew_roster_path)
+        await get_crew(app).register(roster)
         on_progress(f"Replaying {hours:g} h of telemetry")
         readings = await replay_telemetry(app, start, end, on_progress=on_progress)
         await drained(sf)
@@ -276,7 +283,9 @@ async def seed(
             for i in (await gql.run(INCIDENTS))["incidents"]["nodes"]
         ]
         tasks = len((await gql.run(TASKS, {"day": end.date().isoformat()}))["tasks"])
-    return Summary(readings, alerts, incidents, tasks, plan)
+    return Summary(
+        readings, [f"{m.name} ({m.role})" for m in roster], alerts, incidents, tasks, plan
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

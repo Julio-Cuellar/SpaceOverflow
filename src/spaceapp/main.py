@@ -17,6 +17,10 @@ from strawberry.fastapi import GraphQLRouter
 from spaceapp.interfaces.graphql.context import Context, Services
 from spaceapp.interfaces.graphql.schema import schema
 from spaceapp.interfaces.rest.admin import build_router as admin_router
+from spaceapp.modules.crew.adapters.inbound.rest import build_router as crew_router
+from spaceapp.modules.crew.adapters.outbound.sql import SqlCrewRepository
+from spaceapp.modules.crew.application.service import CrewService
+from spaceapp.modules.crew.facade import CrewQuery
 from spaceapp.modules.engagement.adapters.inbound.events import register_engagement
 from spaceapp.modules.engagement.adapters.outbound.json_data import load_system_templates
 from spaceapp.modules.engagement.adapters.outbound.sql import SqlEngagementRepository
@@ -343,6 +347,10 @@ class _AppReplay:
         return await SqlOutboxReplay(self._app.state.session_factory).after(after_id, limit)
 
 
+def get_crew(app: FastAPI) -> CrewService:
+    return CrewService(app.state.session_factory, SqlCrewRepository)
+
+
 def get_simulation(app: FastAPI) -> SimulationService:
     if app.state.sim is None:
         settings: Settings = app.state.settings
@@ -425,6 +433,7 @@ def create_app(
         return wiring.receiver, wiring.ground
 
     app.include_router(groundlink_router(groundlink_services))
+    app.include_router(crew_router(lambda: CrewQuery(app.state.session_factory)))
     if settings.profile in DEV_PROFILES:
         app.include_router(admin_router(lambda: app.state.session_factory))
 

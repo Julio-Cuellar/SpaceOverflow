@@ -25,7 +25,7 @@ else
 fi
 
 docker compose -f docker/compose.yaml up -d --wait postgres
-for module in platform monitoring telemetry facility engagement groundlink; do
+for module in platform monitoring telemetry facility engagement groundlink crew; do
   "${PY[@]}" -m spaceapp.platform.migrate "$module"
 done
 

@@ -8,7 +8,9 @@ import {
   metricLabels,
   type CrewMember,
 } from "../model";
-export function Badge({ severity }: { severity: Severity }) {
+export function Badge({ severity }: { severity: Severity | null }) {
+  if (severity === null)
+    return <span className="status-pill sev-UNKNOWN">○ No wearable data</span>;
   return (
     <span className={`status-pill sev-${severity}`}>
       {{ NORMAL: "●", ATTENTION: "▲", ALERT: "◆", CRITICAL: "■" }[severity]}{" "}
@@ -131,9 +133,7 @@ export function BodyOutline() {
 }
 export function CrewCard({ person }: { person: CrewMember }) {
   const cardEvidence =
-    person.vitals[0]?.evidenceState ??
-    person.bloodPressure?.evidenceState ??
-    "UNVERIFIED";
+    person.vitals[0]?.evidenceState ?? person.bloodPressure?.evidenceState;
   return (
     <article className="crew-card">
       <div className="crew-name">
@@ -182,7 +182,13 @@ export function CrewCard({ person }: { person: CrewMember }) {
                 </b>
               </div>
             ))}
-          <EvidenceBadge state={cardEvidence} />
+          {cardEvidence ? (
+            <EvidenceBadge state={cardEvidence} />
+          ) : (
+            <p className="muted">
+              No wearable readings are available for this crew member.
+            </p>
+          )}
         </div>
       </div>
     </article>

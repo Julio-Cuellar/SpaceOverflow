@@ -28,3 +28,4 @@ class Settings(BaseSettings):
     facility_plan_path: Path = ROOT / "data" / "facility" / "plan.json"
     incident_types_path: Path = ROOT / "data" / "facility" / "incident_types.json"
     engagement_templates_path: Path = ROOT / "data" / "engagement" / "templates.json"
+    crew_roster_path: Path = ROOT / "data" / "crew" / "roster.json"

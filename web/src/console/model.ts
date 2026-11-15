@@ -168,7 +168,8 @@ export interface CrewMember {
     origin: Origin;
     evidenceState: Evidence;
   };
-  state: Severity;
+  /** `null` when no wearable data exists: the state is unknown, not normal. */
+  state: Severity | null;
   vitals: Vital[];
 }
 /** Session is supplied by a trusted backend, not a user picker or URL parameter. */

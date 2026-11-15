@@ -1,0 +1,10 @@
+{
+  "_note": "Fictional crew for demonstration. Names and roles are made up and the portraits are illustrative (web/public/assets/crew-portraits.png, positions 1 to 4). It holds no health data: no wearable readings exist in this system.",
+  "habitat_code": "transit-ship",
+  "members": [
+    { "code": "cdr", "name": "A. Garcia", "role": "Commander", "portrait": 1 },
+    { "code": "plt", "name": "L. Chen", "role": "Pilot", "portrait": 2 },
+    { "code": "eng", "name": "M. Rossi", "role": "Engineer", "portrait": 3 },
+    { "code": "spc", "name": "D. Kim", "role": "Specialist", "portrait": 4 }
+  ]
+}

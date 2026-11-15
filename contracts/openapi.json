@@ -262,6 +262,52 @@
         ]
       }
     },
+    "/api/v1/crew": {
+      "get": {
+        "description": "Who is on board. Health data is not served because none exists: the state is unknown\n(`null`) and `vitals` is empty until a real source of readings is connected.",
+        "operationId": "directory_api_v1_crew_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "habitat",
+            "required": false,
+            "schema": {
+              "default": "transit-ship",
+              "title": "Habitat",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Directory Api V1 Crew Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Directory",
+        "tags": [
+          "crew"
+        ]
+      }
+    },
     "/api/v1/groundlink/inbound/plans": {
       "post": {
         "operationId": "inbound_plan_api_v1_groundlink_inbound_plans_post",
