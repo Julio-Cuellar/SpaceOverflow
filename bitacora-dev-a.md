@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 06:45.
+> Última actualización: 15 de noviembre de 2026, 07:15.
 
 ## Cómo se mantiene esta bitácora
 
@@ -409,6 +409,20 @@
 - **Los PRs y esta bitácora:** el cambio está en `dev-A`. Si el PR `dev-A → testing` ya está abierto, hay que subir antes estos commits.
 - **Copia de respaldo:** `~/Documentos/space_apps/bitacora-dev-a.md` (antes `space_apps/docs/bitacora.md`).
 
+### B-028 · Especificación del front
+- **Pedido del usuario:** un `.md` con las especificaciones del proyecto para el front, indicando cada sección y qué datos se consumen y se muestran.
+- **Archivo:** `docs/especificacion-front.md` (nuevo). Escrito en español para Dev B.
+- **Contenido:** reglas comunes de la interfaz; cómo se conecta (GraphQL, `/ws`, REST y proxy); mapa de las cinco pantallas (Cabina, Nave, Tareas, Asistente y Panel de Tierra) con, para cada una, el dato que muestra, la consulta o el mensaje de `/ws` de donde sale, las acciones y sus errores tipados; catálogo de los mensajes de `/ws`; qué mock reemplaza cada operación; diferencias de nombres y tipos con el front actual; huecos del backend; orden de conexión y cómo levantar el backend.
+- **Método:** se cruzó con los contratos generados (`contracts/schema.generated.graphql` y `openapi.json`) y con el código del front en `origin/dev-B` (`App.tsx`, `Root.tsx`, `DemoPanel.tsx`, `features/*`, mocks).
+- **Corregido durante la escritura:** una primera versión decía que el modo demo se oculta en `jurado`; el `DemoPanel` lo muestra también ahí, y se corrigió. También se verificó que detener un escenario inactivo no da error.
+- **Desajustes encontrados entre el front y el backend (documentados en la sección 7):**
+  - claves de escenario distintas (`co2-alto` contra `co2_slow`, `fuga-presion` contra `pressure_leak`, etc.);
+  - el front manda el id de la zona del mock y el backend espera su código;
+  - el estado de plantilla `RECIBIDA` del front no existe en el backend, y la etapa `RECHAZADO` del backend no está en el front;
+  - el front muestra un código de ticket (`t.code`) que el backend no devuelve;
+  - `Rule` en GraphQL no trae umbrales: salen de `/api/v1/rules/catalog.json`.
+- **Sin cambios de código.**
+
 ---
 
 ## 4. Archivos del proyecto por área
@@ -419,6 +433,7 @@
 | Plan de arquitectura | `docs/plan-arquitectura.md` | Asistente (generado) |
 | Tareas de Dev B | `docs/tareas-dev-b.md` | Asistente |
 | Informe TDD F0 y F1 | `docs/tdd/f0-f1.tdd.md` | Asistente |
+| Especificación del front | `docs/especificacion-front.md` | Asistente |
 | Bitácora | `bitacora-dev-a.md` | Asistente |
 | Tareas de Dev A | `docs/tareas-dev-a.md` | Asistente |
 | Generador del plan y del artefacto | `tools/docgen/` | Asistente (movido desde el *scratchpad*) |
