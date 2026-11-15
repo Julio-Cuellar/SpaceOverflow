@@ -15,11 +15,11 @@
 
 | Fase | Tema | Estado | Nota |
 | --- | --- | --- | --- |
-| F0 | Cimientos (web, codegen, mocks) | PARCIAL | Hecho: web, pruebas, codegen, mocks, borrador de contrato. Falta CODEOWNERS y CI (necesitan repositorio) |
+| F0 | Cimientos (web, codegen, mocks) | PARCIAL | Hecho: web, pruebas, codegen, mocks, borrador de contrato, CODEOWNERS y CI (el CI aún no se ha ejecutado en GitHub). Falta congelar el contrato con Dev A (I0) |
 | F8 | Conocimiento con datos de demo | PARCIAL | Dominio, caso de uso idempotente, catálogo DEMO, fachadas y búsqueda de pasajes probados (29 pruebas). Falta persistencia y outbox de A |
 | F6 | Interfaz de cabina | PARCIAL | Semáforo, tarjetas, cuerpo humano, gráficas SVG con umbral y anomalía, estado de espera, panel de alerta y cola WS, todo cableado en `App` con datos de demostración. Falta el hook `useWs` conectado a `/ws` (I2) y la tendencia de CO₂ en la cabina |
 | F7 | Panel de la nave | PARCIAL | Plano desde `zone.layout`, pins de ticket, orden y regla de «resolver», gráficas por zona con pausa, formulario de reporte, catálogo filtrable y modo demo por perfil. Falta el catálogo completo de 61 tipos y el backend |
-| F12 | RAG sobre PDFs de NASA | PENDIENTE | |
+| F12 | RAG sobre PDFs de NASA | PARCIAL | Manifiesto con licencias, fragmentación por requisito, lectura de PDF, ingesta idempotente, búsqueda con glosario es→en, respaldo a demo y evaluación, probados con PDFs sintéticos (51 pruebas). **Faltan la ingesta y la evaluación reales** (PDFs sin descargar: necesita permiso), el buscador de pasajes en la web (12.6) y la decisión del modelo de embeddings |
 | F13 | Asistente texto y Ollama | PARCIAL | Backend: caso de uso con límite de 8 s, adaptadores nulo y Ollama, evento `answer_ready` (15 pruebas). Web: pestaña Asistente con datos de demostración. Falta GraphQL, persistencia SQL, Ollama real probado y n8n opcional |
 | F14 | Voz con Whisper | PENDIENTE | |
 | F9 | Entrega (Docker, sin internet) | PENDIENTE | conjunta con A |
@@ -362,3 +362,57 @@ En el caso de uso, 2 pruebas fallaron por un error **de mi prueba**: comparaba `
 **Pendiente que ahora sí se puede hacer:** CODEOWNERS y el job de CI de F0 (antes bloqueados por no haber repositorio).
 
 **Estado:** F0 sigue PARCIAL. Lo único que le falta es CODEOWNERS y CI.
+
+### 2026-11-14 · E09 · F12 RAG sobre PDFs de NASA, y CI de GitHub Actions
+
+**Límite de esta etapa:** todo el pipeline se construyó y se probó con PDFs **sintéticos**. **No se descargó ningún PDF real.** Descargar archivos requiere permiso explícito, y se pidió con nombre, origen y tamaño. Con peticiones `HEAD` (que no descargan) se comprobó que las 7 URLs responden `200 application/pdf` y suman **14,56 MB** (la norma Vol. 2 pesa 6,56 MB; el resto, entre 0,38 y 1,87 MB). Por eso **no hay ingesta real ni evaluación real todavía**.
+
+**F12: RED → GREEN por pieza** (51 pruebas nuevas; Python pasa de 44 a 95)
+
+| Pieza | RED observado | GREEN |
+| --- | --- | --- |
+| Manifiesto de documentos y licencias (`ingest/manifest.py`) | Sí, error de colección | 6 |
+| Fragmentación por requisito (`ingest/chunking.py`) | Sí, error de colección | 8 |
+| Lectura de PDF (`ingest/pdf.py`) | Sí, error de colección | 3 |
+| Almacén, ingesta idempotente y comando (`ingest/store.py`, `pipeline.py`, `__main__.py`) | Sí, error de colección | 11 |
+| Búsqueda RAG, glosario y respaldo a demo (`rag_source.py`, `domain/glossary.py`) | Sí, error de colección; 10 de 12 fallaron luego por el glosario ausente | 12 |
+| Evaluación (`evaluate.py`) y preguntas | Sí, error de colección | 11 |
+
+**Cómo se probó la lectura de PDF sin descargar nada:** `tests/knowledge/pdf_helpers.py` arma un PDF mínimo válido (con tabla de referencias cruzadas) y `pypdf` lo lee de vuelta.
+
+**Un hueco que se encontró y se cerró bien:** al evaluar el glosario, una prueba falló porque la pregunta sobre capacidad aeróbica no recibía ninguna traducción. Al ver el detalle, otras pasaban solo por una traducción incidental (por ejemplo «astronauta» → `crew`, sin traducir «densidad ósea»). No se añadió lo mínimo para que pasara: se añadieron 14 entradas con los términos reales (`aerobic capacity`, `bone density`, `partial pressure`, `rate of change`, etc.).
+
+**Garantías de F12 y su evidencia**
+
+| Criterio del plan | Prueba |
+| --- | --- |
+| No se empaqueta ningún PDF sin licencia confirmada | `test_no_document_is_packageable_until_its_license_is_confirmed`, `test_rejects_a_manifest_that_packages_...` |
+| Ingesta idempotente: reejecutarla no duplica | `test_running_it_twice_does_not_duplicate_anything` |
+| Cada fragmento guarda documento, requisito, página y estado | `test_splits_a_page_at_each_requirement_reference` |
+| Sin pasaje relevante no hay respuesta | `test_returns_nothing_when_no_passage_is_relevant` |
+| La ingesta se ejecuta sin internet | El comando solo lee archivos locales y no descarga nada |
+| Un PDF sin texto (escaneo) se avisa, no se ignora | `test_a_pdf_without_extractable_text_is_flagged_instead_of_ignored` |
+| Cero respuestas sin fuente en la evaluación | `test_an_out_of_scope_question_must_not_get_any_passage` (la medición real espera a los PDFs) |
+
+**Decisiones y limitaciones de F12**
+
+1. **El idioma era un problema que el plan no previó.** Los documentos de NASA están en inglés y las preguntas en español; una búsqueda por términos no encontraría «headache» desde «dolor de cabeza». Solución provisoria: un **glosario español-inglés** (`data/knowledge/glossary_es_en.json`, 41 entradas) que expande la pregunta. Es una solución limitada: un término que no esté en el glosario no se encuentra. La solución de fondo es un modelo de embeddings multilingüe, que es la decisión pendiente n.º 5. **El glosario está pendiente de revisión del equipo.**
+2. **El puntaje pondera por rareza** (`ln(1 + (N+1)/df)`) y exige un mínimo de 1,0: una palabra que está en casi todos los fragmentos no basta para devolver un pasaje.
+3. **Posible inconsistencia de evidencia, para decidir.** El RAG toma el estado de evidencia del tipo de documento: todos los Technical Brief salen como `TB`. Pero el catálogo de demostración marca el pasaje de hipoxia de TB-003 como `VERIFICADO`, siguiendo el documento de contexto. No lo cambié porque esa clasificación es del equipo. Cuando se ingieran los PDFs reales, el mismo texto saldría como `TB`.
+4. **Las preguntas de evaluación son hipótesis.** Los documentos esperados salen del documento de contexto, no de haber leído los PDFs. Hay que afinarlas tras la primera ingesta real. Son 16 dentro de alcance y 2 fuera.
+5. **Los PDFs y su índice no se versionan** (`data/knowledge/pdfs/`, `data/knowledge/index/` en el `.gitignore`): la licencia de redistribución no está confirmada.
+6. **No se extraen las tablas que vienen como imagen** (por ejemplo la Tabla 6.2-1). El plan pide transcribirlas a mano; no está hecho.
+7. **El selector por perfil no está cableado.** Las clases (`RagKnowledgeSource`, `FallbackKnowledgeSource`) existen y están probadas, pero quien arma la aplicación es `main.py`, que es de Dev A.
+8. **`pyproject.toml`:** se añadió `pypdf` y las dependencias de desarrollo pasaron a `[project.optional-dependencies]`, para que el CI instale con `pip install -e ".[dev]"`.
+
+**CI de GitHub Actions** (`.github/workflows/ci.yml`) y **CODEOWNERS** (`.github/CODEOWNERS`)
+
+- **Se ejecuta** en cada pull request y en cada push a `main`, `dev-A`, `dev-B` y `testing`. Permisos de solo lectura; un push nuevo cancela la ejecución anterior de esa rama.
+- **Job `web`:** `npm ci`, lint, tipos, cobertura (falla por debajo del 80 %), build y codegen.
+- **Job `python`** en 3.12 y 3.14: `pip install -e ".[dev]"`, `ruff check`, `ruff format --check`, `mypy` y `pytest`.
+- **Verificación en una copia limpia** (clon de `dev-B` en una carpeta temporal, sin mi `node_modules` ni mi `.venv`): los 6 pasos de `web` pasan (cobertura de líneas 99,62 %) y los 5 pasos de `python` pasan en 3.14 (95 pruebas).
+- **Lo que NO se pudo verificar:** Python 3.12 no está instalado en este equipo. Solo se comprobó que los 52 archivos parsean con la gramática de 3.12 y que `mypy --python-version 3.12` no da problemas. La ejecución real en 3.12, y el CI en un runner de GitHub, ocurren por primera vez al subir esta rama. Si 3.12 falla, se corrige.
+- **Hallazgo durante la verificación:** hasta ahora el build se había comprobado con `npx vite build`, no con el script real (`tsc -b && vite build`). Se ejecutó el script real y pasa.
+- **CODEOWNERS** solo cubre las carpetas de Dev B. Falta el usuario de GitHub de Dev A (se dejó anotado como pendiente en el propio archivo).
+
+**Estado:** F12 PARCIAL (pipeline probado; falta la ingesta y la evaluación reales). CI y CODEOWNERS creados; pendiente su primera ejecución en GitHub.
