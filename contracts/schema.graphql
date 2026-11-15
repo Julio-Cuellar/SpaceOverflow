@@ -1,0 +1,45 @@
+# BORRADOR de Dev B (F0). Pendiente de revisión de Dev A antes de congelar en I0.
+# Subconjunto de la sección 10.2 del plan: solo lo que consume la interfaz de F0.
+# Un cambio de contrato exige revisión del otro desarrollador.
+
+enum Severity {
+  NORMAL
+  ATENCION
+  ALERTA
+  CRITICO
+}
+
+enum EvidenceState {
+  VERIFICADO
+  TB
+  DEMO
+  NO_VERIFICADO
+}
+
+enum DataOrigin {
+  REAL
+  SIMULATED
+  REPLAY
+}
+
+type Vital {
+  key: String!
+  label: String!
+  value: Float!
+  unit: String!
+  # "cabina" o "cuerpo". Texto libre hasta que A fije el catálogo de dominios.
+  domain: String!
+  severity: Severity!
+  evidenceState: EvidenceState!
+  origin: DataOrigin!
+}
+
+type DashboardView {
+  habitatId: ID!
+  globalSeverity: Severity!
+  vitals: [Vital!]!
+}
+
+type Query {
+  dashboard(habitatId: ID!): DashboardView!
+}

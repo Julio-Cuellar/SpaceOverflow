@@ -1,0 +1,1784 @@
+<title>Arquitectura Monitor de Salud</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Concepto: mesa de trabajo técnica. Cabecera compacta, navegación fija por secciones, un diagrama o un simulador por sección.
+   Color: tinta azul-grisácea, un acento teal, un color por canal, semáforo aparte. El estado de evidencia se distingue por forma, no por color. */
+:root {
+  --bg: #eef1f4; --surface: #ffffff; --surface2: #f5f7f9; --ink: #121b24; --muted: #56646f; --line: #d3dbe2;
+  --accent: #14506e; --accent-ink: #ffffff; --accent-soft: #dbe9f1;
+  --c-rest: #3a67d1; --c-gql: #a03aad; --c-ws: #c96a0a; --c-evt: #0b8a77;
+  --ok: #1b8a4b; --warn: #b87d00; --bad: #c4352b; --crit: #94195a;
+  --m1: #3a67d1; --m2: #0b8a77; --m3: #a03aad; --m4: #c96a0a; --m5: #5a7a1f; --m6: #b8446a; --m7: #2f7f9e; --m8: #6b5bc4; --m9: #6a7782;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 8px;
+  --dev-a: #0e7c86; --dev-b: #b03a7a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1218; --surface: #131b23; --surface2: #18222c; --ink: #e3eaf0; --muted: #91a1ae; --line: #25323e;
+    --accent: #7ab4da; --accent-ink: #0c1218; --accent-soft: #1b2e3b;
+    --c-rest: #7b9cf0; --c-gql: #cf86dc; --c-ws: #f0a04a; --c-evt: #3cc4ae;
+    --ok: #4cc27d; --warn: #e0b13a; --bad: #f0675c; --crit: #ef6aa7;
+    --dev-a: #4fc3cf; --dev-b: #e58bbf; --m1: #7b9cf0; --m2: #3cc4ae; --m3: #cf86dc; --m4: #f0a04a; --m5: #a4c85a; --m6: #ee8aa8; --m7: #6cb8d6; --m8: #a99cf0; --m9: #98a6b2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1218; --surface: #131b23; --surface2: #18222c; --ink: #e3eaf0; --muted: #91a1ae; --line: #25323e;
+  --accent: #7ab4da; --accent-ink: #0c1218; --accent-soft: #1b2e3b;
+  --c-rest: #7b9cf0; --c-gql: #cf86dc; --c-ws: #f0a04a; --c-evt: #3cc4ae;
+  --ok: #4cc27d; --warn: #e0b13a; --bad: #f0675c; --crit: #ef6aa7;
+  --dev-a: #4fc3cf; --dev-b: #e58bbf; --m1: #7b9cf0; --m2: #3cc4ae; --m3: #cf86dc; --m4: #f0a04a; --m5: #a4c85a; --m6: #ee8aa8; --m7: #6cb8d6; --m8: #a99cf0; --m9: #98a6b2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 15px/1.55 var(--font-body); padding-inline: 16px; padding-block: 0 56px; }
+h1, h2, h3 { font-family: var(--font-display); font-stretch: 112%; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(28px, 4.4vw, 44px); font-weight: 750; line-height: 1.08; }
+h2 { font-size: clamp(22px, 2.6vw, 28px); font-weight: 700; }
+h3 { font-size: 16px; font-weight: 650; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1160px; margin-inline: auto; }
+.eyebrow { font: 500 11px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+
+/* navegación */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin-inline: -16px; padding-inline: 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; scrollbar-width: none; }
+.nav a { white-space: nowrap; padding: 6px 12px; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 14px; }
+.nav a:hover { background: var(--surface2); color: var(--ink); }
+.nav a.on { background: var(--accent); color: var(--accent-ink); }
+
+/* hero */
+.hero { display: grid; gap: 28px; padding-block: 40px 28px; }
+.hero p.lead { max-width: 64ch; font-size: 17px; color: var(--muted); margin-top: 14px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+.stat b { font: 700 28px/1 var(--font-display); font-stretch: 112%; font-variant-numeric: tabular-nums; }
+.stat span { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.cols { display: grid; gap: 28px; grid-template-columns: 1fr 1fr; }
+.cols > * { min-width: 0; }
+.plist { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.plist li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; }
+.plist .n { font: 600 13px/1.6 var(--font-mono); color: var(--accent); }
+.plist b { display: block; font-weight: 600; }
+.plist span { color: var(--muted); font-size: 14px; }
+details.adr { border-top: 1px solid var(--line); padding-block: 10px; }
+details.adr:last-child { border-bottom: 1px solid var(--line); }
+details.adr summary { cursor: pointer; font-weight: 550; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+details.adr summary::-webkit-details-marker { display: none; }
+details.adr summary::before { content: "+"; font: 500 14px var(--font-mono); color: var(--accent); width: 12px; }
+details.adr[open] summary::before { content: "−"; }
+details.adr p { color: var(--muted); font-size: 14px; padding: 6px 0 2px 22px; max-width: 70ch; }
+.adr .id { font: 500 12px var(--font-mono); color: var(--muted); }
+
+/* secciones */
+section.sec { padding-block: 44px 8px; border-top: 1px solid var(--line); scroll-margin-top: 56px; }
+section.sec > header { display: grid; gap: 8px; margin-bottom: 20px; }
+section.sec > header p { color: var(--muted); max-width: 72ch; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.scroll { overflow-x: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 12px; font-size: 13px; line-height: 1.3; display: inline-flex; gap: 6px; align-items: center; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 12px; font-weight: 500; font-size: 14px; }
+.btn:hover { border-color: var(--accent); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn[disabled] { opacity: 0.45; cursor: default; }
+.tag { display: inline-block; font: 500 11px/1 var(--font-mono); padding: 3px 6px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--line); color: var(--muted); }
+.pill { display: inline-block; font: 600 11px/1 var(--font-mono); padding: 4px 7px; border-radius: 4px; letter-spacing: 0.02em; }
+.ch-REST { background: color-mix(in srgb, var(--c-rest) 16%, transparent); color: var(--c-rest); }
+.ch-GQL { background: color-mix(in srgb, var(--c-gql) 16%, transparent); color: var(--c-gql); }
+.ch-WS { background: color-mix(in srgb, var(--c-ws) 18%, transparent); color: var(--c-ws); }
+.ch-EVT { background: color-mix(in srgb, var(--c-evt) 16%, transparent); color: var(--c-evt); }
+.ev { font: 600 10.5px/1 var(--font-mono); padding: 3px 6px; border-radius: 3px; border: 1px solid var(--ink); white-space: nowrap; }
+.ev-VERIFICADO { background: var(--ink); color: var(--bg); }
+.ev-TB { background: transparent; color: var(--ink); }
+.ev-DEMO, .ev-SIM { background: transparent; color: var(--muted); border: 1px dashed var(--muted); }
+.sev { display: inline-flex; gap: 5px; align-items: center; font-weight: 600; font-size: 13px; }
+.sev-0 { color: var(--ok); } .sev-1 { color: var(--warn); } .sev-2 { color: var(--bad); } .sev-3 { color: var(--crit); }
+
+/* mapa de módulos */
+.mapgrid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; }
+.map svg { width: 100%; height: auto; display: block; min-width: 640px; }
+.map text { font-family: var(--font-body); fill: var(--ink); }
+.map .t-sm { font-size: 11px; fill: var(--muted); }
+.map .t-mono { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); }
+.node { cursor: pointer; }
+.node rect { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.node.sel rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.5; }
+.node.partner rect { stroke: var(--accent); stroke-dasharray: 5 3; stroke-width: 1.8; }
+.node:focus-visible rect { stroke: var(--accent); stroke-width: 3; }
+.node.dim, .edge.dim { opacity: 0.35; }
+.ext rect { fill: var(--surface2); stroke: var(--line); stroke-dasharray: 3 3; }
+.bus rect { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+.bus.sel rect { stroke-width: 2.5; }
+.edge { stroke: var(--c-evt); stroke-width: 2; fill: none; }
+.edge.faint { stroke-dasharray: 2 4; opacity: 0.35; }
+.band rect { fill: var(--surface2); stroke: var(--line); }
+.modpanel h3 { font-size: 20px; margin-bottom: 4px; }
+.modpanel .role { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+.modpanel h4 { font: 500 11px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+.modpanel ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 13.5px; }
+.modpanel li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.modpanel .to { color: var(--muted); font-size: 12.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+
+/* tabla de canales */
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 12px; }
+.toolbar input[type=search], .toolbar select { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 10px; min-width: 0; }
+.toolbar input[type=search] { width: min(260px, 100%); }
+table.tbl { width: 100%; border-collapse: collapse; min-width: 760px; font-size: 13.5px; }
+.tbl th { text-align: left; font: 500 11px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 10px 10px; border-bottom: 1px solid var(--line); background: var(--surface2); position: sticky; top: 0; }
+.tbl td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl tr.row { cursor: pointer; }
+.tbl tr.row:hover td { background: var(--surface2); }
+.tbl tr.open td { background: var(--accent-soft); }
+.tbl tr.det td { background: var(--surface2); }
+.det dl { display: grid; grid-template-columns: 110px 1fr; gap: 4px 12px; margin: 0; }
+.det dt { color: var(--muted); font-size: 12px; }
+.det dd { margin: 0; }
+.tbl .route { font-family: var(--font-mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.count { font-size: 13px; color: var(--muted); margin-left: auto; }
+
+/* outbox */
+.obgrid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.obgrid > * { min-width: 0; }
+.ctl { display: grid; gap: 10px; }
+.ctl label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.ctl select { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 10px; }
+.chk { display: flex !important; grid-template-columns: none; gap: 8px; align-items: center; color: var(--ink) !important; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.log { font: 12.5px/1.6 var(--font-mono); background: var(--surface2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; min-height: 150px; max-height: 190px; overflow: auto; }
+.log div { overflow-wrap: anywhere; }
+.log .l-ok { color: var(--ok); } .log .l-bad { color: var(--bad); } .log .l-skip { color: var(--warn); }
+.st { font: 600 11px/1 var(--font-mono); padding: 3px 6px; border-radius: 3px; }
+.st-pending { background: color-mix(in srgb, var(--warn) 22%, transparent); color: var(--warn); }
+.st-done { background: color-mix(in srgb, var(--ok) 20%, transparent); color: var(--ok); }
+.st-dead { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
+table.mini { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mini th { text-align: left; font: 500 10.5px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.mini td { padding: 6px 8px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); overflow-wrap: anywhere; }
+
+/* secuencias */
+.seqbox { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); max-height: 520px; overflow: auto; }
+.seqin { position: relative; }
+.seqhead { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); }
+.seq text { font-family: var(--font-body); font-size: 12px; fill: var(--ink); }
+.seq .life { stroke-dasharray: 3 4; opacity: 0.4; }
+.seq .msg { cursor: pointer; }
+.seq .msg line, .seq .msg path.ln { stroke-width: 1.9; fill: none; }
+.seq .msg.async line { stroke-dasharray: 7 3; }
+.seq .msg.ret line { stroke-dasharray: 2 3; }
+.seq .msg text.lbl { paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.seq .msg text.num { fill: var(--bg); font-size: 10px; font-weight: 700; stroke: none; }
+.seq .msg .band { fill: var(--accent-soft); opacity: 0; }
+.seq .msg.future { opacity: 0.28; }
+.seq .msg.cur .band { opacity: 1; }
+.seq .msg.cur line, .seq .msg.cur path.ln { stroke-width: 3; }
+.seq .msg.cur text.lbl { font-weight: 650; }
+.seq .pbox { stroke-width: 1.6; }
+.sqleg { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); margin-bottom: 10px; align-items: center; }
+.sqleg svg { vertical-align: middle; margin-right: 6px; }
+.caption { margin-top: 12px; display: grid; gap: 4px; min-height: 66px; }
+.caption b { font-weight: 600; }
+
+/* ER */
+.erwrap { position: relative; padding-right: 34px; }
+.ergrid { position: relative; z-index: 1; display: grid; gap: 30px 60px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.ergrid > * { min-width: 0; }
+svg.erlines { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; z-index: 0; }
+svg.erlines text { font: 600 10.5px var(--font-mono); fill: var(--ink); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; }
+svg.erlines path.rl { fill: none; stroke-width: 1.8; }
+svg.erlines path.rl.hard { stroke: var(--mc); }
+svg.erlines path.rl.soft { stroke: var(--muted); stroke-dasharray: 5 4; }
+svg.erlines path.rl.hl { stroke: var(--accent); stroke-width: 3; }
+svg.erlines path.rl.fade { opacity: 0.12; }
+.tcard.stub { background: var(--surface2); border-style: dashed; }
+.tcard.stub .th { border-top-color: var(--muted); color: var(--muted); }
+.rellist { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 18px; font: 12px/1.5 var(--font-mono); color: var(--muted); }
+.rellist b { color: var(--ink); font-weight: 500; }
+.mod-h { display: flex; align-items: center; gap: 8px; margin: 18px 0 8px; font-weight: 600; }
+.mod-h i { width: 10px; height: 10px; border-radius: 2px; }
+.tcard { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; text-align: left; padding: 0; overflow: hidden; }
+.tcard .th { padding: 7px 10px; font: 600 12.5px var(--font-mono); border-bottom: 1px solid var(--line); border-top: 3px solid var(--mc); display: flex; justify-content: space-between; gap: 8px; }
+.tcard ul { list-style: none; margin: 0; padding: 4px 0; font: 12px/1.65 var(--font-mono); }
+.tcard li { display: flex; gap: 6px; padding: 0 10px; align-items: baseline; }
+.tcard li .ty { color: var(--muted); margin-left: auto; }
+.tcard li.fk { background: color-mix(in srgb, var(--mc) 9%, transparent); }
+.k { font-size: 10px; color: var(--accent); font-weight: 600; }
+.tcard.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.tcard.rel { border-color: var(--accent); border-style: dashed; }
+.tcard.dim { opacity: 0.4; }
+.tcard:focus-visible { outline: 2px solid var(--accent); }
+.erinfo { min-height: 44px; font-size: 14px; margin-bottom: 8px; }
+
+/* UX */
+.jrn { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); margin-bottom: 18px; }
+.jinfo { display: grid; gap: 12px 24px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.jinfo h4 { font: 500 11px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.jinfo p { font-size: 14px; }
+.proto { display: grid; gap: 16px; grid-template-columns: 300px minmax(0, 1fr); align-items: start; }
+.proto > * { min-width: 0; }
+.sl { display: grid; gap: 3px; font-size: 13px; }
+.sl .v { display: flex; justify-content: space-between; color: var(--muted); }
+.sl .v b { color: var(--ink); font-family: var(--font-mono); font-weight: 500; }
+.sl input[type=range] { width: 100%; accent-color: var(--accent); }
+.engine { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 8px; font-size: 13px; }
+.engine .rl { display: grid; gap: 2px; }
+.engine .rl code { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.device { border: 1px solid var(--line); border-radius: 14px; background: var(--bg); overflow: hidden; }
+.dtabs { display: flex; gap: 2px; overflow-x: auto; background: var(--surface); border-bottom: 1px solid var(--line); padding: 6px; scrollbar-width: none; }
+.dtabs button { border: 0; background: transparent; padding: 8px 12px; border-radius: 6px; font-size: 13.5px; white-space: nowrap; color: var(--muted); font-weight: 500; }
+.dtabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+.screen { padding: 14px; display: grid; gap: 12px; min-height: 420px; align-content: start; }
+.banner { font-size: 12px; background: var(--surface2); border: 1px dashed var(--muted); border-radius: 6px; padding: 6px 10px; color: var(--muted); }
+.topbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+.glob { display: inline-flex; gap: 8px; align-items: center; font: 700 20px var(--font-display); font-stretch: 112%; padding: 8px 14px; border-radius: 8px; border: 2px solid currentColor; }
+.cards3 { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 6px; align-content: start; }
+.card h5 { margin: 0; font: 500 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.big { font: 700 28px/1.05 var(--font-display); font-stretch: 112%; font-variant-numeric: tabular-nums; }
+.big small { font: 400 13px var(--font-body); color: var(--muted); margin-left: 4px; }
+.gauge { position: relative; height: 10px; border-radius: 5px; margin-block: 4px 2px; }
+.gauge i { position: absolute; top: -4px; width: 3px; height: 18px; background: var(--ink); border-radius: 2px; transform: translateX(-1px); }
+.kv { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.kv span:first-child { color: var(--muted); }
+.alertbox { border: 2px solid var(--sc); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.alertbox .ah { background: var(--sc); color: #fff; padding: 10px 14px; font: 700 18px var(--font-display); font-stretch: 112%; display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.alertbox .ab { padding: 12px 14px; display: grid; gap: 14px; }
+.alertbox h5 { margin: 0 0 4px; font: 500 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.alertbox ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.chat { display: grid; gap: 8px; }
+.bub { max-width: 90%; padding: 9px 12px; border-radius: 10px; font-size: 14px; background: var(--surface); border: 1px solid var(--line); }
+.bub.me { justify-self: end; background: var(--accent-soft); border-color: var(--accent); }
+.cite { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 12px; flex-wrap: wrap; }
+.chat form { display: flex; gap: 8px; flex-wrap: wrap; }
+.chat input[type=text] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 8px 10px; }
+.task { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.task input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent); }
+.task .grow { flex: 1; min-width: 0; }
+.task.done .tt { text-decoration: line-through; color: var(--muted); }
+.sw { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.sw input { width: 20px; height: 20px; accent-color: var(--accent); }
+.uxp { display: grid; gap: 10px 24px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-top: 22px; }
+.uxp div { font-size: 14px; }
+.uxp b { display: block; font-weight: 600; }
+.uxp span { color: var(--muted); }
+
+/* cuerpo humano */
+.bodycard { display: grid; gap: 14px 22px; grid-template-columns: 150px minmax(0, 1fr); align-items: start; }
+.bodycard > * { min-width: 0; }
+.body svg { width: 150px; height: auto; display: block; }
+.body .sil { fill: var(--surface2); stroke: var(--muted); stroke-width: 1.4; }
+.body .mk { cursor: pointer; }
+.body .mk circle.c { stroke: var(--surface); stroke-width: 2.5; }
+.body .mk:focus-visible circle.c, .body .mk.sel circle.c { stroke: var(--ink); stroke-width: 3; }
+.body .mk text { font: 700 10px var(--font-mono); fill: #fff; pointer-events: none; }
+.blist { display: grid; gap: 4px; }
+.brow { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 8px; align-items: center; border: 1px solid transparent; background: transparent; border-radius: 6px; padding: 5px 8px; text-align: left; font-size: 13px; }
+.brow:hover { background: var(--surface2); }
+.brow.sel { border-color: var(--accent); background: var(--accent-soft); }
+.brow .dot { width: 10px; height: 10px; border-radius: 50%; }
+.bdet { border-top: 1px solid var(--line); padding-top: 10px; font-size: 13.5px; display: grid; gap: 4px; }
+
+/* panel de la nave */
+.shipgrid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; margin-bottom: 16px; }
+.shipgrid > * { min-width: 0; }
+.ship svg { width: 100%; height: auto; display: block; min-width: 620px; }
+.ship text { font-family: var(--font-body); fill: var(--ink); }
+.ship .zn { cursor: pointer; }
+.ship .zn rect.zr { stroke-width: 1.6; }
+.ship .zn:focus-visible rect.zr { stroke: var(--accent); stroke-width: 3.5; }
+.ship .zn.sel rect.zr { stroke: var(--accent); stroke-width: 4; }
+.ship .zn.s0 rect.zr { fill: color-mix(in srgb, var(--ok) 10%, var(--surface)); stroke: var(--line); }
+.ship .zn.s1 rect.zr { fill: color-mix(in srgb, var(--warn) 32%, var(--surface)); stroke: var(--warn); }
+.ship .zn.s2 rect.zr { fill: color-mix(in srgb, var(--bad) 34%, var(--surface)); stroke: var(--bad); }
+.ship .zn.s3 rect.zr { fill: color-mix(in srgb, var(--crit) 40%, var(--surface)); stroke: var(--crit); }
+.ship .zn.sel rect.zr { stroke: var(--accent); stroke-width: 4; }
+.ship .zt { font-size: 12.5px; font-weight: 650; }
+.ship .zv { font: 500 10.5px var(--font-mono); fill: var(--muted); }
+.ship .zs { font-size: 11px; font-weight: 700; }
+.ship .hull { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.ship .cor { fill: var(--surface2); stroke: none; }
+.ship .pin rect { fill: var(--ink); }
+.ship .pin text { fill: var(--bg); font: 700 10px var(--font-mono); }
+.zlegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; margin-top: 8px; color: var(--muted); }
+.live { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--font-mono); color: var(--muted); }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); animation: pulse 1.6s infinite; }
+.live.off i { background: var(--muted); animation: none; }
+@keyframes pulse { 50% { opacity: 0.25; } }
+.tk { border: 1px solid var(--line); border-left: 5px solid var(--sc); border-radius: 8px; background: var(--surface); padding: 10px 12px; display: grid; gap: 6px; }
+.tk.sel { box-shadow: 0 0 0 2px var(--accent); }
+.tk .h { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.tk .id { font: 600 12px var(--font-mono); }
+.tk .t { font-weight: 600; }
+.tk .m { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 14px; }
+.tk .tl { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.tk .tl label { display: flex; gap: 8px; align-items: flex-start; }
+.tk.res { opacity: 0.7; border-left-color: var(--muted); }
+.tklist { display: grid; gap: 10px; max-height: 560px; overflow: auto; padding-right: 2px; }
+.ok-note { font-size: 12.5px; color: var(--ok); font-weight: 600; }
+.newtk { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.newtk label { display: grid; gap: 3px; font-size: 12.5px; color: var(--muted); }
+.newtk select, .newtk input[type=text], .newtk textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 9px; width: 100%; min-width: 0; }
+.newtk .two { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+.charts { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.charts > * { min-width: 0; }
+.ch { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 10px 12px 6px; }
+.ch .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ch .top span { font-size: 12.5px; color: var(--muted); }
+.ch .top b { font: 700 20px var(--font-display); font-stretch: 112%; font-variant-numeric: tabular-nums; }
+.ch svg { width: 100%; height: auto; display: block; }
+.ch .foot { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); gap: 6px; flex-wrap: wrap; }
+.anom { font: 700 10.5px var(--font-mono); padding: 2px 5px; border-radius: 3px; background: var(--warn); color: var(--bg); }
+.zhead { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.tflt { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tgroup { display: grid; gap: 8px; margin-bottom: 14px; }
+.tgroup h5 { margin: 0; font: 500 11px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+.tag-TIERRA { border-color: var(--c-rest); color: var(--c-rest); }
+.tag-TRIPULACION { border-color: var(--c-evt); color: var(--c-evt); }
+.task select { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 5px 8px; max-width: 100%; }
+.pipe { display: flex; flex-wrap: wrap; gap: 6px; }
+.pipe .s { padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; color: var(--muted); }
+.pipe .s.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pipe .s.done { border-color: var(--ok); color: var(--ok); }
+.pipe .s.bad { background: var(--bad); border-color: var(--bad); color: var(--bg); }
+
+.devtag { display: inline-block; font: 700 11px/1 var(--font-mono); padding: 4px 7px; border-radius: 4px; border: 1.5px solid currentColor; }
+.devtag.dev-A { color: var(--dev-a); } .devtag.dev-B { color: var(--dev-b); }
+.map.byown .node.own-A rect { stroke: var(--dev-a); stroke-width: 3; fill: color-mix(in srgb, var(--dev-a) 12%, var(--surface)); }
+.map.byown .node.own-B rect { stroke: var(--dev-b); stroke-width: 3; fill: color-mix(in srgb, var(--dev-b) 12%, var(--surface)); }
+.meters { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 16px; }
+.meter { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 12px 14px; display: grid; gap: 6px; }
+.meter b { font: 700 26px/1 var(--font-display); font-stretch: 112%; font-variant-numeric: tabular-nums; }
+.mbar { height: 10px; border-radius: 5px; background: var(--surface2); border: 1px solid var(--line); overflow: hidden; position: relative; }
+.mbar i { position: absolute; top: 0; bottom: 0; left: 0; }
+.tl svg { display: block; }
+.tl text { font-family: var(--font-body); fill: var(--ink); }
+.tl .blk { cursor: pointer; }
+.tl .blk:focus-visible rect.bx { stroke: var(--ink); stroke-width: 3.5; }
+.tl .blk.sel rect.bx { stroke: var(--ink); stroke-width: 3.5; }
+.tl .ms text { font: 600 10.5px var(--font-mono); }
+.owngrid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.ownitem { display: flex; justify-content: space-between; align-items: center; gap: 8px; border: 1px solid var(--line); border-left: 4px solid var(--oc); border-radius: 6px; padding: 8px 10px; background: var(--surface); font-size: 13.5px; }
+.chk2 { font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+
+/* plan */
+.rm { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.rm > * { min-width: 0; }
+.phase { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 8px; align-content: start; }
+.phase .ph { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.phase .ph b { font: 600 15px var(--font-display); font-stretch: 112%; }
+.phase .ph .h { margin-left: auto; color: var(--muted); font: 12px var(--font-mono); }
+.phase label { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; }
+.phase input { margin-top: 3px; accent-color: var(--accent); }
+.prio { font: 700 11px var(--font-mono); padding: 3px 6px; border-radius: 3px; }
+.prio-P0 { background: var(--accent); color: var(--accent-ink); }
+.prio-P1 { border: 1px solid var(--ink); }
+.prio-P2 { border: 1px dashed var(--muted); color: var(--muted); }
+.bar { height: 8px; background: var(--surface2); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; flex: 1 1 200px; }
+.bar i { display: block; height: 100%; background: var(--accent); width: 0; }
+.rk { width: 100%; border-collapse: collapse; min-width: 640px; font-size: 14px; }
+.rk td, .rk th { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.rk th { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.foot { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .cols, .mapgrid, .obgrid, .proto, .jinfo, .shipgrid { grid-template-columns: minmax(0, 1fr); }
+  .bodycard { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .bodycard .blist, .bodycard .bdet { justify-self: stretch; width: 100%; }
+  .jinfo { gap: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+</style>
+
+<nav class="nav" aria-label="Secciones"><div class="wrap" id="nav"></div></nav>
+
+<div class="wrap">
+  <header class="hero" id="top">
+    <div>
+      <div class="eyebrow">NASA Space Apps 2026 · reto de salud para astronautas</div>
+      <h1 style="margin-top:12px">Plan de arquitectura del monitor de salud</h1>
+      <p class="lead">Monolito modular con hexágonos por módulo, bus de eventos con outbox en PostgreSQL, y tres canales con una función cada uno: REST para máquinas, GraphQL para la interfaz y WebSocket para lo que el servidor empuja. Funciona sin internet.</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="cols">
+      <div>
+        <h3 style="margin-bottom:12px">Principios</h3>
+        <ol class="plist" id="principles"></ol>
+      </div>
+      <div>
+        <h3 style="margin-bottom:12px">Decisiones de arquitectura</h3>
+        <div id="adrs"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="sec" id="modulos">
+    <header>
+      <div class="eyebrow">Comunicación entre módulos</div>
+      <h2>Mapa de módulos</h2>
+      <p>Selecciona un módulo para ver qué publica, a qué se suscribe y qué canales expone. Los módulos punteados intercambian eventos con el seleccionado. Las lecturas síncronas van por fachadas de solo lectura.</p>
+    </header>
+    <div class="chips" id="map-chips" style="margin-bottom:12px"></div>
+    <div class="mapgrid">
+      <div class="panel map scroll" id="map"></div>
+      <div class="panel modpanel" id="modpanel"></div>
+    </div>
+    <div class="legend" id="maplegend"></div>
+  </section>
+
+  <section class="sec" id="canales">
+    <header>
+      <div class="eyebrow">Contratos</div>
+      <h2>Canales y eventos de comunicación</h2>
+      <p>Todos los mensajes del sistema. Filtra por canal o módulo y abre una fila para ver payload y garantías de entrega.</p>
+    </header>
+    <div class="toolbar" id="tb-tools"></div>
+    <div class="panel scroll" style="padding:0"><table class="tbl" id="tbl"></table></div>
+  </section>
+
+  <section class="sec" id="outbox">
+    <header>
+      <div class="eyebrow">Simulador</div>
+      <h2>Outbox, relay e inbox</h2>
+      <p>Emite eventos, ejecuta ciclos del relay y fuerza el fallo de un consumidor. Mira cómo el inbox evita duplicados y cómo un evento termina muerto tras ocho intentos.</p>
+    </header>
+    <div class="obgrid">
+      <div class="panel ctl">
+        <label>Evento a emitir
+          <select id="ob-type"></select>
+        </label>
+        <div class="btnrow">
+          <button class="btn pri" id="ob-emit">Emitir con el cambio de estado</button>
+          <button class="btn" id="ob-cycle">Ciclo del relay</button>
+          <button class="btn" id="ob-auto" aria-pressed="false">Auto</button>
+        </div>
+        <label>Consumidor que falla
+          <select id="ob-fail"></select>
+        </label>
+        <div class="btnrow">
+          <button class="btn" id="ob-dup">Entregar de nuevo el último hecho</button>
+          <button class="btn" id="ob-replay">Reencolar muertos</button>
+          <button class="btn" id="ob-reset">Reiniciar</button>
+        </div>
+        <p class="muted" style="font-size:13px">En el simulador no se espera el backoff real (1, 2, 4 … 60 s). Cada ciclo procesa un evento pendiente.</p>
+        <h3>Registro</h3>
+        <div class="log" id="ob-log" aria-live="polite"></div>
+      </div>
+      <div class="panel" style="display:grid;gap:14px;align-content:start">
+        <div>
+          <h3 style="margin-bottom:6px">platform.outbox_event</h3>
+          <div class="scroll"><table class="mini" id="ob-table"></table></div>
+        </div>
+        <div>
+          <h3 style="margin-bottom:6px">platform.inbox_processed</h3>
+          <div class="scroll"><table class="mini" id="ob-inbox"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="secuencias">
+    <header>
+      <div class="eyebrow">Diagramas de secuencia</div>
+      <h2>Qué pasa, paso a paso</h2>
+      <p>Avanza con los botones, haz clic en un mensaje o pulsa Reproducir. La línea continua es una llamada, la de guiones un mensaje asíncrono y la punteada una respuesta.</p>
+    </header>
+    <div class="chips" id="seq-tabs" role="tablist" style="margin-bottom:12px"></div>
+    <p class="muted" id="seq-sub" style="margin-bottom:10px"></p>
+    <div class="seqbox" id="seqbox"></div>
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn" id="sq-prev">Anterior</button>
+      <button class="btn pri" id="sq-next">Siguiente</button>
+      <button class="btn" id="sq-play" aria-pressed="false">Reproducir</button>
+      <button class="btn" id="sq-reset">Reiniciar</button>
+      <span class="count" id="sq-count"></span>
+    </div>
+    <div class="caption panel" id="sq-cap" aria-live="polite"></div>
+  </section>
+
+  <section class="sec" id="er">
+    <header>
+      <div class="eyebrow">Modelo de datos</div>
+      <h2>Diagrama ER por módulo</h2>
+      <p>Un esquema de PostgreSQL por módulo. Las claves foráneas viven dentro del módulo. Entre módulos solo hay referencias blandas por id. Selecciona una tabla para ver sus relaciones.</p>
+    </header>
+    <div class="chips" id="er-chips" style="margin-bottom:10px"></div>
+    <div class="erinfo" id="er-info" aria-live="polite"></div>
+    <div id="er-grid"></div>
+  </section>
+
+  <section class="sec" id="ux">
+    <header>
+      <div class="eyebrow">Experiencia de usuario</div>
+      <h2>Recorrido y prototipo</h2>
+      <p>Elige una etapa del recorrido. El prototipo usa las reglas reales de PIO₂, ppCO₂, presión total y velocidad de cambio del catálogo. Las bandas amarillas y los valores del cuerpo son de demostración y llevan la etiqueta.</p>
+    </header>
+    <div class="jrn panel">
+      <div class="chips" id="j-chips"></div>
+      <div class="jinfo" id="j-info"></div>
+    </div>
+    <div class="proto">
+      <div class="panel">
+        <h3 style="margin-bottom:10px">Condiciones de la cabina</h3>
+        <div class="chips" id="sc-chips" style="margin-bottom:12px"></div>
+        <div style="display:grid;gap:12px" id="sliders"></div>
+        <div class="engine" id="engine"></div>
+      </div>
+      <div class="device">
+        <div class="dtabs" role="tablist" id="dtabs"></div>
+        <div class="screen" id="screen"></div>
+      </div>
+    </div>
+    <div class="uxp" id="uxp"></div>
+  </section>
+
+  <section class="sec" id="nave">
+    <header>
+      <div class="eyebrow">Panel de la nave</div>
+      <h2>Plano, incidencias y atmósfera por zona</h2>
+      <p>Las lecturas se simulan cada segundo en cada zona. Provoca una anomalía y mira cómo se pinta la zona, aparece el ticket con su descripción, severidad y ubicación, y se crean las tareas. El ejemplo inicial ya trae el CO₂ alto en el laboratorio.</p>
+    </header>
+    <div class="toolbar" id="ship-tools"></div>
+    <div class="shipgrid">
+      <div class="panel ship scroll" id="ship-map"></div>
+      <div class="panel" id="ship-tickets"></div>
+    </div>
+    <div class="panel" id="ship-zone" style="margin-bottom:16px"></div>
+    <div class="shipgrid">
+      <div class="panel" id="ship-tasks"><div id="ship-tasks-list"></div><div id="ship-tasks-form"></div></div>
+      <div class="panel">
+        <h3 style="margin-bottom:8px">Eventos del sistema</h3>
+        <p class="muted" style="font-size:13px;margin-bottom:8px">Lo que viajaría por el bus de eventos en cada cambio.</p>
+        <div class="log" id="ship-log" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="panel" id="ship-catalog" style="margin-top:16px"></div>
+  </section>
+
+  <section class="sec" id="tierra">
+    <header>
+      <div class="eyebrow">Centro de control · opción B</div>
+      <h2>Plan de tareas desde Tierra</h2>
+      <p>Tierra publica planes versionados con tareas de salud y de nave. La nave los aplica, conserva el último si se corta el enlace y deja a la tripulación crear sus propias tareas o bloquear las de Tierra con motivo. Corta el enlace, publica un plan y mira cómo queda en cola y llega después.</p>
+    </header>
+    <div class="toolbar" id="gr-tools"></div>
+    <div class="shipgrid">
+      <div class="panel" id="gr-panel">
+        <h3 style="margin-bottom:8px">Panel del centro de control</h3>
+        <div id="gr-status" style="display:grid;gap:10px;margin-bottom:12px"></div>
+        <div id="gr-tpl"></div>
+        <div id="gr-form"></div>
+      </div>
+      <div class="panel" id="gr-ship"></div>
+    </div>
+    <div class="shipgrid">
+      <div class="panel" id="gr-rules"></div>
+      <div class="panel"><h3 style="margin-bottom:8px">Eventos del enlace</h3><div class="log" id="gr-log" aria-live="polite"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="plan">
+    <header>
+      <div class="eyebrow">Ejecución</div>
+      <h2>Plan por fases</h2>
+      <p>Las horas son de una persona. P0 es el producto mínimo defendible. Marca lo que vayas terminando: se guarda en este navegador.</p>
+    </header>
+    <div class="toolbar" id="rm-tools"></div>
+    <div class="rm" id="rm"></div>
+
+    <h3 style="margin:32px 0 10px">Riesgos</h3>
+    <div class="panel scroll" style="padding:0"><table class="rk" id="risks"></table></div>
+
+    <h3 style="margin:32px 0 10px">Supuestos y preguntas abiertas</h3>
+    <ol class="plist" id="open"></ol>
+    <div class="foot">Documento completo en <code>docs/plan-arquitectura.md</code>. Esperando tu confirmación para empezar con la Fase 0 conjunta.</div>
+  </section>
+
+  <section class="sec" id="reparto">
+    <header>
+      <div class="eyebrow">Dos desarrolladores en paralelo</div>
+      <h2>Reparto del plan</h2>
+      <p>Cada módulo tiene un solo dueño, la interfaz es de Dev B y todo el RAG queda en una sola persona. Los contratos se congelan primero y B trabaja sobre mocks hasta que A los vuelve reales. Haz clic en un bloque de la línea de tiempo para ver sus entregables.</p>
+    </header>
+    <div class="meters" id="sp-meters"></div>
+    <div class="toolbar" id="sp-tools"></div>
+    <div class="panel tl scroll" id="sp-time"></div>
+    <div class="panel" id="sp-detail" style="margin-top:14px"></div>
+    <h3 style="margin:30px 0 10px">Dueño de cada módulo</h3>
+    <div class="owngrid" id="sp-own"></div>
+    <h3 style="margin:30px 0 10px">Contratos entre los dos desarrolladores</h3>
+    <div id="sp-cross" style="display:grid;gap:14px"></div>
+    <div class="cols" style="margin-top:30px">
+      <div><h3 style="margin-bottom:10px">Cómo trabajar sin bloquearse</h3><ol class="plist" id="sp-rules"></ol></div>
+      <div><h3 style="margin-bottom:10px">El RAG en una sola mano</h3><div id="sp-rag"></div></div>
+    </div>
+    <h3 style="margin:30px 0 10px">Riesgos del reparto</h3>
+    <div class="panel scroll" style="padding:0"><table class="rk" id="sp-risks"></table></div>
+  </section>
+</div>
+
+<script>
+const D = __DATA__;
+const $ = (s, r = document) => r.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, props, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== false && v !== null && v !== undefined) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false) n.append(c.nodeType ? c : document.createTextNode(c));
+  return n;
+}
+function sv(tag, attrs, ...kids) {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined) n.setAttribute(k, v);
+  }
+  for (const c of kids.flat()) if (c) n.append(c);
+  return n;
+}
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+const MOD = Object.fromEntries(D.modules.map(m => [m.key, m]));
+const NAME = Object.assign(Object.fromEntries(D.modules.map(m => [m.key, m.name])), D.externals);
+const CHL = { REST: "REST", GQL: "GraphQL", WS: "WebSocket", EVT: "Evento" };
+const CHV = { REST: "--c-rest", GQL: "--c-gql", WS: "--c-ws", EVT: "--c-evt" };
+const evRows = D.rows.filter(r => r.ch === "EVT");
+const pubs = k => evRows.filter(r => r.from_ === k);
+const subs = k => evRows.filter(r => r.to.includes(k));
+const short = t => t.split(".").slice(1).join(".");
+const devTag = x => el("span", { class: "devtag dev-" + x, text: "Dev " + x });
+const evBadge = s => el("span", { class: "ev ev-" + s, text: s === "SIM" ? "SIMULADO" : s });
+
+/* ---------- navegación y portada ---------- */
+const SECS = [["modulos", "Módulos"], ["canales", "Canales"], ["outbox", "Outbox"], ["secuencias", "Secuencias"], ["er", "Modelo ER"], ["ux", "Experiencia"], ["nave", "Nave"], ["tierra", "Tierra"], ["plan", "Plan"], ["reparto", "Reparto"]];
+SECS.forEach(([id, t]) => $("#nav").append(el("a", { href: "#" + id, "data-id": id, text: t })));
+const obs = new IntersectionObserver(es => {
+  es.forEach(e => { if (e.isIntersecting) document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.id === e.target.id)); });
+}, { rootMargin: "-40% 0px -55% 0px" });
+SECS.forEach(([id]) => obs.observe($("#" + id)));
+
+const nTables = Object.values(D.er).reduce((a, t) => a + Object.keys(t).length, 0);
+[[D.modules.length - 1, "módulos de dominio"], [evRows.length, "eventos de dominio"], [D.rows.filter(r => r.ch === "REST").length, "rutas REST"], [D.rows.filter(r => r.ch === "GQL").length, "operaciones GraphQL"], [D.rows.filter(r => r.ch === "WS").length, "mensajes WebSocket"], [nTables, "tablas en " + Object.keys(D.er).length + " esquemas"]]
+  .forEach(([n, l]) => $("#stats").append(el("div", { class: "stat" }, el("b", { text: n }), el("span", { text: l }))));
+D.principles.forEach((p, i) => $("#principles").append(el("li", {}, el("span", { class: "n", text: String(i + 1).padStart(2, "0") }), el("div", {}, el("b", { text: p.t }), el("span", { text: p.d })))));
+D.adrs.forEach(a => $("#adrs").append(el("details", { class: "adr" }, el("summary", {}, el("span", { class: "id", text: a.id }), el("span", { text: a.t })), el("p", { text: a.d }))));
+
+/* ---------- mapa de módulos ---------- */
+const POS = { telemetry: [40, 100], monitoring: [216, 100], facility: [392, 100], knowledge: [568, 100], assistant: [744, 100], crew: [128, 380], engagement: [304, 380], groundlink: [480, 380], realtime: [656, 380] };
+const NW = 160, NH = 70;
+const chOn = { REST: true, GQL: true, WS: true, EVT: true };
+let selMod = "monitoring";
+function partners(k) {
+  const s = new Set();
+  if (k === "platform") { Object.keys(POS).forEach(x => s.add(x)); return s; }
+  pubs(k).forEach(r => r.to.forEach(t => s.add(t)));
+  subs(k).forEach(r => s.add(r.from_));
+  s.delete(k);
+  return s;
+}
+function chansOf(k) {
+  const s = new Set();
+  D.rows.filter(r => r.mod === k && r.ch !== "EVT").forEach(r => s.add(r.ch));
+  if (pubs(k).length || subs(k).length) s.add("EVT");
+  return [...s];
+}
+function drawMap() {
+  const box = $("#map"); box.textContent = "";
+  const svg = sv("svg", { viewBox: "0 0 960 650", role: "img", "aria-label": "Mapa de módulos conectados por el bus de eventos" });
+  const part = partners(selMod);
+  const dimmed = k => selMod && k !== selMod && !part.has(k);
+  const arrow = (x1, y1, x2, y2, faint, dim) => {
+    const l = sv("line", { x1, y1, x2, y2, "marker-end": "url(#ah)" });
+    return sv("g", { class: "edge" + (faint ? " faint" : "") + (dim ? " dim" : "") }, l);
+  };
+  svg.append(sv("defs", {}, sv("marker", { id: "ah", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, sv("path", { d: "M0 0 L10 5 L0 10 z", fill: "var(--c-evt)" }))));
+  // externos
+  const ext = (x, y, w, t, sub) => sv("g", { class: "ext" }, sv("rect", { x, y, width: w, height: 40, rx: 8 }), sv("text", { x: x + w / 2, y: y + 18, "text-anchor": "middle", "font-size": 13, "font-weight": 600, text: t }), sv("text", { x: x + w / 2, y: y + 32, "text-anchor": "middle", class: "t-sm", text: sub }));
+  svg.append(ext(30, 14, 180, "Sensores / Simulador", "origen SIMULATED"));
+  svg.append(ext(610, 14, 270, "Ollama · Whisper", "locales, detrás de puertos"));
+  svg.append(ext(60, 604, 380, "Cliente UI · Alexa (solo dev2)", "GraphQL, WebSocket y REST"));
+  svg.append(ext(560, 604, 340, "Centro de control (Tierra)", "enlace intermitente"));
+  const ln = (x1, y1, x2, y2, cls, dash) => sv("line", { x1, y1, x2, y2, stroke: `var(${cls})`, "stroke-width": 2, "stroke-dasharray": dash || null });
+  if (chOn.REST) svg.append(ln(120, 54, 120, 100, "--c-rest"));
+  svg.append(ln(648, 54, 648, 100, "--m9", "4 3"), ln(824, 54, 824, 100, "--m9", "4 3"));
+  svg.append(ln(250, 544, 250, 604, "--c-gql"), ln(290, 544, 290, 604, "--c-ws"), ln(210, 544, 210, 604, "--c-rest"));
+  // banda de interfaces
+  svg.append(sv("g", { class: "band" }, sv("rect", { x: 40, y: 500, width: 880, height: 44, rx: 8 }),
+    ...[["REST", 180], ["GraphQL", 480], ["WebSocket", 780]].map(([t, x], i) => sv("g", {}, sv("circle", { cx: x - 52, cy: 522, r: 5, fill: `var(${["--c-rest", "--c-gql", "--c-ws"][i]})` }), sv("text", { x: x - 40, y: 527, "font-size": 13, "font-weight": 600, text: t })))));
+  svg.append(ln(600, 450, 600, 604, "--m9", "4 3"));
+  // bus
+  const bus = sv("g", { class: "bus" + (selMod === "platform" ? " sel" : ""), tabindex: 0, role: "button", "aria-label": "Plataforma: bus y outbox", style: "cursor:pointer", onclick: () => pick("platform"), onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick("platform"); } } },
+    sv("rect", { x: 40, y: 250, width: 880, height: 50, rx: 10 }),
+    sv("text", { x: 480, y: 273, "text-anchor": "middle", "font-size": 14, "font-weight": 650, text: "Bus de eventos · Outbox + Relay" }),
+    sv("text", { x: 480, y: 290, "text-anchor": "middle", class: "t-sm", text: "PostgreSQL: outbox_event, inbox_processed, LISTEN/NOTIFY" }));
+  svg.append(bus);
+  // nodos y aristas
+  for (const [k, [x, y]] of Object.entries(POS)) {
+    const top = y < 250, cx = x + NW / 2, p = pubs(k).length, s = subs(k).length;
+    const dim = dimmed(k);
+    if (chOn.EVT) {
+      const y1 = top ? y + NH : y, y2 = top ? 250 : 300;
+      if (p) svg.append(arrow(cx - 22, y1, cx - 22, y2, false, dim));
+      else svg.append(sv("line", { x1: cx - 22, y1, x2: cx - 22, y2, class: "edge faint", stroke: "var(--c-evt)", "stroke-width": 1 }));
+      if (s) svg.append(arrow(cx + 22, y2, cx + 22, y1, false, dim));
+      else svg.append(sv("line", { x1: cx + 22, y1: y2, x2: cx + 22, y2: y1, class: "edge faint", stroke: "var(--c-evt)", "stroke-width": 1 }));
+      const ty = top ? y + NH + 24 : y - 14;
+      svg.append(sv("text", { x: cx - 32, y: ty, "text-anchor": "end", class: "t-mono", opacity: dim ? 0.35 : 1, text: p ? "▲" + p : "" }), sv("text", { x: cx + 32, y: ty, class: "t-mono", opacity: dim ? 0.35 : 1, text: s ? "▼" + s : "" }));
+    }
+    const g = sv("g", { class: "node own-" + D.owner[k] + (k === selMod ? " sel" : part.has(k) && selMod !== "platform" ? " partner" : "") + (dim ? " dim" : ""), tabindex: 0, role: "button", "aria-label": MOD[k].name, onclick: () => pick(k), onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(k); } } },
+      sv("rect", { x, y, width: NW, height: NH, rx: 10 }),
+      sv("text", { x: x + 14, y: y + 28, "font-size": 13, "font-weight": 650, text: MOD[k].name }),
+      sv("text", { x: x + 14, y: y + 46, class: "t-mono", text: k }));
+    chansOf(k).filter(c => chOn[c]).forEach((c, i) => g.append(sv("circle", { cx: x + 18 + i * 16, cy: y + NH - 10, r: 5, fill: `var(${CHV[c]})` })));
+    svg.append(g);
+  }
+  box.append(svg);
+}
+function pick(k) { selMod = k; drawMap(); drawModPanel(); }
+function drawModPanel() {
+  const m = MOD[selMod], box = $("#modpanel"); box.textContent = "";
+  box.append(el("h3", { text: m.name }), el("div", { style: "margin:4px 0 10px" }, devTag(D.owner[selMod]), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: "dueño del módulo" })), el("p", { class: "role", text: m.role }));
+  const sec = (t, nodes) => { box.append(el("h4", { text: t })); box.append(nodes); };
+  if (m.aggregates.length) sec("Agregados", el("div", { class: "chips" }, m.aggregates.map(a => el("span", { class: "tag", text: a }))));
+  sec("Puertos de entrada", el("ul", {}, m.ports_in.map(p => el("li", { text: p }))));
+  sec("Puertos de salida", el("ul", {}, m.ports_out.map(p => el("li", { text: p }))));
+  if (chOn.EVT) {
+    const p = pubs(selMod), s = subs(selMod);
+    sec("Publica (" + p.length + ")", p.length ? el("ul", {}, p.map(r => el("li", {}, el("span", { class: "pill ch-EVT", text: short(r.route) }), el("span", { class: "to", text: "→ " + r.to.map(t => MOD[t].short).join(", ") })))) : el("p", { class: "muted", text: "Ninguno. Solo consume." }));
+    sec("Se suscribe a (" + s.length + ")", s.length ? el("ul", {}, s.map(r => el("li", {}, el("span", { class: "pill ch-EVT", text: r.route }), el("span", { class: "to", text: "de " + MOD[r.from_].short })))) : el("p", { class: "muted", text: "Ninguno. Solo publica." }));
+  }
+  const api = D.rows.filter(r => r.mod === selMod && r.ch !== "EVT" && chOn[r.ch]);
+  if (api.length) sec("Expone (" + api.length + ")", el("ul", {}, api.map(r => el("li", {}, el("span", { class: "pill ch-" + r.ch, text: CHL[r.ch] }), el("span", { class: "mono", text: r.route })))));
+  const rd = D.sync.filter(r => r.a === selMod);
+  if (rd.length) sec("Lecturas síncronas", el("ul", {}, rd.map(r => el("li", {}, el("span", { class: "tag", text: r.port }), el("span", { class: "to", text: "de " + NAME[r.b] })))));
+  if (m.adapters.length) sec("Adaptadores", el("div", { class: "chips" }, m.adapters.map(a => el("span", { class: "tag", text: a }))));
+}
+const mc = $("#map-chips");
+mc.append(el("span", { class: "muted", style: "font-size:13px;margin-right:4px", text: "Mostrar:" }));
+mc.append(el("button", { class: "chip", "aria-pressed": "false", onclick: e => { const on = $("#map").classList.toggle("byown"); e.currentTarget.setAttribute("aria-pressed", String(on)); } }, el("span", { class: "dot", style: "color:var(--dev-a)" }), el("span", { class: "dot", style: "color:var(--dev-b)" }), "Dueño: Dev A / Dev B"));
+Object.keys(CHL).forEach(c => {
+  const b = el("button", { class: "chip", "aria-pressed": "true", onclick: () => { chOn[c] = !chOn[c]; b.setAttribute("aria-pressed", chOn[c]); drawMap(); drawModPanel(); } }, el("span", { class: "dot", style: `color:var(${CHV[c]})` }), CHL[c]);
+  mc.append(b);
+});
+$("#maplegend").append(...[["--c-evt", "▲ publica · ▼ se suscribe"], ["--c-rest", "REST"], ["--c-gql", "GraphQL"], ["--c-ws", "WebSocket"]].map(([c, t]) => el("span", {}, el("i", { style: `background:var(${c})` }), t)));
+drawMap(); drawModPanel();
+
+/* ---------- tabla de canales ---------- */
+const tf = { ch: "ALL", mod: "ALL", q: "" };
+const tt = $("#tb-tools");
+const chipRow = el("div", { class: "chips" });
+[["ALL", "Todos"], ...Object.entries(CHL)].forEach(([k, l]) => {
+  const b = el("button", { class: "chip", "aria-pressed": String(k === "ALL"), "data-k": k, onclick: () => { tf.ch = k; chipRow.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.k === k))); drawTbl(); } }, k !== "ALL" ? el("span", { class: "dot", style: `color:var(${CHV[k]})` }) : null, l);
+  chipRow.append(b);
+});
+const modSel = el("select", { "aria-label": "Módulo", onchange: e => { tf.mod = e.target.value; drawTbl(); } }, el("option", { value: "ALL", text: "Todos los módulos" }), ...D.modules.map(m => el("option", { value: m.key, text: m.name })));
+const qIn = el("input", { type: "search", placeholder: "Buscar ruta, evento o texto", "aria-label": "Buscar", oninput: e => { tf.q = e.target.value.toLowerCase(); drawTbl(); } });
+const cnt = el("span", { class: "count" });
+tt.append(chipRow, modSel, qIn, cnt);
+const openRow = new Set();
+function drawTbl() {
+  const t = $("#tbl"); t.textContent = "";
+  t.append(el("thead", {}, el("tr", {}, ["ID", "Canal", "Ruta o evento", "De → a", "Qué hace"].map(h => el("th", { text: h })))));
+  const body = el("tbody");
+  const rows = D.rows.filter(r => (tf.ch === "ALL" || r.ch === tf.ch) && (tf.mod === "ALL" || r.mod === tf.mod || r.from_ === tf.mod || r.to.includes(tf.mod)) && (!tf.q || (r.route + r.what + r.payload).toLowerCase().includes(tf.q)));
+  rows.forEach(r => {
+    const open = openRow.has(r.id);
+    const tr = el("tr", { class: "row" + (open ? " open" : ""), tabindex: 0, "aria-expanded": String(open), onclick: () => { open ? openRow.delete(r.id) : openRow.add(r.id); drawTbl(); }, onkeydown: e => { if (e.key === "Enter") { open ? openRow.delete(r.id) : openRow.add(r.id); drawTbl(); } } },
+      el("td", { class: "mono", text: r.id }), el("td", {}, el("span", { class: "pill ch-" + r.ch, text: CHL[r.ch] })),
+      el("td", { class: "route", text: r.route }), el("td", { text: NAME[r.from_] + " → " + r.to.map(x => NAME[x]).join(", ") }), el("td", { text: r.what }));
+    body.append(tr);
+    if (open) body.append(el("tr", { class: "det" }, el("td", { colspan: 5 }, el("dl", {}, el("dt", { text: "Payload" }), el("dd", { class: "mono", text: r.payload }), el("dt", { text: "Entrega" }), el("dd", { text: r.delivery }), el("dt", { text: "Módulo dueño" }), el("dd", { text: NAME[r.mod] })))));
+  });
+  if (!rows.length) body.append(el("tr", {}, el("td", { colspan: 5, class: "muted", text: "Ningún mensaje coincide con el filtro." })));
+  t.append(body);
+  cnt.textContent = rows.length + " de " + D.rows.length;
+}
+drawTbl();
+
+/* ---------- outbox ---------- */
+const OB = { rows: [], inbox: [], log: [], next: 1, timer: null, last: null };
+const obType = $("#ob-type"), obFail = $("#ob-fail");
+evRows.forEach(r => obType.append(el("option", { value: r.route, text: r.route })));
+obType.value = "monitoring.alert_raised";
+obFail.append(el("option", { value: "", text: "Ninguno" }));
+D.modules.filter(m => m.key !== "platform").forEach(m => obFail.append(el("option", { value: m.key, text: m.name })));
+function lg(t, c) { OB.log.unshift({ t, c }); OB.log = OB.log.slice(0, 40); }
+function obDraw() {
+  const t = $("#ob-table"); t.textContent = "";
+  t.append(el("tr", {}, ["id", "type", "status", "intentos", "last_error"].map(h => el("th", { text: h }))));
+  OB.rows.slice(-8).reverse().forEach(r => t.append(el("tr", {}, el("td", { text: r.id }), el("td", { text: r.type }), el("td", {}, el("span", { class: "st st-" + r.status, text: r.status })), el("td", { text: r.attempts + (r.status === "pending" && r.attempts ? " · próx. " + Math.min(60, 2 ** (r.attempts - 1)) + " s" : "") }), el("td", { text: r.err || "" }))));
+  if (!OB.rows.length) t.append(el("tr", {}, el("td", { colspan: 5, class: "muted", text: "Vacío. Emite un evento." })));
+  const ib = $("#ob-inbox"); ib.textContent = "";
+  ib.append(el("tr", {}, ["consumer", "event"].map(h => el("th", { text: h }))));
+  OB.inbox.slice(-8).reverse().forEach(i => ib.append(el("tr", {}, el("td", { text: i.c }), el("td", { text: "#" + i.id }))));
+  if (!OB.inbox.length) ib.append(el("tr", {}, el("td", { colspan: 2, class: "muted", text: "Vacío." })));
+  const lgb = $("#ob-log"); lgb.textContent = "";
+  OB.log.forEach(l => lgb.append(el("div", { class: l.c || "", text: l.t })));
+  if (!OB.log.length) lgb.append(el("div", { class: "muted", text: "Sin actividad." }));
+}
+function obEmit() {
+  const row = evRows.find(r => r.route === obType.value);
+  const e = { id: OB.next++, type: row.route, status: "pending", attempts: 0, err: "", to: row.to.filter(x => x !== "realtime" || true) };
+  OB.rows.push(e);
+  lg(`BEGIN · cambio de estado en ${row.from_} · INSERT outbox #${e.id} ${e.type} · COMMIT · NOTIFY`, "");
+  obDraw();
+}
+function obCycle() {
+  const e = OB.rows.find(r => r.status === "pending");
+  if (!e) { lg("Relay: nada pendiente.", "l-skip"); obDraw(); return; }
+  lg(`Relay: SELECT … FOR UPDATE SKIP LOCKED → #${e.id} ${e.type}`, "");
+  let fail = false;
+  const failing = obFail.value;
+  for (const c of e.to) {
+    if (OB.inbox.some(i => i.c === c && i.id === e.id)) { lg(`  ${c}: ya está en inbox, se omite`, "l-skip"); continue; }
+    if (c === failing) { lg(`  ${c}: excepción en el handler`, "l-bad"); e.err = `${c}: handler lanzó excepción`; fail = true; continue; }
+    OB.inbox.push({ c, id: e.id });
+    lg(`  ${c}: handler ejecutado, inbox registrado`, "l-ok");
+  }
+  if (!fail) { e.status = "done"; e.err = ""; OB.last = e; lg(`  #${e.id} → done`, "l-ok"); }
+  else {
+    e.attempts++;
+    if (e.attempts >= 8) { e.status = "dead"; lg(`  #${e.id} → dead tras 8 intentos`, "l-bad"); }
+    else lg(`  #${e.id} intento ${e.attempts}, próximo en ${Math.min(60, 2 ** (e.attempts - 1))} s`, "l-skip");
+  }
+  obDraw();
+}
+$("#ob-emit").onclick = obEmit;
+$("#ob-cycle").onclick = obCycle;
+$("#ob-dup").onclick = () => {
+  const e = OB.last; if (!e) { lg("Aún no hay un evento terminado para duplicar.", "l-skip"); obDraw(); return; }
+  lg(`Entrega duplicada de #${e.id} (el relay se reinició antes de marcar done)`, "l-skip");
+  e.to.forEach(c => lg(`  ${c}: ${OB.inbox.some(i => i.c === c && i.id === e.id) ? "ya está en inbox, se omite" : "se ejecuta"}`, "l-skip"));
+  obDraw();
+};
+$("#ob-replay").onclick = () => { const d = OB.rows.filter(r => r.status === "dead"); d.forEach(r => { r.status = "pending"; r.attempts = 0; r.err = ""; }); lg(d.length ? `Reencolados ${d.length} eventos muertos` : "No hay eventos muertos.", d.length ? "l-ok" : "l-skip"); obDraw(); };
+$("#ob-reset").onclick = () => { OB.rows = []; OB.inbox = []; OB.log = []; OB.next = 1; OB.last = null; stopAuto(); obDraw(); };
+function stopAuto() { clearInterval(OB.timer); OB.timer = null; $("#ob-auto").setAttribute("aria-pressed", "false"); $("#ob-auto").textContent = "Auto"; }
+$("#ob-auto").onclick = () => { if (OB.timer) return stopAuto(); $("#ob-auto").setAttribute("aria-pressed", "true"); $("#ob-auto").textContent = "Detener"; OB.timer = setInterval(obCycle, 700); };
+lg("Ejemplo inicial: se emite monitoring.alert_raised y el relay lo entrega.", "");
+obEmit(); obCycle();
+
+/* ---------- secuencias ---------- */
+const SQ = { i: 0, cur: -1, timer: null };
+const tabs = $("#seq-tabs");
+D.seqs.forEach((s, i) => tabs.append(el("button", { class: "chip", role: "tab", "aria-pressed": String(i === 0), onclick: () => { SQ.i = i; SQ.cur = -1; stopPlay(); tabs.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-pressed", String(j === i))); drawSeq(); } }, s.title)));
+const PCOL = { sensors: "--m9", rest: "--c-rest", gql: "--c-gql", tel: "--m2", bus: "--c-evt", mon: "--m3", knw: "--m4", eng: "--m6", rt: "--c-ws", ui: "--accent", ast: "--m5", stt: "--m9", llm: "--m9", upl: "--m7", crw: "--m1", gnd: "--m9", adm: "--m9", hnd: "--m6", db: "--m9", fac: "--m8" };
+const pcol = k => `var(${PCOL[k] || "--m9"})`;
+(function () {
+  const leg = el("div", { class: "sqleg" });
+  [["", "Llamada"], ["7 3", "Mensaje asíncrono"], ["2 3", "Respuesta"]].forEach(([dash, t]) => {
+    const s = sv("svg", { width: 34, height: 10, viewBox: "0 0 34 10" }, sv("line", { x1: 0, y1: 5, x2: 28, y2: 5, stroke: "var(--ink)", "stroke-width": 2, "stroke-dasharray": dash || null }), sv("path", { d: "M34 5 l-7 -4 v8 z", fill: "var(--ink)" }));
+    leg.append(el("span", {}, s, t));
+  });
+  leg.append(el("span", { class: "muted", text: "El color de cada flecha es el del participante que la envía." }));
+  $("#seq-sub").after(leg);
+})();
+function drawSeq() {
+  const s = D.seqs[SQ.i]; $("#seq-sub").textContent = s.subtitle;
+  const n = s.cast.length, lane = Math.max(122, Math.floor(1000 / n)), W = lane * n, rowH = 42, top = 34, H = top + s.steps.length * rowH + 16;
+  const X = k => lane * s.cast.indexOf(k) + lane / 2;
+  const hd = sv("svg", { width: W, height: 52, viewBox: `0 0 ${W} 52` });
+  s.cast.forEach(k => { const x = X(k); hd.append(sv("rect", { class: "pbox", x: x - 54, y: 9, width: 108, height: 32, rx: 6, style: `fill:color-mix(in srgb, ${pcol(k)} 22%, var(--surface));stroke:${pcol(k)}` }), sv("text", { x, y: 29, "text-anchor": "middle", "font-weight": 650, text: D.participants[k] })); });
+  const bd = sv("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, class: "seq" });
+  s.cast.forEach(k => bd.append(sv("line", { class: "life", x1: X(k), y1: 0, x2: X(k), y2: H, stroke: pcol(k) })));
+  s.steps.forEach((st, i) => {
+    const y = top + i * rowH, x1 = X(st.a), x2 = X(st.b), col = pcol(st.a);
+    const g = sv("g", { class: `msg ${st.kind}` + (i === SQ.cur ? " cur" : i > SQ.cur ? " future" : ""), "data-i": i, onclick: () => { SQ.cur = i; stopPlay(); drawSeq(); } });
+    g.append(sv("rect", { class: "band", x: 0, y: y - 20, width: W, height: rowH - 2, rx: 4 }));
+    const label = st.label, half = label.length * 3.4;
+    if (st.kind === "self") {
+      const dir = x1 > W / 2 ? -1 : 1, xs = x1 + dir * 9, xe = x1 + dir * 36;
+      g.append(sv("path", { class: "ln", stroke: col, d: `M${xs} ${y - 8} H${xe} V${y + 8} H${xs + dir * 3}` }), sv("path", { fill: col, d: `M${xs} ${y + 8} l${dir * 7} -4 v8 z` }));
+      g.append(sv("text", { class: "lbl", x: xe + dir * 6, y: y + 4, "text-anchor": dir > 0 ? "start" : "end", text: label }));
+    } else {
+      const d = x2 > x1 ? 1 : -1;
+      g.append(sv("line", { x1: x1 + d * 9, y1: y, x2: x2 - d * 7, y2: y, stroke: col }), sv("path", { fill: col, d: `M${x2} ${y} l${-d * 8} -4 v8 z` }));
+      const mid = (x1 + x2) / 2; let anc = "middle", tx = mid;
+      if (mid - half < 6) { anc = "start"; tx = 6; } else if (mid + half > W - 6) { anc = "end"; tx = W - 6; }
+      g.append(sv("text", { class: "lbl", x: tx, y: y - 8, "text-anchor": anc, text: label }));
+    }
+    g.append(sv("circle", { cx: x1, cy: y, r: 9, fill: col }), sv("text", { class: "num", x: x1, y: y + 3.5, "text-anchor": "middle", text: i + 1 }));
+    bd.append(g);
+  });
+  const box = $("#seqbox"); const keep = box.scrollTop;
+  box.textContent = "";
+  const inner = el("div", { class: "seqin", style: `width:${W}px` }, el("div", { class: "seqhead" }, hd), bd);
+  box.append(inner); box.scrollTop = keep;
+  if (SQ.cur >= 0) { const y = top + SQ.cur * rowH + 52; if (y < box.scrollTop + 70 || y > box.scrollTop + box.clientHeight - 20) box.scrollTop = Math.max(0, y - box.clientHeight / 2); }
+  const cap = $("#sq-cap"); cap.textContent = "";
+  if (SQ.cur < 0) cap.append(el("b", { text: "Listo para empezar" }), el("span", { class: "muted", text: `${s.steps.length} pasos. Pulsa Siguiente o Reproducir.` }));
+  else { const st = s.steps[SQ.cur]; cap.append(el("b", { text: `Paso ${SQ.cur + 1} de ${s.steps.length}: ${D.participants[st.a]} → ${D.participants[st.b]}` }), el("span", { class: "mono", text: st.label }), el("span", { text: st.detail })); }
+  $("#sq-count").textContent = Math.max(0, SQ.cur + 1) + " / " + s.steps.length;
+  $("#sq-prev").disabled = SQ.cur < 0; $("#sq-next").disabled = SQ.cur >= s.steps.length - 1;
+}
+function stopPlay() { clearInterval(SQ.timer); SQ.timer = null; const b = $("#sq-play"); b.setAttribute("aria-pressed", "false"); b.textContent = "Reproducir"; }
+$("#sq-next").onclick = () => { SQ.cur = Math.min(D.seqs[SQ.i].steps.length - 1, SQ.cur + 1); drawSeq(); };
+$("#sq-prev").onclick = () => { SQ.cur = Math.max(-1, SQ.cur - 1); drawSeq(); };
+$("#sq-reset").onclick = () => { SQ.cur = -1; stopPlay(); drawSeq(); };
+$("#sq-play").onclick = () => {
+  if (SQ.timer) return stopPlay();
+  const b = $("#sq-play"); b.setAttribute("aria-pressed", "true"); b.textContent = "Pausar";
+  if (SQ.cur >= D.seqs[SQ.i].steps.length - 1) SQ.cur = -1;
+  SQ.timer = setInterval(() => { if (SQ.cur >= D.seqs[SQ.i].steps.length - 1) return stopPlay(); SQ.cur++; drawSeq(); }, 1600);
+  SQ.cur = Math.max(0, SQ.cur); drawSeq();
+};
+SQ.cur = 5; drawSeq();
+
+/* ---------- ER ---------- */
+const MC = { crew: "--m1", facility: "--m8", telemetry: "--m2", monitoring: "--m3", knowledge: "--m4", assistant: "--m5", engagement: "--m6", groundlink: "--m7", platform: "--m9" };
+const erModsOrder = ["crew", "facility", "telemetry", "monitoring", "knowledge", "assistant", "engagement", "groundlink", "platform"];
+let erSel = null, erFilter = "ALL", erBlocks = [];
+const colsOf = t => D.er[D.tblmod[t]][t];
+function relOf(t) {
+  const parents = colsOf(t).filter(c => c.r).map(c => ({ t: c.r, col: c.n, hard: D.tblmod[c.r] === D.tblmod[t] }));
+  const children = [];
+  for (const [m, tabs] of Object.entries(D.er)) for (const [tn, cols] of Object.entries(tabs)) cols.filter(c => c.r === t).forEach(c => children.push({ t: tn, col: c.n, hard: m === D.tblmod[t] }));
+  return { parents, children };
+}
+const erChips = $("#er-chips");
+["ALL", ...erModsOrder].forEach(k => erChips.append(el("button", { class: "chip", "aria-pressed": String(k === "ALL"), "data-k": k, onclick: () => { erFilter = k; erChips.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); drawER(); } }, k === "ALL" ? "Todos" : el("span", { class: "dot", style: `color:var(${MC[k]})` }), k === "ALL" ? "" : NAME[k])));
+function drawER() {
+  const root = $("#er-grid"); root.textContent = ""; erBlocks = [];
+  const rel = erSel ? relOf(erSel) : null;
+  const relSet = rel ? new Set([...rel.parents.map(p => p.t), ...rel.children.map(c => c.t)]) : new Set();
+  const info = $("#er-info"); info.textContent = "";
+  if (!erSel) info.append(el("span", { class: "muted", text: "Las líneas unen cada clave foránea con su tabla padre: continuas dentro del módulo (FK), punteadas hacia otro módulo (referencia blanda). Selecciona una tabla para resaltar las suyas." }));
+  else {
+    info.append(el("b", { class: "mono", text: erSel }), el("span", { class: "muted", text: " · esquema " + D.tblmod[erSel] }), el("br"));
+    info.append("Depende de: " + (rel.parents.length ? rel.parents.map(p => `${p.t}.${p.col} (${p.hard ? "FK" : "ref blanda"})`).join(", ") : "nada") + ". Referenciada por: " + (rel.children.length ? rel.children.map(c => `${c.t}.${c.col} (${c.hard ? "FK" : "ref blanda"})`).join(", ") : "nadie") + ".");
+  }
+  const cls = t => "tcard" + (t === erSel ? " sel" : relSet.has(t) ? " rel" : erSel ? " dim" : "");
+  erModsOrder.filter(m => erFilter === "ALL" || m === erFilter).forEach(m => {
+    const tabs = D.er[m], rels = [];
+    Object.entries(tabs).forEach(([t, cols]) => cols.forEach(c => { if (c.r) rels.push({ child: t, col: c.n, parent: c.r, hard: D.tblmod[c.r] === m, nullable: c.f.includes("N") }); }));
+    const stubs = [...new Set(rels.filter(r => !r.hard).map(r => r.parent))];
+    root.append(el("div", { class: "mod-h" }, el("i", { style: `background:var(${MC[m]})` }), `${NAME[m]} `, el("span", { class: "tag", text: "esquema " + m }), el("span", { class: "tag", text: rels.length + " relaciones" })));
+    const wrap = el("div", { class: "erwrap", style: `--mc:var(${MC[m]})` }), grid = el("div", { class: "ergrid" }), svg = sv("svg", { class: "erlines" }), cards = {};
+    Object.entries(tabs).forEach(([t, cols]) => {
+      const card = el("button", { class: cls(t), style: `--mc:var(${MC[m]})`, onclick: () => { erSel = erSel === t ? null : t; drawER(); }, "aria-pressed": String(t === erSel) },
+        el("div", { class: "th" }, el("span", { text: t }), t === "reading" ? el("span", { class: "k", text: "PARTICIONADA" }) : null),
+        el("ul", {}, cols.map(c => el("li", { "data-col": c.n, class: c.r && D.tblmod[c.r] === m ? "fk" : "" },
+          el("span", { text: c.n + (c.f.includes("N") ? "?" : "") }),
+          c.f.includes("PK") ? el("span", { class: "k", text: "PK" }) : null,
+          c.f.includes("UK") ? el("span", { class: "k", text: "UK" }) : null,
+          c.r ? el("span", { class: "k", text: (D.tblmod[c.r] === m ? "FK→" : "ref→") + c.r }) : null,
+          el("span", { class: "ty", text: c.t })))));
+      cards[t] = card; grid.append(card);
+    });
+    stubs.forEach(t => {
+      const pk = colsOf(t).filter(c => c.f.includes("PK")).map(c => c.n).join(", ");
+      const card = el("button", { class: cls(t) + " stub", onclick: () => { erSel = erSel === t ? null : t; drawER(); }, "aria-label": "Tabla de otro módulo: " + t },
+        el("div", { class: "th" }, el("span", { text: t }), el("span", { class: "k", text: "otro módulo" })),
+        el("ul", {}, el("li", {}, el("span", { text: pk }), el("span", { class: "k", text: "PK" }), el("span", { class: "ty", text: "esquema " + D.tblmod[t] }))));
+      cards[t] = card; grid.append(card);
+    });
+    wrap.append(svg, grid); root.append(wrap);
+    root.append(el("ul", { class: "rellist" }, rels.map(r => el("li", {}, el("b", { text: `${r.child}.${r.col}` }), ` → ${r.parent} · ${r.hard ? "FK" : "ref blanda"} · ${r.nullable ? "0..1" : "1"} a N`))));
+    erBlocks.push({ m, wrap, svg, cards, rels });
+  });
+  requestAnimationFrame(drawLines);
+}
+function drawLines() {
+  erBlocks.forEach(b => {
+    const wr = b.wrap.getBoundingClientRect(), svg = b.svg;
+    svg.textContent = "";
+    svg.setAttribute("width", wr.width); svg.setAttribute("height", wr.height);
+    svg.append(sv("defs", {}, sv("marker", { id: "erarr-" + b.m, viewBox: "0 0 10 10", refX: "9", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto" }, sv("path", { d: "M0 0 L10 5 L0 10 z", fill: "var(--ink)" }))));
+    const lab = (x, y, t, a) => sv("text", { x, y, "text-anchor": a, text: t });
+    b.rels.forEach((r, idx) => {
+      const cEl = b.cards[r.child], pEl = b.cards[r.parent];
+      if (!cEl || !pEl) return;
+      const row = cEl.querySelector(`li[data-col="${r.col}"]`) || cEl.querySelector(".th");
+      const rc = row.getBoundingClientRect(), cc = cEl.getBoundingClientRect(), pc = pEl.getBoundingClientRect(), ph = pEl.querySelector(".th").getBoundingClientRect();
+      const y1 = rc.top + rc.height / 2 - wr.top, y2 = ph.top + ph.height / 2 - wr.top;
+      let d, x1, x2, l1, l2;
+      if (pc.left >= cc.right + 8) { x1 = cc.right - wr.left; x2 = pc.left - wr.left; const xm = (x1 + x2) / 2; d = `M${x1} ${y1} C${xm} ${y1} ${xm} ${y2} ${x2} ${y2}`; l1 = [x1 + 6, "start"]; l2 = [x2 - 12, "end"]; }
+      else if (pc.right <= cc.left - 8) { x1 = cc.left - wr.left; x2 = pc.right - wr.left; const xm = (x1 + x2) / 2; d = `M${x1} ${y1} C${xm} ${y1} ${xm} ${y2} ${x2} ${y2}`; l1 = [x1 - 6, "end"]; l2 = [x2 + 12, "start"]; }
+      else { x1 = cc.right - wr.left; x2 = pc.right - wr.left; const xm = Math.max(x1, x2) + 20 + (idx % 3) * 6; d = `M${x1} ${y1} H${xm} V${y2} H${x2}`; l1 = [x1 + 6, "start"]; l2 = [x2 + 12, "start"]; }
+      const on = erSel && (r.child === erSel || r.parent === erSel), fade = erSel && !on;
+      const path = sv("path", { class: "rl " + (r.hard ? "hard" : "soft") + (on ? " hl" : "") + (fade ? " fade" : ""), d, "marker-end": `url(#erarr-${b.m})` }, sv("title", { text: `${r.child}.${r.col} → ${r.parent} (${r.hard ? "FK" : "ref blanda"})` }));
+      svg.append(path, sv("circle", { cx: x1, cy: y1, r: 3, fill: r.hard ? `var(${MC[b.m]})` : "var(--muted)", opacity: fade ? 0.15 : 1 }));
+      if (!fade) svg.append(lab(l1[0], y1 - 5, "N", l1[1]), lab(l2[0], y2 - 5, r.nullable ? "0..1" : "1", l2[1]));
+    });
+  });
+}
+new ResizeObserver(() => requestAnimationFrame(drawLines)).observe($("#er-grid"));
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => drawLines());
+drawER();
+
+/* ---------- UX: recorrido y prototipo ---------- */
+const SC = {
+  normal: { l: "Normal", kpa: 101.3, o2: 21, co2: 0.6, rate: 0, head: false },
+  co2pre: { l: "CO₂ sube", kpa: 101.3, o2: 21, co2: 2.7, rate: 0, head: false },
+  co2alto: { l: "CO₂ alto con dolor de cabeza", kpa: 101.3, o2: 21, co2: 3.4, rate: 0, head: true },
+  hipo34: { l: "Hipoxia leve a 56.5 kPa", kpa: 56.5, o2: 34, co2: 0.8, rate: 0, head: false },
+  hipo21: { l: "21 % de O₂ a 70 kPa", kpa: 70, o2: 21, co2: 0.8, rate: 0, head: false },
+  despres: { l: "Despresurización rápida", kpa: 90, o2: 21, co2: 0.8, rate: 28, head: false },
+  cuerpo: { l: "Dolor de cabeza, aire normal", kpa: 101.3, o2: 21, co2: 0.6, rate: 0, head: true },
+};
+const UX = { ...SC.normal, link: true, tab: "panel", ack: {}, done: {}, eff: {}, consent: { alertas: true, vitales: false, ambiente: true, sueno: false, conversaciones: false, tareas: true }, chat: [], scenario: "normal", bodySel: "lungs", tf: "ALL", block: {} };
+const SEVN = ["Normal", "Atención", "Alerta", "Crítico"], SEVI = ["●", "▲", "■", "■"];
+function evalState(s) {
+  const pmm = s.kpa * 7.50062, pio2 = (pmm - 47) * s.o2 / 100;
+  const out = [];
+  let sev = 0, band = "normoxia (145 a 155 mmHg)", ev = "VERIFICADO";
+  if (pio2 > 356) { sev = 2; band = "sobre el límite indefinido de 356 mmHg"; }
+  else if (pio2 <= 122) { sev = 3; band = "bajo el límite absoluto de 122 mmHg"; }
+  else if (pio2 < 127) { sev = 2; band = "bajo 127 mmHg"; }
+  else if (pio2 < 145) { sev = 1; band = "bajo la normoxia (145 a 155)"; ev = "DEMO"; }
+  else if (pio2 > 155) { sev = 1; band = "sobre la normoxia, dentro del límite"; ev = "DEMO"; }
+  out.push({ key: "env-pio2", name: "PIO₂", val: pio2.toFixed(1), unit: "mmHg", sev, band, req: "V2 6003 · Tabla 6.2-1", doc: "NASA-STD-3001 Vol. 2 Rev F", ev, formula: `(${pmm.toFixed(1)} − 47) × ${(s.o2 / 100).toFixed(2)}`, kind: "o2", acts: ["Revisar suministro de O₂ y presión de cabina", "Reducir el esfuerzo físico", "Avisar al oficial médico (CMO)"] });
+  const pOut = s.kpa < 34.5 || s.kpa > 103;
+  out.push({ key: "env-ptotal", name: "Presión total", val: s.kpa.toFixed(1), unit: "kPa", sev: pOut ? 2 : 0, band: pOut ? "fuera de 34.5 a 103 kPa" : "dentro de 34.5 a 103 kPa", req: "V2 6006", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: "VERIFICADO", kind: "p", acts: ["Verificar sensores y estanqueidad", "Avisar al oficial médico (CMO)"] });
+  let cs = 0, cb = "bajo 2.5 mmHg", ce = "VERIFICADO";
+  if (s.co2 > 3) { cs = 2; cb = "sobre 3 mmHg (promedio de 1 h)"; } else if (s.co2 >= 2.5) { cs = 1; cb = "pre-alerta desde 2.5 mmHg"; ce = "DEMO"; }
+  out.push({ key: "env-co2-1h", name: "ppCO₂ (promedio 1 h)", val: s.co2.toFixed(1), unit: "mmHg", sev: cs, band: cb, req: "V2 6004", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: ce, kind: "co2", acts: ["Revisar ventilación y filtros de CO₂", "Medir CO₂ en zonas locales: los sensores fijos no ven bolsas", "Reducir la actividad física"] });
+  const rs = s.rate > 13.5 ? 2 : 0;
+  out.push({ key: "env-dpdt", name: "Velocidad de cambio de presión", val: s.rate.toFixed(1), unit: "psi/min", sev: rs, band: rs ? "sobre 13.5 psi/min" : "dentro de 13.5 psi/min", req: "V2 6007", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: "VERIFICADO", kind: "r", acts: ["Verificar integridad de escotillas y sellos", "Prepararse para un procedimiento de despresurización"] });
+  const amb = Math.max(...out.map(o => o.sev));
+  let cause = null;
+  if (amb > 0 && s.head) cause = ["AMBIENTE", "Hay un parámetro de cabina fuera de rango y el astronauta reporta síntomas. El aire es la causa más probable."];
+  else if (amb > 0) cause = ["AMBIENTE", "Un parámetro de cabina está fuera de rango. Aún no hay síntomas reportados."];
+  else if (s.head) cause = ["CUERPO", "La cabina está dentro de límites. NASA advierte que el desplazamiento de fluidos en microgravedad también causa estos síntomas."];
+  const low = Math.max(0, 145 - pio2);
+  const body = { hr: Math.min(140, Math.round(62 + (s.head ? 7 : 0) + low * 0.25)), spo2: Math.max(70, Math.round(98 - low * 0.2)) };
+  return { pio2, rules: out, global: Math.max(...out.map(o => o.sev)), alerts: out.filter(o => o.sev > 0).sort((a, b) => b.sev - a.sev), cause, body };
+}
+const sevColor = s => `var(${["--ok", "--warn", "--bad", "--crit"][s]})`;
+const sevEl = s => el("span", { class: "sev sev-" + s }, SEVI[s] + " " + SEVN[s]);
+function gaugeBg(stops, lo, hi) {
+  const c = ["--ok", "--warn", "--bad"]; const p = x => ((x - lo) / (hi - lo) * 100).toFixed(1) + "%";
+  return "linear-gradient(90deg," + stops.map(([a, b, k]) => `var(${c[k]}) ${p(a)} ${p(b)}`).join(",") + ")";
+}
+function gauge(val, lo, hi, stops) {
+  const pct = Math.max(0, Math.min(100, (val - lo) / (hi - lo) * 100));
+  return el("div", { class: "gauge", style: `background:${gaugeBg(stops, lo, hi)}` }, el("i", { style: `left:${pct}%` }));
+}
+const jc = $("#j-chips");
+const JSET = { rutina: ["normal", "panel", true], amarilla: ["co2pre", "panel", true], roja: ["hipo21", "alerta", true], nave: ["normal", "nave", true], plan: ["normal", "misiones", true], voz: ["co2alto", "asistente", true], enlace: ["normal", "enlace", false] };
+let jSel = "rutina";
+D.journey.forEach(j => jc.append(el("button", { class: "chip", "aria-pressed": String(j.key === jSel), "data-k": j.key, onclick: () => { jSel = j.key; const [sc, tab, link] = JSET[j.key]; Object.assign(UX, SC[sc], { tab, link, scenario: sc }); drawJourney(); drawProto(); } }, j.title)));
+function drawJourney() {
+  jc.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === jSel)));
+  const j = D.journey.find(x => x.key === jSel), box = $("#j-info"); box.textContent = "";
+  [["Qué necesita", j.goal], ["Qué ve", j.sees], ["Qué ocurre en el sistema", j.system], ["Cómo sabemos que funciona", j.metric]].forEach(([h, t]) => box.append(el("div", {}, el("h4", { text: h }), el("p", { text: t }))));
+}
+const scc = $("#sc-chips");
+Object.entries(SC).forEach(([k, v]) => scc.append(el("button", { class: "chip", "data-k": k, "aria-pressed": String(k === UX.scenario), onclick: () => { Object.assign(UX, v, { scenario: k }); drawProto(); } }, v.l)));
+const SLD = [["kpa", "Presión total", "kPa", 30, 110, 0.1], ["o2", "Oxígeno (fracción)", "%", 15, 100, 0.5], ["co2", "ppCO₂ promedio de 1 h", "mmHg", 0, 6, 0.1], ["rate", "Velocidad de cambio de presión", "psi/min", 0, 30, 0.5]];
+const slBox = $("#sliders");
+SLD.forEach(([k, l, u, mn, mx, st]) => {
+  const out = el("b"); const inp = el("input", { type: "range", id: "sl-" + k, min: mn, max: mx, step: st, value: UX[k], "aria-label": l, oninput: e => { UX[k] = parseFloat(e.target.value); UX.scenario = ""; drawProto(true); } });
+  slBox.append(el("label", { class: "sl", for: "sl-" + k }, el("span", { class: "v" }, el("span", { text: l }), out), inp)); inp._out = out; inp._u = u;
+});
+slBox.append(el("label", { class: "chk", for: "hd" }, el("input", { type: "checkbox", id: "hd", onchange: e => { UX.head = e.target.checked; UX.scenario = ""; drawProto(true); } }), "Dolor de cabeza reportado"));
+slBox.append(el("label", { class: "chk", for: "lk" }, el("input", { type: "checkbox", id: "lk", checked: true, onchange: e => setLink(e.target.checked) }), "Enlace con Tierra activo"));
+const DT = [["panel", "Panel de cabina"], ["alerta", "Detalle de alerta"], ["asistente", "Asistente"], ["misiones", "Tareas del día"], ["nave", "Nave"], ["enlace", "Enlace y privacidad"]];
+const dtabs = $("#dtabs");
+DT.forEach(([k, l]) => dtabs.append(el("button", { role: "tab", "data-k": k, onclick: () => { UX.tab = k; drawProto(); } }, l)));
+
+function drawProto(keepSliders) {
+  const S = evalState(UX);
+  scc.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === UX.scenario)));
+  slBox.querySelectorAll("input[type=range]").forEach(i => { if (!keepSliders) i.value = UX[i.id.slice(3)]; i._out.textContent = parseFloat(i.value).toFixed(i.step < 1 ? 1 : 0) + " " + i._u; });
+  $("#hd").checked = UX.head; $("#lk").checked = UX.link;
+  dtabs.querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.k === UX.tab)));
+  const eng = $("#engine"); eng.textContent = "";
+  eng.append(el("h3", { text: "Motor de reglas" }));
+  S.rules.forEach(r => eng.append(el("div", { class: "rl" }, el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between" }, el("span", {}, `${r.name}: `, el("b", { class: "mono", text: r.val + " " + r.unit })), sevEl(r.sev)), el("code", { text: (r.formula ? r.formula + " · " : "") + r.band + " · " + r.req }), el("span", {}, evBadge(r.ev)))));
+  eng.append(el("p", { class: "muted", style: "font-size:12px", text: "Límites de la norma: VERIFICADO. Bandas amarillas y vitales del cuerpo: propuesta del equipo o demostración." }));
+  const sc = $("#screen"); sc.textContent = "";
+  ({ panel: pPanel, alerta: pAlert, asistente: pChat, misiones: pTasks, nave: pShip, enlace: pLink })[UX.tab](sc, S);
+}
+const banner = () => el("div", { class: "banner", text: "Datos simulados. Prototipo de apoyo a la decisión, no es un dispositivo médico." });
+function linkChip() { return el("span", { class: "tag", text: UX.link ? "Enlace con Tierra: activo" : "Sin enlace · modo autónomo" }); }
+function bodyMarks(S) {
+  const hrSev = S.body.hr - 62 >= 40 ? 2 : S.body.hr - 62 >= 25 ? 1 : 0;
+  const spSev = S.body.spo2 < 90 ? 2 : S.body.spo2 < 95 ? 1 : 0;
+  return [
+    { k: "head", n: "Cabeza · ánimo y cefalea", v: UX.head ? "Dolor de cabeza reportado" : "Sin síntomas reportados", sev: UX.head ? 1 : 0, x: 80, y: 34, haz: "Aislamiento y confinamiento. Entorno cerrado hostil: CO₂ e hipoxia dan cefalea.", ev: "DEMO" },
+    { k: "lungs", n: "Pulmones · SpO₂", v: S.body.spo2 + " %", sev: spSev, x: 63, y: 98, haz: "Entorno cerrado hostil: la presión parcial de O₂ de la cabina.", ev: "DEMO" },
+    { k: "heart", n: "Corazón · frecuencia", v: S.body.hr + " lpm (base 62)", sev: hrSev, x: 97, y: 112, haz: "Campos gravitacionales: la microgravedad redistribuye los fluidos. Eventos cardiovasculares.", ev: "DEMO" },
+    { k: "blood", n: "Sangre y órganos · radiación", v: "0.42 mSv/día", sev: 0, x: 80, y: 150, haz: "Radiación espacial. Límite GCR en espacio libre: menos de 1.3 mSv/día (V1 4033, VERIFICADO).", ev: "SIM" },
+    { k: "temp", n: "Temperatura corporal", v: "36.6 °C", sev: 0, x: 80, y: 184, haz: "Cambios inmunes y respuesta a infecciones. Sin umbral citable en los documentos leídos.", ev: "DEMO" },
+    { k: "bones", n: "Huesos y músculo · línea base", v: "97 % de la previa", sev: 0, x: 66, y: 262, haz: "Campos gravitacionales: pérdida de densidad ósea. Criterio de la norma: 95 % o más en cadera y columna (V1 4027, VERIFICADO).", ev: "DEMO" },
+  ];
+}
+function bodyCard(S) {
+  const M = bodyMarks(S), sel = M.find(m => m.k === UX.bodySel) || M[1];
+  const tint = (cx, cy, rx, ry, sev) => sv("ellipse", { cx, cy, rx, ry, fill: sevColor(sev), opacity: sev ? 0.4 : 0.16 });
+  const svg = sv("svg", { viewBox: "0 0 160 340", role: "img", "aria-label": "Cuerpo humano con seis indicadores de salud" },
+    sv("circle", { class: "sil", cx: 80, cy: 34, r: 22 }), sv("rect", { class: "sil", x: 72, y: 54, width: 16, height: 14, rx: 4 }),
+    sv("path", { class: "sil", d: "M46 70 Q80 60 114 70 L108 190 Q80 200 52 190 Z" }),
+    sv("path", { class: "sil", d: "M46 72 Q22 90 18 160 L32 164 Q38 108 54 90 Z" }), sv("path", { class: "sil", d: "M114 72 Q138 90 142 160 L128 164 Q122 108 106 90 Z" }),
+    sv("path", { class: "sil", d: "M54 188 L52 322 L74 322 L80 196 Z" }), sv("path", { class: "sil", d: "M106 188 L108 322 L86 322 L80 196 Z" }),
+    tint(66, 98, 13, 21, M[1].sev), tint(94, 98, 13, 21, M[1].sev), tint(97, 114, 9, 9, M[2].sev), tint(66, 270, 9, 46, M[5].sev), tint(94, 270, 9, 46, M[5].sev),
+    ...M.map((m, i) => sv("g", { class: "mk" + (m.k === sel.k ? " sel" : ""), tabindex: 0, role: "button", "aria-label": `${m.n}: ${m.v}, ${SEVN[m.sev]}`, onclick: () => { UX.bodySel = m.k; drawProto(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); UX.bodySel = m.k; drawProto(); } } },
+      sv("circle", { class: "c", cx: m.x, cy: m.y, r: 11, fill: sevColor(m.sev) }), sv("text", { x: m.x, y: m.y + 3.5, "text-anchor": "middle", text: i + 1 }))));
+  const rows = M.map((m, i) => el("button", { class: "brow" + (m.k === sel.k ? " sel" : ""), onclick: () => { UX.bodySel = m.k; drawProto(); } },
+    el("span", { class: "dot", style: `background:${sevColor(m.sev)}` }), el("span", {}, `${i + 1}. ${m.n}`), el("span", { class: "mono", text: m.v })));
+  const det = el("div", { class: "bdet" }, el("div", {}, el("b", { text: sel.n + " " }), sevEl(sel.sev)), el("div", { text: sel.v }), el("div", { class: "muted", text: sel.haz }), el("div", {}, evBadge(sel.ev), sel.ev === "DEMO" ? " valor de demostración" : sel.ev === "SIM" ? " valor simulado" : ""));
+  return el("div", { class: "card" }, el("h5", { text: "Cuerpo del tripulante" }), el("div", { class: "bodycard" }, el("div", { class: "body" }, svg), el("div", { style: "display:grid;gap:10px;min-width:0" }, el("div", { class: "blist" }, rows), det)));
+}
+function pPanel(sc, S) {
+  sc.append(banner(), el("div", { class: "topbar" }, el("div", { class: "glob", style: `color:${sevColor(S.global)}` }, SEVI[S.global], " ", SEVN[S.global]), linkChip()));
+  const o = S.rules[0], c = S.rules[2], p = S.rules[1], r = S.rules[3];
+  const card = (t, kids) => el("div", { class: "card" }, el("h5", { text: t }), ...kids);
+  sc.append(el("div", { class: "cards3" },
+    card("Cabina · oxígeno", [el("div", { class: "big", style: `color:${sevColor(o.sev)}` }, o.val, el("small", { text: "mmHg PIO₂" })), gauge(S.pio2, 80, 180, [[80, 127, 2], [127, 145, 1], [145, 155, 0], [155, 180, 1]]), el("div", { class: "kv" }, el("span", { text: "Normoxia" }), el("span", { text: "145 a 155" })), sevEl(o.sev)]),
+    card("Cabina · CO₂", [el("div", { class: "big", style: `color:${sevColor(c.sev)}` }, c.val, el("small", { text: "mmHg" })), gauge(UX.co2, 0, 5, [[0, 2.5, 0], [2.5, 3, 1], [3, 5, 2]]), el("div", { class: "kv" }, el("span", { text: "Límite 1 h" }), el("span", { text: "3 mmHg" })), sevEl(c.sev)]),
+    card("Cabina · presión", [el("div", { class: "big", style: `color:${sevColor(Math.max(p.sev, r.sev))}` }, p.val, el("small", { text: "kPa" })), el("div", { class: "kv" }, el("span", { text: "Cambio" }), el("span", { text: r.val + " psi/min" })), el("div", { class: "kv" }, el("span", { text: "Rango" }), el("span", { text: "34.5 a 103 kPa" })), sevEl(Math.max(p.sev, r.sev))]),
+    card("Radiación", [el("div", { class: "big" }, "0.42", el("small", { text: "mSv/día" })), el("div", { class: "bar" }, el("i", { style: "width:32%;display:block" })), el("div", { class: "kv" }, el("span", { text: "Límite GCR espacio libre" }), el("span", { text: "< 1.3" })), el("span", {}, evBadge("SIM"), " valor; límite ", evBadge("VERIFICADO"))])));
+  sc.append(bodyCard(S));
+  if (S.cause) sc.append(el("div", { class: "card" }, el("h5", { text: "Causa probable" }), el("div", {}, el("b", { text: S.cause[0] + ". " }), S.cause[1]), el("span", {}, evBadge("DEMO"), " heurística de cruce cuerpo y ambiente")));
+  if (S.alerts.length) sc.append(el("button", { class: "btn pri", onclick: () => { UX.tab = "alerta"; drawProto(); }, text: `Ver ${S.alerts.length} ${S.alerts.length > 1 ? "alertas" : "alerta"}` }));
+}
+function pAlert(sc, S) {
+  sc.append(banner());
+  if (!S.alerts.length) { sc.append(el("div", { class: "card" }, el("h5", { text: "Sin alertas activas" }), el("p", { text: "Cambia las condiciones de la cabina para disparar una regla." }))); return; }
+  S.alerts.forEach(a => {
+    const acked = UX.ack[a.key];
+    sc.append(el("div", { class: "alertbox", style: `--sc:${sevColor(a.sev)}` },
+      el("div", { class: "ah" }, el("span", {}, SEVI[a.sev] + " " + SEVN[a.sev].toUpperCase() + " · " + a.name), el("span", { class: "mono", style: "font-size:13px", text: a.val + " " + a.unit })),
+      el("div", { class: "ab" },
+        el("div", {}, el("h5", { text: "Qué hacer" }), el("ol", {}, a.acts.map(t => el("li", { text: t }))), el("p", { style: "margin-top:6px" }, evBadge("DEMO"), " acciones de demostración. El catálogo real vendrá del RAG con cita.")),
+        el("div", {}, el("h5", { text: "Por qué" }), el("div", { text: `${a.name} ${a.val} ${a.unit}: ${a.band}.` }), a.formula ? el("code", { text: "PIO₂ = " + a.formula }) : null, el("div", { class: "cite" }, el("span", { text: `${a.doc} · ${a.req}` }), evBadge(a.ev))),
+        S.cause ? el("div", {}, el("h5", { text: "Causa probable" }), el("div", {}, el("b", { text: S.cause[0] + ". " }), S.cause[1])) : null,
+        el("div", {}, el("h5", { text: "Cuándo escalar" }), el("div", { text: a.sev >= 2 ? "Avisar ya al oficial médico (CMO). Si persiste, el cirujano de vuelo en Tierra decide." : "Si el valor sube o aparecen síntomas, avisar al oficial médico (CMO)." })),
+        el("div", { class: "btnrow" }, el("button", { class: "btn pri", disabled: acked, onclick: () => { UX.ack[a.key] = true; drawProto(); }, text: acked ? "Reconocida ✓" : "Reconocer" }), acked ? el("span", { class: "muted mono", style: "font-size:12px;align-self:center", text: "monitoring.alert_acknowledged → outbox" }) : null))));
+  });
+}
+function answer(q) {
+  const t = q.toLowerCase(); const S = evalState(UX);
+  if (/co2|co₂|cabeza|dióxido|dioxido/.test(t)) return { t: `Entre 2.8 y 4.5 mmHg de CO₂ se observan dolores de cabeza. Por encima de 4.5 aparecen fatiga, mal sueño y náuseas. Ahora la cabina marca ${UX.co2.toFixed(1)} mmHg.`, c: ["OCHMO-TB-004 · CO₂", "TB"] };
+  if (/ox[ií]geno|hipoxia|piO2|pio2|mareo/.test(t)) return { t: `La hipoxia puede dar cambios mentales que el propio astronauta no percibe, visión reducida, fatiga, náuseas, dolor de cabeza y mareo. Por eso la alarma sale del sensor. PIO₂ actual: ${S.pio2.toFixed(1)} mmHg.`, c: ["OCHMO-TB-003 · Atmósfera habitable", "TB"] };
+  if (/presi[oó]n|despresur/.test(t)) return { t: "La presión total de cabina debe estar entre 34.5 y 103 kPa. Si cambia más de 1.0 psi, la velocidad no debe superar 13.5 psi/min.", c: ["NASA-STD-3001 Vol. 2 Rev F · V2 6006 y V2 6007", "VERIFICADO"] };
+  return { t: "No tengo esa información en las fuentes cargadas.", c: null };
+}
+function pChat(sc) {
+  sc.append(banner(), el("div", { class: "topbar" }, el("span", { class: "tag", text: "Whisper local · Ollama local · sin internet" }), linkChip()));
+  const box = el("div", { class: "chat" });
+  if (!UX.chat.length) box.append(el("div", { class: "muted", style: "font-size:13px", text: "Haz una pregunta por texto o elige un ejemplo. En el producto, el audio se transcribe y se confirma antes de responder." }));
+  UX.chat.forEach(m => {
+    box.append(el("div", { class: "bub me" }, el("span", { class: "tag", text: m.voice ? "voz, confirmada" : "texto" }), " ", m.q));
+    box.append(el("div", { class: "bub" }, m.a.t, m.a.c ? el("div", { class: "cite" }, el("span", { text: "Fuente: " + m.a.c[0] }), evBadge(m.a.c[1])) : el("div", { class: "cite muted", text: "Sin pasaje que respalde una respuesta. No se inventa un protocolo." })));
+  });
+  const ask = (q, voice) => { if (!q.trim()) return; UX.chat.push({ q, a: answer(q), voice }); drawProto(); };
+  const inp = el("input", { type: "text", id: "q", placeholder: "Escribe tu pregunta", "aria-label": "Pregunta" });
+  const form = el("form", { onsubmit: e => { e.preventDefault(); ask(inp.value, false); } }, inp, el("button", { class: "btn pri", type: "submit", text: "Enviar" }));
+  sc.append(box, form, el("div", { class: "chips" }, ["¿Por qué me duele la cabeza?", "¿Qué pasa si baja el oxígeno?", "¿Qué presión debe tener la cabina?", "¿Cuántas calorías necesito hoy?"].map((q, i) => el("button", { class: "chip", onclick: () => ask(q, i === 0), text: q }))));
+}
+const ROUT = [["ejercicio", "Ejercicio de resistencia, 30 min"], ["animo", "Registrar estado de ánimo"], ["tension", "Medir presión arterial con el tensiómetro"]];
+const NAVE_TASKS = [["n1", "air", "Inspeccionar los sellos de la esclusa"], ["n2", "eclss", "Revisar el cartucho de CO₂ y registrar sus horas de uso"], ["n3", "lab", "Verificar los filtros de aire del laboratorio"], ["n4", "med", "Revisar el inventario del botiquín médico"]];
+const TKIND = [["ALL", "Todas"], ["SALUD", "Salud"], ["NAVE", "Nave"], ["INCIDENTE", "Incidentes"]];
+function taskItems(S) {
+  const it = [], zl = z => z ? zname(z) : "toda la nave";
+  ST.tasks.forEach(tk => { const inc = ST.inc.find(i => i.id === tk.inc); if (inc && inc.status !== "resuelta") it.push({ k: tk.k, kind: "INCIDENTE", origin: "SISTEMA", g: "Incidentes abiertos", t: tk.title, sub: `${inc.id} · ${zname(tk.zone)}`, eff: true }); });
+  S.alerts.forEach(a => it.push({ k: "a-" + a.key, kind: "SALUD", origin: "SISTEMA", g: "Medidas por alertas de cabina", t: a.acts[0], sub: "Por " + a.name, eff: true }));
+  TPL.filter(t => t.origin === "TIERRA" && (t.active !== false || UX.done[t.id])).forEach(t => it.push({ k: t.id, kind: t.kind, origin: "TIERRA", g: "Plan de Tierra", t: t.title, sub: `${t.rec} · ${zl(t.zone)} · plan v${t.ver}` + (t.active === false ? " · cancelada para el futuro" : ""), tpl: t, eff: true }));
+  ROUT.forEach(([k, t]) => it.push({ k, kind: "SALUD", origin: "SISTEMA", g: "Rutina de salud", t, sub: "Recordatorio a las 18:00 · pospón 15 min" }));
+  NAVE_TASKS.forEach(([k, z, t]) => it.push({ k, kind: "NAVE", origin: "SISTEMA", g: "Mantenimiento diario de la nave", t, sub: zname(z) + " · tarea de demostración" }));
+  TPL.filter(t => t.origin === "TRIPULACION").forEach(t => it.push({ k: t.id, kind: t.kind, origin: "TRIPULACION", g: "Tareas propias de la tripulación", t: t.title, sub: `${t.rec} · ${zl(t.zone)}`, tpl: t, eff: true }));
+  return it;
+}
+const ORG = { TIERRA: "Tierra", SISTEMA: "Sistema", TRIPULACION: "Tripulación" };
+function taskRow(it) {
+  const done = !!UX.done[it.k], blocked = UX.block[it.k], acts = [];
+  if (it.origin === "TIERRA" && !done) {
+    if (blocked) acts.push(el("button", { class: "btn", onclick: () => { delete UX.block[it.k]; refreshTasks(); }, text: "Quitar bloqueo" }));
+    else acts.push(el("select", { "aria-label": "No puedo cumplirla", onchange: e => { const v = e.target.value; if (!v) return; UX.block[it.k] = v; const m = `engagement.task_blocked · «${it.t}» · ${v} → realtime, groundlink`; shipLog(m, "l-skip"); grLog(m, "l-skip"); refreshTasks(); } }, el("option", { value: "", text: "No puedo cumplirla…" }), BLOCK_REASONS.map(r => el("option", { value: r, text: r }))));
+  }
+  if (it.origin === "TRIPULACION") acts.push(el("button", { class: "btn", onclick: () => { TPL.splice(TPL.indexOf(it.tpl), 1); delete UX.done[it.k]; shipLog(`engagement.task_deleted · «${it.t}» (origen TRIPULACION)`, ""); refreshTasks(); }, text: "Eliminar" }));
+  return el("div", { class: "task" + (done ? " done" : "") },
+    el("input", { type: "checkbox", checked: done, disabled: !!blocked, "aria-label": it.t, onchange: e => { UX.done[it.k] = e.target.checked; refreshTasks(); } }),
+    el("div", { class: "grow" }, el("div", { class: "tt", text: it.t }),
+      el("div", { class: "muted", style: "font-size:12.5px" }, el("span", { class: "tag tag-" + it.origin, text: ORG[it.origin] }), " " + it.sub),
+      blocked ? el("div", { style: "margin-top:4px;font-size:13px" }, el("span", { class: "st st-dead", text: "bloqueada" }), " " + blocked) : null,
+      done && it.eff ? el("div", { class: "btnrow", style: "margin-top:6px;align-items:center" }, el("span", { text: "¿Funcionó?" }), ...[true, false].map(v => el("button", { class: "btn", onclick: () => { UX.eff[it.k] = v; refreshTasks(); }, text: (v ? "Sí" : "No") + (UX.eff[it.k] === v ? " ✓" : "") }))) : null,
+      acts.length ? el("div", { class: "btnrow", style: "margin-top:6px" }, acts) : null));
+}
+function taskFilter(items) {
+  return el("div", { class: "tflt" }, TKIND.map(([k, l]) => el("button", { class: "chip", "aria-pressed": String(UX.tf === k), onclick: () => { UX.tf = k; refreshTasks(); } }, `${l} (${items.filter(i => (k === "ALL" || i.kind === k) && !UX.done[i.k]).length})`)));
+}
+function taskGroups(items) {
+  const groups = {};
+  items.filter(i => UX.tf === "ALL" || i.kind === UX.tf).forEach(i => (groups[i.g] = groups[i.g] || []).push(i));
+  const out = Object.entries(groups).map(([g, list]) => el("div", { class: "tgroup" }, el("h5", { text: g }), ...list.map(taskRow)));
+  return out.length ? out : [el("div", { class: "muted", style: "font-size:13px", text: "No hay tareas de este tipo." })];
+}
+function refreshTasks() { drawProto(); shipDrawTasks(); if (typeof drawGround === "function") drawGround(); }
+function pTasks(sc, S) {
+  const items = taskItems(S), n = ROUT.filter(([k]) => UX.done[k]).length;
+  sc.append(banner(), el("div", { class: "topbar" }, el("b", { text: `Rutinas de salud hoy: ${n} de 3` }), el("span", { class: "tag", text: n === 3 ? "Logro: Constancia" : "Racha: 4 días" })), taskFilter(items), ...taskGroups(items), newTaskForm(),
+    el("p", { class: "muted", style: "font-size:12.5px", text: "Solo las rutinas de salud suman a la racha. Las medidas por alertas, las de Tierra y los incidentes no dan puntos." }));
+}
+function pShip(sc) {
+  const open = ST.inc.filter(i => i.status !== "resuelta");
+  sc.append(banner(), el("div", { class: "topbar" }, el("b", { text: open.length ? `${open.length} ${open.length > 1 ? "incidencias abiertas" : "incidencia abierta"}` : "Sin incidencias abiertas" }), el("button", { class: "btn pri", onclick: () => $("#nave").scrollIntoView({ behavior: "smooth" }), text: "Abrir el panel de la nave" })));
+  open.forEach(i => sc.append(el("div", { class: "tk", style: `--sc:${sevColor(i.sev)}` }, el("div", { class: "h" }, el("span", { class: "id", text: i.id }), sevEl(i.sev)), el("div", { class: "t", text: i.title }), el("div", { class: "m" }, el("span", { text: "Ubicación: " + zname(i.zone) })))));
+  if (!open.length) sc.append(el("div", { class: "muted", style: "font-size:13px", text: "El plano muestra todas las zonas en verde." }));
+}
+const CATS = [["alertas", "Alertas críticas"], ["vitales", "Signos vitales (simulados)"], ["ambiente", "Ambiente de cabina"], ["sueno", "Sueño"], ["conversaciones", "Conversaciones con el asistente"], ["tareas", "Tareas (estado de las de Tierra y las propias)"]];
+function pLink(sc, S) {
+  sc.append(banner(), el("div", { class: "topbar" }, linkChip(), el("span", { class: "muted", style: "font-size:13px", text: UX.link ? "Se envía lo autorizado." : "Todo se guarda y se envía al reconectar." })));
+  const items = [];
+  S.alerts.forEach(a => items.push(["alertas", `alert_raised · ${a.name}`]));
+  items.push(["ambiente", "readings · cabina (lote de 10 min)"], ["vitales", "readings · FC y SpO₂ (lote de 10 min)"], ["sueno", "sueño · noche anterior"], ["conversaciones", "assistant.answer_ready"], ["tareas", "tasks · estado y tareas propias"]);
+  const ok = items.filter(([c]) => UX.consent[c]);
+  sc.append(el("div", { class: "card" }, el("h5", { text: "Qué se comparte" }), ...CATS.map(([k, l]) => el("label", { class: "sw", for: "cs-" + k }, el("span", { text: l }), el("input", { type: "checkbox", id: "cs-" + k, checked: UX.consent[k], onchange: e => { UX.consent[k] = e.target.checked; drawProto(); } })))));
+  sc.append(el("div", { class: "card" }, el("h5", { text: `Vista previa del lote · ${ok.length} de ${items.length}` }), ...items.map(([c, t]) => el("div", { class: "kv" }, el("span", { class: "mono", style: "font-size:12.5px", text: t }), UX.consent[c] ? el("span", { class: "st st-pending", text: UX.link ? "se envía" : "en cola" }) : el("span", { class: "st st-dead", text: "retenido" })))));
+}
+drawJourney(); drawProto();
+$("#uxp").append(...[["Acciones antes que explicación", "En una alerta crítica se dice primero qué hacer."], ["El color nunca va solo", "● Normal, ▲ Atención, ■ Crítico: forma, icono y texto."], ["Cada cifra dice de dónde viene", "Documento, requisito y estado de evidencia."], ["El enlace siempre se ve", "También cuando todo funciona sin él."], ["Nada por voz sin confirmar", "Y siempre hay entrada por texto."], ["Gamificación sobria", "Rutinas sí. Alertas críticas nunca."], ["Estados vacíos y de error útiles", "Reconectando, modelo lento, sin pasaje: cada uno con su mensaje."], ["Táctil y legible en cabina", "Objetivos de 48 px, contraste AA, modo oscuro por defecto."]].map(([t, d]) => el("div", {}, el("b", { text: t }), el("span", { text: d }))));
+
+/* datos compartidos: catálogo de incidencias, plantillas de tareas y plan de Tierra */
+const IT = Object.fromEntries(D.itypes.map(t => [t.k, t])), IC = Object.fromEntries(D.icats.map(c => [c.k, c.n]));
+const typeOfAlert = a => ({ pio2: parseFloat(a.val) > 155 ? "hyperoxia" : "hypoxia", ptotal: "pressure_range", dpdt: "pressure_leak", co2: "co2_high", n2: "diluent_low", rh: "humidity", t: "temperature" })[a.rule] || null;
+const zlabel = z => z === "*" ? "Cualquiera" : zname(z);
+let catSel = "ALL";
+const TPL = [
+  { id: "t-g1", kind: "SALUD", title: "Registrar la masa corporal", origin: "TIERRA", ver: 11, rec: "Diaria", zone: null },
+  { id: "t-g2", kind: "NAVE", title: "Inspeccionar el sellado de la escotilla del laboratorio", origin: "TIERRA", ver: 11, rec: "Diaria", zone: "lab" },
+];
+const GR = { ver: 11, applied: 11, draft: [], sent: null, delay: 2, log: [], snap: [], snapCrew: [], snapT: 0, n: 3, banner: "Plan v11 aplicado" };
+const BLOCK_REASONS = ["Sin recursos o repuestos", "Zona inaccesible", "Conflicto con otra tarea", "Riesgo para la tripulación", "Otro"];
+const tplStatus = t => UX.block[t.id] ? "Bloqueada: " + UX.block[t.id] : UX.done[t.id] ? (t.active === false ? "Completada · cancelada para el futuro" : "Completada hoy") : t.active === false ? "Cancelada" : "Aplicada · pendiente";
+
+/* ---------- panel de la nave ---------- */
+const DOC = "NASA-STD-3001 Vol. 2 Rev F", N_H = 90;
+const ZONES = [
+  { id: "eng", n: ["Ingeniería", "y propulsión"], x: 60, y: 56, w: 150, h: 104, base: { t: 24.2, rh: 40, co2: 0.8 } },
+  { id: "eclss", n: ["Soporte vital", "(ECLSS)"], x: 222, y: 56, w: 150, h: 104, base: { t: 22.8, rh: 48, co2: 0.7 } },
+  { id: "lab", n: ["Laboratorio"], x: 384, y: 56, w: 170, h: 104, base: { t: 22.6, rh: 44, co2: 0.7 } },
+  { id: "med", n: ["Enfermería"], x: 566, y: 56, w: 140, h: 104, base: { t: 22.4, rh: 45, co2: 0.5 } },
+  { id: "bridge", n: ["Puente", "de control"], x: 718, y: 56, w: 190, h: 104, base: { t: 22.2, rh: 42, co2: 0.6 } },
+  { id: "air", n: ["Esclusa"], x: 60, y: 212, w: 130, h: 104, base: { t: 21.5, rh: 38, co2: 0.4 } },
+  { id: "store", n: ["Almacén"], x: 202, y: 212, w: 140, h: 104, base: { t: 21.0, rh: 36, co2: 0.4 } },
+  { id: "gym", n: ["Gimnasio"], x: 354, y: 212, w: 150, h: 104, base: { t: 23.8, rh: 50, co2: 1.1 } },
+  { id: "galley", n: ["Cocina", "y comedor"], x: 516, y: 212, w: 170, h: 104, base: { t: 24.0, rh: 52, co2: 0.9 } },
+  { id: "crew", n: ["Dormitorios"], x: 698, y: 212, w: 210, h: 104, base: { t: 22.0, rh: 43, co2: 0.8 } },
+];
+const MET = [
+  { key: "pio2", n: "Oxígeno · PIO₂", u: "mmHg", lo: 80, hi: 180, dec: 1, bands: [[80, 122, 3], [122, 127, 2], [127, 145, 1], [145, 155, 0], [155, 180, 1]], normal: "145 a 155", ev: "VERIFICADO" },
+  { key: "co2", n: "CO₂ · ppCO₂ (media 30 s)", u: "mmHg", lo: 0, hi: 5, dec: 2, bands: [[0, 2.5, 0], [2.5, 3, 1], [3, 5, 2]], normal: "menos de 2.5", ev: "VERIFICADO", avg: true },
+  { key: "n2", n: "Nitrógeno · N₂", u: "%", lo: 0, hi: 100, dec: 1, bands: [[0, 30, 2], [30, 100, 0]], normal: "diluyente 30 o más", ev: "VERIFICADO" },
+  { key: "rh", n: "Humedad relativa", u: "%", lo: 0, hi: 100, dec: 0, bands: [[0, 25, 2], [25, 30, 1], [30, 60, 0], [60, 75, 1], [75, 100, 2]], normal: "30 a 60", ev: "DEMO" },
+  { key: "t", n: "Temperatura", u: "°C", lo: 10, hi: 35, dec: 1, bands: [[10, 18, 2], [18, 20, 1], [20, 25, 0], [25, 27, 1], [27, 35, 2]], normal: "20 a 25", ev: "DEMO" },
+  { key: "kpa", n: "Presión total", u: "kPa", lo: 30, hi: 110, dec: 1, bands: [[30, 34.5, 2], [34.5, 103, 0], [103, 110, 2]], normal: "34.5 a 103", ev: "VERIFICADO" },
+];
+const SCEN = [
+  ["co2lab", "CO₂ alto · Laboratorio", "lab", { co2: 3.6 }, 0.1],
+  ["leak", "Fuga de presión · Esclusa", "air", { kpa: 55 }, 0.05],
+  ["hum", "Humedad alta · Dormitorios", "crew", { rh: 82 }, 0.1],
+  ["o2", "Fallo de O₂ · Soporte vital", "eclss", { o2: 17.5 }, 0.1],
+  ["heat", "Calor · Ingeniería", "eng", { t: 29.5 }, 0.1],
+];
+const ST = { t: 0, live: true, sel: "lab", inc: [], nextInc: 1, log: [], tasks: [], dirty: false, sig: "", timer: null };
+const zname = id => { const z = ZONES.find(x => x.id === id); return z ? z.n.join(" ") : id; };
+const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+const std = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
+const rnd = a => (Math.random() - 0.5) * a;
+const bandSev = (m, v) => { for (const [a, b, k] of m.bands) if (v >= a && v < b) return k; return v < m.lo ? m.bands[0][2] : m.bands[m.bands.length - 1][2]; };
+function derive(v) { const P = v.kpa * 7.50062; return { pio2: (P - 47) * v.o2 / 100, n2: 100 - v.o2 - v.co2 / P * 100 }; }
+function pushHist(z, v) {
+  const d = derive(v), h = z.hist;
+  const add = (k, x) => { h[k].push(x); if (h[k].length > N_H) h[k].shift(); };
+  add("pio2", d.pio2); add("co2", Math.max(0.05, v.co2)); add("n2", d.n2); add("rh", v.rh); add("t", v.t); add("kpa", v.kpa);
+}
+const noisy = v => ({ kpa: v.kpa + rnd(0.08), o2: v.o2 + rnd(0.08), co2: v.co2 + rnd(0.06), t: v.t + rnd(0.12), rh: v.rh + rnd(0.6) });
+ZONES.forEach(z => {
+  z.v = { kpa: 101.3, o2: 21, co2: z.base.co2, t: z.base.t, rh: z.base.rh };
+  z.tg = { ...z.v }; z.k = 0.1; z.status = 0; z.ev = { alerts: [], anomalies: {} };
+  z.hist = { pio2: [], co2: [], n2: [], rh: [], t: [], kpa: [] };
+});
+(function seed() {
+  const lab = ZONES.find(z => z.id === "lab");
+  lab.v.co2 = 3.4; lab.tg.co2 = 3.4;
+  ZONES.forEach(z => { for (let i = 0; i < N_H; i++) { const v = noisy(z.v); if (z.id === "lab") v.co2 = z.base.co2 + (3.4 - z.base.co2) * Math.min(1, Math.max(0, (i - 30) / 25)) + rnd(0.06); pushHist(z, v); } });
+})();
+
+function shipLog(txt, cls) { ST.log.unshift({ t: "t+" + ST.t + " s", txt, cls: cls || "" }); ST.log = ST.log.slice(0, 30); const b = $("#ship-log"); if (!b) return; b.textContent = ""; ST.log.forEach(l => b.append(el("div", { class: l.cls, text: `${l.t} · ${l.txt}` }))); }
+
+function zoneEval(z) {
+  const h = z.hist, name = z.n.join(" "), L = a => a[a.length - 1];
+  const pio2 = L(h.pio2), kpa = L(h.kpa), co2a = mean(h.co2.slice(-30)), rh = L(h.rh), t = L(h.t), n2 = L(h.n2);
+  const out = [], flagged = new Set(), anomalies = {};
+  const add = (rule, metric, nm, val, unit, sev, band, req, ev, acts) => { if (sev > 0) { out.push({ key: z.id + ":" + rule, rule, metric, zone: z.id, name: nm, val, unit, sev, band, req, doc: DOC, ev, acts: acts.map(a => a.replace("{z}", name)) }); flagged.add(metric); } };
+  let s = 0, b = "normoxia", ev = "VERIFICADO";
+  if (pio2 <= 122) { s = 3; b = "bajo el límite absoluto de 122 mmHg"; } else if (pio2 < 127) { s = 2; b = "bajo 127 mmHg"; } else if (pio2 < 145) { s = 1; b = "bajo la normoxia (145 a 155)"; ev = "DEMO"; } else if (pio2 > 356) { s = 2; b = "sobre 356 mmHg"; } else if (pio2 > 155) { s = 1; b = "sobre la normoxia"; ev = "DEMO"; }
+  add("pio2", "pio2", "Oxígeno (PIO₂)", pio2.toFixed(1), "mmHg", s, b, "V2 6003 · Tabla 6.2-1", ev, ["Revisar el suministro de O₂ y la presión en {z}", "Reducir el esfuerzo físico", "Avisar al oficial médico (CMO)"]);
+  add("ptotal", "kpa", "Presión total", kpa.toFixed(1), "kPa", kpa < 34.5 || kpa > 103 ? 2 : 0, "fuera de 34.5 a 103 kPa", "V2 6006", "VERIFICADO", ["Verificar la estanqueidad y los sellos de {z}", "Aislar la zona si la presión sigue cayendo"]);
+  const psi = Math.abs(h.kpa[h.kpa.length - 11] - kpa) * 0.145038, rate = psi * 6;
+  add("dpdt", "kpa", "Velocidad de cambio de presión", rate.toFixed(1), "psi/min", psi > 1 && rate > 13.5 ? 2 : 0, "sobre 13.5 psi/min", "V2 6007", "VERIFICADO", ["Verificar la integridad de escotillas y sellos de {z}", "Prepararse para aislar la zona"]);
+  s = 0; b = "bajo 2.5 mmHg"; ev = "VERIFICADO";
+  if (co2a > 4.5) { s = 3; b = "sobre 4.5 mmHg: fatiga y náuseas"; ev = "TB"; } else if (co2a > 3) { s = 2; b = "sobre 3 mmHg (media móvil; en producción, 1 h)"; } else if (co2a >= 2.5) { s = 1; b = "pre-alerta desde 2.5 mmHg"; ev = "DEMO"; }
+  add("co2", "co2", "ppCO₂", co2a.toFixed(2), "mmHg", s, b, "V2 6004", ev, ["Revisar la ventilación y los filtros de CO₂ en {z}", "Medir CO₂ en zonas locales: los sensores fijos no ven bolsas", "Reducir la actividad física en la zona"]);
+  add("n2", "n2", "Diluyente (N₂)", n2.toFixed(1), "%", n2 < 30 ? 2 : 0, "bajo 30 %", "V2 6002", "VERIFICADO", ["Verificar la composición de la atmósfera en {z}"]);
+  s = rh < 25 || rh > 75 ? 2 : rh < 30 || rh > 60 ? 1 : 0;
+  add("rh", "rh", "Humedad relativa", rh.toFixed(0), "%", s, s === 2 ? "fuera de 25 a 75 %" : "fuera de 30 a 60 %", "V2 6012 · V2 6013 (aproximado)", "DEMO", ["Revisar el condensador y la ventilación de {z}", "Secar las superficies y vigilar la condensación"]);
+  s = t < 18 || t > 27 ? 2 : t < 20 || t > 25 ? 1 : 0;
+  add("t", "t", "Temperatura", t.toFixed(1), "°C", s, s === 2 ? "fuera de 18 a 27 °C" : "fuera de 20 a 25 °C", "V2 6012 · V2 6013 (aproximado)", "DEMO", ["Revisar el lazo térmico y la ventilación de {z}", "Reducir la carga de equipos en la zona"]);
+  [["co2", "CO₂", "mmHg", 0.6], ["rh", "Humedad", "%", 6], ["t", "Temperatura", "°C", 1.5], ["pio2", "Oxígeno (PIO₂)", "mmHg", 6], ["kpa", "Presión", "kPa", 4]].forEach(([m, nm, u, md]) => {
+    if (flagged.has(m)) return;
+    const a = h[m], base = a.slice(-60, -20), rec = mean(a.slice(-5)), mu = mean(base), sd = std(base);
+    if (Math.abs(rec - mu) > Math.max(4 * sd, md)) { anomalies[m] = true; add("trend-" + m, m, nm + ": tendencia anómala", rec.toFixed(2), u, 1, `cambio de ${rec - mu > 0 ? "+" : ""}${(rec - mu).toFixed(2)} ${u} frente a los 40 s previos`, "regla de tendencia", "DEMO", ["Revisar el sensor y la tendencia de " + nm + " en {z}"]); }
+  });
+  return { alerts: out.sort((x, y) => y.sev - x.sev), anomalies };
+}
+function openIncident(o) {
+  const id = "INC-" + String(ST.nextInc++).padStart(4, "0");
+  const inc = { id, zone: o.zone, type: o.type || null, auto: !!o.auto, manual: !o.auto, sev: o.sev, title: o.title, desc: o.desc, source: o.auto ? "Alerta automática · regla " + o.rule : "Reporte manual de la tripulación", status: "abierta", t0: ST.t, ev: o.ev || null, normal: false };
+  ST.inc.unshift(inc);
+  const acts = o.acts && o.acts.length ? o.acts.slice(0, 2) : ["Evaluar y atender: " + o.title];
+  acts.forEach((a, i) => ST.tasks.push({ k: `${id}-t${i}`, inc: id, zone: o.zone, title: a }));
+  shipLog(`facility.incident_opened · ${id} (${SEVN[o.sev]}) en ${zname(o.zone)} → engagement, realtime, groundlink`, "l-bad");
+  shipLog(`engagement.task_assigned ×${acts.length} (kind=INCIDENTE) → realtime`, "");
+  ST.dirty = true;
+}
+function shipEvaluate() {
+  ZONES.forEach(z => {
+    const ev = zoneEval(z); z.ev = ev;
+    const hi = ev.alerts.filter(a => a.sev >= 2);
+    let inc = ST.inc.find(i => i.zone === z.id && i.auto && i.status !== "resuelta");
+    if (hi.length) {
+      const top = hi[0], desc = hi.map(a => `${a.name} = ${a.val} ${a.unit} (${a.band}; ${a.req})`).join(". ") + ". Fuente: " + DOC + ".";
+      if (!inc) openIncident({ zone: z.id, auto: true, sev: top.sev, title: `${top.name}: ${top.band}`, desc, rule: top.rule, ev: top.ev, acts: top.acts, type: typeOfAlert(top) });
+      else { inc.desc = desc; inc.normal = false; if (top.sev > inc.sev) { inc.sev = top.sev; shipLog(`facility.incident_updated · ${inc.id} sube a ${SEVN[inc.sev]} → realtime, groundlink`, "l-bad"); } }
+    } else if (inc && !inc.normal) { inc.normal = true; shipLog(`monitoring.alert_resolved → facility · ${inc.id} con valores normales, puede cerrarse`, "l-ok"); ST.dirty = true; }
+    const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resuelta");
+    const sev = Math.max(0, ...ev.alerts.map(a => a.sev), ...open.map(i => i.sev));
+    if (sev !== z.status) { shipLog(`facility.zone_status_changed · ${zname(z.id)}: ${SEVN[z.status]} → ${SEVN[sev]} → realtime`, sev > z.status ? "l-skip" : "l-ok"); z.status = sev; }
+  });
+}
+function incAck(id) { const i = ST.inc.find(x => x.id === id); i.status = "reconocida"; shipLog(`facility.incident_updated · ${id} reconocida → realtime, groundlink`, ""); shipDraw(true); }
+function incResolve(id) {
+  const i = ST.inc.find(x => x.id === id); i.status = "resuelta";
+  ST.tasks.filter(t => t.inc === id).forEach(t => { UX.done[t.k] = true; });
+  shipLog(`facility.incident_resolved · ${id} → engagement, realtime, groundlink`, "l-ok");
+  ST.dirty = true; shipEvaluate(); shipDraw(true);
+}
+function selZone(id) { ST.sel = id; shipDraw(true); }
+
+/* mapa */
+const MAPREF = {};
+function buildMap() {
+  const svg = sv("svg", { viewBox: "0 0 960 352", role: "img", "aria-label": "Plano esquemático de la nave con sus zonas" });
+  svg.append(sv("defs", {}, sv("pattern", { id: "stripes", width: 9, height: 9, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, sv("line", { x1: 0, y1: 0, x2: 0, y2: 9, stroke: "var(--crit)", "stroke-width": 3.5, opacity: 0.5 }))));
+  svg.append(sv("path", { class: "hull", d: "M30 36 H870 Q950 36 950 110 V262 Q950 336 870 336 H30 Z" }), sv("rect", { class: "cor", x: 50, y: 166, width: 880, height: 40, rx: 6 }), sv("text", { class: "zv", x: 490, y: 191, "text-anchor": "middle", text: "PASILLO CENTRAL · CUBIERTA PRINCIPAL" }));
+  ZONES.forEach(z => {
+    const r = {};
+    r.rect = sv("rect", { class: "zr", x: z.x, y: z.y, width: z.w, height: z.h, rx: 8 });
+    r.pat = sv("rect", { x: z.x, y: z.y, width: z.w, height: z.h, rx: 8, fill: "url(#stripes)", opacity: 0, "pointer-events": "none" });
+    r.names = z.n.map((l, i) => sv("text", { class: "zt", x: z.x + 10, y: z.y + 20 + i * 15, text: l }));
+    r.st = sv("text", { class: "zs", x: z.x + 10, y: z.y + z.h - 24 });
+    r.vals = sv("text", { class: "zv", x: z.x + 10, y: z.y + z.h - 9 });
+    r.pin = sv("g", { class: "pin" });
+    r.g = sv("g", { class: "zn s0", tabindex: 0, role: "button", onclick: () => selZone(z.id), onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selZone(z.id); } } }, r.rect, r.pat, ...r.names, r.st, r.vals, r.pin);
+    MAPREF[z.id] = r; svg.append(r.g);
+  });
+  const lg = el("div", { class: "zlegend" }, [0, 1, 2, 3].map(s => el("span", {}, el("span", { style: `display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:${sevColor(s)};opacity:.7` }), SEVI[s] + " " + SEVN[s])), el("span", { text: "Pasa el cursor o toca una zona para ver sus gráficas. El crítico lleva trazado rayado. La etiqueta INC marca el ticket." }));
+  $("#ship-map").append(svg, lg);
+}
+function updateMap() {
+  ZONES.forEach(z => {
+    const r = MAPREF[z.id], h = z.hist;
+    r.g.setAttribute("class", `zn s${z.status}` + (ST.sel === z.id ? " sel" : ""));
+    r.g.setAttribute("aria-label", `${zname(z.id)}: ${SEVN[z.status]}`);
+    r.pat.setAttribute("opacity", z.status === 3 ? 1 : 0);
+    r.st.textContent = `${SEVI[z.status]} ${SEVN[z.status]}`;
+    r.vals.textContent = `CO₂ ${mean(h.co2.slice(-30)).toFixed(1)} | O₂ ${h.pio2[h.pio2.length - 1].toFixed(0)}`;
+    r.pin.textContent = "";
+    const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resuelta").sort((a, b) => b.sev - a.sev);
+    if (open.length) {
+      const txt = open[0].id + (open.length > 1 ? ` +${open.length - 1}` : ""), py = z.y + 12 + z.n.length * 15 + 6;
+      r.pin.append(sv("rect", { x: z.x + 10, y: py, width: txt.length * 6.4 + 10, height: 16, rx: 3 }), sv("text", { x: z.x + 15, y: py + 12, text: txt }));
+    }
+  });
+}
+
+/* gráficas de la zona */
+function chartCard(z, m) {
+  const arr = z.hist[m.key], cur = m.avg ? mean(arr.slice(-30)) : arr[arr.length - 1], sev = bandSev(m, cur), W = 300, H = 92, p = 6;
+  const X = i => p + (W - 2 * p) * i / (N_H - 1), cl = v => Math.min(m.hi, Math.max(m.lo, v)), Y = v => p + (H - 2 * p) * (1 - (cl(v) - m.lo) / (m.hi - m.lo));
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${m.n}: ${cur.toFixed(m.dec)} ${m.u}, ${SEVN[sev]}, últimos 90 segundos` });
+  m.bands.forEach(([a, b, k]) => svg.append(sv("rect", { x: p, y: Y(b), width: W - 2 * p, height: Math.max(0, Y(a) - Y(b)), fill: sevColor(k), opacity: 0.17 })));
+  svg.append(sv("polyline", { points: arr.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" "), fill: "none", stroke: "var(--ink)", "stroke-width": 1.7, "stroke-linejoin": "round" }), sv("circle", { cx: X(arr.length - 1), cy: Y(arr[arr.length - 1]), r: 4, fill: sevColor(sev), stroke: "var(--surface)", "stroke-width": 1.5 }));
+  return el("div", { class: "ch" }, el("div", { class: "top" }, el("span", { text: m.n }), el("b", { style: `color:${sevColor(sev)}`, text: cur.toFixed(m.dec) + " " + m.u })), svg,
+    el("div", { class: "foot" }, el("span", { text: `${SEVI[sev]} ${SEVN[sev]} · normal ${m.normal}` }), el("span", {}, z.ev.anomalies[m.key] ? el("span", { class: "anom", text: "ANOMALÍA" }) : null, " ", evBadge(m.ev))));
+}
+function drawZone() {
+  const z = ZONES.find(x => x.id === ST.sel), box = $("#ship-zone"); box.textContent = "";
+  const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resuelta");
+  box.append(el("div", { class: "zhead" }, el("div", {}, el("h3", { text: zname(z.id) }), el("span", { class: "muted", style: "font-size:13px", text: `Cubierta principal · ${open.length} ${open.length === 1 ? "incidencia abierta" : "incidencias abiertas"}` })),
+    el("div", { style: "display:flex;gap:14px;align-items:center;flex-wrap:wrap" }, sevEl(z.status), el("span", { class: "live" + (ST.live ? "" : " off") }, el("i"), ST.live ? "en vivo · 1 Hz · últimos 90 s" : "medición en pausa"))));
+  if (z.ev.alerts.length) box.append(el("div", { class: "tgroup" }, el("h5", { text: "Alertas activas en esta zona" }), ...z.ev.alerts.map(a => el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13.5px" }, sevEl(a.sev), el("span", { text: `${a.name}: ${a.band}` }), evBadge(a.ev)))));
+  else box.append(el("div", { class: "ok-note", style: "margin-bottom:10px", text: "Sin alertas. Todos los parámetros están en rango y sin anomalías de tendencia." }));
+  const ch = el("div", { class: "charts" }); MET.forEach(m => ch.append(chartCard(z, m))); box.append(ch);
+}
+
+/* tickets */
+function ticketCard(i) {
+  const res = i.status === "resuelta", can = i.manual || i.normal, tasks = ST.tasks.filter(t => t.inc === i.id);
+  return el("div", { class: "tk" + (res ? " res" : "") + (ST.sel === i.zone ? " sel" : ""), style: `--sc:${sevColor(i.sev)}` },
+    el("div", { class: "h" }, el("span", { class: "id", text: i.id }), sevEl(i.sev), el("span", { class: "tag", text: i.status }), i.ev ? evBadge(i.ev) : null, el("span", { class: "muted age", "data-id": i.id, style: "font-size:12px;margin-left:auto" })),
+    el("div", { class: "t", text: i.title }),
+    el("div", { class: "m" }, el("span", { text: "Ubicación: " + zname(i.zone) + " · Cubierta principal" }), el("span", { text: "Origen: " + i.source }), i.type ? el("span", { text: "Tipo: " + IC[IT[i.type].c] + " · " + IT[i.type].n }) : null),
+    el("div", { class: "dsc", "data-id": i.id, style: "font-size:13.5px", text: i.desc }),
+    tasks.length ? el("ul", { class: "tl" }, tasks.map(t => el("li", {}, el("label", {}, el("input", { type: "checkbox", checked: !!UX.done[t.k], onchange: e => { UX.done[t.k] = e.target.checked; refreshTasks(); drawTickets(true); } }), t.title)))) : null,
+    i.normal && !res ? el("div", { class: "ok-note", text: "Valores normales: puede cerrarse." }) : null,
+    el("div", { class: "btnrow" }, res ? null : (i.status === "abierta" ? el("button", { class: "btn", onclick: () => incAck(i.id), text: "Reconocer" }) : null), res ? null : el("button", { class: "btn pri", disabled: !can, onclick: () => incResolve(i.id), text: can ? "Resolver" : "Resolver (valores fuera de rango)" }), el("button", { class: "btn", onclick: () => selZone(i.zone), text: "Ver zona" })));
+}
+const ageTxt = s => s < 60 ? `hace ${s} s` : `hace ${Math.floor(s / 60)} min`;
+function drawTickets(force) {
+  const sig = JSON.stringify([ST.inc.map(i => [i.id, i.status, i.sev, i.normal]), ST.tasks.map(t => !!UX.done[t.k]), ST.sel]);
+  if (force || sig !== ST.sig) {
+    ST.sig = sig;
+    const list = $("#tk-list"); list.textContent = "";
+    const open = ST.inc.filter(i => i.status !== "resuelta").sort((a, b) => b.sev - a.sev || b.t0 - a.t0), done = ST.inc.filter(i => i.status === "resuelta").slice(0, 2);
+    open.concat(done).forEach(i => list.append(ticketCard(i)));
+    if (!ST.inc.length) list.append(el("div", { class: "muted", style: "font-size:13.5px", text: "Sin incidencias. Provoca una anomalía o reporta una manualmente." }));
+    $("#tk-count").textContent = `${open.length} ${open.length === 1 ? "abierta" : "abiertas"}`;
+  }
+  document.querySelectorAll("#tk-list .dsc").forEach(n => { const i = ST.inc.find(x => x.id === n.dataset.id); if (i && n.textContent !== i.desc) n.textContent = i.desc; });
+  document.querySelectorAll("#tk-list .age").forEach(n => { const i = ST.inc.find(x => x.id === n.dataset.id); if (i) n.textContent = ageTxt(ST.t - i.t0); });
+}
+function buildTickets() {
+  const box = $("#ship-tickets");
+  box.append(el("div", { class: "zhead" }, el("h3", { text: "Tickets de incidencia" }), el("span", { class: "muted", id: "tk-count" })), el("div", { class: "tklist", id: "tk-list" }));
+  const zsel = el("select", { id: "nz" }, ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
+  const csel = el("select", { id: "nc" }, D.icats.map(c => el("option", { value: c.k, text: c.n })));
+  const tsel = el("select", { id: "ntp" });
+  const ssel = el("select", { id: "ns" }, [1, 2, 3].map(x => el("option", { value: x, text: SEVN[x] })));
+  const applyType = () => { const t = IT[tsel.value]; if (!t) return; const z = t.zones.find(x => x !== "*"); if (z) zsel.value = z; ssel.value = t.sev; };
+  const fillTypes = () => { tsel.textContent = ""; D.itypes.filter(t => t.c === csel.value).forEach(t => tsel.append(el("option", { value: t.k, text: t.n + (t.det === "AUTO" ? " (auto)" : "") }))); applyType(); };
+  csel.addEventListener("change", fillTypes); tsel.addEventListener("change", applyType);
+  const form = el("form", { class: "newtk", onsubmit: e => {
+    e.preventDefault();
+    const t = IT[tsel.value], title = $("#nt").value.trim() || t.n, d = $("#nd").value.trim() || "Sin descripción adicional.";
+    openIncident({ zone: zsel.value, auto: false, sev: parseInt(ssel.value, 10), title, desc: d, acts: t.acts, type: t.k });
+    $("#nt").value = ""; $("#nd").value = ""; ST.sel = zsel.value; shipDraw(true);
+  } },
+    el("h3", { text: "Reportar una incidencia" }),
+    el("div", { class: "two" }, el("label", { for: "nc" }, "Categoría", csel), el("label", { for: "ntp" }, "Tipo", tsel)),
+    el("div", { class: "two" }, el("label", { for: "nz" }, "Zona", zsel), el("label", { for: "ns" }, "Severidad", ssel)),
+    el("label", { for: "nt" }, "Título", el("input", { type: "text", id: "nt", placeholder: "Si lo dejas vacío se usa el tipo" })),
+    el("label", { for: "nd" }, "Descripción", el("textarea", { id: "nd", rows: 3, placeholder: "Qué se observa y desde cuándo" })),
+    el("button", { class: "btn pri", type: "submit", text: "Crear ticket" }));
+  box.append(form); fillTypes();
+}
+
+/* tareas del día en el panel de la nave */
+function shipDrawTasks() {
+  const box = $("#ship-tasks-list"); if (!box) return; box.textContent = "";
+  const items = taskItems(evalState(UX));
+  box.append(el("h3", { style: "margin-bottom:4px", text: "Tareas diarias de la tripulación" }), el("p", { class: "muted", style: "font-size:13px;margin-bottom:10px", text: "Salud, mantenimiento de la nave e incidentes del lugar donde estén. Las de incidente nacen al abrirse un ticket y se completan al cerrarlo." }), taskFilter(items), ...taskGroups(items));
+}
+
+/* barra de herramientas, tick y arranque */
+function shipDraw(force) {
+  updateMap(); drawZone(); drawTickets(force);
+  if (ST.dirty) { ST.dirty = false; shipDrawTasks(); if (UX.tab === "misiones" || UX.tab === "nave") drawProto(); }
+}
+function shipTick() {
+  ST.t++;
+  ZONES.forEach(z => { for (const m of ["kpa", "o2", "co2", "t", "rh"]) z.v[m] += (z.tg[m] - z.v[m]) * z.k; pushHist(z, noisy(z.v)); });
+  shipEvaluate(); shipDraw(false);
+}
+function setLive(on) {
+  ST.live = on; clearInterval(ST.timer); ST.timer = on ? setInterval(shipTick, 1000) : null;
+  $("#sh-live").textContent = on ? "Pausar medición" : "Reanudar medición"; drawZone();
+}
+(function initShip() {
+  const tools = $("#ship-tools");
+  tools.append(el("span", { class: "muted", style: "font-size:13px", text: "Provocar:" }));
+  const chips = el("div", { class: "chips" });
+  SCEN.forEach(sc => chips.append(el("button", { class: "chip", onclick: () => { const z = ZONES.find(x => x.id === sc[2]); Object.assign(z.tg, sc[3]); z.k = sc[4]; ST.sel = sc[2]; shipLog(`telemetry.scenario_changed · ${sc[1]} → realtime`, "l-skip"); shipDraw(true); } }, sc[1])));
+  chips.append(el("button", { class: "chip", onclick: () => { ZONES.forEach(z => { z.tg = { kpa: 101.3, o2: 21, co2: z.base.co2, t: z.base.t, rh: z.base.rh }; z.k = 0.1; }); shipLog("telemetry.scenario_changed · todo vuelve a valores normales", "l-ok"); shipDraw(true); } }, "Normalizar todo"));
+  tools.append(chips, el("button", { class: "btn", id: "sh-live", onclick: () => setLive(!ST.live), text: "Pausar medición" }));
+  buildMap(); buildTickets();
+  shipLog("Ejemplo inicial: el CO₂ del laboratorio ya venía subiendo.", "");
+  shipEvaluate(); ST.dirty = true; shipDraw(true); shipDrawTasks(); drawProto();
+  ST.timer = setInterval(shipTick, 1000);
+})();
+
+/* ---------- catálogo de tipos de incidencia ---------- */
+function reportType(k) {
+  const t = IT[k]; $("#nc").value = t.c; $("#nc").dispatchEvent(new Event("change")); $("#ntp").value = k; $("#ntp").dispatchEvent(new Event("change"));
+  $("#ship-tickets").scrollIntoView({ behavior: "smooth", block: "center" }); $("#nt").focus();
+}
+function drawCatalog() {
+  const box = $("#ship-catalog"); box.textContent = "";
+  const n = catSel === "ALL" ? D.itypes.length : D.itypes.filter(t => t.c === catSel).length;
+  box.append(el("h3", { style: "margin-bottom:4px", text: "Catálogo de tipos de incidencia" }), el("p", { class: "muted", style: "font-size:13px;margin-bottom:10px", text: `${D.itypes.length} tipos en ${D.icats.length} categorías. Es una propuesta: solo los marcados VERIFICADO salen de la norma. Los AUTO se detectan por regla y los MANUAL los reporta la tripulación.` }));
+  box.append(el("div", { class: "chips", style: "margin-bottom:10px" }, [["ALL", "Todas"], ...D.icats.map(c => [c.k, c.n])].map(([k, l]) => el("button", { class: "chip", "aria-pressed": String(catSel === k), onclick: () => { catSel = k; drawCatalog(); } }, l))));
+  const tb = el("table", { class: "tbl", style: "min-width:760px" }, el("thead", {}, el("tr", {}, ["Tipo", "Detección", "Severidad", "Evidencia", "Zonas típicas", ""].map(h => el("th", { text: h })))));
+  const body = el("tbody");
+  D.itypes.filter(t => catSel === "ALL" || t.c === catSel).forEach(t => body.append(el("tr", {},
+    el("td", {}, el("div", { text: t.n }), catSel === "ALL" ? el("div", { class: "muted", style: "font-size:12px", text: IC[t.c] }) : null),
+    el("td", {}, el("span", { class: "pill " + (t.det === "AUTO" ? "ch-EVT" : "ch-REST"), text: t.det }), t.rule ? el("div", { class: "mono muted", style: "font-size:11.5px", text: t.rule }) : null),
+    el("td", {}, sevEl(t.sev)), el("td", {}, evBadge(t.ev)), el("td", { style: "font-size:13px", text: t.zones.map(zlabel).join(", ") }),
+    el("td", {}, el("button", { class: "btn", onclick: () => reportType(t.k), text: "Reportar" })))));
+  tb.append(body);
+  box.append(el("div", { class: "scroll", style: "max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px" }, tb), el("div", { class: "muted", style: "font-size:12.5px;margin-top:6px", text: `${n} tipos mostrados.` }));
+}
+
+/* ---------- tareas: origen, tareas propias y plan desde Tierra ---------- */
+function snapshot() { GR.snap = TPL.filter(t => t.origin === "TIERRA").map(t => ({ id: t.id, title: t.title, st: tplStatus(t) })); GR.snapCrew = TPL.filter(t => t.origin === "TRIPULACION").map(t => ({ title: t.title, kind: t.kind, st: tplStatus(t) })); GR.snapT = ST.t; }
+function grLog(txt, cls) { GR.log.unshift({ t: "t+" + ST.t + " s", txt, cls: cls || "" }); GR.log = GR.log.slice(0, 30); const b = $("#gr-log"); if (!b) return; b.textContent = ""; GR.log.forEach(l => b.append(el("div", { class: l.cls, text: `${l.t} · ${l.txt}` }))); }
+function setLink(v) {
+  if (UX.link === v) return;
+  UX.link = v; const m = `groundlink.link_state_changed · ${v ? "UP" : "DOWN"} → realtime`;
+  grLog(m, v ? "l-ok" : "l-skip"); shipLog(m, v ? "l-ok" : "l-skip");
+  if (v) snapshot();
+  drawProto(true); drawGround();
+}
+function createCrewTask(kind, title, zone) {
+  TPL.push({ id: "t-c" + (GR.n++), kind, title, origin: "TRIPULACION", rec: "Una vez", zone: zone || null, active: true });
+  const m = `engagement.task_created · «${title}» (origen TRIPULACION) → realtime` + (UX.consent.tareas ? ", groundlink" : " (no sube a Tierra: sin consentimiento)");
+  shipLog(m, "l-ok"); grLog(m, "l-ok"); ST.dirty = true; refreshTasks(); drawGround();
+}
+function newTaskForm() {
+  const kind = el("select", { "aria-label": "Tipo de tarea" }, el("option", { value: "SALUD", text: "Salud" }), el("option", { value: "NAVE", text: "Nave" }));
+  const zone = el("select", { "aria-label": "Zona" }, el("option", { value: "", text: "Sin zona" }), ...ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
+  const title = el("input", { type: "text", placeholder: "Ej. Cambiar el filtro de la cocina", "aria-label": "Título de la tarea" });
+  return el("form", { class: "newtk", onsubmit: e => { e.preventDefault(); const t = title.value.trim(); if (!t) { title.focus(); return; } createCrewTask(kind.value, t, zone.value); title.value = ""; } },
+    el("h3", { text: "Nueva tarea propia" }), el("div", { class: "two" }, el("label", {}, "Tipo", kind), el("label", {}, "Zona", zone)), el("label", {}, "Título", title),
+    el("button", { class: "btn pri", type: "submit", text: "Crear tarea" }), el("span", { class: "muted", style: "font-size:12.5px", text: "Funciona sin enlace. Solo sube a Tierra si el consentimiento de tareas está activo." }));
+}
+
+/* ---------- plan desde Tierra (opción B) ---------- */
+function publishPlan() {
+  const test = $("#gr-test").value;
+  if (!GR.draft.length || (GR.sent && !GR.sent.acked)) return;
+  const changes = GR.draft.slice();
+  if (test === "zona") changes.push({ change: "NEW", kind: "NAVE", title: "Tarea con zona inexistente (prueba)", rec: "Diaria", zone: "__x" });
+  const ver = test === "repetida" ? GR.applied : GR.ver + 1;
+  if (test !== "repetida") GR.ver = ver;
+  GR.sent = { ver, changes, test, stage: UX.link ? "transito" : "cola", eta: GR.delay, acked: false, result: "", draftBack: GR.draft.slice() };
+  GR.draft = [];
+  grLog(`Tierra publica el plan v${ver} (${changes.length} cambios)` + (UX.link ? "" : ". Sin enlace: queda en cola"), UX.link ? "" : "l-skip");
+  drawGround();
+}
+function receivePlan(p) {
+  if (p.test === "corrupto") { p.stage = "rechazado"; p.eta = GR.delay; p.result = `Rechazado: el hash no coincide. Se conserva la v${GR.applied}.`; grLog(`groundlink.inbound_plan v${p.ver}: ${p.result}`, "l-bad"); shipLog(`groundlink.inbound_plan v${p.ver} rechazado (hash inválido)`, "l-bad"); return; }
+  if (p.ver <= GR.applied) { p.stage = "ignorado"; p.eta = GR.delay; p.result = `Ignorado: la v${p.ver} ya está aplicada (idempotente).`; grLog(`groundlink.inbound_plan v${p.ver}: ${p.result}`, "l-skip"); shipLog(`groundlink.inbound_plan v${p.ver} ignorado (repetido)`, "l-skip"); return; }
+  p.stage = "recibido"; p.eta = 1; grLog(`groundlink.ground_plan_received v${p.ver} → engagement, realtime`, "l-ok"); shipLog(`groundlink.ground_plan_received v${p.ver} → engagement, realtime`, "l-ok");
+}
+function applyPlan(p) {
+  const rej = []; let n = 0;
+  p.changes.forEach(c => {
+    if (c.change === "NEW") { if (c.zone === "__x") { rej.push(`«${c.title}»: la zona no existe`); return; } TPL.push({ id: "t-g" + (GR.n++), kind: c.kind, title: c.title, origin: "TIERRA", ver: p.ver, rec: c.rec, zone: c.zone || null }); n++; }
+    else if (c.change === "CANCEL") { const t = TPL.find(x => x.id === c.target); if (t) { t.active = false; n++; } else rej.push("cancelación: la plantilla no existe"); }
+  });
+  GR.applied = p.ver; p.rejected = rej; p.stage = "aplicado"; p.eta = GR.delay;
+  p.result = `Aplicado: ${n} cambios` + (rej.length ? `, ${rej.length} rechazado(s): ${rej.join("; ")}` : "") + ".";
+  GR.banner = `Plan v${p.ver} aplicado` + (rej.length ? " con rechazos" : "");
+  const m = `engagement.ground_plan_applied v${p.ver}: ${n} aplicados` + (rej.length ? `, ${rej.length} rechazados` : "") + " → groundlink, realtime";
+  grLog(m, rej.length ? "l-skip" : "l-ok"); shipLog(m, rej.length ? "l-skip" : "l-ok"); ST.dirty = true; refreshTasks();
+}
+function groundTick() {
+  const p = GR.sent;
+  if (p && !p.acked) {
+    if (p.stage === "cola") { if (UX.link) { p.stage = "transito"; p.eta = GR.delay; grLog(`Vuelve el enlace: el plan v${p.ver} sale hacia la nave`, "l-ok"); } }
+    else if (p.stage === "transito") { if (!UX.link) { p.stage = "cola"; grLog("Se cortó el enlace: el plan queda en cola", "l-skip"); } else if (--p.eta <= 0) receivePlan(p); }
+    else if (p.stage === "recibido") { if (--p.eta <= 0) applyPlan(p); }
+    else if (UX.link && --p.eta <= 0) {
+      p.acked = true; if (p.stage === "aplicado") p.stage = "confirmado";
+      if (p.stage === "rechazado") { GR.draft = p.draftBack; GR.ver = GR.applied; }
+      grLog(`Tierra recibe la confirmación del plan v${p.ver}`, "l-ok");
+    }
+  }
+  if (UX.link && UX.consent.tareas) snapshot();
+  drawGround();
+}
+const PIPE = ["Publicado", "En el enlace", "Recibido", "Aplicado", "Confirmado"];
+function pipeStep(p) { return { cola: 0, transito: 1, recibido: 2, aplicado: 3, confirmado: 4, rechazado: 2, ignorado: 2 }[p.stage]; }
+function drawGround() {
+  const st = $("#gr-status"); if (!st) return;
+  if (!$("#gr-pub")) return;
+  const lk = $("#gr-link"); if (lk) { lk.textContent = UX.link ? "Enlace activo · cortar" : "Sin enlace · restablecer"; lk.setAttribute("aria-pressed", String(UX.link)); }
+  const sig = JSON.stringify([UX.link, GR.sent && [GR.sent.stage, GR.sent.eta, GR.sent.acked, GR.sent.result], GR.draft, GR.ver, GR.applied, TPL.map(t => [t.id, t.active, tplStatus(t)]), GR.snap, GR.snapCrew, UX.consent.tareas, GR.banner, $("#gr-test") && $("#gr-test").value, UX.link ? 0 : ST.t - GR.snapT, UX.block, Object.keys(UX.done).length, taskItems(evalState(UX)).length]);
+  if (sig === GR.sig) return; GR.sig = sig;
+  st.textContent = "";
+  const p = GR.sent;
+  st.append(el("div", { class: "topbar" }, el("span", { class: "tag", text: UX.link ? "Enlace activo" : "Sin enlace" }), el("span", { class: "mono", style: "font-size:12.5px", text: `Última versión aplicada en la nave: v${GR.applied} · publicada: v${GR.ver}` })));
+  if (p) {
+    const cur = pipeStep(p), bad = p.stage === "rechazado" || p.stage === "ignorado";
+    st.append(el("div", { class: "pipe" }, PIPE.map((s, i) => el("span", { class: "s" + (i < cur || (i === cur && p.acked) ? " done" : i === cur ? " on" : "") + (bad && i === cur ? " bad" : ""), text: (i < cur ? "✓ " : "") + s }))),
+      el("div", { style: "font-size:13.5px", text: `Plan v${p.ver}: ` + (p.result || ({ cola: "en cola, esperando enlace", transito: `en tránsito (${p.eta} s)`, recibido: "recibido, aplicando" }[p.stage] || "")) + (p.stage === "aplicado" && !p.acked ? ` Confirmación en camino${UX.link ? ` (${p.eta} s)` : ", esperando enlace"}.` : "") }));
+  } else st.append(el("div", { class: "muted", style: "font-size:13px", text: "Aún no se publicó ninguna versión nueva." }));
+  const tpl = $("#gr-tpl"); tpl.textContent = "";
+  const stale = !UX.link ? ` · último dato hace ${ST.t - GR.snapT} s` : "";
+  tpl.append(el("h5", { class: "mono muted", style: "margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: "Plantillas de Tierra y su estado en la nave" + stale }));
+  const act = TPL.filter(t => t.origin === "TIERRA" && t.active !== false);
+  if (!act.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "No hay plantillas activas." }));
+  act.forEach(t => {
+    const s = (GR.snap.find(x => x.id === t.id) || {}).st, cancel = GR.draft.some(d => d.change === "CANCEL" && d.target === t.id);
+    tpl.append(el("div", { class: "task" }, el("div", { class: "grow" }, el("div", { class: "tt", text: t.title }), el("div", { class: "muted", style: "font-size:12.5px" }, `${t.kind} · ${t.rec} · ${t.zone ? zname(t.zone) : "toda la nave"} · v${t.ver}`), el("div", { style: "font-size:12.5px;margin-top:2px" }, UX.consent.tareas ? (s || "sin datos") : "Sin datos: la tripulación no comparte tareas")),
+      el("button", { class: "btn", disabled: cancel, onclick: () => { GR.draft.push({ change: "CANCEL", target: t.id, title: t.title }); drawGround(); }, text: cancel ? "Cancelación en borrador" : "Cancelar" })));
+  });
+  tpl.append(el("h5", { class: "mono muted", style: "margin:14px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: `Borrador de la v${GR.ver + 1}` }));
+  if (!GR.draft.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "Sin cambios. Añade una plantilla o cancela una." }));
+  GR.draft.forEach((d, i) => tpl.append(el("div", { class: "task" }, el("div", { class: "grow" }, el("div", { class: "tt" }, el("span", { class: "tag", text: d.change === "NEW" ? "NUEVA" : "CANCELAR" }), " " + d.title), d.change === "NEW" ? el("div", { class: "muted", style: "font-size:12.5px", text: `${d.kind} · ${d.rec} · ${d.zone ? zname(d.zone) : "toda la nave"}` }) : null), el("button", { class: "btn", onclick: () => { GR.draft.splice(i, 1); drawGround(); }, text: "Quitar" }))));
+  const inflight = GR.sent && !GR.sent.acked, pub = $("#gr-pub");
+  pub.disabled = !GR.draft.length || !!inflight;
+  pub.textContent = inflight ? `Plan v${GR.sent.ver} en curso` : `Publicar plan v${$("#gr-test").value === "repetida" ? GR.applied : GR.ver + 1} (${GR.draft.length} cambios)`;
+  if (UX.consent.tareas) { tpl.append(el("h5", { class: "mono muted", style: "margin:14px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: "Tareas propias de la tripulación (compartidas)" })); if (!GR.snapCrew.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "Ninguna." })); GR.snapCrew.forEach(c => tpl.append(el("div", { class: "kv", style: "padding:4px 0" }, el("span", { text: c.title }), el("span", { class: "mono", style: "font-size:12.5px", text: c.st })))); }
+  else tpl.append(el("div", { class: "muted", style: "font-size:13px;margin-top:12px", text: "La tripulación no comparte sus tareas propias." }));
+  // lado nave
+  const sh = $("#gr-ship"); sh.textContent = "";
+  const cnt = o => taskItems(evalState(UX)).filter(i => i.origin === o).length;
+  sh.append(el("h3", { style: "margin-bottom:4px", text: "Lo que ve la nave" }), el("div", { class: "banner", style: "margin:8px 0", text: GR.banner + (UX.link ? "" : " · sin enlace: sigue el último plan") }),
+    el("div", { class: "kv" }, el("span", { text: "Tareas de Tierra" }), el("b", { class: "mono", text: cnt("TIERRA") })), el("div", { class: "kv" }, el("span", { text: "Tareas del sistema" }), el("b", { class: "mono", text: cnt("SISTEMA") })), el("div", { class: "kv" }, el("span", { text: "Tareas propias" }), el("b", { class: "mono", text: cnt("TRIPULACION") })),
+    el("div", { class: "kv" }, el("span", { text: "Bloqueadas con motivo" }), el("b", { class: "mono", text: Object.keys(UX.block).filter(k => UX.block[k]).length })),
+    el("p", { class: "muted", style: "font-size:13px;margin-top:10px", text: "Crea o bloquea tareas en «Tareas diarias de la tripulación», en el panel de la nave, o en la pestaña Tareas del día del prototipo. Lo que cambies aparece aquí y en el panel de Tierra si el enlace está activo y el consentimiento de tareas lo permite." }));
+}
+(function initGround() {
+  const tools = $("#gr-tools");
+  const lk = el("button", { class: "btn", id: "gr-link", "aria-pressed": "true", onclick: () => setLink(!UX.link) });
+  tools.append(el("span", { class: "muted", style: "font-size:13px", text: "Enlace:" }), lk, el("span", { class: "muted", style: "font-size:13px;margin-left:8px", text: "Demora de señal:" }),
+    ...[2, 8, 20].map(s => el("button", { class: "chip", "data-d": s, "aria-pressed": String(s === GR.delay), onclick: e => { GR.delay = s; tools.querySelectorAll("[data-d]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.d === s))); } }, s + " s")),
+    el("span", { class: "muted", style: "font-size:12.5px", text: "Valores de demostración. La demora real a Marte no está verificada." }));
+  const form = $("#gr-form");
+  const kind = el("select", { "aria-label": "Tipo" }, el("option", { value: "SALUD", text: "Salud" }), el("option", { value: "NAVE", text: "Nave" }));
+  const zone = el("select", { "aria-label": "Zona" }, el("option", { value: "", text: "Toda la nave" }), ...ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
+  const rec = el("select", { "aria-label": "Recurrencia" }, ["Diaria", "Semanal", "Una vez"].map(r => el("option", { value: r, text: r })));
+  const title = el("input", { type: "text", placeholder: "Ej. Revisar el filtro de la cocina", "aria-label": "Título de la plantilla" });
+  form.append(el("form", { class: "newtk", onsubmit: e => { e.preventDefault(); const t = title.value.trim(); if (!t) { title.focus(); return; } GR.draft.push({ change: "NEW", kind: kind.value, title: t, rec: rec.value, zone: zone.value || null }); title.value = ""; drawGround(); } },
+    el("h3", { text: "Nueva plantilla en el borrador" }), el("div", { class: "two" }, el("label", {}, "Tipo", kind), el("label", {}, "Recurrencia", rec)), el("label", {}, "Zona", zone), el("label", {}, "Título", title), el("button", { class: "btn", type: "submit", text: "Añadir al borrador" })),
+    el("div", { class: "newtk" }, el("label", {}, "Prueba al publicar", el("select", { id: "gr-test", onchange: () => drawGround() }, [["", "Ninguna (envío normal)"], ["corrupto", "Plan corrupto"], ["repetida", "Reenviar versión ya aplicada"], ["zona", "Un ítem con zona inexistente"]].map(([v, l]) => el("option", { value: v, text: l })))), el("button", { class: "btn pri", id: "gr-pub", onclick: () => publishPlan(), text: "Publicar" })));
+  const rules = $("#gr-rules");
+  rules.append(el("h3", { style: "margin-bottom:8px", text: "Reglas de conflicto" }), el("ul", { class: "rellist", style: "display:grid;gap:8px;font:13.5px/1.5 var(--font-body);color:var(--ink)" }, [
+    ["Plan nuevo (v12 sobre v11)", "Se aplica en una transacción. Lo completado hoy no se toca."],
+    ["Versión menor o repetida", "Se ignora. Es idempotente."],
+    ["Plan corrupto", "Se rechaza completo con motivo y se conserva el anterior."],
+    ["Un ítem inválido", "Se rechaza solo ese ítem. El resto se aplica."],
+    ["Tierra cancela algo ya completado", "Queda completado. La cancelación rige para el futuro."],
+    ["La tripulación no puede cumplir una tarea de Tierra", "La bloquea con motivo. No se borra. Tierra se entera al reconectar."],
+    ["Sin enlace", "Sigue el último plan. Las tareas propias siguen creándose."],
+    ["Tareas de incidente", "Son locales y siempre prevalecen. Tierra no las borra."],
+  ].map(([a, b]) => el("li", {}, el("b", { text: a + ". " }), b))));
+  snapshot(); drawCatalog(); drawGround();
+  grLog("Plan v11 aplicado. Tierra y la nave están sincronizadas.", "l-ok");
+  $("#ship-tasks-form").append(newTaskForm());
+  setInterval(groundTick, 1000);
+})();
+
+/* ---------- plan ---------- */
+const RM = store("rm-v1") || {};
+const rmf = { P0: true, P1: true, P2: true };
+const rmt = $("#rm-tools");
+const pbar = el("div", { class: "bar" }, el("i")), pn = el("span", { class: "count" });
+rmt.append(el("span", { class: "muted", style: "font-size:13px", text: "Mostrar:" }), ...["P0", "P1", "P2"].map(p => el("button", { class: "chip", "aria-pressed": "true", onclick: e => { rmf[p] = !rmf[p]; e.currentTarget.setAttribute("aria-pressed", String(rmf[p])); drawRM(); } }, p)), pbar, pn);
+function drawRM() {
+  const box = $("#rm"); box.textContent = "";
+  let tot = 0, dn = 0, hs = 0;
+  D.roadmap.filter(p => rmf[p.prio]).forEach(p => {
+    hs += p.h;
+    const ph = el("div", { class: "phase" }, el("div", { class: "ph" }, el("span", { class: "prio prio-" + p.prio, text: p.prio }), el("b", { text: p.id + " · " + p.name }), p.rag ? el("span", { class: "tag", text: "RAG" }) : null, el("span", { class: "h", text: p.h + " h" })), el("div", { style: "display:flex;gap:6px;flex-wrap:wrap" }, p.a ? el("span", { class: "devtag dev-A", text: "A " + p.a + " h" }) : null, p.b ? el("span", { class: "devtag dev-B", text: "B " + p.b + " h" }) : null));
+    p.tasks.forEach((t, i) => { const k = p.id + "-" + i; tot++; if (RM[k]) dn++; ph.append(el("label", {}, el("input", { type: "checkbox", checked: !!RM[k], onchange: e => { RM[k] = e.target.checked; store("rm-v1", RM); drawRM(); } }), t)); });
+    box.append(ph);
+  });
+  pbar.firstChild.style.width = (tot ? dn / tot * 100 : 0) + "%";
+  pn.textContent = `${dn} de ${tot} entregables · ${hs} h`;
+}
+drawRM();
+const rk = $("#risks");
+rk.append(el("tr", {}, ["Riesgo", "Probabilidad", "Mitigación"].map(h => el("th", { text: h }))));
+D.risks.forEach(r => rk.append(el("tr", {}, el("td", { text: r.r }), el("td", { text: r.p }), el("td", { text: r.m }))));
+D.open.forEach((o, i) => $("#open").append(el("li", {}, el("span", { class: "n", text: String(i + 1).padStart(2, "0") }), el("div", {}, el("b", { text: o.t }), el("span", { text: o.d })))));
+
+/* ---------- reparto entre dos desarrolladores ---------- */
+const DEVC = { A: "var(--dev-a)", B: "var(--dev-b)" };
+const SPL = { sel: "F7", lane: "B", dim: false, rag: false };
+const sumH = (dev, pred) => D.roadmap.filter(pred).reduce((a, p) => a + p[dev === "A" ? "a" : "b"], 0);
+function drawMeters() {
+  const box = $("#sp-meters"); box.textContent = "";
+  const maxT = Math.max(sumH("A", () => true), sumH("B", () => true));
+  ["A", "B"].forEach(dv => {
+    const tot = sumH(dv, () => true), p0 = sumH(dv, p => p.prio === "P0");
+    box.append(el("div", { class: "meter" }, el("div", {}, devTag(dv), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: D.devs[dv].split(" · ")[1] })),
+      el("div", {}, el("b", { text: tot }), el("span", { class: "muted", text: " h en total" })),
+      el("div", { class: "mbar", role: "img", "aria-label": `${dv}: ${p0} h en P0 de ${tot} h` }, el("i", { style: `width:${tot / maxT * 100}%;background:color-mix(in srgb, ${DEVC[dv]} 35%, transparent)` }), el("i", { style: `width:${p0 / maxT * 100}%;background:${DEVC[dv]}` })),
+      el("span", { class: "muted", style: "font-size:12.5px", text: `${p0} h en el corte P0 · ${tot - p0} h en P1 y P2` })));
+  });
+  const rag = D.roadmap.filter(p => p.rag).reduce((a, p) => a + p.b, 0);
+  box.append(el("div", { class: "meter" }, el("div", {}, el("span", { class: "tag", text: "RAG" }), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: "todo en Dev B" })), el("div", {}, el("b", { text: rag }), el("span", { class: "muted", text: " h en " + D.roadmap.filter(p => p.rag).length + " fases" })), el("span", { class: "muted", style: "font-size:12.5px", text: D.roadmap.filter(p => p.rag).map(p => p.id).join(" · ") + ". Cabe en la holgura de B antes de la entrega." })));
+}
+function drawTimeline() {
+  const sc = D.schedule, all = [...sc.blocks.A, ...sc.blocks.B], maxH = Math.max(...all.map(b => b.end), ...sc.milestones.map(m => m.at));
+  const px = 30, padL = 74, W = padL + maxH * px + 24, laneH = 70, laneY = { A: 64, B: 64 + laneH + 18 }, H = laneY.B + laneH + 30;
+  const svg = sv("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Línea de tiempo de Dev A y Dev B con los hitos de integración" });
+  svg.append(sv("defs", {}, sv("pattern", { id: "ragpat", width: 8, height: 8, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, sv("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: "var(--ink)", "stroke-width": 1.6, opacity: 0.35 }))));
+  for (let h = 0; h <= maxH + 0.01; h += 4) { const x = padL + h * px; svg.append(sv("line", { x1: x, y1: 40, x2: x, y2: H - 22, stroke: "var(--line)" }), sv("text", { x, y: H - 6, "text-anchor": "middle", style: "font:11px var(--font-mono);fill:var(--muted)", text: h + " h" })); }
+  ["A", "B"].forEach(dv => svg.append(sv("rect", { x: 0, y: laneY[dv], width: padL - 8, height: laneH, rx: 6, fill: `color-mix(in srgb, ${DEVC[dv]} 22%, var(--surface))`, stroke: DEVC[dv] }), sv("text", { x: (padL - 8) / 2, y: laneY[dv] + laneH / 2 + 5, "text-anchor": "middle", "font-weight": 700, text: "Dev " + dv })));
+  all.forEach(b => {
+    const x = padL + b.start * px, w = b.h * px - 3, y = laneY[b.lane], col = DEVC[b.lane], p1 = b.prio !== "P0";
+    const dim = (SPL.dim && p1) || (SPL.rag && !b.rag);
+    const g = sv("g", { class: "blk" + (SPL.sel === b.f && SPL.lane === b.lane ? " sel" : ""), tabindex: 0, role: "button", "aria-label": `${b.f} ${b.name}, Dev ${b.lane}, ${b.h} horas`, opacity: dim ? 0.25 : 1, onclick: () => { SPL.sel = b.f; SPL.lane = b.lane; drawTimeline(); drawSplitDetail(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); SPL.sel = b.f; SPL.lane = b.lane; drawTimeline(); drawSplitDetail(); } } });
+    g.append(sv("rect", { class: "bx", x, y, width: w, height: laneH, rx: 6, fill: `color-mix(in srgb, ${col} ${p1 ? 14 : 30}%, var(--surface))`, stroke: col, "stroke-width": b.rag ? 3 : 1.6, "stroke-dasharray": p1 ? "5 3" : null }));
+    if (b.rag) g.append(sv("rect", { x, y, width: w, height: laneH, rx: 6, fill: "url(#ragpat)", "pointer-events": "none" }));
+    g.append(sv("text", { x: x + 7, y: y + 20, "font-size": 13, "font-weight": 700, text: b.f }));
+    const chars = Math.floor((w - 12) / 6.3);
+    if (chars > 6) { const words = b.name.split(" "); let l1 = "", l2 = ""; words.forEach(wd => { if ((l1 + " " + wd).trim().length <= chars && !l2) l1 = (l1 + " " + wd).trim(); else l2 = (l2 + " " + wd).trim(); }); g.append(sv("text", { x: x + 7, y: y + 37, "font-size": 11, text: l1 }), l2 ? sv("text", { x: x + 7, y: y + 50, "font-size": 11, text: l2.length > chars ? l2.slice(0, chars - 1) + "…" : l2 }) : null); }
+    g.append(sv("text", { x: x + 7, y: y + laneH - 6, "font-size": 10.5, style: "font-family:var(--font-mono);fill:var(--muted)", text: b.h + " h" }));
+    svg.append(g);
+  });
+  sc.milestones.forEach((m, i) => { const x = padL + m.at * px, top = 14 + (i % 2) * 13; svg.append(sv("g", { class: "ms" }, sv("line", { x1: x, y1: top + 4, x2: x, y2: H - 22, stroke: "var(--ink)", "stroke-dasharray": "3 3", opacity: 0.55 }), sv("circle", { cx: x, cy: top - 2, r: 4, fill: "var(--ink)" }), sv("text", { x: x + 7, y: top + 2, text: m.id }), sv("title", { text: `${m.id} · ${m.name} (hora ${m.at})` }))); });
+  const box = $("#sp-time"); box.textContent = ""; box.append(svg);
+}
+function drawSplitDetail() {
+  const b = [...D.schedule.blocks.A, ...D.schedule.blocks.B].find(x => x.f === SPL.sel && x.lane === SPL.lane), box = $("#sp-detail"); box.textContent = "";
+  if (!b) return;
+  const other = [...D.schedule.blocks.A, ...D.schedule.blocks.B].find(x => x.f === b.f && x.lane !== b.lane), ms = D.schedule.milestones.filter(m => m.phase === b.f), deps = D.depends[b.f] || [];
+  box.append(el("div", { class: "zhead" }, el("div", {}, el("h3", { text: `${b.f} · ${b.name}` }), el("span", { class: "muted", style: "font-size:13px", text: `Horas ${b.start} a ${b.end} de su carril · ${b.h} h` })), el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, devTag(b.lane), el("span", { class: "prio prio-" + b.prio, text: b.prio }), b.rag ? el("span", { class: "tag", text: "RAG" }) : null, other ? el("span", { class: "tag", text: `La otra parte la hace Dev ${other.lane} (${other.h} h)` }) : null)));
+  box.append(el("div", { class: "jinfo", style: "grid-template-columns:repeat(auto-fit,minmax(240px,1fr))" },
+    el("div", {}, el("h4", { text: "Entregables de la fase" }), el("ul", { style: "margin:0;padding-left:18px;font-size:14px;display:grid;gap:3px" }, b.tasks.map(t => el("li", { text: t })))),
+    el("div", {}, el("h4", { text: "Se apoya en" }), el("p", { text: b.mock || (deps.length ? "Las fases " + deps.join(", ") + " del plan." : "Nada externo.") }), deps.length ? el("p", { class: "muted", style: "font-size:13px;margin-top:4px", text: "Depende de: " + deps.join(", ") }) : null),
+    el("div", {}, el("h4", { text: "Hito que cierra" }), ms.length ? ms.map(m => el("p", {}, el("b", { text: m.id + " · " + m.name + ". " }), m.what)) : el("p", { class: "muted", text: "Ninguno." }))));
+}
+(function initSplit() {
+  drawMeters();
+  const tools = $("#sp-tools");
+  tools.append(el("label", { class: "chk2" }, el("input", { type: "checkbox", onchange: e => { SPL.dim = e.target.checked; drawTimeline(); } }), "Atenuar P1 y P2"), el("label", { class: "chk2" }, el("input", { type: "checkbox", onchange: e => { SPL.rag = e.target.checked; drawTimeline(); } }), "Resaltar el RAG"),
+    el("span", { class: "count", text: "Rayado = RAG · borde punteado = P1 o P2 · líneas = hitos de integración" }));
+  drawTimeline(); drawSplitDetail();
+  const og = $("#sp-own");
+  D.modules.forEach(m => og.append(el("div", { class: "ownitem", style: `--oc:${DEVC[D.owner[m.key]]}` }, el("span", { text: m.name }), devTag(D.owner[m.key]))));
+  og.append(el("div", { class: "ownitem", style: `--oc:${DEVC.B}` }, el("span", { text: "Interfaz (SPA React)" }), devTag("B")));
+  const own = D.owner, cx = $("#sp-cross");
+  const evx = D.rows.filter(r => r.ch === "EVT").map(r => ({ r, rec: r.to.filter(x => own[x] !== own[r.from_]) })).filter(x => x.rec.length);
+  const rdx = D.sync.filter(r => own[r.a] !== own[r.b]);
+  const tb = (heads, rows) => el("div", { class: "panel scroll", style: "padding:0" }, el("table", { class: "rk" }, el("tr", {}, heads.map(h => el("th", { text: h }))), rows));
+  cx.append(el("div", {}, el("h4", { style: "margin:0 0 6px;font:500 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)", text: "Eventos que cruzan de un desarrollador al otro" }),
+    tb(["Evento", "Emisor", "Receptores del otro"], evx.map(x => el("tr", {}, el("td", { class: "mono", text: x.r.route }), el("td", {}, devTag(own[x.r.from_]), " " + NAME[x.r.from_]), el("td", {}, x.rec.map(k => el("span", { style: "display:inline-flex;gap:4px;align-items:center;margin-right:10px" }, devTag(own[k]), NAME[k]))))))),
+    el("div", {}, el("h4", { style: "margin:14px 0 6px;font:500 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)", text: "Lecturas síncronas entre desarrolladores" }),
+      tb(["Quien lee", "De quién", "Fachada", "Para qué"], rdx.map(r => el("tr", {}, el("td", {}, devTag(own[r.a]), " " + NAME[r.a]), el("td", {}, devTag(own[r.b]), " " + NAME[r.b]), el("td", { class: "mono", text: r.port }), el("td", { text: r.what }))))));
+  const api = { REST: 0, GQL: 0, WS: 0 }; D.rows.forEach(r => { if (api[r.ch] !== undefined && own[r.mod] === "A" && (r.from_ === "ui" || r.to.includes("ui"))) api[r.ch]++; });
+  cx.append(el("p", { class: "muted", style: "font-size:13.5px", text: `La interfaz de B consume del núcleo de A: ${api.GQL} operaciones GraphQL, ${api.WS} mensajes WebSocket y ${api.REST} rutas REST. Se congelan en el hito I0 como esquema y se usan con tipos generados.` }));
+  D.splitRules.forEach((r, i) => $("#sp-rules").append(el("li", {}, el("span", { class: "n", text: String(i + 1).padStart(2, "0") }), el("div", {}, el("b", { text: r.t }), el("span", { text: r.d })))));
+  const rg = $("#sp-rag");
+  rg.append(el("ul", { style: "margin:0 0 12px;padding-left:18px;font-size:14px;display:grid;gap:4px" }, D.ragScope.map(t => el("li", { text: t.replace(/`/g, "") }))),
+    el("p", { style: "font-size:14px;margin-bottom:6px" }, el("b", { text: "Qué necesita de A: " }), "el evento alert_raised y la fachada RuleQuery, el bus de eventos (en memoria al principio) y el gateway para registrar sus resolvers."),
+    el("p", { style: "font-size:14px;margin-bottom:6px" }, el("b", { text: "Qué entrega a A: " }), "el evento recommendation_ready y la fachada ActionCatalogQuery."),
+    el("p", { class: "muted", style: "font-size:13.5px", text: "Si B se atrasa, el adaptador demo de Conocimiento sigue funcionando y el resto no se detiene. Siguen pendientes las decisiones del RAG: solo pasajes con cita o también redacción con Ollama, y si n8n sigue." }));
+  const rk = $("#sp-risks"); rk.append(el("tr", {}, ["Riesgo", "Probabilidad", "Mitigación"].map(h => el("th", { text: h }))));
+  D.splitRisks.forEach(r => rk.append(el("tr", {}, el("td", { text: r.r }), el("td", { text: r.p }), el("td", { text: r.m }))));
+})();
+</script>

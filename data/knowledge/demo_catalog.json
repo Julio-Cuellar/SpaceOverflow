@@ -1,0 +1,451 @@
+{
+  "_nota": "Catálogo de DEMOSTRACIÓN de Dev B (F8). Toda salida se etiqueta DEMO. Los textos de acción son de demostración; las citas indican la fuente de la regla cuando existe. Una regla por cada una del catálogo de Monitoreo (rules/catalog/monitoring.json); tests/knowledge/test_rule_coverage.py las cruza.",
+  "passages": [
+    {
+      "document_code": "OCHMO-TB-004 CO₂",
+      "requirement_ref": null,
+      "page": null,
+      "excerpt": "Dolor de cabeza entre 2.8 y 4.5 mmHg de ppCO₂; fatiga, mal sueño y náuseas por encima de 4.5 mmHg.",
+      "evidence_state": "TB",
+      "keywords": ["cabeza", "dolor", "co2", "ppco2", "fatiga", "sueno", "nauseas"]
+    },
+    {
+      "document_code": "OCHMO-TB-003 atmósfera habitable",
+      "requirement_ref": null,
+      "page": null,
+      "excerpt": "La hipoxia puede causar cambios mentales a veces imperceptibles para el propio astronauta, visión reducida, fatiga, náuseas, dolor de cabeza, mareo e hiperventilación.",
+      "evidence_state": "VERIFICADO",
+      "keywords": ["hipoxia", "cabeza", "mareo", "vision", "fatiga", "nauseas"]
+    },
+    {
+      "document_code": "OCHMO-TB-044 operaciones médicas",
+      "requirement_ref": null,
+      "page": null,
+      "excerpt": "El mareo espacial dura unos 3 días en promedio.",
+      "evidence_state": "TB",
+      "keywords": ["mareo", "espacial", "dias"]
+    }
+  ],
+  "rules": [
+    {
+      "key": "env-co2-pre",
+      "text": "Aviso previo: la ppCO₂ alcanza o supera 2,5 mmHg (promedio de 1 h).",
+      "action_keys": ["revisar_ventilacion_y_filtros", "medir_co2_en_zonas_locales"],
+      "citations": [
+        {
+          "document_code": "OCHMO-TB-004 CO₂",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "TB-004 (límite de 2,5 mmHg a 7 días, usado como pre-alerta)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-co2-1h",
+      "text": "El promedio de 1 hora de ppCO₂ supera el límite de 3 mmHg de la norma.",
+      "action_keys": ["revisar_ventilacion_y_filtros", "medir_co2_en_zonas_locales"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6004",
+          "page": null,
+          "excerpt": "ppCO2 promedio de 1 h ≤ 3 mmHg",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-co2-crit",
+      "text": "La ppCO₂ supera 4,5 mmHg (promedio de 1 h).",
+      "action_keys": ["revisar_ventilacion_y_filtros", "medir_co2_en_zonas_locales"],
+      "citations": [
+        {
+          "document_code": "OCHMO-TB-004 CO₂",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "TB-004 (fatiga y náuseas sobre 4,5 mmHg)",
+          "evidence_state": "TB"
+        }
+      ]
+    },
+    {
+      "key": "env-pio2-low-pre",
+      "text": "Aviso previo: la PIO₂ baja de 145 mmHg.",
+      "action_keys": ["revisar_suministro_o2_y_presion", "reducir_esfuerzo_fisico"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6003",
+          "page": null,
+          "excerpt": "V2 6003 y Tabla 6.2-1 (banda propuesta por el equipo)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-pio2-low",
+      "text": "La PIO₂ baja de 127 mmHg.",
+      "action_keys": ["revisar_suministro_o2_y_presion", "reducir_esfuerzo_fisico"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "Tabla 6.2-1 (hipoxia leve, límite inferior)",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-pio2-abs-low",
+      "text": "La PIO₂ es igual o inferior a 122 mmHg (promedio de 1 h).",
+      "action_keys": ["revisar_suministro_o2_y_presion", "reducir_esfuerzo_fisico"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "Tabla 6.2-1 (límite absoluto, promedio de 1 h)",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-pio2-high-pre",
+      "text": "Aviso previo: la PIO₂ supera 155 mmHg.",
+      "action_keys": ["revisar_suministro_o2_y_presion", "verificar_composicion_atmosfera"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6003",
+          "page": null,
+          "excerpt": "V2 6003 y Tabla 6.2-1 (banda propuesta por el equipo)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-pio2-high",
+      "text": "La PIO₂ supera 356 mmHg.",
+      "action_keys": ["revisar_suministro_o2_y_presion", "verificar_composicion_atmosfera"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "Tabla 6.2-1 (hiperoxia, límite superior indefinido)",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-ptotal-low",
+      "text": "La presión total baja de 34,5 kPa.",
+      "action_keys": ["verificar_estanqueidad_y_sellos", "comprobar_presion_en_zonas"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6006",
+          "page": null,
+          "excerpt": "V2 6006",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-ptotal-high",
+      "text": "La presión total supera 103 kPa.",
+      "action_keys": ["verificar_estanqueidad_y_sellos", "comprobar_presion_en_zonas"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6006",
+          "page": null,
+          "excerpt": "V2 6006",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-dpdt",
+      "text": "La presión baja más rápido que el límite de 13.5 psi/min.",
+      "action_keys": ["verificar_estanqueidad_y_sellos", "verificar_integridad_escotillas_y_sellos", "aislar_zona"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6007",
+          "page": null,
+          "excerpt": "Velocidad de cambio de presión ≤ 13.5 psi/min si el cambio supera 1.0 psi",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-n2",
+      "text": "El diluyente (N₂) está por debajo del 30 % de la atmósfera.",
+      "action_keys": ["verificar_composicion_atmosfera", "revisar_sensor_n2"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6002",
+          "page": null,
+          "excerpt": "Gas diluyente ≥ 30%",
+          "evidence_state": "VERIFICADO"
+        }
+      ]
+    },
+    {
+      "key": "env-rh-low-pre",
+      "text": "Aviso previo: la humedad relativa baja de 30 %.",
+      "action_keys": ["revisar_condensador_y_ventilacion", "comprobar_sensor_humedad"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6013",
+          "page": null,
+          "excerpt": "V2 6013 (zona de desempeño, aproximada)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-rh-low",
+      "text": "La humedad relativa baja de 25 %.",
+      "action_keys": ["revisar_condensador_y_ventilacion", "comprobar_sensor_humedad"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6012",
+          "page": null,
+          "excerpt": "V2 6012 (límite de salud, aproximado)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-rh-high-pre",
+      "text": "Aviso previo: la humedad relativa supera 60 %.",
+      "action_keys": ["revisar_condensador_y_ventilacion", "comprobar_sensor_humedad"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6013",
+          "page": null,
+          "excerpt": "V2 6013 (zona de desempeño, aproximada)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-rh-high",
+      "text": "La humedad relativa supera 75 %.",
+      "action_keys": ["revisar_condensador_y_ventilacion", "comprobar_sensor_humedad"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6012",
+          "page": null,
+          "excerpt": "V2 6012 (límite de salud, aproximado)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-t-low-pre",
+      "text": "Aviso previo: la temperatura baja de 20 °C.",
+      "action_keys": ["revisar_lazo_termico_y_ventilacion", "comprobar_sensor_temperatura"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6013",
+          "page": null,
+          "excerpt": "V2 6013 (zona de desempeño, aproximada)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-t-low",
+      "text": "La temperatura baja de 18 °C.",
+      "action_keys": ["revisar_lazo_termico_y_ventilacion", "comprobar_sensor_temperatura"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6012",
+          "page": null,
+          "excerpt": "V2 6012 (límite de salud, aproximado)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-t-high-pre",
+      "text": "Aviso previo: la temperatura supera 25 °C.",
+      "action_keys": ["revisar_lazo_termico_y_ventilacion", "comprobar_sensor_temperatura"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6013",
+          "page": null,
+          "excerpt": "V2 6013 (zona de desempeño, aproximada)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-t-high",
+      "text": "La temperatura supera 27 °C.",
+      "action_keys": ["revisar_lazo_termico_y_ventilacion", "comprobar_sensor_temperatura"],
+      "citations": [
+        {
+          "document_code": "NASA-STD-3001 Vol. 2 Rev F",
+          "requirement_ref": "V2 6012",
+          "page": null,
+          "excerpt": "V2 6012 (límite de salud, aproximado)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-trend-co2",
+      "text": "La ppCO₂ cambia de forma sostenida frente a la línea base de la zona (a partir de 0,6 mmHg). Solo es un aviso de atención.",
+      "action_keys": ["revisar_sensor_y_tendencia", "revisar_tendencia_en_la_zona"],
+      "citations": [
+        {
+          "document_code": "Demostración (sin requisito)",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "regla de tendencia sin fuente (cambio sostenido frente a la línea base)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-trend-rh",
+      "text": "La humedad relativa cambia de forma sostenida frente a la línea base de la zona (a partir de 6 %). Solo es un aviso de atención.",
+      "action_keys": ["revisar_sensor_y_tendencia", "revisar_tendencia_en_la_zona"],
+      "citations": [
+        {
+          "document_code": "Demostración (sin requisito)",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "regla de tendencia sin fuente (cambio sostenido frente a la línea base)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-trend-t",
+      "text": "La temperatura cambia de forma sostenida frente a la línea base de la zona (a partir de 1,5 °C). Solo es un aviso de atención.",
+      "action_keys": ["revisar_sensor_y_tendencia", "revisar_tendencia_en_la_zona"],
+      "citations": [
+        {
+          "document_code": "Demostración (sin requisito)",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "regla de tendencia sin fuente (cambio sostenido frente a la línea base)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-trend-pio2",
+      "text": "La PIO₂ cambia de forma sostenida frente a la línea base de la zona (a partir de 6 mmHg). Solo es un aviso de atención.",
+      "action_keys": ["revisar_sensor_y_tendencia", "revisar_tendencia_en_la_zona"],
+      "citations": [
+        {
+          "document_code": "Demostración (sin requisito)",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "regla de tendencia sin fuente (cambio sostenido frente a la línea base)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    },
+    {
+      "key": "env-trend-pressure",
+      "text": "La presión total cambia de forma sostenida frente a la línea base de la zona (a partir de 4 kPa). Solo es un aviso de atención.",
+      "action_keys": ["revisar_sensor_y_tendencia", "revisar_tendencia_en_la_zona"],
+      "citations": [
+        {
+          "document_code": "Demostración (sin requisito)",
+          "requirement_ref": null,
+          "page": null,
+          "excerpt": "regla de tendencia sin fuente (cambio sostenido frente a la línea base)",
+          "evidence_state": "DEMO"
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "revisar_ventilacion_y_filtros": {
+      "title": "Revisar ventilación y filtros de CO₂",
+      "description": "Comprobar que los ventiladores y los filtros de CO₂ funcionan y no están saturados."
+    },
+    "medir_co2_en_zonas_locales": {
+      "title": "Medir CO₂ en zonas locales",
+      "description": "Usar un sensor portátil en la zona donde sube el valor."
+    },
+    "revisar_suministro_o2_y_presion": {
+      "title": "Revisar suministro de O₂ y presión",
+      "description": "Confirmar el flujo de O₂ y la presión total de la cabina."
+    },
+    "reducir_esfuerzo_fisico": {
+      "title": "Reducir el esfuerzo físico",
+      "description": "Bajar la actividad mientras se verifica la oxigenación."
+    },
+    "verificar_sensores_y_estanqueidad": {
+      "title": "Verificar sensores y estanqueidad",
+      "description": "Revisar que los sensores de presión leen bien y que no hay fugas."
+    },
+    "comprobar_presion_en_zonas": {
+      "title": "Comprobar la presión en otras zonas",
+      "description": "Contrastar la lectura con sensores de otras zonas."
+    },
+    "verificar_integridad_escotillas_y_sellos": {
+      "title": "Verificar escotillas y sellos",
+      "description": "Inspeccionar escotillas y sellos de la zona afectada."
+    },
+    "aislar_zona": {
+      "title": "Aislar la zona",
+      "description": "Cerrar la zona afectada hasta confirmar la causa."
+    },
+    "verificar_composicion_atmosfera": {
+      "title": "Verificar la composición de la atmósfera",
+      "description": "Comprobar el porcentaje de diluyente y de O₂."
+    },
+    "revisar_sensor_n2": {
+      "title": "Revisar el sensor de N₂",
+      "description": "Comprobar la calibración del sensor de diluyente."
+    },
+    "revisar_condensador_y_ventilacion": {
+      "title": "Revisar el condensador y la ventilación",
+      "description": "Inspeccionar el condensador y el flujo de aire."
+    },
+    "comprobar_sensor_humedad": {
+      "title": "Comprobar el sensor de humedad",
+      "description": "Verificar la lectura contra un instrumento de referencia."
+    },
+    "revisar_lazo_termico_y_ventilacion": {
+      "title": "Revisar el lazo térmico y la ventilación",
+      "description": "Comprobar el lazo térmico y el flujo de aire."
+    },
+    "comprobar_sensor_temperatura": {
+      "title": "Comprobar el sensor de temperatura",
+      "description": "Verificar la lectura contra un instrumento de referencia."
+    },
+    "revisar_tendencia_en_la_zona": {
+      "title": "Revisar la tendencia en la zona",
+      "description": "Mirar la gráfica de la zona antes de actuar."
+    },
+    "verificar_estanqueidad_y_sellos": {
+      "title": "Verificar estanqueidad y sellos",
+      "description": "Comprobar que no hay fugas en los sellos y escotillas de la zona afectada."
+    },
+    "revisar_sensor_y_tendencia": {
+      "title": "Revisar el sensor y la tendencia",
+      "description": "Comprobar que el sensor lee bien y mirar la gráfica de la zona antes de actuar."
+    }
+  }
+}
