@@ -24,7 +24,7 @@
 | F14 | Voz con Whisper | PENDIENTE | |
 | F9 | Entrega (Docker, sin internet) | PENDIENTE | conjunta con A |
 | F10 | Tareas (interfaz) | PARCIAL | Lista con filtros y etiqueta de origen, tarea propia, bloqueo con motivo, «¿Funcionó?», posponer, racha y consentimiento, con datos de demostración (E13). Falta `tasks`/`createTask` reales y `task.assigned` por WS (hito I5 de A) |
-| F11 | Panel del centro de control | PENDIENTE | |
+| F11 | Panel del centro de control | PARCIAL | Ruta `/ground`, plantillas con estado en la nave (solo si se comparte «tareas»), borrador de la versión siguiente, publicar plan vN, canalización, control del enlace con demora y aviso «Plan vN aplicado» en la nave, con datos simulados en memoria (E14). Falta el backend de A (`groundTasks`, `publishGroundPlan`, WS `plan.*`) |
 | F16 | Alexa como respaldo | PENDIENTE | solo si Whisper se traba |
 
 ---
@@ -572,3 +572,16 @@ Rama `dev-B`, puesta al día con `testing` (880c416, incluye el PR nº 4). Plan:
   - El estilo es el mismo mínimo del resto de pantallas; no hay diseño propio de las tarjetas.
   - La gamificación mide solo la racha; los logros del plan (`achievements`) no están.
   - Descubierto: `web/tsconfig.tsbuildinfo` está versionado y `tsc` lo modifica en cada ejecución; debería ignorarse. No lo toqué en este commit.
+
+## E14 · F11 Panel del centro de control (15 nov 2026)
+
+- **RED observado:** `Failed to resolve import "./model"`, `"./GroundPanel"` y `"./Root"` (los tres módulos no existían) y `"./main"` vacío (ver el defecto de abajo).
+- **Qué se hizo:**
+  - `features/ground/model.ts`: estado y transiciones puras. Borrador de la versión siguiente (`addTemplate`, `markForCancel`, `hasChanges`), `publishPlan` (ignorada si no hay cambios o si ya hay un plan en camino), canalización `EN_COLA → EN_EL_ENLACE → RECIBIDO → APLICADO → CONFIRMADO` con `advancePlan`, y `setLink` (cortar, restablecer, demora). Las plantillas nuevas se aplican y las canceladas se retiran **solo cuando el plan llega a `APLICADO`**.
+  - `GroundPanel`: encabezado «Panel de Tierra (centro de control)» con aviso de que no es la pantalla de la tripulación, plantillas con su estado en la nave, formulario de plantilla, «Marcar para cancelar», «Publicar plan vN», canalización con la etapa actual marcada (`aria-current`), «En cola: sin enlace con la nave» y control del enlace con demora (1, 2 o 5 s).
+  - `Root`: elige entre la nave y `/ground` (la misma SPA con rol `ground`), con `pushState`; mantiene en memoria el plan, el enlace y el consentimiento, y avanza la canalización con un temporizador según la demora. `App` recibe `planNotice` («Plan v4 aplicado», 11.4) y el consentimiento «tareas» como props opcionales (si no se pasan, se comporta como antes).
+- **Criterios del plan cubiertos:** con el enlace cortado el plan queda «en cola» y al restablecerlo llega, se aplica y se confirma; **solo se ve el estado de tareas si la tripulación comparte la categoría «tareas»** (si no, Tierra ve los títulos pero ni el estado ni el motivo de bloqueo).
+- **No cubierto aquí (es del backend de A):** versión repetida ignorada, plan corrupto rechazado completo, ítem inválido rechazado solo él. La interfaz no los puede probar sin el backend.
+- **Defecto propio, hallado en el navegador:** al cablear `main.tsx` con un script de Python, `open("main.tsx", "w")` se evaluó antes que `open("main.tsx").read()` y **dejó el archivo vacío**. Las 201 pruebas, el lint, el typecheck y el build pasaron igual (un módulo vacío compila) y la página salió en blanco. Corrección: prueba de humo `main.test.tsx` (RED observado con el archivo vacío: `Unable to find role="tab" and name "Cabina"`) y `main.tsx` restaurado. Lección: toda edición de un archivo con un script debe leerlo primero y comprobar el resultado.
+- **Verificación:** lint, typecheck y build limpios; **202 pruebas web pasan** (34 archivos), cobertura 97,21 % de líneas. Revisado en el navegador: `/ground` → añadir plantilla → publicar v4 → la canalización llega a «Confirmado» en unos 7 s → «Ir a la nave» muestra «Plan v4 aplicado». Se añadió CSS mínimo para ver la etapa actual y el filtro elegido sin depender del color.
+- **Límites:** el estado vive en memoria (se pierde al recargar); el rol `ground` no tiene autenticación (supuesto del plan: selección de perfil local); solo se previó el caso de un plan en camino a la vez.

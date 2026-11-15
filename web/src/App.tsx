@@ -42,14 +42,24 @@ type View = 'cabina' | 'nave' | 'asistente' | 'tareas'
  * Cableado de F6 y F7 con datos de demostración (sin backend). Cuando llegue el gateway (I2),
  * el estado vendrá de GraphQL y de /ws en lugar de `initialState`.
  */
-export function App() {
+export interface AppProps {
+  /** Aviso de Tierra, p. ej. «Plan v4 aplicado» (plan, 11.4). */
+  planNotice?: string
+  /** Consentimiento de la categoría «tareas». Si no se pasa, la app lo guarda por su cuenta. */
+  tasksShared?: boolean
+  onTasksSharedChange?: (shared: boolean) => void
+}
+
+export function App({ planNotice, tasksShared: sharedProp, onTasksSharedChange }: AppProps = {}) {
   const [state, setState] = useState(initialState)
   const [view, setView] = useState<View>('cabina')
   const [selectedZoneId, setSelectedZoneId] = useState('z-puente')
   const [presetTypeKey, setPresetTypeKey] = useState<string | undefined>(undefined)
   const [formRound, setFormRound] = useState(0)
   const [tasks, setTasks] = useState(tasksFixture)
-  const [tasksShared, setTasksShared] = useState(true)
+  const [localShared, setLocalShared] = useState(true)
+  const tasksShared = sharedProp ?? localShared
+  const setTasksShared = onTasksSharedChange ?? setLocalShared
   const [nextTaskNumber, setNextTaskNumber] = useState(1)
 
   const alert = alertFor(state)
@@ -59,6 +69,7 @@ export function App() {
   return (
     <main>
       <Banner />
+      {planNotice && <p role="status" aria-label="Plan de Tierra">{planNotice}</p>}
 
       <div role="tablist" aria-label="Vistas">
         <button type="button" role="tab" aria-selected={view === 'cabina'} onClick={() => setView('cabina')}>
