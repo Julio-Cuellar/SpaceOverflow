@@ -15,7 +15,7 @@ import { bodyIndicatorsFixture } from './data/mocks/body'
 import { incidentTypesFixture } from './data/mocks/incidentTypes'
 import { tasksFixture } from './data/mocks/tasks'
 import { AssistantPanel } from './features/assistant/AssistantPanel'
-import { mockAnswer } from './features/assistant/mockAnswer'
+import { mockAnswer, type AssistantAnswer } from './features/assistant/mockAnswer'
 import { SIMULATED_TRANSCRIPT_NOTICE, mockTranscribe } from './features/assistant/mockTranscribe'
 import { startMicrophoneRecording } from './features/assistant/microphone'
 import { AlertPanel } from './features/cabin/AlertPanel'
@@ -50,9 +50,16 @@ export interface AppProps {
   /** Consentimiento de la categoría «tareas». Si no se pasa, la app lo guarda por su cuenta. */
   tasksShared?: boolean
   onTasksSharedChange?: (shared: boolean) => void
+  /** Asistente real (backend, n8n y Ollama). Sin él, la pestaña usa la simulación local. */
+  askAssistant?: (question: string) => Promise<AssistantAnswer>
 }
 
-export function App({ planNotice, tasksShared: sharedProp, onTasksSharedChange }: AppProps = {}) {
+export function App({
+  planNotice,
+  tasksShared: sharedProp,
+  onTasksSharedChange,
+  askAssistant,
+}: AppProps = {}) {
   const [state, setState] = useState(initialState)
   const [view, setView] = useState<View>('cabina')
   const [selectedZoneId, setSelectedZoneId] = useState('z-puente')
@@ -133,7 +140,7 @@ export function App({ planNotice, tasksShared: sharedProp, onTasksSharedChange }
       ) : view === 'asistente' ? (
         <AssistantPanel
           mode="local"
-          answerFor={(question) => mockAnswer(question, activeAlertTitles(state))}
+          answerFor={askAssistant ?? ((question) => mockAnswer(question, activeAlertTitles(state)))}
           voice={{
             startRecording: startMicrophoneRecording,
             transcribe: mockTranscribe,

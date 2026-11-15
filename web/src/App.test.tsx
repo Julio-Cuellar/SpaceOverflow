@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 const openTab = (name: 'Cabina' | 'Nave' | 'Asistente' | 'Tareas') => userEvent.click(screen.getByRole('tab', { name }))
@@ -193,5 +193,23 @@ describe('App', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('escribe tu pregunta')
     expect(screen.getByLabelText('Pregunta')).toBeVisible()
+  })
+})
+
+describe('App with the real assistant', () => {
+  it('sends the question to the assistant it was given instead of the local simulation', async () => {
+    const askAssistant = vi.fn().mockResolvedValue({
+      outcome: 'ANSWERED',
+      text: 'Respuesta de n8n.',
+      citations: [],
+    })
+    render(<App askAssistant={askAssistant} />)
+    await openTab('Asistente')
+
+    await userEvent.type(screen.getByLabelText('Pregunta'), 'What is the noise limit in the crew quarters?')
+    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+
+    expect(await screen.findByText('Respuesta de n8n.')).toBeInTheDocument()
+    expect(askAssistant).toHaveBeenCalledWith('What is the noise limit in the crew quarters?')
   })
 })

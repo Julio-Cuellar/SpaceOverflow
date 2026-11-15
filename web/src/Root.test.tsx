@@ -72,3 +72,16 @@ describe('Root', () => {
     expect(screen.getByText(/La tripulación no comparte el estado de sus tareas/)).toBeVisible()
   })
 })
+
+describe('Root with the real assistant', () => {
+  it('hands the assistant to the ship so its questions do not use the simulation', async () => {
+    const askAssistant = vi.fn().mockResolvedValue({ outcome: 'NO_INFO', text: 'Sin datos.', citations: [] })
+    render(<Root initialPath="/" askAssistant={askAssistant} />)
+    await userEvent.click(screen.getByRole('tab', { name: 'Asistente' }))
+
+    await userEvent.type(screen.getByLabelText('Pregunta'), 'pregunta')
+    await userEvent.click(screen.getByRole('button', { name: 'Preguntar' }))
+
+    expect(await screen.findByText('Sin datos.')).toBeInTheDocument()
+  })
+})

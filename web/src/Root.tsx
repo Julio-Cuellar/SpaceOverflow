@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { App } from './App'
+import { App, type AppProps } from './App'
 import {
   addTemplate,
   advancePlan,
@@ -18,7 +18,13 @@ const INITIAL_VERSION = initialGroundState().version
  * demo los dos comparten el estado del plan en memoria; con el backend (I7) cada uno hablará con
  * el suyo por el enlace.
  */
-export function Root({ initialPath = window.location.pathname }: { initialPath?: string }) {
+export function Root({
+  initialPath = window.location.pathname,
+  askAssistant,
+}: {
+  initialPath?: string
+  askAssistant?: AppProps['askAssistant']
+}) {
   const [path, setPath] = useState(initialPath)
   const [ground, setGround] = useState(initialGroundState)
   const [tasksShared, setTasksShared] = useState(true)
@@ -79,6 +85,7 @@ export function Root({ initialPath = window.location.pathname }: { initialPath?:
         planNotice={ground.version > INITIAL_VERSION ? `Plan v${ground.version} aplicado` : undefined}
         tasksShared={tasksShared}
         onTasksSharedChange={setTasksShared}
+        askAssistant={askAssistant}
       />
     </>
   )
