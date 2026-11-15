@@ -46,6 +46,12 @@
                 "name": "question",
                 "value": "={{ $json.body.question }}",
                 "type": "string"
+              },
+              {
+                "id": "a5",
+                "name": "model",
+                "value": "spaceapp-asistente",
+                "type": "string"
               }
             ]
           },
@@ -81,7 +87,7 @@
       },
       {
         "parameters": {
-          "model": "spaceapp-asistente",
+          "model": "={{ $('Config').first().json.model }}",
           "options": {}
         },
         "id": "5a1c0004-0000-4000-8000-000000000004",

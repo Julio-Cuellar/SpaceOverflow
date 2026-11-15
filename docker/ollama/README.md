@@ -31,6 +31,18 @@ n8n (en otro contenedor) lo alcanza por `http://host.docker.internal:11434`. El 
 
 **Calidad observada (una muestra, no una evaluación):** con un pasaje sobre CO₂ y dolor de cabeza en el prompt, el modelo sin acotar contestó largo y genérico («no puedo proporcionar una respuesta médica específica…») en vez de apoyarse en el pasaje. Hace falta limitar la longitud y fijar las instrucciones en n8n, y evaluarlo con las preguntas de `data/knowledge/eval_questions*.json` (fase 6).
 
+## Modelo más pequeño: qwen2.5:1.5b (probado y descartado como agente)
+
+Descargado con permiso del usuario (0,99 GB). Variante `spaceapp-asistente-rapido` en `docker/ollama/Modelfile.qwen1.5b`.
+
+| | llama3.2:3b | qwen2.5:1.5b |
+|---|---|---|
+| Velocidad (4 hilos) | 6,9 tok/s | **14 a 16 tok/s** (el doble) |
+| ¿Llama a la herramienta de búsqueda? | sí | **no, en 0 de 20 preguntas** |
+| Evaluación principal por n8n | 9 de 16 con redacción del modelo, 64 s de media | 9 de 16 **pero 16 de 16 por la plantilla de respaldo**, 4,3 s de media |
+
+El modelo pequeño ignora la orden de usar `search_passages` y contesta de memoria («La capital de Francia es París»). El backend lo detecta (no hay pasajes recuperados), descarta ese texto y responde con la plantilla: **la seguridad funcionó, pero el modelo no sirve de agente**. Los 4,3 s de media son los de la plantilla, no los de una redacción. El flujo por defecto sigue con llama3.2:3b.
+
 ## Límites
 
 - Mediciones con carga variable (promedio de carga de 7 a 12 durante las pruebas): en otra máquina o sin los otros contenedores serán distintas.
