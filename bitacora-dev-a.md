@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 08:45.
+> Última actualización: 15 de noviembre de 2026, 09:30.
 
 ## Cómo se mantiene esta bitácora
 
@@ -453,6 +453,15 @@
 - **Entregado:** `pr-dev-A-to-testing.md` y `pr-dev-B-to-testing.md` (título, enlace y descripción en inglés), enviados al usuario.
 - **Opción pendiente de autorización:** fusionar `dev-A` y luego `dev-B` en `testing` desde Git, verificando el árbol fusionado con `scripts/check.sh` antes de subir. Se salta los PRs, y no se hace sin la autorización expresa del usuario.
 
+### B-032 · Fusión directa de `dev-A` y `dev-B` en `testing`
+- **Pedido del usuario:** «fusiona», tras no poder abrir los PRs desde aquí (B-031). Se eligió la fusión directa por Git, sin PRs.
+- **Qué:** rama local `testing` desde `origin/testing` (`880c416`); `git merge --no-ff origin/dev-A` (`ad30a1f`) y después `git merge --no-ff origin/dev-B` (`38a41ae`). **Sin conflictos.** Resultado `67778b7`.
+- **Interrupción:** la sesión se cortó durante la primera verificación; no se había subido nada. Al retomar, las pruebas de integración fallaban porque **Docker estaba apagado** (no por el código): se volvió a iniciar `docker-desktop` (ver sección 5).
+- **Verificación sobre el árbol fusionado, antes de subir** (`scripts/check.sh`): `uv lock --check` correcto, ruff sin errores, mypy estricto sin errores en 199 archivos, 4 contratos de arquitectura cumplidos, **930 pruebas** (21 omitidas) y 95,44 % de cobertura.
+- **Push:** `git push origin testing` (`880c416..67778b7`), fast-forward. `origin/testing` ya contiene `dev-A` y `dev-B`.
+- **Sin PRs:** no quedan descripciones en GitHub; las de `pr-dev-A-to-testing.md` y `pr-dev-B-to-testing.md` quedan como registro. El CI de `testing` es la segunda verificación.
+- **Siguiente:** integración dentro de `testing` (asistente de Dev B en `main.py`, puerto 8000 y proxy del front) y conectar el front a la API real. Cuando funcione, pasar a `main` y dockerizar (F9).
+
 ---
 
 ## 4. Archivos del proyecto por área
@@ -482,7 +491,7 @@ Todo lo que se hizo en el equipo del usuario, para poder revertirlo.
 
 | Cambio | Detalle | Cómo revertir |
 | --- | --- | --- |
-| Servicio `docker-desktop` iniciado | Servicio de usuario arrancado con `systemctl --user start`. **No se habilitó** para el inicio | `systemctl --user stop docker-desktop` |
+| Servicio `docker-desktop` iniciado | Servicio de usuario arrancado con `systemctl --user start` (otra vez el 15 de noviembre, B-032). **No se habilitó** para el inicio | `systemctl --user stop docker-desktop` |
 | `uv` 0.13.8 instalado | En `~/.local/bin/uv`. Descargado de los *releases* oficiales de `astral-sh/uv` con SHA-256 verificado | Borrar `~/.local/bin/uv` |
 | Python 3.12.16 descargado | Por `uv`, en `~/.local/share/uv/python/` | `uv python uninstall 3.12` |
 | Imagen `pgvector/pgvector:pg16` descargada | Para las pruebas de integración y el compose | `docker rmi pgvector/pgvector:pg16` |
