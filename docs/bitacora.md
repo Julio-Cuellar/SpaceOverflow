@@ -225,8 +225,8 @@
 - **Cómo:** se copiaron los 192 archivos que respeta `.gitignore` (sin `.venv`, cachés ni `.git`). El `README.md` de la plantilla (`# SpaceOverflow`) se reemplazó por el del proyecto.
 - **Estado del remoto al clonar:** `main` y `dev-A` solo tienen el primer commit; `dev-B` y `testing` ya tienen trabajo de Dev B (`pyproject.toml`, `.gitignore`, `src/spaceapp/__init__.py`, `.github/CODEOWNERS`, CI, etc.).
 - **Aviso:** Dev A y Dev B crearon cada uno su propio `pyproject.toml`, `.gitignore`, `README.md` y `src/spaceapp/__init__.py`. Al unir las ramas habrá conflictos en esos archivos y hay que resolverlos a mano.
-- **Verificación:** la copia se comparó con el origen (`diff -r`) y el commit quedó solo en local. Las pruebas no se volvieron a ejecutar en el clon (no cambió ningún archivo de código).
-- **Pendiente:** hacer `git push origin dev-A` cuando el usuario lo confirme.
+- **Verificación:** la copia se comparó con el origen (`diff -r`) y el commit se subió después con `git push origin dev-A` (`2d38c34..8ddbad7`). Las pruebas no se volvieron a ejecutar en el clon (no cambió ningún archivo de código).
+- **Pendiente:** resolver los conflictos con `dev-B` al unir las ramas.
 
 ---
 
@@ -261,7 +261,7 @@ Todo lo que se hizo en el equipo del usuario, para poder revertirlo.
 | Contenedores de testcontainers | Efímeros, eliminados al terminar las pruebas | Ya revertido |
 | Servidores locales de vista previa | Puertos 8765 a 8768 y 8010, detenidos | Ya revertido |
 | Prueba en vivo del Bloque 2 | Contenedor `spaceapp-postgres-1` y su volumen, y la aplicación en el puerto 8011. Detenidos y eliminados al terminar | Ya revertido |
-| Repositorio clonado | `~/Documentos/SpaceOverflow` (clon de `Julio-Cuellar/SpaceOverflow`, rama `dev-A` con el trabajo de Dev A, commit local) | Borrar la carpeta `~/Documentos/SpaceOverflow` |
+| Repositorio clonado | `~/Documentos/SpaceOverflow` (clon de `Julio-Cuellar/SpaceOverflow`, rama `dev-A` con el trabajo de Dev A, ya subida a GitHub) | Borrar la carpeta `~/Documentos/SpaceOverflow` |
 
 **No se tocó:** los contenedores de otro proyecto del usuario (`clinerya-postgres`, `clinerya-backend`, `clinerya-frontend`, `clinerya-rabbitmq`).
 
