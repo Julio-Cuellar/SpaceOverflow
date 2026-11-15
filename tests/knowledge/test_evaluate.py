@@ -1,19 +1,30 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 
 from spaceapp.modules.knowledge.adapters.outbound.rag_source import load_glossary
 from spaceapp.modules.knowledge.domain.model import Citation, EvidenceState
-from spaceapp.modules.knowledge.evaluate import EvalCase, evaluate, load_cases, main
+from spaceapp.modules.knowledge.evaluate import (
+    EvalCase,
+    diagnose,
+    evaluate,
+    load_cases,
+    main,
+    matches,
+)
 from spaceapp.modules.knowledge.ingest.chunking import chunk_page
 from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
+from spaceapp.modules.knowledge.ingest.vectors import VectorIndex
 
 ROOT = Path(__file__).resolve().parents[2]
 QUESTIONS = ROOT / "data" / "knowledge" / "eval_questions.json"
+RESERVED = ROOT / "data" / "knowledge" / "eval_questions_reserved.json"
 GLOSSARY = ROOT / "data" / "knowledge" / "glossary_es_en.json"
+REAL_INDEX = ROOT / "data" / "knowledge" / "index" / "chunks.jsonl"
 
 
 class FakeSearch:
@@ -24,6 +35,15 @@ class FakeSearch:
 
     def search(self, text: str, k: int) -> list[Citation]:
         return self._answers.get(text, [])[:k]
+
+
+class ConstantEmbedder:
+    """Todo se parece a todo: sirve para probar el cableado, no la calidad."""
+
+    model = "fake"
+
+    def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        return [[1.0, 0.0] for _ in texts]
 
 
 def passage(document: str, text: str = "texto") -> Citation:
@@ -135,6 +155,146 @@ def test_the_out_of_scope_questions_get_no_translation_so_they_cannot_match() ->
             assert not glossary.expand(case.question), case.question
 
 
+def ranked(*documents: str) -> list[Citation]:
+    return [passage(document) for document in documents]
+
+
+def test_records_the_rank_of_the_first_hit_and_derives_recall_and_mrr() -> None:
+    cases = [EvalCase(f"q{i}", expected_documents=("A",)) for i in range(4)]
+    answers = {
+        "q0": ranked("A"),
+        "q1": ranked("X", "A"),
+        "q2": ranked("X", "X", "X", "X", "A"),
+        "q3": ranked("X", "X"),
+    }
+
+    result = evaluate(FakeSearch(answers), cases, k=3)
+
+    assert result.ranks == [1, 2, 5, None]
+    assert result.recall_at(1) == 0.25
+    assert result.recall_at(3) == 0.5
+    assert result.recall_at(5) == 0.75
+    assert result.hits == 2  # con k=3: los dos primeros
+    assert result.mrr == pytest.approx((1 + 1 / 2 + 1 / 5 + 0) / 4)
+
+
+def test_recall_and_mrr_are_one_when_nothing_is_in_scope() -> None:
+    result = evaluate(FakeSearch({}), [EvalCase("off", out_of_scope=True)])
+
+    assert result.recall_at(3) == 1.0
+    assert result.mrr == 1.0
+
+
+@pytest.mark.parametrize(
+    ("anchor", "text"),
+    [
+        ("3035 kcal", "Energy: 3,035 kcal per day"),
+        ("3,035 kcal", "Energy: 3035 kcal per day"),
+        ("25 µg", "Vitamin D: 25 μg/day"),
+        ("below 2.5 mmhg", "BELOW  2.5\nmmHg"),
+    ],
+)
+def test_anchors_ignore_case_spacing_thousands_separators_and_the_micro_sign(
+    anchor: str, text: str
+) -> None:
+    cases = [EvalCase("q", expected_contains=(anchor,))]
+
+    assert evaluate(FakeSearch({"q": [passage("D", text)]}), cases).hits == 1
+
+
+@pytest.mark.parametrize(
+    ("anchor", "text"),
+    [("2.5 mmhg", "25 mmHg"), ("3035 kcal", "2,035 kcal"), ("25 mg", "125 mg")],
+)
+def test_normalising_anchors_does_not_make_different_numbers_match(anchor: str, text: str) -> None:
+    cases = [EvalCase("q", expected_contains=(anchor,))]
+
+    assert evaluate(FakeSearch({"q": [passage("D", text)]}), cases).hits == 0
+
+
+def test_an_expectation_with_alternatives_accepts_any_one_of_them() -> None:
+    case = EvalCase("q", expected_contains_any=("3,035 kcal", "12.7 MJ"))
+
+    assert matches(case, "D", "about 12.7 MJ per day")
+    assert matches(case, "D", "3035 kcal")
+    assert not matches(case, "D", "2,000 kcal")
+
+
+def test_alternatives_combine_with_required_text() -> None:
+    case = EvalCase("q", expected_contains=("energy",), expected_contains_any=("kcal", "MJ"))
+
+    assert matches(case, "D", "Energy: 10 MJ")
+    assert not matches(case, "D", "Energy: ten")
+    assert not matches(case, "D", "10 MJ of heat")
+
+
+def test_loading_reads_the_alternatives_and_a_case_with_only_them_is_valid(tmp_path: Path) -> None:
+    path = tmp_path / "questions.json"
+    path.write_text(
+        json.dumps({"cases": [{"question": "q", "expected_contains_any": ["a", "b"]}]}),
+        encoding="utf-8",
+    )
+
+    [case] = load_cases(path)
+
+    assert case.expected_contains_any == ("a", "b")
+
+
+def test_diagnose_tells_a_ranking_problem_from_a_missing_passage() -> None:
+    chunks = chunk_page("DOC", 1, "The daily energy requirement is 3,035 kcal for the crew.", "TB")
+    cases = [
+        EvalCase("top", expected_contains=("3,035 kcal",)),
+        EvalCase("mid", expected_contains=("3,035 kcal",)),
+        EvalCase("deep", expected_contains=("3,035 kcal",)),
+        EvalCase("never", expected_contains=("3,035 kcal",)),
+        EvalCase("absent", expected_contains=("99 widgets",)),
+    ]
+    hit = passage("DOC", "requirement is 3,035 kcal")
+    filler = passage("DOC", "filler")
+    answers = {
+        "top": [hit],
+        "mid": [filler] * 5 + [hit],
+        "deep": [filler] * 12 + [hit],
+        "never": [filler] * 3,
+    }
+
+    found = {d.question: d for d in diagnose(FakeSearch(answers), chunks, cases)}
+
+    assert [found[q].category for q in ("top", "mid", "deep", "never", "absent")] == [
+        "top 3",
+        "puestos 4 a 10",
+        "puesto 11 o más",
+        "en el índice, no recuperada",
+        "no está en el índice",
+    ]
+    assert found["mid"].rank == 6
+    assert found["never"].rank is None
+    assert found["absent"].indexed is False
+
+
+def test_the_reserved_set_is_large_enough_and_every_case_has_a_text_anchor() -> None:
+    cases = load_cases(RESERVED)
+    in_scope = [c for c in cases if not c.out_of_scope]
+
+    assert len(in_scope) >= 30
+    assert sum(c.out_of_scope for c in cases) >= 6
+    assert all(c.expected_contains or c.expected_contains_any for c in in_scope)
+
+
+@pytest.mark.skipif(not REAL_INDEX.exists(), reason="sin índice real: los PDFs no se versionan")
+def test_every_anchor_of_the_reserved_set_exists_in_the_real_index() -> None:
+    chunks = JsonlChunkStore(REAL_INDEX).all()
+
+    orphans = [
+        case.question
+        for case in load_cases(RESERVED)
+        if not case.out_of_scope
+        and not any(matches(case, chunk.document_code, chunk.content) for chunk in chunks)
+    ]
+
+    assert orphans == []
+
+
 class TestCommand:
     def build_index(self, tmp_path: Path) -> Path:
         index = tmp_path / "chunks.jsonl"
@@ -225,3 +385,108 @@ class TestCommand:
 
         assert code == 2
         assert "ingesta" in capsys.readouterr().err
+
+    def test_prints_recall_at_several_cutoffs_and_the_mean_reciprocal_rank(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        main(
+            [
+                "--index",
+                str(self.build_index(tmp_path)),
+                "--glossary",
+                str(GLOSSARY),
+                "--questions",
+                str(self.write_questions(tmp_path)),
+            ]
+        )
+
+        out = capsys.readouterr().out
+        assert "Recall@1: 100%" in out
+        assert "@10: 100%" in out
+        assert "MRR: 1.00" in out
+
+    def test_the_diagnose_flag_lists_each_case_with_where_it_stands(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        code = main(
+            [
+                "--index",
+                str(self.build_index(tmp_path)),
+                "--glossary",
+                str(GLOSSARY),
+                "--questions",
+                str(self.write_questions(tmp_path)),
+                "--diagnose",
+            ]
+        )
+
+        out = capsys.readouterr().out
+        assert code == 0
+        assert "[top 3] ¿Por qué me duele la cabeza?" in out
+        assert "Diagnóstico:" in out
+
+    def test_says_which_mode_it_evaluated(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        main(
+            [
+                "--index",
+                str(self.build_index(tmp_path)),
+                "--glossary",
+                str(GLOSSARY),
+                "--questions",
+                str(self.write_questions(tmp_path)),
+            ]
+        )
+
+        assert "Modo: léxico" in capsys.readouterr().out
+
+    def test_the_hybrid_mode_uses_the_vectors_and_says_so(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        index = self.build_index(tmp_path)
+        chunks = JsonlChunkStore(index).all()
+        vectors = tmp_path / "embeddings.json"
+        VectorIndex.build("fake", [c.id for c in chunks], [[1.0, 0.0]] * len(chunks)).save(vectors)
+
+        # Con un modelo donde todo se parece a todo, la pregunta fuera de alcance también recibe
+        # pasaje y el código de salida es 1: aquí solo importa que se use el modo híbrido.
+        main(
+            [
+                "--index",
+                str(index),
+                "--glossary",
+                str(GLOSSARY),
+                "--questions",
+                str(self.write_questions(tmp_path)),
+                "--mode",
+                "hybrid",
+                "--vectors",
+                str(vectors),
+            ],
+            embedder=ConstantEmbedder(),
+        )
+
+        assert "Modo: híbrido (fake)" in capsys.readouterr().out
+
+    def test_the_hybrid_mode_without_vectors_says_how_to_make_them(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        code = main(
+            [
+                "--index",
+                str(self.build_index(tmp_path)),
+                "--glossary",
+                str(GLOSSARY),
+                "--questions",
+                str(self.write_questions(tmp_path)),
+                "--mode",
+                "hybrid",
+                "--vectors",
+                str(tmp_path / "no-hay.json"),
+            ],
+            embedder=ConstantEmbedder(),
+        )
+
+        assert code == 2
+        assert "ingest.embed" in capsys.readouterr().err

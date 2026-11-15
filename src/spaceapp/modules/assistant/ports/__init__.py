@@ -8,6 +8,7 @@ from typing import Protocol
 from uuid import UUID
 
 from spaceapp.modules.assistant.contracts import AnswerReady
+from spaceapp.modules.assistant.domain.voice import Transcript, Utterance
 from spaceapp.modules.knowledge.contracts import CitationDTO
 
 
@@ -54,3 +55,41 @@ class EventPublisher(Protocol):
     """Publica por el outbox (en memoria hasta I1). No bloquea la respuesta al astronauta."""
 
     def publish(self, event: AnswerReady) -> None: ...
+
+
+class SpeechToText(Protocol):
+    """Voz a texto. `available` es False en el adaptador nulo: entonces se escribe a mano."""
+
+    available: bool
+
+    def transcribe(self, audio: bytes, content_type: str) -> Transcript | None: ...
+
+
+class AudioStore(Protocol):
+    def save(self, utterance_id: UUID, audio: bytes, extension: str) -> str:
+        """Guarda el audio y devuelve dónde quedó."""
+        ...
+
+
+class UtteranceRepository(Protocol):
+    def add(self, utterance: Utterance) -> None: ...
+
+    def get(self, utterance_id: UUID) -> Utterance:
+        """Lanza `UnknownUtteranceError` si no existe."""
+        ...
+
+    def update(self, utterance: Utterance) -> None: ...
+
+
+class AssistantOrchestrator(Protocol):
+    """Quien responde con herramientas (n8n). Devuelve solo texto: las citas las pone el backend.
+
+    Lanza `OrchestratorError` si falla. `available` es False si no está configurado.
+    """
+
+    @property
+    def available(self) -> bool: ...
+
+    def answer(
+        self, turn_id: UUID, conversation_id: UUID, question: str, alerts: Sequence[str]
+    ) -> str: ...

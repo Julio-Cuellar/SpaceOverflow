@@ -1,8 +1,18 @@
 from __future__ import annotations
 
+import json
 from collections import Counter
+from pathlib import Path
 
-from spaceapp.modules.knowledge.domain.glossary import Glossary, terms, token_counts
+import pytest
+
+from spaceapp.modules.knowledge.adapters.outbound.rag_source import load_glossary
+from spaceapp.modules.knowledge.domain.glossary import Glossary, terms, token_counts, words
+from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
+
+ROOT = Path(__file__).resolve().parents[2]
+GLOSSARY_FILE = ROOT / "data" / "knowledge" / "glossary_es_en.json"
+REAL_INDEX = ROOT / "data" / "knowledge" / "index" / "chunks.jsonl"
 
 
 def test_plural_endings_are_ignored_so_singular_and_plural_match() -> None:
@@ -37,3 +47,62 @@ def test_the_glossary_expansion_is_normalized_the_same_way() -> None:
     glossary = Glossary([(["dura"], ["lasts"])])
 
     assert glossary.expand("¿Cuánto dura?") == {"last"}
+
+
+def test_every_spanish_key_is_written_already_normalized() -> None:
+    # Sin acentos y en minúsculas: si no, la frase nunca coincide con la pregunta normalizada.
+    entries = json.loads(GLOSSARY_FILE.read_text(encoding="utf-8"))["entries"]
+
+    not_normalized = [
+        phrase for entry in entries for phrase in entry["es"] if phrase != " ".join(words(phrase))
+    ]
+
+    assert not_normalized == []
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("¿Cuánta energía diaria necesita un astronauta?", "energy"),
+        ("¿Cuántas calorías por hora?", "kcal"),
+        ("¿Cuánta vitamina D se necesita al día?", "vitamin"),
+        ("¿Cuánto calcio y sodio se recomienda?", "calcium"),
+        ("¿Qué porcentaje de gas diluyente se exige?", "diluent"),
+        ("¿Cuánto nitrógeno hay en la cabina?", "nitrogen"),
+        ("¿Qué se exige en una actividad extravehicular?", "extravehicular"),
+        ("¿Cómo es el traje espacial?", "spacesuit"),
+        ("¿Qué fuerza muscular debe mantenerse?", "muscle"),
+        ("¿Qué densidad ósea debe conservar?", "bone"),
+        ("¿Cuál es el límite de ruido de una alarma?", "alarm"),
+        ("¿Qué iluminación necesita la tripulación?", "lighting"),
+        ("¿Cuál es el límite de dosis por evento de partículas solares?", "solar"),
+        ("¿Cómo se trata una lesión?", "injury"),
+        ("¿Cuál es la presión parcial de oxígeno?", "partial"),
+        ("¿Cuánto cambia la presión total?", "total"),
+    ],
+)
+def test_the_glossary_covers_the_main_topics_of_the_standard(question: str, expected: str) -> None:
+    english = load_glossary(GLOSSARY_FILE).expand(question)
+
+    assert expected in english
+
+
+@pytest.mark.skipif(not REAL_INDEX.exists(), reason="sin índice real: los PDFs no se versionan")
+def test_every_english_term_of_the_glossary_exists_in_the_real_index() -> None:
+    # Una traducción a una palabra que ningún documento tiene no sirve para encontrar nada.
+    vocabulary: set[str] = set()
+    for chunk in JsonlChunkStore(REAL_INDEX).all():
+        vocabulary |= terms(chunk.content, 1)
+    entries = json.loads(GLOSSARY_FILE.read_text(encoding="utf-8"))["entries"]
+
+    dead = sorted(
+        {
+            f"{translation}→{term}"
+            for entry in entries
+            for translation in entry["en"]
+            for term in terms(translation, 1)
+            if term not in vocabulary
+        }
+    )
+
+    assert dead == []

@@ -142,3 +142,14 @@ form textarea {
 svg text {
   font-size: 11px;
 }
+
+/* Etapa actual de la canalización del plan y filtro elegido: se ven sin depender del color (plan, 11.3). */
+[aria-current='step'] {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+button[aria-pressed='true'] {
+  font-weight: bold;
+  text-decoration: underline;
+}

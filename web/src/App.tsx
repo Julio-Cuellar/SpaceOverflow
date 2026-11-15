@@ -10,10 +10,14 @@ import {
   provoke,
   zoneSeriesFor,
 } from './app/scenario'
+import { addCrewTask, blockTask, completeTask, deleteCrewTask, snoozeTask, updateCrewTask } from './app/tasks'
 import { bodyIndicatorsFixture } from './data/mocks/body'
 import { incidentTypesFixture } from './data/mocks/incidentTypes'
+import { tasksFixture } from './data/mocks/tasks'
 import { AssistantPanel } from './features/assistant/AssistantPanel'
-import { mockAnswer } from './features/assistant/mockAnswer'
+import { mockAnswer, type AssistantAnswer } from './features/assistant/mockAnswer'
+import { SIMULATED_TRANSCRIPT_NOTICE, mockTranscribe } from './features/assistant/mockTranscribe'
+import { startMicrophoneRecording } from './features/assistant/microphone'
 import { AlertPanel } from './features/cabin/AlertPanel'
 import { BodyMap } from './features/cabin/BodyMap'
 import { CabinPanel } from './features/cabin/CabinPanel'
@@ -23,6 +27,9 @@ import { ReportForm } from './features/ship/ReportForm'
 import { ShipPlan } from './features/ship/ShipPlan'
 import { sortTickets } from './features/ship/model'
 import { ZoneCharts } from './features/ship/ZoneCharts'
+import { ConsentToggle } from './features/tasks/ConsentToggle'
+import { NewTaskForm } from './features/tasks/NewTaskForm'
+import { TaskList } from './features/tasks/TaskList'
 import { Banner } from './shared/ui/Banner'
 import { SevPill } from './shared/ui/SevPill'
 
@@ -31,18 +38,38 @@ const PROFILE = 'dev1'
 /** Hora fija de la demo: las pruebas no dependen del reloj. */
 const NOW = '2026-11-14T10:00:00Z'
 
-type View = 'cabina' | 'nave' | 'asistente'
+type View = 'cabina' | 'nave' | 'asistente' | 'tareas'
 
 /**
  * Cableado de F6 y F7 con datos de demostración (sin backend). Cuando llegue el gateway (I2),
  * el estado vendrá de GraphQL y de /ws en lugar de `initialState`.
  */
-export function App() {
+export interface AppProps {
+  /** Aviso de Tierra, p. ej. «Plan v4 aplicado» (plan, 11.4). */
+  planNotice?: string
+  /** Consentimiento de la categoría «tareas». Si no se pasa, la app lo guarda por su cuenta. */
+  tasksShared?: boolean
+  onTasksSharedChange?: (shared: boolean) => void
+  /** Asistente real (backend, n8n y Ollama). Sin él, la pestaña usa la simulación local. */
+  askAssistant?: (question: string) => Promise<AssistantAnswer>
+}
+
+export function App({
+  planNotice,
+  tasksShared: sharedProp,
+  onTasksSharedChange,
+  askAssistant,
+}: AppProps = {}) {
   const [state, setState] = useState(initialState)
   const [view, setView] = useState<View>('cabina')
   const [selectedZoneId, setSelectedZoneId] = useState('z-puente')
   const [presetTypeKey, setPresetTypeKey] = useState<string | undefined>(undefined)
   const [formRound, setFormRound] = useState(0)
+  const [tasks, setTasks] = useState(tasksFixture)
+  const [localShared, setLocalShared] = useState(true)
+  const tasksShared = sharedProp ?? localShared
+  const setTasksShared = onTasksSharedChange ?? setLocalShared
+  const [nextTaskNumber, setNextTaskNumber] = useState(1)
 
   const alert = alertFor(state)
   const zones = state.zones.map(({ id, name }) => ({ id, name }))
@@ -51,6 +78,7 @@ export function App() {
   return (
     <main>
       <Banner />
+      {planNotice && <p role="status" aria-label="Plan de Tierra">{planNotice}</p>}
 
       <div role="tablist" aria-label="Vistas">
         <button type="button" role="tab" aria-selected={view === 'cabina'} onClick={() => setView('cabina')}>
@@ -67,6 +95,14 @@ export function App() {
         >
           Asistente
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={view === 'tareas'}
+          onClick={() => setView('tareas')}
+        >
+          Tareas
+        </button>
       </div>
 
       {view === 'cabina' ? (
@@ -81,10 +117,35 @@ export function App() {
             ))}
           <BodyMap indicators={bodyIndicatorsFixture} />
         </>
+      ) : view === 'tareas' ? (
+        <>
+          <TaskList
+            tasks={tasks}
+            zones={zones}
+            onComplete={(id, effective) => setTasks((t) => completeTask(t, id, effective))}
+            onBlock={(id, reason) => setTasks((t) => blockTask(t, id, reason))}
+            onSnooze={(id, minutes) => setTasks((t) => snoozeTask(t, id, minutes))}
+            onUpdate={(id, changes) => setTasks((t) => updateCrewTask(t, id, changes))}
+            onDelete={(id) => setTasks((t) => deleteCrewTask(t, id))}
+          />
+          <NewTaskForm
+            zones={zones}
+            onCreate={(draft) => {
+              setTasks((t) => addCrewTask(t, draft, `task-crew-${nextTaskNumber}`))
+              setNextTaskNumber((n) => n + 1)
+            }}
+          />
+          <ConsentToggle shared={tasksShared} onChange={setTasksShared} />
+        </>
       ) : view === 'asistente' ? (
         <AssistantPanel
           mode="local"
-          answerFor={(question) => mockAnswer(question, activeAlertTitles(state))}
+          answerFor={askAssistant ?? ((question) => mockAnswer(question, activeAlertTitles(state)))}
+          voice={{
+            startRecording: startMicrophoneRecording,
+            transcribe: mockTranscribe,
+            notice: SIMULATED_TRANSCRIPT_NOTICE,
+          }}
         />
       ) : (
         <>

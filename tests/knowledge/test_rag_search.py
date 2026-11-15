@@ -91,6 +91,42 @@ def test_returns_at_most_k_passages() -> None:
     assert len(source().search("CO₂ dolor de cabeza límite promedio", k=1)) == 1
 
 
+def nutrition_source() -> RagKnowledgeSource:
+    return RagKnowledgeSource(
+        [
+            *corpus(),
+            *chunk_page(
+                STANDARD,
+                21,
+                "[V2 7006] Vitamin D intake for each crew member shall be 25 µg per day.",
+                "VERIFICADO",
+            ),
+        ],
+        GLOSSARY,
+    )
+
+
+def test_question_words_do_not_have_to_appear_in_the_passage() -> None:
+    # «much» y «needed» son de la pregunta, no del documento: exigirlos escondía el pasaje.
+    results = nutrition_source().search("How much vitamin D is needed per day?", k=3)
+
+    assert results[0].requirement_ref == "V2 7006"
+
+
+def test_a_rare_word_alone_does_not_answer_a_question_that_has_other_unknown_words() -> None:
+    # «world» sale en una lista de siglas; «football» no sale en ningún documento. Una pregunta
+    # con palabras que ningún documento tiene exige dos coincidencias, no una.
+    acronyms = chunk_page(
+        "ACR",
+        1,
+        "Acronyms: World Health Organization, International Space Station, Johnson Space Center.",
+        "TB",
+    )
+    rag = RagKnowledgeSource([*corpus(), *acronyms], GLOSSARY)
+
+    assert rag.search("Who won the football World Cup?", k=3) == []
+
+
 def test_a_very_long_passage_is_shortened_for_the_answer() -> None:
     long_chunk = chunk_page("D", 1, "carbon dioxide " + "filler " * 600, "TB", max_chars=20000)
 

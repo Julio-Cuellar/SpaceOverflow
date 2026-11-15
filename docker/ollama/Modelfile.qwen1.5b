@@ -1,0 +1,7 @@
+# Variante rápida del asistente sobre qwen2.5:1.5b. No descarga nada: parte del modelo ya bajado.
+# Medido aquí: unos 14 a 16 tok/s con 4 a 6 hilos, el doble que llama3.2:3b (ver README).
+FROM qwen2.5:1.5b
+PARAMETER num_thread 4
+PARAMETER num_predict 150
+PARAMETER num_ctx 2048
+PARAMETER temperature 0.2

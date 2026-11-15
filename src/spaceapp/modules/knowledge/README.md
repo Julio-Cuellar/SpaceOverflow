@@ -34,26 +34,28 @@ El comando indexa los PDFs que haya en `data/knowledge/pdfs/` según `data/knowl
 - Idempotente: reejecutarla no duplica. Usa `--rebuild` tras cambiar el fragmentado, o quedarán fragmentos viejos.
 - Un PDF que falta, roto o sin texto se avisa y no detiene a los demás.
 - Se fragmenta por referencia de requisito (`[V2 6004]`); una referencia citada a mitad de frase o dentro de un paréntesis abierto no parte el pasaje.
-- Búsqueda BM25 con raíces de palabra y umbral (`MIN_SCORE`, `MIN_MATCHED_TERMS`); sin pasaje relevante devuelve lista vacía. Pregunta en español → `data/knowledge/glossary_es_en.json` (40 entradas, pendiente de revisión del equipo).
+- Búsqueda BM25 con raíces de palabra y umbral (`MIN_SCORE`, `MIN_MATCHED_TERMS`); sin pasaje relevante devuelve lista vacía. Pregunta en español → `data/knowledge/glossary_es_en.json` (unas 85 entradas, pendiente de revisión del equipo).
+- **Búsqueda híbrida (palabras + significado):** `python -m spaceapp.modules.knowledge.ingest.embed` calcula los vectores con `bge-m3` (Ollama local, 1 024 dimensiones; es incremental y guarda `embeddings.json` y `.f32` junto al índice). `build_knowledge_source` deja que las palabras (BM25) propongan los 50 mejores candidatos y que el coseno los reordene. El significado no decide solo que hay respuesta: si las palabras no encuentran nada, o ningún candidato se parece lo bastante (coseno ≥ 0,5), no se cita nada. Sin vectores, con otro modelo o sin Ollama, busca solo por palabras. Cuesta ≈ 0,1 a 0,2 s por pregunta nueva (embedding incluido).
 - **Los PDFs y el índice no se versionan:** la licencia de redistribución no está confirmada.
 
 ## Evaluación (métrica estricta, k=3)
 
-Un acierto exige que el texto esperado aparezca en el extracto de los 3 primeros pasajes. Mínimo del plan: 80 %. Con el Handbook de diseño indexado (`--include-optional`) baja a 8/16, 1/9 y 12/25, por eso no se indexa por defecto.
+Un acierto exige que el texto esperado aparezca en el extracto de los 3 primeros pasajes. Mínimo del plan: 80 %. `evaluate --mode lexical|hybrid --diagnose` imprime recall@1/3/5/10, MRR y en qué puesto quedó cada fallo. El conjunto reservado (`eval_questions_reserved.json`, 30 preguntas útiles y 8 fuera de alcance) está congelado: no se usa para ajustar nada.
 
-| Conjunto | Aciertos | Fuera de alcance respondidas |
-|---|---|---|
-| Principal (ES) | 9 de 16 (56 %) | 0 de 2 |
-| Validación (ES, no se afinó con él) | 1 de 9 (11 %) | 0 de 1 |
-| Diagnóstico (EN) | 13 de 25 (52 %) | 0 de 3 |
+| Conjunto | Léxico @3 | Híbrido @3 | Híbrido @10 | Fuera de alcance respondidas (híbrido) |
+|---|---|---|---|---|
+| Principal ES (16) | 56 % | 81 % | 81 % | 0 de 2 |
+| Validación ES (9) | 67 % | 67 % | 78 % | 0 de 1 |
+| Diagnóstico EN (25) | 56 % | 68 % | 80 % | 0 de 3 |
+| Reservado (30) | 60 % | **80 %** | 87 % | 0 de 8 |
 
-**No se alcanza el 80 %.** Nunca se responde fuera de alcance, pero la búsqueda léxica falla con paráfrasis y con cifras de tablas.
+Se alcanza el 80 % en @3 en el principal y en el reservado, **no** en validación (67 %, solo 9 preguntas) ni en inglés (68 %). El techo es el recall@10: los pasajes que las palabras no encuentran entre sus 50 primeros no se recuperan. El reservado se midió varias veces (ver la bitácora E24): su cifra ya no es de una sola vez.
 
 ## Límites actuales
 
 - Sin base de datos ni outbox: la idempotencia y el guardado son en memoria hasta el hito I1 (dev A).
 - El asistente aún usa los pasajes de demostración: falta cablear la fuente RAG por perfil en `main.py` (dev A).
-- La solución de fondo para la recuperación es un modelo de embeddings multilingüe (decisión pendiente; exige permiso para descargarlo).
+- Los vectores no se versionan (como el índice): cada máquina los calcula con `ingest.embed` (≈ 25 min en CPU para 1 588 fragmentos).
 - Los Technical Brief salen como `TB` aunque el catálogo de demostración marca TB-003 como `VERIFICADO`: decisión de equipo.
 - Muchas cifras quedan sin `requirement_ref` propio: la cita lleva documento y página, no siempre número de requisito.
 - No se extraen las tablas que vienen como imagen.
