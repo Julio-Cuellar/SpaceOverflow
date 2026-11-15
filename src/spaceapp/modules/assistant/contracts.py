@@ -15,3 +15,8 @@ class AnswerReady(BaseModel):
     utterance_id: UUID
     text: str
     citations: list[CitationDTO]
+
+
+# Provisional de la fusión: el registro de eventos de Dev A espera EVENTS. La fase 2 lo sustituye
+# por los payloads reales (EventPayload) y esta prueba de contratos pasa a verde.
+EVENTS: dict[str, type] = {}

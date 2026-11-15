@@ -26,14 +26,16 @@ from spaceapp.modules.knowledge.ingest.chunking import MAX_CHARS, Chunk
 from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
 from spaceapp.modules.knowledge.ports import PassageSource
 
-# Por debajo de este puntaje no hay pasaje: una palabra que está en casi todos los fragmentos no basta.
+# Por debajo de este puntaje no hay pasaje: una palabra presente en casi todos los fragmentos no
+# basta.
 MIN_SCORE = 1.0
 MIN_MATCHED_TERMS = 2
 # Por debajo de este número de palabras, un fragmento es un título o una entrada de índice.
 MIN_CONTENT_WORDS = 6
 BM25_K1 = 1.5
 BM25_B = 0.75
-# Se cita el fragmento completo: recortar a 500 caracteres escondía la cifra en la mitad de los casos
+# Se cita el fragmento completo: recortar a 500 caracteres escondía la cifra en la mitad de los
+# casos
 # (medido sobre los PDFs reales: con 500 se veía 7 de 25 respuestas; con 1200, 13 de 25).
 EXCERPT_MAX_CHARS = MAX_CHARS
 _QUERY_MIN_LENGTH = 4
@@ -163,7 +165,7 @@ class RagKnowledgeSource:
             return []
 
         # Una coincidencia aislada no es una respuesta: con varios términos en la pregunta, el
-        # fragmento debe coincidir en al menos dos (p. ej. «world» dentro de una lista de acrónimos).
+        # fragmento debe coincidir en al menos dos (p. ej. «world» en una lista de acrónimos).
         required = min(MIN_MATCHED_TERMS, len(query))
 
         scored: list[tuple[float, int]] = []

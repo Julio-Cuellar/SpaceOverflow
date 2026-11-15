@@ -16,7 +16,7 @@ from spaceapp.modules.knowledge.ingest.chunking import Chunk
 
 class ChunkStore(Protocol):
     def add(self, chunks: list[Chunk]) -> int:
-        """Guarda los fragmentos nuevos y devuelve cuántos eran nuevos (la ingesta es idempotente)."""
+        """Guarda los fragmentos nuevos y devuelve cuántos eran nuevos (ingesta idempotente)."""
         ...
 
     def all(self) -> list[Chunk]: ...

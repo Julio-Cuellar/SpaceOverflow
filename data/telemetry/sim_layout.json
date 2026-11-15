@@ -1,0 +1,65 @@
+{
+  "habitat_code": "nave-transito",
+  "zones": [
+    {
+      "code": "eng",
+      "temperature_c": 24.2,
+      "humidity_pct": 40,
+      "co2_mmhg": 0.8
+    },
+    {
+      "code": "eclss",
+      "temperature_c": 22.8,
+      "humidity_pct": 48,
+      "co2_mmhg": 0.7
+    },
+    {
+      "code": "lab",
+      "temperature_c": 22.6,
+      "humidity_pct": 44,
+      "co2_mmhg": 0.7
+    },
+    {
+      "code": "med",
+      "temperature_c": 22.4,
+      "humidity_pct": 45,
+      "co2_mmhg": 0.5
+    },
+    {
+      "code": "bridge",
+      "temperature_c": 22.2,
+      "humidity_pct": 42,
+      "co2_mmhg": 0.6
+    },
+    {
+      "code": "air",
+      "temperature_c": 21.5,
+      "humidity_pct": 38,
+      "co2_mmhg": 0.4
+    },
+    {
+      "code": "store",
+      "temperature_c": 21.0,
+      "humidity_pct": 36,
+      "co2_mmhg": 0.4
+    },
+    {
+      "code": "gym",
+      "temperature_c": 23.8,
+      "humidity_pct": 50,
+      "co2_mmhg": 1.1
+    },
+    {
+      "code": "galley",
+      "temperature_c": 24.0,
+      "humidity_pct": 52,
+      "co2_mmhg": 0.9
+    },
+    {
+      "code": "crew",
+      "temperature_c": 22.0,
+      "humidity_pct": 43,
+      "co2_mmhg": 0.8
+    }
+  ]
+}

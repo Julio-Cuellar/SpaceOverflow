@@ -1,7 +1,8 @@
 """Caso de uso: responder una pregunta con pasajes citados.
 
 Reglas del plan (sección 13):
-- Solo se redacta con lo recuperado. Sin pasaje, no se llama al modelo y se dice que no hay información.
+- Solo se redacta con lo recuperado. Sin pasaje, no se llama al modelo y se dice que no hay
+  información.
 - Si el modelo tarda más del límite o falla, se responde con los pasajes en texto plano.
 - Las citas las pone el caso de uso, no el modelo. El asistente no cambia ninguna alerta.
 """
@@ -137,7 +138,7 @@ class AskAssistant:
         future = executor.submit(run)
         try:
             future.result(timeout=self._timeout_s)
-        except Exception:  # noqa: BLE001 - tiempo agotado o cualquier fallo del modelo: pasajes
+        except Exception:  # tiempo agotado o cualquier fallo del modelo: se devuelven los pasajes
             return ""
         finally:
             executor.shutdown(wait=False, cancel_futures=True)

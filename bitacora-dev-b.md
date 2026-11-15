@@ -504,3 +504,10 @@ Rama de trabajo `integration/a-b`, cortada de `dev-B` (ec2e298). Etiqueta local 
 - **Pruebas de A, en una copia de `origin/dev-A` (9fb8bfe):** 293 pasan en 79 s con Python 3.12 y Docker (testcontainers con `pgvector/pgvector:pg16`). Coincide con lo que dice su bitácora.
 - **Pruebas mías en `dev-B`:** 120 de Python y 123 de la web pasan.
 - **Lo leído de A:** los handlers son `handler(envelope, ctx)`; se publica con `ctx.publish(EventEnvelope.from_payload(payload, aggregate_type, aggregate_id, partition_key, correlation_id, causation_id))`; Monitoreo usa `aggregate_type="alert"`, `aggregate_id=alert_id`, `partition_key="habitat:<id>"` y `causation_id` = evento causante. Su prueba de contratos (`tests/contract/test_event_contracts.py`) tiene una lista fija de 22 eventos y una muestra por evento.
+
+### Fase 1 · Fusión mecánica de `origin/dev-A` (9fb8bfe)
+
+- **Conflictos (5) y resolución:** `.gitignore` unión de ambos; `pyproject.toml` base de A más `pypdf>=5` (Python `>=3.12,<3.13`, hatchling, grupos de dependencias de uv); `knowledge/contracts.py`, `knowledge/facade.py` y `assistant/contracts.py` se quedan con mi versión más un `EVENTS = {}` **provisional** para que importe el registro de eventos de A. `uv.lock` regenerado (`pypdf` 7.1.0).
+- **Ajustes de formato, sin cambiar comportamiento:** la configuración de ruff de A activa `E501` y `RUF100`; 10 líneas largas mías se partieron y se quitó un `noqa: BLE001` que A no activa.
+- **Verificación sobre Python 3.12.16:** ruff y `ruff format` limpios; mypy estricto sin errores en 135 archivos; **import-linter: 4 contratos cumplidos, 0 rotos** (mis módulos cumplen la independencia y las capas de A sin cambios); pytest **405 pasan y 8 fallan**.
+- **Las 8 fallas son la prueba en RED de la fase 2**, todas en `tests/contract/test_event_contracts.py`: el registro no tiene los eventos `knowledge.*` ni `assistant.*` porque mi `EVENTS` está vacío a propósito. Cuentas: 293 de A − 8 + 120 mías = 405.
