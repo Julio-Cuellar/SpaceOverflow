@@ -21,6 +21,8 @@ class IncidentOpened(EventPayload):
     title: str
     description: str
     source: Literal["ALERTA", "MANUAL"]
+    # Código legible (INC-0001). Opcional: los eventos anteriores a esta versión no lo traen.
+    code: str | None = None
 
 
 class IncidentUpdated(EventPayload):

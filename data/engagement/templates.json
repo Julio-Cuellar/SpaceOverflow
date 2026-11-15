@@ -1,0 +1,13 @@
+{
+  "evidence_state": "DEMO",
+  "note": "Tareas diarias de demostración (plan, sección 13.8). Las rutinas de salud suman a la racha; las de nave no.",
+  "templates": [
+    {"key": "ejercicio", "kind": "SALUD", "title": "Ejercicio de resistencia, 30 min", "recurrence": "DIARIA", "zone_code": "gym", "due_time": "10:00"},
+    {"key": "tension", "kind": "SALUD", "title": "Medir la presión arterial con el tensiómetro", "recurrence": "DIARIA", "zone_code": "med", "due_time": "08:00"},
+    {"key": "animo", "kind": "SALUD", "title": "Registrar el estado de ánimo", "recurrence": "DIARIA", "zone_code": null, "due_time": "18:00"},
+    {"key": "sellos", "kind": "NAVE", "title": "Inspeccionar los sellos de la esclusa", "recurrence": "DIARIA", "zone_code": "air", "due_time": "09:00"},
+    {"key": "cartucho", "kind": "NAVE", "title": "Revisar el cartucho de CO₂ y registrar sus horas de uso", "recurrence": "DIARIA", "zone_code": "eclss", "due_time": "11:00"},
+    {"key": "filtros", "kind": "NAVE", "title": "Verificar los filtros de aire del laboratorio", "recurrence": "DIARIA", "zone_code": "lab", "due_time": "14:00"},
+    {"key": "botiquin", "kind": "NAVE", "title": "Revisar el inventario del botiquín médico", "recurrence": "DIARIA", "zone_code": "med", "due_time": "16:00"}
+  ]
+}

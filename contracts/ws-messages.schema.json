@@ -1,0 +1,1111 @@
+{
+  "$defs": {
+    "ClientMessage": {
+      "oneOf": [
+        {
+          "properties": {
+            "topics": {
+              "items": {
+                "enum": [
+                  "telemetry",
+                  "alerts",
+                  "assistant",
+                  "habitat",
+                  "crew"
+                ]
+              },
+              "type": "array"
+            },
+            "type": {
+              "enum": [
+                "subscribe",
+                "unsubscribe"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "topics"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "ts": {},
+            "type": {
+              "enum": [
+                "ping"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "after_outbox_id": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": {
+              "enum": [
+                "resume"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "after_outbox_id"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ServerMessage": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "telemetry.tick"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "metric": {
+                    "type": "string"
+                  },
+                  "sensor_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "ts": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "sensor_id",
+                  "metric",
+                  "value",
+                  "ts"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "telemetry"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "scenario.changed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "enum": [
+                      "started",
+                      "stopped"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "state"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "telemetry"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "alert.raised"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "cause_hint": {
+                    "enum": [
+                      "AMBIENTE",
+                      "CUERPO",
+                      "INDETERMINADO",
+                      null
+                    ]
+                  },
+                  "evidence": {
+                    "type": "object"
+                  },
+                  "rule_key": {
+                    "type": "string"
+                  },
+                  "severity": {
+                    "enum": [
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "rule_key",
+                  "severity"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "alert.updated"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "acknowledged"
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "alert.resolved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "duration_s": {
+                    "type": "integer"
+                  },
+                  "resolved_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "resolved"
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "recommendation.ready"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "action_keys": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "alert_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "citations": {
+                    "items": {
+                      "properties": {
+                        "document_code": {
+                          "type": "string"
+                        },
+                        "evidence_state": {
+                          "enum": [
+                            "VERIFICADO",
+                            "TB",
+                            "DEMO",
+                            "NO_VERIFICADO"
+                          ]
+                        },
+                        "excerpt": {
+                          "type": "string"
+                        },
+                        "page": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "requirement_ref": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "document_code",
+                        "excerpt",
+                        "evidence_state"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "composed_by": {
+                    "const": "template"
+                  },
+                  "recommendation_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "alert_id",
+                  "recommendation_id",
+                  "action_keys",
+                  "citations",
+                  "composed_by"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "recommendation.enriched"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "composed_by": {
+                    "const": "llm"
+                  },
+                  "recommendation_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "recommendation_id",
+                  "text",
+                  "composed_by"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "alerts"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "assistant.answer"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "citations": {
+                    "items": {
+                      "properties": {
+                        "document_code": {
+                          "type": "string"
+                        },
+                        "evidence_state": {
+                          "enum": [
+                            "VERIFICADO",
+                            "TB",
+                            "DEMO",
+                            "NO_VERIFICADO"
+                          ]
+                        },
+                        "excerpt": {
+                          "type": "string"
+                        },
+                        "page": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "requirement_ref": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "document_code",
+                        "excerpt",
+                        "evidence_state"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "utterance_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "utterance_id",
+                  "text",
+                  "citations"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "assistant"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "incident.opened"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "code": {
+                    "description": "Código legible del ticket, INC-0001",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "incident_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "severity": {
+                    "enum": [
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "source": {
+                    "enum": [
+                      "ALERTA",
+                      "MANUAL"
+                    ]
+                  },
+                  "status": {
+                    "const": "ABIERTA"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "incident_id",
+                  "zone_id",
+                  "severity",
+                  "title",
+                  "description",
+                  "source",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "incident.updated"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "incident_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "severity": {
+                    "enum": [
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "ABIERTA",
+                      "RECONOCIDA",
+                      "RESUELTA"
+                    ]
+                  }
+                },
+                "required": [
+                  "incident_id",
+                  "severity",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "incident.resolved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "incident_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "resolved_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "status": {
+                    "const": "RESUELTA"
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "incident_id",
+                  "zone_id",
+                  "resolved_at",
+                  "status"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "zone.status"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "open_incidents": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "status": {
+                    "enum": [
+                      "NORMAL",
+                      "ATENCION",
+                      "ALERTA",
+                      "CRITICO"
+                    ]
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "zone_id",
+                  "status",
+                  "open_incidents"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "habitat"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "task.assigned"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "action_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "crew_member_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "due_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "enum": [
+                      "SALUD",
+                      "NAVE",
+                      "INCIDENTE"
+                    ]
+                  },
+                  "origin": {
+                    "enum": [
+                      "TIERRA",
+                      "SISTEMA",
+                      "TRIPULACION"
+                    ]
+                  },
+                  "task_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "task_id",
+                  "crew_member_id",
+                  "kind",
+                  "origin",
+                  "due_at"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "task.created"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "SALUD",
+                      "NAVE",
+                      "INCIDENTE"
+                    ]
+                  },
+                  "origin": {
+                    "enum": [
+                      "TIERRA",
+                      "SISTEMA",
+                      "TRIPULACION"
+                    ]
+                  },
+                  "task_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "zone_id": {
+                    "format": "uuid",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "task_id",
+                  "kind",
+                  "title",
+                  "origin"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "task.completed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "action_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "effective": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "task_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "task_id"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "task.blocked"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "origin": {
+                    "enum": [
+                      "TIERRA",
+                      "SISTEMA",
+                      "TRIPULACION"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "task_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "task_id",
+                  "origin",
+                  "reason"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "groundplan.received"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "batch_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "changes": {
+                    "items": {
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "plan_version": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "batch_id",
+                  "plan_version",
+                  "changes"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "groundplan.applied"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "applied": {
+                    "items": {
+                      "format": "uuid",
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "plan_version": {
+                    "type": "integer"
+                  },
+                  "rejected": {
+                    "items": {
+                      "properties": {
+                        "reason": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "reason"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "plan_version",
+                  "applied",
+                  "rejected"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "groundplan.confirmed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "acked_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "batch_id": {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  "items": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "batch_id",
+                  "items",
+                  "acked_at"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "groundlink.state"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "properties": {
+                  "queued": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "since": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "state": {
+                    "enum": [
+                      "UP",
+                      "DOWN",
+                      "DEGRADED"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "since",
+                  "queued"
+                ],
+                "type": "object"
+              },
+              "topic": {
+                "const": "crew"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        },
+        "seq": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "topic": {
+          "enum": [
+            "telemetry",
+            "alerts",
+            "assistant",
+            "habitat",
+            "crew",
+            "system"
+          ]
+        },
+        "type": {
+          "enum": [
+            "telemetry.tick",
+            "scenario.changed",
+            "alert.raised",
+            "alert.updated",
+            "alert.resolved",
+            "recommendation.ready",
+            "recommendation.enriched",
+            "assistant.answer",
+            "incident.opened",
+            "incident.updated",
+            "incident.resolved",
+            "zone.status",
+            "task.assigned",
+            "task.created",
+            "task.completed",
+            "task.blocked",
+            "groundplan.received",
+            "groundplan.applied",
+            "groundplan.confirmed",
+            "groundlink.state",
+            "subscribed",
+            "pong",
+            "ping",
+            "resumed",
+            "error"
+          ]
+        }
+      },
+      "required": [
+        "seq",
+        "topic",
+        "type",
+        "at",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "ws-messages.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Un solo canal de push. El servidor envía ServerMessage; el cliente, ClientMessage. `seq` es el id del outbox cuando el mensaje nace de un evento (se reenvía con `resume`); es null en los ticks y en el topic `system`. Con la cola llena se descartan ticks, nunca alertas. Sin mensajes durante 15 s el servidor envía `ping`.",
+  "title": "Mensajes de /ws"
+}

@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Documento de trabajo para **Dev A**. Deriva de [`plan-arquitectura.md`](plan-arquitectura.md) (secciones 5 a 8, 10, 13 y 16) y de [`spaceapps-health-monitor-context.md`](spaceapps-health-monitor-context.md). Es el equivalente de [`tareas-dev-b.md`](tareas-dev-b.md).
-> Historial y estado: [`bitacora.md`](bitacora.md). Evidencia de las pruebas ya hechas: [`tdd/f0-f1.tdd.md`](tdd/f0-f1.tdd.md).
+> Historial y estado: [`bitacora-dev-a.md`](../bitacora-dev-a.md). Evidencia de las pruebas ya hechas: [`tdd/f0-f1.tdd.md`](tdd/f0-f1.tdd.md).
 > Las horas son de trabajo por persona, no de reloj.
 
 ---
@@ -331,17 +331,17 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **4.1 Esquema `facility` (0,75 h):** `habitat`, `zone` (con `layout` JSON y `status`), `incident_type`, `incident`, `incident_update`. Migración propia. Un ticket automático por zona activa (`source_alert_id` como referencia blanda).
-- [ ] **4.2 Plano en JSON (0,5 h):** el plano de las 10 zonas (ingeniería, soporte vital, laboratorio, enfermería, puente, esclusa, almacén, gimnasio, cocina y dormitorios) como dato en `data/facility/`. **Cambiar de nave a base lunar es cambiar datos, no código.** Todo `DEMO`.
-- [ ] **4.3 Catálogo de tipos de incidencia (0,75 h):** 61 tipos en 12 categorías como datos versionados (el catálogo está en `tools/docgen/data.py`). Cargador con validación. Prueba: toda clave de regla de un tipo `AUTO` existe en el catálogo de reglas, o está en una lista explícita de reglas pendientes.
-- [ ] **4.4 Handlers de alerta (1,5 h)**
+- [x] **4.1 Esquema `facility` (0,75 h):** *(B-019. Diferencia: no hay tabla `incident_type`, el catálogo vive en memoria como el plano; sí hay `zone_alert`, una proyección de las alertas activas por zona)* `habitat`, `zone` (con `layout` JSON y `status`), `incident_type`, `incident`, `incident_update`. Migración propia. Un ticket automático por zona activa (`source_alert_id` como referencia blanda).
+- [x] **4.2 Plano en JSON (0,5 h):** *(B-019: `data/facility/plan.json`, con la geometría del artefacto)* el plano de las 10 zonas (ingeniería, soporte vital, laboratorio, enfermería, puente, esclusa, almacén, gimnasio, cocina y dormitorios) como dato en `data/facility/`. **Cambiar de nave a base lunar es cambiar datos, no código.** Todo `DEMO`.
+- [x] **4.3 Catálogo de tipos de incidencia (0,75 h):** *(B-019: `data/facility/incident_types.json`, con claves de regla exactas y 20 reglas pendientes)* 61 tipos en 12 categorías como datos versionados (el catálogo está en `tools/docgen/data.py`). Cargador con validación. Prueba: toda clave de regla de un tipo `AUTO` existe en el catálogo de reglas, o está en una lista explícita de reglas pendientes.
+- [x] **4.4 Handlers de alerta (1,5 h)** *(B-019)*
   - `alert_raised` con severidad Alerta o mayor abre un ticket automático por zona. La tendencia (severidad Atención) **no** abre ticket.
   - Un ticket abierto por zona: si llegan más alertas se actualiza su descripción y, si sube la severidad, se publica `incident_updated`.
   - `alert_resolved` marca «valores normales, puede cerrarse». **El ticket no se cierra solo.**
   - Un ticket automático no puede resolverse mientras haya alertas activas en su zona. Un ticket manual sí.
   - Reporte manual (`reportIncident`) por categoría y tipo, con severidad y acciones por defecto.
-- [ ] **4.5 Estado de color de cada zona (0,5 h):** máximo entre las alertas activas y los tickets abiertos. Se recalcula al arrancar con `ActiveAlertsQuery`. Publica `zone_status_changed` solo si cambia.
-- [ ] **4.6 GraphQL (1 h):** consultas y mutaciones con resultados tipados (`union` de éxito y errores, sin excepciones para errores esperados), paginación por cursor y DataLoaders.
+- [x] **4.5 Estado de color de cada zona (0,5 h):** *(B-019: se reconstruye la primera vez que el proceso lo necesita)* máximo entre las alertas activas y los tickets abiertos. Se recalcula al arrancar con `ActiveAlertsQuery`. Publica `zone_status_changed` solo si cambia.
+- [~] **4.6 GraphQL (1 h):** *(B-019: todo salvo los DataLoaders; `updates` de cada ticket hace una consulta)* consultas y mutaciones con resultados tipados (`union` de éxito y errores, sin excepciones para errores esperados), paginación por cursor y DataLoaders.
 
 **Criterios de aceptación**
 
@@ -363,19 +363,19 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **5.1 Composición del esquema (1,5 h)**
+- [~] **5.1 Composición del esquema (1,5 h)** · *parcial (B-017): las consultas de Monitoreo, Telemetría y Conocimiento, y `acknowledgeAlert`. Faltan `crewMember`, `recordBaseline`, `setConsent`, las de nave (F4), los fragmentos por módulo y los DataLoaders*
   - Strawberry montado en FastAPI. Cada módulo aporta su fragmento (`graphql.py`) y A los compone en `interfaces/graphql/schema.py`. Los resolvers de B (Conocimiento y Asistente) se registran sin que A los escriba.
   - Consultas y mutaciones de A: `dashboard`, `readings`, `alerts`, `alert`, `rules`, `zoneReadings`, `crewMember`, `acknowledgeAlert`, `recordBaseline`, `setConsent`, y las de nave de F4.
   - Resultados tipados con `union`. Límite de profundidad y de costo. DataLoaders contra N+1.
-- [ ] **5.2 Gateway `/ws` (1,5 h)**
+- [~] **5.2 Gateway `/ws` (1,5 h)** · *hecho (B-017 y B-018). Diferencia: los topics son `telemetry`, `alerts` y `assistant`, los que ya usa la interfaz de B; `habitat` llega con F4 y `crew` con Tripulación*
   - Un endpoint con `subscribe` y `unsubscribe` por topic (`habitat`, `crew`, `alerts`, `assistant`).
   - Traduce los eventos del bus a los 14 mensajes del plan (tabla en la sección 5.3). `seq` es el `id` del outbox cuando el mensaje nace de un evento.
   - **`resume { after_outbox_id }`:** reenvía desde `outbox_event` (retención de 24 h).
   - `ping` y `pong` cada 15 s.
   - **Presión inversa:** cola de 500 mensajes por cliente. Se descartan primero los `telemetry.tick`. **Las alertas no se descartan.**
-- [ ] **5.3 Ticks coalescidos (0,25 h):** `telemetry.tick` a 1 Hz como máximo por zona y sensor, a partir de `readings_recorded`.
-- [ ] **5.4 Contratos publicados y operación (0,5 h):** exportar `schema.graphql`, el OpenAPI y `ws-messages.schema.json` para que B genere tipos y mocks. Ruta de reencolado `POST /api/v1/admin/outbox/{id}:replay` (R8) y `outboxStats` (solo perfiles de desarrollo). Limpieza de eventos `done` con más de 24 h.
-- [ ] **5.5 Prueba de extremo a extremo (0,25 h):** escenario → alerta por WebSocket en menos de 1 s → reconocer por GraphQL.
+- [x] **5.3 Ticks coalescidos (0,25 h):** *(B-017: la cola de cada cliente se queda con el último tick por zona y métrica)* `telemetry.tick` a 1 Hz como máximo por zona y sensor, a partir de `readings_recorded`.
+- [x] **5.4 Contratos publicados y operación (0,5 h):** *(B-018: `contracts/schema.generated.graphql`, `openapi.json` y `ws-messages.schema.json` con `python -m spaceapp.interfaces.contracts_export`; el borrador `schema.graphql` de B no se toca)* exportar `schema.graphql`, el OpenAPI y `ws-messages.schema.json` para que B genere tipos y mocks. Ruta de reencolado `POST /api/v1/admin/outbox/{id}:replay` (R8) y `outboxStats` (solo perfiles de desarrollo). Limpieza de eventos `done` con más de 24 h.
+- [x] **5.5 Prueba de extremo a extremo (0,25 h):** *(B-017: `tests/integration/test_end_to_end.py`, latencia medida de 47 a 73 ms)* escenario → alerta por WebSocket en menos de 1 s → reconocer por GraphQL.
 
 **Criterios de aceptación**
 
@@ -421,10 +421,10 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **10.1 Esquema (0,5 h):** `task_template`, `task` (con `kind`, `origin`, `template_id`, `blocked_reason`), `reminder`, `achievement`, `crew_achievement`.
-- [ ] **10.2 Handlers (0,75 h):** las tareas de incidente nacen al abrirse un ticket y se completan al cerrarlo. Las medidas de una alerta nacen de la recomendación.
-- [ ] **10.3 Tareas propias (0,75 h):** `TRIPULACION` puede crear, editar y borrar. **Una tarea de Tierra no se puede editar ni borrar:** devuelve un error tipado. Se puede completar, posponer o **bloquear con motivo** (no se borra).
-- [ ] **10.4 GraphQL (0,5 h):** resolvers y errores tipados. Solo las rutinas de salud suman a la racha y a los logros. **Las alertas críticas no se gamifican.**
+- [x] **10.1 Esquema (0,5 h):** *(B-022. Diferencia: sin tablas `reminder`, `achievement` ni `crew_achievement`; posponer mueve `due_at` y la racha se calcula de las tareas del día; se añadió `applied_plan`)* `task_template`, `task` (con `kind`, `origin`, `template_id`, `blocked_reason`), `reminder`, `achievement`, `crew_achievement`.
+- [x] **10.2 Handlers (0,75 h):** *(B-022)* las tareas de incidente nacen al abrirse un ticket y se completan al cerrarlo. Las medidas de una alerta nacen de la recomendación.
+- [x] **10.3 Tareas propias (0,75 h):** *(B-022)* `TRIPULACION` puede crear, editar y borrar. **Una tarea de Tierra no se puede editar ni borrar:** devuelve un error tipado. Se puede completar, posponer o **bloquear con motivo** (no se borra).
+- [x] **10.4 GraphQL (0,5 h):** *(B-022: `snoozeTask` en lugar de `snoozeReminder`; sin logros, solo `streak`)* resolvers y errores tipados. Solo las rutinas de salud suman a la racha y a los logros. **Las alertas críticas no se gamifican.**
 
 **Criterios de aceptación**
 
@@ -452,11 +452,11 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **11.1 Esquema (0,75 h):** `inbound_plan` (con `batch_id` y `plan_version` únicos, hash y estado), `ground_plan` y `ground_template` (lado de Tierra, solo en el despliegue de Tierra o en la demo).
-- [ ] **11.2 Recepción (0,75 h):** R9 valida versión e integridad (hash). Versión menor o repetida: se ignora. Plan corrupto: se rechaza completo con motivo. Responde `202` y publica `ground_plan_received`.
-- [ ] **11.3 Aplicación en Misiones (1,25 h):** una transacción. Crea, actualiza y cancela plantillas con origen `TIERRA`. Un ítem inválido (zona o asignado inexistentes) se rechaza solo él, con motivo, y el resto se aplica. Publica `ground_plan_applied` con lo aplicado y lo rechazado.
-- [ ] **11.4 Lado de Tierra y enlace simulado (1 h):** GraphQL de borrador y publicación. Adaptador `GroundLink` simulado con demora y corte configurables.
-- [ ] **11.5 Reglas de conflicto (0,25 h):** una prueba por cada una de las reglas de la sección 13.11 del plan.
+- [x] **11.1 Esquema (0,75 h):** *(B-022: `inbound_plan`, `ground_plan`, `ground_item` y `link_state`)* `inbound_plan` (con `batch_id` y `plan_version` únicos, hash y estado), `ground_plan` y `ground_template` (lado de Tierra, solo en el despliegue de Tierra o en la demo).
+- [x] **11.2 Recepción (0,75 h):** *(B-022)* R9 valida versión e integridad (hash). Versión menor o repetida: se ignora. Plan corrupto: se rechaza completo con motivo. Responde `202` y publica `ground_plan_received`.
+- [x] **11.3 Aplicación en Misiones (1,25 h):** *(B-022)* una transacción. Crea, actualiza y cancela plantillas con origen `TIERRA`. Un ítem inválido (zona o asignado inexistentes) se rechaza solo él, con motivo, y el resto se aplica. Publica `ground_plan_applied` con lo aplicado y lo rechazado.
+- [x] **11.4 Lado de Tierra y enlace simulado (1 h):** *(B-022: `groundControl`, `saveGroundTemplate`, `cancelGroundTemplate`, `publishGroundPlan`, `setGroundLink` y R5; sin filtro de consentimiento ni autenticación del rol `ground`)* GraphQL de borrador y publicación. Adaptador `GroundLink` simulado con demora y corte configurables.
+- [x] **11.5 Reglas de conflicto (0,25 h):** *(B-022: las ocho reglas tienen prueba)* una prueba por cada una de las reglas de la sección 13.11 del plan.
 
 **Reglas de conflicto (resumen)**
 
@@ -662,7 +662,7 @@ Una fase de A está **hecha** cuando:
 - [ ] Funciona sin internet y sin enlace con Tierra.
 - [ ] Si toca un contrato, B lo revisó antes.
 - [ ] Hay un informe de evidencia en `docs/tdd/` del bloque.
-- [ ] La entrada correspondiente está en `docs/bitacora.md`.
+- [ ] La entrada correspondiente está en `bitacora-dev-a.md`.
 
 ---
 
@@ -751,5 +751,5 @@ No se deciden sin consultar. Mientras tanto se usa el supuesto indicado.
 
 - [ ] README corto por módulo
 - [ ] Informe de evidencia de cada bloque en `docs/tdd/`
-- [ ] Entrada de cada bloque en `docs/bitacora.md`
+- [ ] Entrada de cada bloque en `bitacora-dev-a.md`
 - [ ] Prueba final en otra computadora, sin internet, con el perfil `jurado`

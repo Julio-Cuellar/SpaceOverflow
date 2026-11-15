@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from spaceapp.platform.bus import HandlerContext, Subscription, SubscriptionRegistry
 from spaceapp.platform.events import EventEnvelope
+from spaceapp.platform.outbox.admin import RETENTION, purge_done
 from spaceapp.platform.outbox.publisher import NOTIFY_CHANNEL, add_to_outbox
 
 log = logging.getLogger(__name__)
@@ -55,6 +56,7 @@ class OutboxRelay:
         max_attempts: int = 8,
         poll_interval: float = 0.5,
         listen_dsn: str | None = None,
+        purge_interval: float = 600,
     ) -> None:
         self._sf = session_factory
         self._registry = registry
@@ -62,6 +64,7 @@ class OutboxRelay:
         self.max_attempts = max_attempts
         self.poll_interval = poll_interval
         self._listen_dsn = listen_dsn
+        self.purge_interval = purge_interval
 
     async def run_once(self) -> int:
         """Procesa un lote de pendientes en orden de id. Devuelve cuántos tomó."""
@@ -126,9 +129,14 @@ class OutboxRelay:
         if self._listen_dsn:
             conn = await asyncpg.connect(self._listen_dsn)
             await conn.add_listener(NOTIFY_CHANNEL, lambda *_: wake.set())
+        loop = asyncio.get_running_loop()
+        next_purge = loop.time()
         try:
             while not stop.is_set():
                 wake.clear()
+                if loop.time() >= next_purge:
+                    next_purge = loop.time() + self.purge_interval
+                    await self._purge()
                 try:
                     if await self.run_once():
                         continue
@@ -138,6 +146,16 @@ class OutboxRelay:
         finally:
             if conn is not None:
                 await conn.close()
+
+    async def _purge(self) -> None:
+        """Los eventos entregados se conservan 24 h (para `resume`) y después se borran."""
+        try:
+            async with self._sf() as session, session.begin():
+                purged = await purge_done(session, RETENTION)
+            if purged:
+                log.info("se borraron %d eventos entregados del outbox", purged)
+        except Exception:
+            log.exception("no se pudo limpiar el outbox")
 
     async def _sleep(self, wake: asyncio.Event, stop: asyncio.Event) -> None:
         tasks = {asyncio.create_task(wake.wait()), asyncio.create_task(stop.wait())}

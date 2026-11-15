@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 
 ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_SOCK = Path.home() / ".docker" / "desktop" / "docker.sock"
-MIGRATED_MODULES = ["platform", "monitoring", "telemetry"]
+MIGRATED_MODULES = ["platform", "monitoring", "telemetry", "facility", "engagement", "groundlink"]
 CLEAN_TABLES = [
     "platform.outbox_event",
     "platform.inbox_processed",
@@ -25,6 +25,18 @@ CLEAN_TABLES = [
     "telemetry.reading",
     "telemetry.scenario_run",
     "telemetry.sensor",
+    "facility.incident_update",
+    "facility.incident",
+    "facility.zone_alert",
+    "facility.zone",
+    "facility.habitat",
+    "engagement.applied_plan",
+    "engagement.task",
+    "engagement.task_template",
+    "groundlink.ground_item",
+    "groundlink.ground_plan",
+    "groundlink.inbound_plan",
+    "groundlink.link_state",
 ]
 
 
