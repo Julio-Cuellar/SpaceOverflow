@@ -21,11 +21,11 @@ Responde preguntas de la tripulación **solo con pasajes recuperados** y los cit
 3. Sin modelo de voz, con un fallo o sin habla, la intervención queda `NO_TRANSCRIPT` con el motivo y la tripulación escribe la pregunta: el flujo es el mismo.
 4. Una emergencia no depende de la voz: este código no toca las alertas.
 
-Adaptadores de `SpeechToText`: `NullSpeechToText` (sin modelo) y `WhisperSpeechToText` (`faster-whisper` en CPU, `int8`, español, con un texto de contexto con términos médicos). Se cargan al primer uso; `build_speech_to_text` devuelve el nulo si la biblioteca no está instalada.
+Adaptadores de `SpeechToText`: `NullSpeechToText` (sin modelo) y `WhisperSpeechToText` (`faster-whisper` en CPU, `int8`, inglés, con un texto de contexto con términos médicos) y `HttpSpeechToText` (llama al contenedor `docker/voice`, que ejecuta el anterior). Se cargan al primer uso; `build_speech_to_text` devuelve el nulo si la biblioteca no está instalada.
 
 ## Micrófono en el navegador
 
-El navegador solo ofrece el micrófono en `localhost` o con HTTPS. En otra dirección sin HTTPS la interfaz avisa y la tripulación escribe la pregunta. La interfaz de voz está en `web/src/features/assistant/` (`VoiceInput`, `microphone.ts`); hoy transcribe con una **simulación**, no con Whisper.
+El navegador solo ofrece el micrófono en `localhost` o con HTTPS. En otra dirección sin HTTPS la interfaz avisa y la tripulación escribe la pregunta. La interfaz de voz está en `web/src/features/assistant/` (`VoiceInput`, `microphone.ts`); con `VITE_VOICE_URL` transcribe con Whisper real (`transcribeBackend`); sin ella, con una **simulación** que lo avisa.
 
 ## Pruebas
 
@@ -35,7 +35,7 @@ El navegador solo ofrece el micrófono en `localhost` o con HTTPS. En otra direc
 
 ## Límites actuales
 
-- La voz está hecha en el núcleo y probada con un Whisper de mentira. **Falta** la ruta `POST /api/v1/voice/utterances` (necesita `python-multipart`), la entrega de la transcripción por WebSocket (no existe un evento `assistant.transcript` en el contrato de Dev A) y probar el modelo real con audio.
+- **Voz (F14):** rutas `POST /api/v1/voice/utterances` (audio crudo, 202), `GET …/{id}`, `POST …/{id}/confirm` y `…/discard` (`adapters/inbound/voice_rest.py`), servidas por el servidor de desarrollo. La web consulta el estado cada 0,5 s. **Falta** la entrega por WebSocket (no existe un evento `assistant.transcript` en el contrato de Dev A) y medir la precisión con voz real (`python -m spaceapp.devtools.voice_measure`). El audio se borra al transcribirse.
 - El audio se guarda tal cual en una carpeta local y no se borra: falta una política de retención.
 - Conversaciones en memoria; falta el esquema `assistant` en PostgreSQL y su migración.
 - Faltan los resolvers GraphQL (`askAssistant`, `conversation`), que se registran en el esquema que compone Dev A.

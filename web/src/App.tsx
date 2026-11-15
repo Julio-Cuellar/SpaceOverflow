@@ -52,6 +52,8 @@ export interface AppProps {
   onTasksSharedChange?: (shared: boolean) => void
   /** Asistente real (backend, n8n y Ollama). Sin él, la pestaña usa la simulación local. */
   askAssistant?: (question: string) => Promise<AssistantAnswer>
+  /** Voz real (backend y Whisper). Sin ella, la pestaña usa una transcripción simulada y lo avisa. */
+  transcribeVoice?: (audio: Blob) => Promise<{ text: string } | null>
 }
 
 export function App({
@@ -59,6 +61,7 @@ export function App({
   tasksShared: sharedProp,
   onTasksSharedChange,
   askAssistant,
+  transcribeVoice,
 }: AppProps = {}) {
   const [state, setState] = useState(initialState)
   const [view, setView] = useState<View>('cabina')
@@ -143,8 +146,8 @@ export function App({
           answerFor={askAssistant ?? ((question) => mockAnswer(question, activeAlertTitles(state)))}
           voice={{
             startRecording: startMicrophoneRecording,
-            transcribe: mockTranscribe,
-            notice: SIMULATED_TRANSCRIPT_NOTICE,
+            transcribe: transcribeVoice ?? mockTranscribe,
+            notice: transcribeVoice ? undefined : SIMULATED_TRANSCRIPT_NOTICE,
           }}
         />
       ) : (

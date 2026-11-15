@@ -93,6 +93,20 @@ def test_an_agent_answer_with_an_invented_figure_is_not_delivered() -> None:
     assert result.citations
 
 
+def test_an_agent_that_says_it_has_no_information_after_retrieving_passages_is_not_delivered() -> (
+    None
+):
+    refusal = '"I don\'t have that information in the loaded sources."'
+    assistant, _, _, _ = build(lambda log: FakeAgent(log, text=refusal))
+
+    result = assistant(uuid.uuid4(), HEADACHE, turn_id=uuid.uuid4())
+
+    assert result.composed_by != "n8n"
+    assert result.degraded is True
+    assert result.text.startswith("According to the loaded sources:")
+    assert result.citations
+
+
 def test_an_agent_answer_in_spanish_is_not_delivered() -> None:
     text = "El dolor de cabeza puede deberse a un nivel de CO₂ alto en la cabina."
     assistant, _, _, _ = build(lambda log: FakeAgent(log, text=text))

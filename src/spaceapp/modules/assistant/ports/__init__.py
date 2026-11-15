@@ -70,6 +70,10 @@ class AudioStore(Protocol):
         """Guarda el audio y devuelve dónde quedó."""
         ...
 
+    def delete(self, path: str) -> None:
+        """Borra el audio; si ya no está, no hace nada."""
+        ...
+
 
 class UtteranceRepository(Protocol):
     def add(self, utterance: Utterance) -> None: ...

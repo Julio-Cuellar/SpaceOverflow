@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     // El asistente real vive en el backend de desarrollo (puerto 8000); así no hace falta CORS.
-    proxy: { '/dev': { target: 'http://127.0.0.1:8000', changeOrigin: true, timeout: 150_000 } },
+    proxy: {
+      '/dev': { target: 'http://127.0.0.1:8000', changeOrigin: true, timeout: 150_000 },
+      '/api': { target: 'http://127.0.0.1:8000', changeOrigin: true, timeout: 150_000 },
+    },
   },
   resolve: {
     alias: {

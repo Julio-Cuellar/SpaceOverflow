@@ -882,3 +882,64 @@ Sin descargar nada: el modelo real y la biblioteca aún no se instalaron (hace f
 **Decisión:** se descarta; se queda el registro, no el código (módulo, pruebas y vectores borrados; los vectores en uso siguen siendo los de E23). El reservado se ha medido ya seis veces.
 
 **Idea que queda:** anteponer el **encabezado de sección** más cercano (exige que el fragmentador lo extraiga) o un reordenador de modelo cruzado (descarga con permiso). Ninguno se ha hecho.
+
+## E28 · Prueba de punta a punta con 8 preguntas (15 nov 2026)
+
+**Prueba:** servidor de desarrollo con el código de E26 → n8n → Ollama `spaceapp-asistente`, 8 preguntas por `/dev/ask` (no es una evaluación: una muestra).
+
+**Resultados:**
+- **Fuera de alcance (migraña, mundial de fútbol):** `NO_INFO` en < 0,5 s, sin citas. Correcto.
+- **Presión mínima de cabina (inglés):** respuesta del agente correcta (5,0 psia, 34,5 kPa) en 40 s, con citas.
+- **Límite de CO₂ de una hora (inglés) y «¿Por qué me duele la cabeza?»:** el agente **respondió «I don't have that information in the loaded sources» habiendo recuperado 3 pasajes**, y el backend lo entregó como respuesta con «Sources». Es engañoso: citas junto a un «no sé».
+- **Energía diaria, calorías extra en EVA, síntomas de hipoxia:** el agente tardó 148 a 152 s en las dos primeras (pasó el límite de 120 s) y cayó a la plantilla; la tercera, 15,6 s, también plantilla. Latencia total 15 a 152 s.
+
+**Corrección (TDD, RED observado):** `AskAssistant._refuses`: una redacción que niega tener la información cuando sí se recuperaron pasajes no se entrega; se responde con la plantilla. Las dos preguntas repetidas dieron plantilla (30 s y 15 s).
+
+**Hallazgos sin arreglar:**
+- La plantilla muestra los pasajes en el orden del buscador y el primero puede ser el equivocado (recall@1 44 %): para «límite de CO₂ de una hora» abre con las horas de oxígeno enriquecido; para el dolor de cabeza, con una tabla de medicamentos.
+- **Con `llama3.2:3b` en CPU el agente no es fiable ni rápido:** de 6 preguntas útiles, 1 respuesta buena del agente, 2 negativas falsas, 3 plantillas. La decisión de latencia/modelo sigue abierta (opciones de E19: modelo más pequeño que no usa herramientas, o plantilla primero y redacción después).
+
+**GREEN:** 780 pruebas de Python (19 omitidas), `ruff`, `mypy` estricto e `import-linter` limpios. Sin commit.
+
+## E29 · Resumen extractivo en la plantilla (15 nov 2026)
+
+**Motivo:** el usuario pegó una respuesta de plantilla de ≈ 3 000 caracteres (tres pasajes de 600 a 900) y preguntó cómo resumirla. La respuesta con la cifra («5.0 psia») estaba enterrada en el primer párrafo.
+
+**Hecho (TDD, RED observado):** `assistant/application/brief.py`: de cada pasaje se muestra la frase que más se parece a la pregunta (términos, con más peso si lleva cifras) y, si aún pasa de 260 caracteres, la ventana de 260 que reúne más términos y cifras; se quita el encabezado de página de la norma. **Extractivo: no reescribe nada**, todo está literal en el pasaje, así que no puede inventar. Solo cambia la plantilla (`_template` recibe la pregunta); las citas conservan el extracto completo y la evaluación del asistente (que juzga por citas) no cambia.
+
+**Resultado en vivo (curl):** «What is the average one-hour CO2 limit?» → tres líneas de una frase cada una con «3 mmHg» a la vista, en lugar de tres párrafos.
+
+**Límites vistos en la misma prueba (no son del resumen):**
+- Pregunta en **español**: los términos no coinciden con el texto en inglés, así que se muestra el comienzo del pasaje. `assistant` no puede usar el glosario sin saltarse la frontera con `knowledge`.
+- «¿Por qué me duele la cabeza?» recupera tablas de medicamentos del checklist antes que el Technical Brief de CO₂; «drinking water per day» recupera pasajes de agua que no traen la cifra. Es recuperación, no resumen.
+- Latencia con plantilla degradada: 25 a 39 s (el agente de n8n se intenta primero).
+
+**GREEN:** 787 pruebas de Python (19 omitidas), `ruff`, `mypy` estricto e `import-linter` limpios. Sin commit (E28 y E29 pendientes).
+
+## E30 · F14 Whisper integrado de punta a punta (15 nov 2026)
+
+**Decisiones del usuario:** Whisper como servicio HTTP en su contenedor (no instalar en el `.venv`), borrar el audio al transcribir, y grabar él las frases de medición.
+
+**Hecho (TDD, RED observado en cada pieza; 18 pruebas nuevas de Python y 7 de web):**
+- **Inglés:** `LANGUAGE = "en"` y el texto de contexto con «hypoxia», «ppCO2», «partial pressure», «cabin».
+- **Servicio:** `devtools/voice_server.py` (biblioteca estándar; `POST /transcribe` con el audio crudo, `GET /health`, límite de 25 MB, 400/404/413/500 en JSON) ejecutado por la imagen `spaceapp-voice` con la repo montada en `/app`. El idioma y el contexto salen de `whisper.py` (una sola fuente); el contenedor no duplica nada.
+- **Adaptador:** `HttpSpeechToText` (`urllib`, como `ollama_embedder`); si el contenedor no responde lanza el error y el caso de uso deja la transcripción en blanco con «escribe tu pregunta».
+- **Borrado del audio:** `AudioStore.delete` y `SubmitAudio.transcribe` lo borran con texto, sin habla, con fallo o sin modelo; `Utterance.audio_path` queda en `None`.
+- **Rutas REST** (`adapters/inbound/voice_rest.py`): subir (202; 400 audio vacío, 415 tipo no admitido, 422 sin `conversation_id`), estado, confirmar (409 si ya se confirmó) y descartar. Audio como cuerpo crudo: **no hizo falta `python-multipart`** ni instalar nada.
+- **Servidor de desarrollo:** monta las rutas; `SPACEAPP_WHISPER_URL` (por defecto `127.0.0.1:9000`); sin servicio, cae al adaptador nulo.
+- **Web:** `transcribeBackend` (sube, consulta cada 0,5 s hasta 60 s, `null` si no hay texto, error si falla), `App`/`Root`/`main.tsx` con `VITE_VOICE_URL`, proxy `/api` en Vite. Sin la variable queda la simulación y lo avisa.
+- **Medición:** `devtools/voice_measure.py` (WER y tiempo por frase) para las grabaciones del usuario.
+
+**Verificado con el contenedor real:** `/health`, y un tono de 3 s por `curl` directo y por el servidor de desarrollo → `NO_TRANSCRIPT` («No se oyó nada»), carpeta de audio vacía después. La segunda petición al contenedor tardó 0,07 s.
+
+**No verificado:**
+- **Voz real:** no hay sintetizador en esta máquina; el tono no es habla. La precisión y la latencia con una frase real **no se midieron**: el usuario grabará con `arecord` y correrá `voice_measure`.
+- **`webm/opus` del navegador:** el micrófono real no se probó (el navegador integrado no ofrece micrófono); `av` debería decodificarlo, pero no está comprobado.
+- **Memoria y CPU:** Whisper en reposo usa ≈ 280 MB (Ollama 0,9 GB sin modelo de chat cargado). No se midió con Whisper, bge-m3 y llama a la vez; la transcripción compite por CPU con el agente.
+
+**Límites que quedan:**
+- La web confirma el texto con `/dev/ask` (como si fuera escrito); la ruta `…/confirm` existe y está probada, pero esa intervención de voz queda en `TRANSCRIBED` en el servidor de desarrollo.
+- Sin evento WebSocket de transcripción (hay que pedírselo a Dev A); se consulta cada 0,5 s.
+- El texto de «No se oyó nada» y «escribe tu pregunta» sigue en español (la interfaz no se tradujo).
+
+**GREEN:** 823 + 7 pruebas de Python (19 omitidas), 238 de web, cobertura 96 %/97 %, `ruff`, `mypy` estricto, `import-linter` y `tsc`/`eslint` limpios. El contenedor `spaceapp-voice` queda en marcha. Sin commit.

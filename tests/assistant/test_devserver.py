@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from test_ask_with_orchestrator import FakeAgent
 
 from spaceapp.devtools.assistant_server import build_app
+from spaceapp.modules.assistant.adapters.outbound.null_stt import NullSpeechToText
 from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
 from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowledgeSource
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
@@ -67,3 +68,61 @@ def test_the_agent_tools_are_mounted_and_refuse_a_turn_that_is_not_open() -> Non
     )
 
     assert response.status_code == 404
+
+
+class FakeVoice:
+    available = True
+
+    def transcribe(self, audio: bytes, content_type: str) -> object:
+        from spaceapp.modules.assistant.domain.voice import Transcript
+
+        # El catálogo de demostración está en español: la pregunta debe coincidir con él.
+        return Transcript(HEADACHE, 0.9, "en")
+
+
+def voice_client(tmp_path: Path, speech: object | None = None) -> TestClient:
+    log = RetrievalLog()
+    app = build_app(
+        passages=KnowledgeQuery(DemoKnowledgeSource.from_file(DEMO_CATALOG)),
+        orchestrator=FakeAgent(log),  # type: ignore[arg-type]
+        retrievals=log,
+        speech=speech if speech is not None else FakeVoice(),  # type: ignore[arg-type]
+        audio_dir=tmp_path,
+    )
+    return TestClient(app)
+
+
+def test_the_voice_routes_are_served_and_a_spoken_question_is_answered_after_confirming(
+    tmp_path: Path,
+) -> None:
+    web = voice_client(tmp_path)
+    conversation = uuid.uuid4()
+
+    uploaded = web.post(
+        f"/api/v1/voice/utterances?conversation_id={conversation}",
+        content=b"audio",
+        headers={"Content-Type": "audio/webm"},
+    )
+    utterance_id = uploaded.json()["utterance_id"]
+    transcript = web.get(f"/api/v1/voice/utterances/{utterance_id}").json()
+    answer = web.post(
+        f"/api/v1/voice/utterances/{utterance_id}/confirm", json={"text": transcript["text"]}
+    ).json()
+
+    assert uploaded.status_code == 202
+    assert transcript["status"] == "TRANSCRIBED"
+    assert answer["outcome"] == "ANSWERED"
+
+
+def test_without_a_speech_service_the_server_still_works_and_voice_says_to_type(
+    tmp_path: Path,
+) -> None:
+    web = voice_client(tmp_path, speech=NullSpeechToText())
+    uploaded = web.post(
+        f"/api/v1/voice/utterances?conversation_id={uuid.uuid4()}",
+        content=b"audio",
+        headers={"Content-Type": "audio/webm"},
+    )
+
+    state = web.get(f"/api/v1/voice/utterances/{uploaded.json()['utterance_id']}").json()
+    assert state["status"] == "NO_TRANSCRIPT"

@@ -17,6 +17,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel, StringConstraints
 
 from spaceapp.modules.assistant.adapters.inbound.rest import build_router
+from spaceapp.modules.assistant.adapters.inbound.voice_rest import build_voice_router
+from spaceapp.modules.assistant.adapters.outbound.audio_store import LocalAudioStore
+from spaceapp.modules.assistant.adapters.outbound.http_stt import HttpSpeechToText
 from spaceapp.modules.assistant.adapters.outbound.memory import (
     InMemoryConversations,
     InMemoryUtterances,
@@ -24,10 +27,11 @@ from spaceapp.modules.assistant.adapters.outbound.memory import (
 )
 from spaceapp.modules.assistant.adapters.outbound.n8n import N8nOrchestrator
 from spaceapp.modules.assistant.adapters.outbound.null_llm import NullLlmGateway
+from spaceapp.modules.assistant.adapters.outbound.null_stt import NullSpeechToText
 from spaceapp.modules.assistant.application.ask import AskAssistant
 from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
-from spaceapp.modules.assistant.application.voice import ConfirmUtterance
-from spaceapp.modules.assistant.ports import AssistantOrchestrator, PassageSearch
+from spaceapp.modules.assistant.application.voice import ConfirmUtterance, SubmitAudio
+from spaceapp.modules.assistant.ports import AssistantOrchestrator, PassageSearch, SpeechToText
 from spaceapp.modules.knowledge.adapters.outbound.demo_source import DemoKnowledgeSource
 from spaceapp.modules.knowledge.adapters.outbound.hybrid_source import build_knowledge_source
 from spaceapp.modules.knowledge.adapters.outbound.ollama_embedder import DEFAULT_URL, OllamaEmbedder
@@ -35,6 +39,7 @@ from spaceapp.modules.knowledge.adapters.outbound.rag_source import FallbackKnow
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
 ROOT = Path(__file__).resolve().parents[3]
+WHISPER_URL = "http://127.0.0.1:9000"
 DEFAULT_WEBHOOK = "http://127.0.0.1:5678/webhook/space-apps-assistant"
 
 
@@ -55,6 +60,8 @@ def build_app(
     orchestrator: AssistantOrchestrator | None,
     retrievals: RetrievalLog | None = None,
     orchestrator_timeout_s: float = 120.0,
+    speech: SpeechToText | None = None,
+    audio_dir: Path | None = None,
 ) -> FastAPI:
     log = retrievals or RetrievalLog()
     utterances = InMemoryUtterances()
@@ -72,6 +79,17 @@ def build_app(
 
     app = FastAPI(title="Asistente (desarrollo)")
     app.include_router(build_router(log=log, passages=passages, alerts=NoAlerts()))
+    app.include_router(
+        build_voice_router(
+            submit=SubmitAudio(
+                stt=speech or NullSpeechToText(),
+                store=LocalAudioStore(audio_dir or ROOT / "data" / "voice" / "incoming"),
+                utterances=utterances,
+            ),
+            confirm=confirm,
+            utterances=utterances,
+        )
+    )
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -115,6 +133,7 @@ def main() -> None:
         passages=_knowledge(),
         orchestrator=N8nOrchestrator(webhook, timeout_s=timeout),
         orchestrator_timeout_s=timeout,
+        speech=HttpSpeechToText(os.environ.get("SPACEAPP_WHISPER_URL", WHISPER_URL)),
     )
     uvicorn.run(app, host=os.environ.get("SPACEAPP_DEV_HOST", "0.0.0.0"), port=8000)
 

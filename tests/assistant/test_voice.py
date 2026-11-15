@@ -119,6 +119,22 @@ def test_transcribing_leaves_an_editable_text_waiting_for_confirmation(tmp_path:
     assert utterance.confidence == 0.8
 
 
+@pytest.mark.parametrize("stt", [None, FakeStt(fail=True), NullSpeechToText()])
+def test_the_audio_is_deleted_once_it_has_been_transcribed_or_has_failed(
+    tmp_path: Path, stt: object | None
+) -> None:
+    rig = Rig(tmp_path, stt)
+    utterance_id = rig.submit.submit(CONVERSATION, AUDIO, "audio/webm")
+    stored = Path(rig.utterances.get(utterance_id).audio_path or "")
+    assert stored.exists()
+
+    utterance = rig.submit.transcribe(utterance_id)
+
+    assert not stored.exists()  # son grabaciones de personas: no se guardan más de lo necesario
+    assert utterance.audio_path is None
+    assert rig.utterances.get(utterance_id).audio_path is None
+
+
 def test_nothing_is_asked_or_answered_until_the_crew_confirms(tmp_path: Path) -> None:
     rig = Rig(tmp_path)
     utterance_id = rig.submit.submit(CONVERSATION, AUDIO, "audio/wav")

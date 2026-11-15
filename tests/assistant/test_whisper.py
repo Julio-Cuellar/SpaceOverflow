@@ -24,7 +24,7 @@ class Segment:
 
 @dataclass
 class Info:
-    language: str = "es"
+    language: str = "en"
 
 
 class FakeModel:
@@ -42,7 +42,7 @@ def test_the_model_is_not_loaded_until_the_first_transcription() -> None:
 
     def factory() -> FakeModel:
         loaded.append(1)
-        return FakeModel([Segment(" hola")])
+        return FakeModel([Segment(" hello")])
 
     stt = WhisperSpeechToText(factory)
     assert loaded == []
@@ -54,13 +54,13 @@ def test_the_model_is_not_loaded_until_the_first_transcription() -> None:
 
 
 def test_it_joins_the_segments_into_one_text() -> None:
-    model = FakeModel([Segment(" Me falta"), Segment(" el aire.")])
+    model = FakeModel([Segment(" I am short"), Segment(" of breath.")])
 
     transcript = WhisperSpeechToText(lambda: model).transcribe(b"audio", "audio/wav")
 
     assert transcript is not None
-    assert transcript.text == "Me falta el aire."
-    assert transcript.language == "es"
+    assert transcript.text == "I am short of breath."
+    assert transcript.language == "en"
 
 
 def test_the_confidence_comes_from_the_segment_probabilities() -> None:
@@ -80,15 +80,16 @@ def test_there_is_no_confidence_when_there_are_no_segments() -> None:
     assert transcript.confidence is None
 
 
-def test_it_asks_for_spanish_and_primes_the_model_with_the_medical_terms() -> None:
+def test_it_asks_for_english_and_primes_the_model_with_the_medical_terms() -> None:
     model = FakeModel([Segment("x")])
 
     WhisperSpeechToText(lambda: model).transcribe(b"audio", "audio/wav")
 
-    assert model.kwargs["language"] == "es"
+    assert model.kwargs["language"] == "en"
     assert model.kwargs["initial_prompt"] == MEDICAL_TERMS_PROMPT
-    for term in ("hipoxia", "ppCO₂", "presión parcial"):
+    for term in ("hypoxia", "ppCO2", "partial pressure", "cabin"):
         assert term in MEDICAL_TERMS_PROMPT
+    assert "presión" not in MEDICAL_TERMS_PROMPT
 
 
 def test_a_null_adapter_says_it_is_not_available_and_returns_nothing() -> None:

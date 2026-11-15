@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { App } from './App'
 
 const openTab = (name: 'Cabina' | 'Nave' | 'Asistente' | 'Tareas') => userEvent.click(screen.getByRole('tab', { name }))
@@ -193,6 +193,40 @@ describe('App', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('escribe tu pregunta')
     expect(screen.getByLabelText('Pregunta')).toBeVisible()
+  })
+})
+
+describe('App with the real voice service', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('sends the recording to the voice service and shows its transcript, not the simulated one', async () => {
+    class FakeRecorder {
+      mimeType = 'audio/webm'
+      ondataavailable: ((event: { data: Blob }) => void) | null = null
+      onstop: (() => void) | null = null
+      start() {}
+      stop() {
+        this.ondataavailable?.({ data: new Blob(['voice'], { type: 'audio/webm' }) })
+        this.onstop?.()
+      }
+    }
+    vi.stubGlobal('MediaRecorder', FakeRecorder)
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [] }) },
+    })
+    const transcribeVoice = vi.fn().mockResolvedValue({ text: 'what is the minimum cabin pressure' })
+    render(<App transcribeVoice={transcribeVoice} />)
+    await openTab('Asistente')
+
+    const user = userEvent.setup()
+    const button = screen.getByRole('button', { name: 'Mantener para hablar' })
+    await user.pointer([{ keys: '[MouseLeft>]', target: button }])
+    await user.pointer([{ keys: '[/MouseLeft]', target: button }])
+
+    expect(await screen.findByDisplayValue('what is the minimum cabin pressure')).toBeVisible()
+    expect(transcribeVoice).toHaveBeenCalledWith(expect.any(Blob))
+    expect(screen.queryByText(/Transcripción simulada/)).not.toBeInTheDocument()
   })
 })
 

@@ -15,3 +15,6 @@ class LocalAudioStore:
         path = self._directory / f"{utterance_id}.{extension}"
         path.write_bytes(audio)
         return str(path)
+
+    def delete(self, path: str) -> None:
+        Path(path).unlink(missing_ok=True)

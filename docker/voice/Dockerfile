@@ -13,3 +13,7 @@ ENV HF_HOME=/models \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
+
+# Servicio HTTP de Whisper: audio crudo dentro, texto fuera. La repo se monta en /app (ver README).
+EXPOSE 9000
+CMD ["python", "-m", "spaceapp.devtools.voice_server"]

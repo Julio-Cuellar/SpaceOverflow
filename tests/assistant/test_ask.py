@@ -87,6 +87,36 @@ def test_answers_a_headache_question_with_the_tb004_passage_and_its_citation() -
     assert result.citations[0].evidence_state == "TB"
 
 
+class OnePassage:
+    def __init__(self, excerpt: str) -> None:
+        self._passage = CitationDTO(
+            document_code="DOC", requirement_ref=None, page=1, excerpt=excerpt, evidence_state="TB"
+        )
+
+    def search(self, text: str, k: int) -> list[CitationDTO]:
+        return [self._passage]
+
+
+def test_the_template_shows_only_the_part_of_each_passage_that_answers_the_question() -> None:
+    filler = "Lorem ipsum filler sentence without relevance to anything at all, repeated here. "
+    passage = (
+        filler * 6 + "The headache threshold is between 2.8 and 4.5 mmHg of ppCO2. " + filler * 6
+    )
+    assistant = AskAssistant(
+        passages=OnePassage(passage),
+        llm=NullLlmGateway(),
+        conversations=InMemoryConversations(),
+        alerts=FakeAlerts(),
+        publisher=ListPublisher(),
+    )
+
+    result = assistant(uuid.uuid4(), "What is the headache threshold?")
+
+    assert "between 2.8 and 4.5 mmHg" in result.text
+    assert len(result.text) < len(passage) / 2
+    assert result.citations[0].excerpt == passage  # la cita conserva el extracto completo
+
+
 def test_mentions_the_active_alert_without_changing_it() -> None:
     assistant, _ = build(alerts=FakeAlerts(["CO₂ alto (Alerta)"]))
 

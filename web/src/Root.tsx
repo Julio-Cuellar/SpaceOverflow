@@ -21,9 +21,11 @@ const INITIAL_VERSION = initialGroundState().version
 export function Root({
   initialPath = window.location.pathname,
   askAssistant,
+  transcribeVoice,
 }: {
   initialPath?: string
   askAssistant?: AppProps['askAssistant']
+  transcribeVoice?: AppProps['transcribeVoice']
 }) {
   const [path, setPath] = useState(initialPath)
   const [ground, setGround] = useState(initialGroundState)
@@ -86,6 +88,7 @@ export function Root({
         tasksShared={tasksShared}
         onTasksSharedChange={setTasksShared}
         askAssistant={askAssistant}
+        transcribeVoice={transcribeVoice}
       />
     </>
   )

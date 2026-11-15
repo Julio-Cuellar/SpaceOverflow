@@ -74,6 +74,10 @@ class SubmitAudio:
         working = replace(utterance, status=transition(utterance.status, TurnEvent.TRANSCRIBE))
         self._utterances.update(working)
         done = self._transcribe(working)
+        # Son grabaciones de personas: el audio se borra al tener texto o saber que no lo hay.
+        if done.audio_path is not None:
+            self._store.delete(done.audio_path)
+            done = replace(done, audio_path=None)
         self._utterances.update(done)
         return done
 

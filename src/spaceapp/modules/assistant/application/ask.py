@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from uuid import UUID, uuid4
 
+from spaceapp.modules.assistant.application.brief import brief
 from spaceapp.modules.assistant.application.grounding import unsupported_figures
 from spaceapp.modules.assistant.application.language import is_english
 from spaceapp.modules.assistant.application.retrieval_log import RetrievalLog
@@ -53,9 +54,9 @@ def source_label(citation: CitationDTO) -> str:
     return f"{citation.document_code}{requirement} · {citation.evidence_state}"
 
 
-def _template(passages: tuple[CitationDTO, ...], alerts: list[str]) -> str:
+def _template(question: str, passages: tuple[CitationDTO, ...], alerts: list[str]) -> str:
     lines = ["According to the loaded sources:"]
-    lines += [f"- {p.excerpt} ({source_label(p)})" for p in passages]
+    lines += [f"- {brief(p.excerpt, question)} ({source_label(p)})" for p in passages]
     lines += [f"Active alert: {title}. {ALERT_NOTE}" for title in alerts]
     return "\n".join(lines)
 
@@ -173,14 +174,27 @@ class AskAssistant:
             if composed and self._acceptable(composed, question, passages, alerts):
                 sources = "Sources: " + "; ".join(source_label(p) for p in passages)
                 return f"{composed}\n\n{sources}", "llm"
-        return _template(passages, alerts), "plantilla"
+        return _template(question, passages, alerts), "plantilla"
 
     @classmethod
     def _acceptable(
         cls, text: str, question: str, passages: tuple[CitationDTO, ...], alerts: list[str]
     ) -> bool:
-        """En inglés y con cifras de las fuentes; si no, se entregan los pasajes tal cual."""
-        return is_english(text) and cls._figures_supported(text, question, passages, alerts)
+        """En inglés, sin negarse y con cifras de las fuentes; si no, se entregan los pasajes."""
+        return (
+            is_english(text)
+            and not cls._refuses(text)
+            and cls._figures_supported(text, question, passages, alerts)
+        )
+
+    @staticmethod
+    def _refuses(text: str) -> bool:
+        """Dice que no tiene la información aunque se le dieron pasajes: no sirve de respuesta.
+
+        Un modelo pequeño lo hace con pasajes que sí contestan. Citar fuentes junto a un «no sé»
+        engaña; el texto literal de los pasajes, no.
+        """
+        return NO_INFO_TEXT.rstrip(".").lower() in text.lower().replace("\u2019", "'")
 
     @staticmethod
     def _figures_supported(

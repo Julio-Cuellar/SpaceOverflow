@@ -18,10 +18,10 @@ from spaceapp.modules.assistant.ports import SpeechToText
 
 # Whisper acierta más con términos poco comunes si se le da un texto de contexto con ellos.
 MEDICAL_TERMS_PROMPT = (
-    "Pregunta de un astronauta sobre su salud y la atmósfera de la nave: hipoxia, ppCO₂, "
-    "presión parcial de oxígeno, dióxido de carbono, cabina, alerta."
+    "A crew member's question about their health and the cabin atmosphere: hypoxia, ppCO2, "
+    "partial pressure of oxygen, carbon dioxide, cabin pressure, alert."
 )
-LANGUAGE = "es"
+LANGUAGE = "en"
 
 
 class WhisperSpeechToText:
