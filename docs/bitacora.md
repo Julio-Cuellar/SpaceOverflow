@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 14 de noviembre de 2026, 18:45.
+> Última actualización: 14 de noviembre de 2026, 23:30.
 
 ## Cómo se mantiene esta bitácora
 
@@ -33,11 +33,11 @@
 | Reparto en dos desarrolladores | Redactado (sección 16 del plan) y detallado para Dev B |
 | Plan detallado de Dev A | `docs/tareas-dev-a.md` (F0 y F1 marcadas como hechas) |
 | Generador del plan y del artefacto | En el repositorio (`tools/docgen/`), con prueba que verifica que reproduce el documento |
-| Código | **Bloques 1 y 2 de Dev A terminados:** F0, F1, F2 y F3 (11 de 31 h). Nada de Dev B |
-| Pruebas | **293 pasan** (122 del Bloque 1, 3 del generador y 168 del Bloque 2), 97,53 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
+| Código | **Bloques 1 y 2 de Dev A terminados** (F0 a F3). **F5 casi terminada**: GraphQL con las consultas de Monitoreo, Telemetría y Conocimiento, gateway `/ws` y prueba de extremo a extremo. F4 sin empezar. El trabajo de Dev B (F0, F6 a F8, F12, F13) ya está integrado desde `testing` |
+| Pruebas | **604 pasan y 19 se omiten** (las omitidas son de Dev B), 96,96 % de cobertura, ruff y mypy estricto sin errores, 4 contratos de arquitectura cumplidos |
 | Artefacto interactivo | Versión 4 publicada: https://claude.ai/artifact/LMrTxLRghTr9h3v2Q79am8 |
-| Repositorio git | Iniciado en `main`, **sin commits** (no se pidieron) |
-| Siguiente bloque propuesto | Bloque 3 de Dev A: F4 (nave, zonas e incidencias) y F5 (GraphQL y WebSocket), unas 9 h. Cierra el hito I5 |
+| Repositorio git | El trabajo vive en `~/Documentos/SpaceOverflow`, rama `dev-A`. Dos fusiones **solo en local** (B-015 y B-016). El trabajo de F5 está **sin commit** |
+| Siguiente bloque propuesto | Terminar F5 (5.4, contratos exportados) y hacer F4 (nave, zonas e incidencias), con su GraphQL. Cierra I3 e I5 |
 
 ---
 
@@ -246,6 +246,49 @@
 - **Verificación** (`scripts/check.sh` en el árbol fusionado): ruff, mypy estricto, import-linter y **388 pruebas** (293 de Dev A y 95 de Dev B) con 97,22 % de cobertura. No se ejecutó la parte web (`npm`) ni el CI real en GitHub.
 - **Pendiente:** subir la fusión (a `dev-A` o por PR hacia `testing`) cuando el usuario lo confirme; que Dev B revise el CI; completar el `CODEOWNERS` con las carpetas de Dev A; probar la interfaz web contra el backend.
 
+
+### B-016 · Fusión de `origin/testing` en `dev-A` (solo en local)
+- **Qué (pedido del usuario: «baja lo que se tiene en testing»):** `git fetch` y `git merge --no-ff origin/testing` en `dev-A`. `testing` traía el PR #4 (`integration/a-b`): Dev B integró `dev-A`, alineó los contratos de Conocimiento y Asistente con los de Dev A, cargó guía para las 25 reglas de Monitoreo, hizo la suscripción de Conocimiento al bus y ajustó el CI a `uv`.
+- **Antes de fusionar:** había trabajo de F5 de una sesión anterior **sin commit ni entrada en la bitácora**. Se respaldó en el *scratchpad* de la sesión (`wip-f5.diff` y `wip-f5-untracked.tgz`) y en `git stash` («wip F5 realtime+graphql antes de fusionar testing»).
+- **Conflictos (5), resueltos con la versión de `testing`**, porque Dev B ya los había integrado y probado en el PR #4:
+
+| Archivo | Resolución |
+| --- | --- |
+| `.github/workflows/ci.yml` | La de `testing` (Python 3.12, `uv sync --frozen`, ruff, mypy, import-linter y pytest con cobertura por separado). Equivale a `scripts/check.sh` |
+| `.gitignore` | La de `testing`: ya incluye las entradas de Dev A |
+| `pyproject.toml` | La de `testing` (`pypdf` con comentario) |
+| `knowledge/contracts.py`, `assistant/contracts.py` | Las de Dev B. Ya no hay copia local de `AlertRaised`: Conocimiento lee el contrato de Monitoreo |
+
+- **Se mantiene de B-015:** el `CODEOWNERS` de la raíz sigue borrado (GitHub usa el de `.github/`).
+- **Verificación** (`scripts/check.sh` sobre la fusión): ruff, mypy estricto, import-linter y **547 pruebas** (19 omitidas, de Dev B), con 97,27 % de cobertura.
+- **No se subió nada.** `dev-A` queda con dos fusiones locales sin subir (B-015 y B-016).
+
+### B-017 · F5: GraphQL, gateway `/ws` y prueba de extremo a extremo
+- **Qué:** se recuperó el trabajo de F5 del *stash* (dominio de mensajes, hub con cola acotada, endpoint `/ws`, numeración y reenvío desde el outbox, y sus 32 pruebas, que ya pasaban) y se terminó la parte de GraphQL que estaba en RED.
+- **Lo que se descartó del trabajo anterior:** mi adaptador de Conocimiento al bus (`KnowledgeEvents`), porque Dev B hizo el suyo en `testing` (`register_knowledge` con `HandleAlertRaised`). `main.py` usa ahora el de Dev B. También desapareció mi «omitir reglas sin guía»: Dev B cubre las 25 reglas y una regla desconocida reintenta.
+- **Archivos nuevos:**
+
+| Ruta | Contenido |
+| --- | --- |
+| `src/spaceapp/interfaces/graphql/schema.py` | Esquema Strawberry: `dashboard`, `alerts` (paginación por cursor, filtro por estado), `alert` (con regla y recomendación con citas), `rules`, `zoneReadings` (por minuto o cruda), `knowledgeSearch` y la mutación `acknowledgeAlert` con `union` de éxito y error (`NOT_FOUND`, `ALREADY_RESOLVED`). Límite de profundidad 10 |
+| `src/spaceapp/interfaces/graphql/dashboard.py` | Signos vitales de la cabina, como función pura |
+| `src/spaceapp/interfaces/graphql/context.py` | Servicios que recibe cada operación |
+| `src/spaceapp/modules/realtime/...` | Del trabajo anterior: `domain/messages.py`, `application/hub.py`, `adapters/inbound/{ws,events}.py`, `adapters/outbound/sql.py`, puerto `OutboxReplay` |
+| `tests/unit/graphql/test_dashboard.py`, `tests/unit/wiring/test_alert_to_recommendation.py`, `tests/integration/test_end_to_end.py` | Pruebas nuevas o reescritas |
+
+- **Archivos cambiados:** `main.py` (Conocimiento de Dev B, `build_services`, hub suscrito al bus, `/graphql` y `/ws`), `monitoring/facade.py` (`AlertReadQuery` y `RuleQuery.all`), `telemetry/facade.py` (`TelemetryViews`: último valor por sensor y series), `pyproject.toml` y `uv.lock` (`strawberry-graphql`), `config.py` (`knowledge_catalog_path`), `tests/integration/graphql/test_schema.py` (dos expectativas corregidas, E-19 y E-20) y `docs/tareas-dev-a.md` (estado de F5).
+- **Cómo se calcula un signo vital:** sin alertas es el promedio de las zonas y no lleva zona. Con alertas manda la peor: su severidad, su zona, el valor de esa zona y la evidencia de su regla. PIO₂ se deriva de la presión y el O₂. Una alerta de N₂ (sin signo propio) cuenta para la severidad global.
+- **Prueba de extremo a extremo:** la app real con relay (LISTEN/NOTIFY), un cliente en `/ws` y un escenario de CO₂ en el laboratorio. La alerta llega con `seq`, se reconoce por `/graphql` y llega `alert.updated`. **Latencia de la alerta hasta el cliente: 47, 47 y 73 ms** en tres corridas (meta: 1 s). El tick más lento tardó entre 0,17 y 0,27 s en procesarse.
+- **Verificación** (`scripts/check.sh`): ruff sin errores, mypy estricto sin errores en 149 archivos, 4 contratos de arquitectura cumplidos, **604 pruebas** (19 omitidas, de Dev B) y 96,96 % de cobertura.
+- **TDD:** la prueba de cableado se reescribió primero y falló (RED: `cannot import name 'KnowledgeEvents'`). Las pruebas de GraphQL ya estaban en RED desde la sesión anterior (`No module named 'spaceapp.interfaces'`). Las de `dashboard.py` se escribieron antes que el código, pero **no se ejecutaron en RED** antes de escribirlo.
+- **Decisiones:**
+  - Severidades y estados salen en mayúsculas en GraphQL (`ALERTA`, `ACKNOWLEDGED`), como en el contrato de Dev B.
+  - El hábitat se puede pedir por UUID o por código (`nave-transito`).
+  - Las acciones se firman con un tripulante de demostración (`DEMO_CREW_MEMBER`) hasta que exista la selección de perfil.
+  - Las recomendaciones viven en memoria (`InMemoryRecommendations` de Dev B): se pierden al reiniciar. La persistencia es de Dev B.
+- **Pendiente de F5:** 5.4 (exportar `schema.graphql`, OpenAPI y `ws-messages.schema.json`, R8, `outboxStats` y limpieza de eventos de más de 24 h), `ping` del servidor cada 15 s, topics `habitat` y `crew`, DataLoaders y límite de costo, y las consultas de Tripulación.
+- **Contrato con Dev B:** el esquema real incluye todo `contracts/schema.graphql` (lo comprueba `test_contract_superset.py`). Un cambio en ese archivo compartido necesita la revisión de Dev B.
+
 ---
 
 ## 4. Archivos del proyecto por área
@@ -260,6 +303,7 @@
 | Tareas de Dev A | `docs/tareas-dev-a.md` | Asistente |
 | Generador del plan y del artefacto | `tools/docgen/` | Asistente (movido desde el *scratchpad*) |
 | Backend de Dev A (Bloques 1 y 2) | `src/`, `tests/`, `migrations/`, `docker/`, `scripts/`, `rules/`, `data/` | Asistente |
+| GraphQL compuesto (F5) | `src/spaceapp/interfaces/graphql/` | Asistente |
 | Informes de evidencia TDD | `docs/tdd/f0-f1.tdd.md`, `docs/tdd/f2-f3.tdd.md` | Asistente |
 
 ---
@@ -280,6 +324,10 @@ Todo lo que se hizo en el equipo del usuario, para poder revertirlo.
 | Servidores locales de vista previa | Puertos 8765 a 8768 y 8010, detenidos | Ya revertido |
 | Prueba en vivo del Bloque 2 | Contenedor `spaceapp-postgres-1` y su volumen, y la aplicación en el puerto 8011. Detenidos y eliminados al terminar | Ya revertido |
 | Repositorio clonado | `~/Documentos/SpaceOverflow` (clon de `Julio-Cuellar/SpaceOverflow`, rama `dev-A` con el trabajo de Dev A, ya subida a GitHub) | Borrar la carpeta `~/Documentos/SpaceOverflow` |
+| Fusiones locales en `dev-A` | B-015 (`dev-B`) y B-016 (`origin/testing`), **sin subir** | `git reset --hard origin/dev-A` (descarta las dos fusiones y el trabajo sin commit) |
+| `git stash` en el clon | «wip F5 realtime+graphql antes de fusionar testing». Ya se reaplicó: se puede borrar | `git stash drop` |
+| Respaldo del trabajo de F5 | `wip-f5.diff` y `wip-f5-untracked.tgz` en el *scratchpad* temporal de la sesión | Se borra solo con la sesión |
+| `strawberry-graphql` 0.341.2 | En el `.venv` del clon, por `uv sync` | `uv sync` sin la dependencia |
 
 **No se tocó:** los contenedores de otro proyecto del usuario (`clinerya-postgres`, `clinerya-backend`, `clinerya-frontend`, `clinerya-rabbitmq`).
 
@@ -309,6 +357,10 @@ Todo lo que se hizo en el equipo del usuario, para poder revertirlo.
 | E-16 | Mi caso de prueba de la fuga evaluaba el segundo 30, donde el cambio en 10 s es 0,97 psi y la regla lo exime por correcto diseño | Se corrigió el caso y se añadió una prueba que documenta la exención |
 | E-17 | 19 pruebas de integración fallaban a la vez: un reemplazo de texto en `conftest.py` no se aplicó porque `ruff format` ya había reformateado la lista | Se editó sobre el texto real |
 | E-18 | Otro reemplazo de texto (en el motor) tampoco se aplicó por lo mismo, sin avisar | Se detectó con `grep` y se aplicó. Lección: comprobar cada reemplazo masivo |
+| E-19 | Una prueba de GraphQL de la sesión anterior esperaba que no hubiera alertas resueltas tras el escenario de CO₂. La pre-alerta se resuelve al quedar reemplazada por la alerta (`supersedes`) | Se corrigió la prueba, no el código: ahora exige que las resueltas sean de otras reglas |
+| E-20 | Otra prueba esperaba 20 muestras de presión crudas en 30 s, pero la prueba avanza la simulación de 5 en 5 s (7 muestras) | Se corrigió la prueba: exige una muestra por tick |
+| E-21 | La primera medición de latencia de extremo a extremo (1,9 s) estaba mal: leía el socket después de todos los ticks y metía 330 s simulados en 5 s de reloj, así que la alerta esperaba detrás de lecturas posteriores | La prueba lee en paralelo y avanza a ritmo real (un tick cuando el relay terminó el anterior). Medido: 47 a 73 ms |
+| E-22 | El trabajo de F5 de una sesión anterior quedó sin commit y sin entrada en la bitácora | Se registró en B-017. Lección: cerrar cada sesión con la entrada de la bitácora aunque el bloque no esté terminado |
 
 ---
 
@@ -345,8 +397,9 @@ Las pruebas de integración necesitan Docker en marcha (`systemctl --user start 
 
 ## 9. Próximos pasos
 
-1. **Bloque 3 de Dev A (F4 y F5), unas 9 h:** plano e incidencias (tickets automáticos desde las alertas por zona, catálogo de 61 tipos, estado de color de cada zona) y el esquema GraphQL y el gateway WebSocket. Cierra I3 e I5.
-2. **Revisión de contratos por Dev B (I0):** `contracts.py` de cada módulo, `event_registry.py` y el bus en memoria.
-3. **Republicar el artefacto** para reflejar el modelo de datos actual (decisión del usuario).
-4. **Decisiones pendientes** de la sección 2.3.
-5. **Primer commit** cuando el usuario lo pida.
+1. **Terminar F5 (5.4) y hacer F4:** exportar los contratos para Dev B. Después, plano e incidencias (tickets automáticos desde las alertas por zona, catálogo de 61 tipos, estado de color de cada zona) con su GraphQL y sus mensajes WebSocket. Cierra I3 e I5.
+2. **Subir `dev-A`** (dos fusiones locales y F5) cuando el usuario lo pida, directo o por PR hacia `testing`.
+3. **Revisión de contratos por Dev B (I0):** `contracts.py` de cada módulo, `event_registry.py` y el bus en memoria.
+4. **Republicar el artefacto** para reflejar el modelo de datos actual (decisión del usuario).
+5. **Decisiones pendientes** de la sección 2.3.
+6. **Commit de F5** cuando el usuario lo pida.

@@ -16,6 +16,7 @@ dependencies = [
   "httpx>=0.27",
   # Conocimiento (dev B): extracción de texto de los PDFs de NASA.
   "pypdf>=5",
+  "strawberry-graphql>=0.341.2",
 ]
 
 [dependency-groups]

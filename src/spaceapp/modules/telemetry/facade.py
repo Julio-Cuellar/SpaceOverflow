@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 
 @dataclass(frozen=True)
@@ -56,3 +56,90 @@ class SqlReadingQuery:
             )
         ).scalar_one()
         return float(value) if value is not None else None
+
+
+@dataclass(frozen=True)
+class LatestReadingView:
+    zone_id: UUID | None
+    metric: str
+    unit: str
+    domain: str
+    origin: str
+    value: float
+    ts: datetime
+
+
+@dataclass(frozen=True)
+class SeriesPoint:
+    ts: datetime
+    avg: float
+    min: float
+    max: float
+
+
+@dataclass(frozen=True)
+class SeriesView:
+    metric: str
+    unit: str
+    points: list[SeriesPoint]
+
+
+RAW_LIMIT = 10_000
+
+
+class TelemetryViews:
+    """Lecturas para la interfaz: el último valor de cada sensor y series por zona."""
+
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+        self._sf = session_factory
+
+    async def latest(self, habitat_id: UUID) -> list[LatestReadingView]:
+        sql = (
+            "SELECT s.zone_id, s.metric, s.unit, s.domain, s.origin, r.value, r.ts "
+            "FROM telemetry.sensor s CROSS JOIN LATERAL ("
+            "  SELECT value, ts FROM telemetry.reading WHERE sensor_id = s.id "
+            "  ORDER BY ts DESC LIMIT 1"
+            ") r WHERE s.habitat_id = :h ORDER BY s.zone_id, s.metric"
+        )
+        async with self._sf() as session:
+            rows = (await session.execute(text(sql), {"h": habitat_id})).all()
+        return [LatestReadingView(*r) for r in rows]
+
+    async def series(
+        self,
+        zone_id: UUID,
+        metrics: Sequence[str],
+        since: datetime,
+        until: datetime,
+        *,
+        raw: bool = False,
+    ) -> list[SeriesView]:
+        """Una serie por métrica con sensor en la zona. Por minuto (rollup) o cruda."""
+        if raw:
+            points_sql = (
+                "SELECT ts, value, value, value FROM telemetry.reading "
+                "WHERE sensor_id = :s AND ts >= :a AND ts <= :b ORDER BY ts LIMIT :n"
+            )
+        else:
+            points_sql = (
+                "SELECT bucket, avg_v, min_v, max_v FROM telemetry.reading_rollup_1m "
+                "WHERE sensor_id = :s AND bucket >= date_trunc('minute', CAST(:a AS timestamptz)) "
+                "AND bucket <= :b ORDER BY bucket LIMIT :n"
+            )
+        async with self._sf() as session:
+            sensors = (
+                await session.execute(
+                    text(
+                        "SELECT id, metric, unit FROM telemetry.sensor "
+                        "WHERE zone_id = :z AND metric = ANY(CAST(:m AS text[])) ORDER BY metric"
+                    ),
+                    {"z": zone_id, "m": list(metrics)},
+                )
+            ).all()
+            out: list[SeriesView] = []
+            for sensor_id, metric, unit in sensors:
+                rows = await session.execute(
+                    text(points_sql), {"s": sensor_id, "a": since, "b": until, "n": RAW_LIMIT}
+                )
+                out.append(SeriesView(metric, unit, [SeriesPoint(*r) for r in rows]))
+        return out

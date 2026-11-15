@@ -363,19 +363,19 @@ Conversiones: 1 kPa = 7,50062 mmHg. 1 psi = 51,7149 mmHg.
 
 **Tareas**
 
-- [ ] **5.1 Composición del esquema (1,5 h)**
+- [~] **5.1 Composición del esquema (1,5 h)** · *parcial (B-017): las consultas de Monitoreo, Telemetría y Conocimiento, y `acknowledgeAlert`. Faltan `crewMember`, `recordBaseline`, `setConsent`, las de nave (F4), los fragmentos por módulo y los DataLoaders*
   - Strawberry montado en FastAPI. Cada módulo aporta su fragmento (`graphql.py`) y A los compone en `interfaces/graphql/schema.py`. Los resolvers de B (Conocimiento y Asistente) se registran sin que A los escriba.
   - Consultas y mutaciones de A: `dashboard`, `readings`, `alerts`, `alert`, `rules`, `zoneReadings`, `crewMember`, `acknowledgeAlert`, `recordBaseline`, `setConsent`, y las de nave de F4.
   - Resultados tipados con `union`. Límite de profundidad y de costo. DataLoaders contra N+1.
-- [ ] **5.2 Gateway `/ws` (1,5 h)**
+- [~] **5.2 Gateway `/ws` (1,5 h)** · *hecho salvo dos puntos (B-017): los topics son `telemetry`, `alerts` y `assistant` (no `habitat` ni `crew`) y el servidor no envía `ping` cada 15 s, solo responde con `pong`*
   - Un endpoint con `subscribe` y `unsubscribe` por topic (`habitat`, `crew`, `alerts`, `assistant`).
   - Traduce los eventos del bus a los 14 mensajes del plan (tabla en la sección 5.3). `seq` es el `id` del outbox cuando el mensaje nace de un evento.
   - **`resume { after_outbox_id }`:** reenvía desde `outbox_event` (retención de 24 h).
   - `ping` y `pong` cada 15 s.
   - **Presión inversa:** cola de 500 mensajes por cliente. Se descartan primero los `telemetry.tick`. **Las alertas no se descartan.**
-- [ ] **5.3 Ticks coalescidos (0,25 h):** `telemetry.tick` a 1 Hz como máximo por zona y sensor, a partir de `readings_recorded`.
+- [x] **5.3 Ticks coalescidos (0,25 h):** *(B-017: la cola de cada cliente se queda con el último tick por zona y métrica)* `telemetry.tick` a 1 Hz como máximo por zona y sensor, a partir de `readings_recorded`.
 - [ ] **5.4 Contratos publicados y operación (0,5 h):** exportar `schema.graphql`, el OpenAPI y `ws-messages.schema.json` para que B genere tipos y mocks. Ruta de reencolado `POST /api/v1/admin/outbox/{id}:replay` (R8) y `outboxStats` (solo perfiles de desarrollo). Limpieza de eventos `done` con más de 24 h.
-- [ ] **5.5 Prueba de extremo a extremo (0,25 h):** escenario → alerta por WebSocket en menos de 1 s → reconocer por GraphQL.
+- [x] **5.5 Prueba de extremo a extremo (0,25 h):** *(B-017: `tests/integration/test_end_to_end.py`, latencia medida de 47 a 73 ms)* escenario → alerta por WebSocket en menos de 1 s → reconocer por GraphQL.
 
 **Criterios de aceptación**
 

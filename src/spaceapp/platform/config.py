@@ -24,3 +24,4 @@ class Settings(BaseSettings):
     simulator_autostart: bool = False
     sim_layout_path: Path = ROOT / "data" / "telemetry" / "sim_layout.json"
     sim_seed: int = 7
+    knowledge_catalog_path: Path = ROOT / "data" / "knowledge" / "demo_catalog.json"
