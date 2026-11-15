@@ -1,43 +1,34 @@
-"""Eventos y DTO públicos del módulo knowledge. Es lo único que otros módulos pueden importar."""
+"""Eventos públicos de Conocimiento. Otros módulos solo pueden importar esto y la fachada."""
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import ClassVar
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from spaceapp.platform.events import EventPayload
+from spaceapp.platform.vocab import Citation
 
-EvidenceStateName = Literal["VERIFICADO", "TB", "DEMO", "NO_VERIFICADO"]
-SeverityName = Literal["NORMAL", "ATENCION", "ALERTA", "CRITICO"]
-CauseHint = Literal["AMBIENTE", "CUERPO", "INDETERMINADO"]
-
-
-class AlertRaised(BaseModel):
-    """Payload de `monitoring.alert_raised` (lo publica Monitoreo, dev A)."""
-
-    model_config = ConfigDict(frozen=True)
-
-    event_id: UUID
-    alert_id: UUID
-    zone_id: UUID | None = None
-    rule_key: str
-    severity: SeverityName
-    evidence: dict[str, Any]
-    cause_hint: CauseHint
+# La cita es del kernel compartido (`platform/vocab`): una sola definición para todos los módulos.
+# El alias conserva el nombre con el que la usa el asistente.
+CitationDTO = Citation
 
 
-class CitationDTO(BaseModel):
-    document_code: str
-    requirement_ref: str | None = None
-    page: int | None = None
-    excerpt: str
-    evidence_state: EvidenceStateName
+class RecommendationReady(EventPayload):
+    """`knowledge.recommendation_ready`: la plantilla ya está lista, sin esperar a ningún modelo."""
 
-
-class RecommendationReady(BaseModel):
-    """Payload de `knowledge.recommendation_ready`, tal como lo define el plan (sección 4.1)."""
-
+    event_type: ClassVar[str] = "knowledge.recommendation_ready"
     alert_id: UUID
     recommendation_id: UUID
     action_keys: list[str]
-    citations: list[CitationDTO]
+    citations: list[Citation]
+
+
+class RecommendationEnriched(EventPayload):
+    """`knowledge.recommendation_enriched`: la misma recomendación redactada por el modelo local."""
+
+    event_type: ClassVar[str] = "knowledge.recommendation_enriched"
+    recommendation_id: UUID
+    text: str
+
+
+EVENTS = {m.event_type: m for m in (RecommendationReady, RecommendationEnriched)}

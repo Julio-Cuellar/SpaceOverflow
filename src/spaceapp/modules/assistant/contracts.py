@@ -1,17 +1,21 @@
-"""Eventos públicos del módulo assistant. Es lo único que otros módulos pueden importar."""
+"""Eventos públicos del Asistente. Otros módulos solo pueden importar esto y la fachada."""
 
 from __future__ import annotations
 
+from typing import ClassVar
 from uuid import UUID
 
-from pydantic import BaseModel
+from spaceapp.platform.events import EventPayload
+from spaceapp.platform.vocab import Citation
 
-from spaceapp.modules.knowledge.contracts import CitationDTO
 
+class AnswerReady(EventPayload):
+    """`assistant.answer_ready`. El gateway lo traduce a un mensaje de WebSocket."""
 
-class AnswerReady(BaseModel):
-    """Payload de `assistant.answer_ready` (plan, sección 4.1). El gateway lo traduce a WS."""
-
+    event_type: ClassVar[str] = "assistant.answer_ready"
     utterance_id: UUID
     text: str
-    citations: list[CitationDTO]
+    citations: list[Citation]
+
+
+EVENTS = {m.event_type: m for m in (AnswerReady,)}

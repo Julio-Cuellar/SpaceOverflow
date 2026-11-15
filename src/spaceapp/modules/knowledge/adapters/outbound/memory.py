@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from spaceapp.modules.knowledge.contracts import RecommendationReady
 from spaceapp.modules.knowledge.domain.model import Recommendation
 
 
@@ -32,11 +31,3 @@ class InMemoryInbox:
 
     def is_marked(self, consumer: str, event_id: UUID) -> bool:
         return (consumer, event_id) in self._seen
-
-
-class ListPublisher:
-    def __init__(self) -> None:
-        self.events: list[RecommendationReady] = []
-
-    def publish(self, event: RecommendationReady) -> None:
-        self.events.append(event)
