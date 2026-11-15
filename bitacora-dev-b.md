@@ -19,7 +19,7 @@
 | F8 | Conocimiento con datos de demo | PARCIAL | Dominio, caso de uso idempotente, catálogo DEMO, fachadas y búsqueda de pasajes probados (29 pruebas). Falta persistencia y outbox de A |
 | F6 | Interfaz de cabina | PARCIAL | Semáforo, tarjetas, cuerpo humano, gráficas SVG con umbral y anomalía, estado de espera, panel de alerta y cola WS, todo cableado en `App` con datos de demostración. Falta el hook `useWs` conectado a `/ws` (I2) y la tendencia de CO₂ en la cabina |
 | F7 | Panel de la nave | PARCIAL | Plano desde `zone.layout`, pins de ticket, orden y regla de «resolver», gráficas por zona con pausa, formulario de reporte, catálogo filtrable y modo demo por perfil. Falta el catálogo completo de 61 tipos y el backend |
-| F12 | RAG sobre PDFs de NASA | PARCIAL | Manifiesto con licencias, fragmentación por requisito, lectura de PDF, ingesta idempotente, búsqueda con glosario es→en, respaldo a demo y evaluación, probados con PDFs sintéticos (51 pruebas). **Faltan la ingesta y la evaluación reales** (PDFs sin descargar: necesita permiso), el buscador de pasajes en la web (12.6) y la decisión del modelo de embeddings |
+| F12 | RAG sobre PDFs de NASA | PARCIAL | Manifiesto con licencias, fragmentación por requisito, lectura de PDF, ingesta idempotente, búsqueda con glosario es→en, respaldo a demo y evaluación, probados con PDFs sintéticos y luego con los 7 PDFs reales (2 087 fragmentos, E10). **Recuperación por debajo del umbral del plan:** 56 % en el conjunto principal, 11 % en el retenido, 0 respuestas sin fuente. Faltan el buscador de pasajes en la web (12.6) y la decisión del modelo de embeddings |
 | F13 | Asistente texto y Ollama | PARCIAL | Backend: caso de uso con límite de 8 s, adaptadores nulo y Ollama, evento `answer_ready` (15 pruebas). Web: pestaña Asistente con datos de demostración. Falta GraphQL, persistencia SQL, Ollama real probado y n8n opcional |
 | F14 | Voz con Whisper | PENDIENTE | |
 | F9 | Entrega (Docker, sin internet) | PENDIENTE | conjunta con A |
@@ -416,3 +416,68 @@ En el caso de uso, 2 pruebas fallaron por un error **de mi prueba**: comparaba `
 - **CODEOWNERS** solo cubre las carpetas de Dev B. Falta el usuario de GitHub de Dev A (se dejó anotado como pendiente en el propio archivo).
 
 **Estado:** F12 PARCIAL (pipeline probado; falta la ingesta y la evaluación reales). CI y CODEOWNERS creados; pendiente su primera ejecución en GitHub.
+
+### 2026-11-14 · E10 · F12 con los PDFs reales: descarga, ingesta y evaluación
+
+**Permiso:** el usuario autorizó con nombre, origen y tamaño la descarga de los 7 PDFs (14,56 MB). Se descargaron a `data/knowledge/pdfs/` (ignorada por git) y se comprobó que los 7 empiezan con `%PDF-`. No se descargó nada más.
+
+**Ingesta real:** 2 087 fragmentos (Vol. 2: 1 456; Vol. 1: 291; TB-002: 116; TB-003: 76; TB-004: 56; TB-044: 52; botiquín: 40). Solo 665 llevan referencia de requisito: el resto es texto de tablas, listas y secciones sin `[V# ####]` propio.
+
+**Defectos que solo aparecieron con los PDFs reales** (cada uno se reprodujo con una prueba en RED antes de corregirlo)
+
+| Defecto | Causa | Corrección |
+| --- | --- | --- |
+| Una cita dentro de una frase partía el fragmento | `[V2 6004]` precedido de una letra minúscula, «(» o «,» es una cita en línea, no el comienzo de un requisito | `_starts_a_requirement` |
+| Fragmentos viejos quedaban en el índice tras cambiar las reglas de corte | Los ids cambian al recortar distinto; la ingesta solo añade | Opción `--rebuild` (reconstruye en memoria y reemplaza de forma atómica; si no se indexó nada, conserva el índice anterior) |
+| Una tabla que lista «headache» entre decenas de términos ganaba a un pasaje enfocado | El puntaje contaba coincidencias sin normalizar por longitud | BM25 (K1 1,5; B 0,75) |
+| «dura» → `lasts`, pero el texto dice `last` | Faltaba normalizar plurales y terceras personas | `stem` |
+| Con 500 caracteres de extracto la cifra quedaba fuera en la mitad de los casos | Recorte al comienzo del fragmento | El extracto es el fragmento completo (≤ 1 200) |
+| «Who won the last football world cup?» recibía una respuesta | Coincidía solo en «world», dentro de una lista de siglas | Se exigen al menos 2 términos coincidentes (con 1 término de pregunta, 1) |
+| Títulos y entradas de índice salían como pasajes | Fragmentos de 2 o 3 palabras | Se descartan los de menos de 6 palabras de contenido |
+| Una referencia cruzada tras un dígito («…Volume 1 [V1 4030] Título)») partía V1 4033 y la cifra de 1,3 mSv/día se citaba como V1 4030 | La regla de «número de página» la tomaba por requisito | Dentro de un paréntesis sin cerrar es una cita (prueba en RED observada; 120 pruebas pasan) |
+| El comando de evaluación fallaba con un traceback si faltaba un archivo | — | Mensaje claro y código de salida 2 |
+
+**Cómo se evaluó (y por qué se cambió)**
+
+- Mis preguntas de la entrada E09 eran hipótesis basadas en el documento de contexto (esperaban un documento concreto). Se reemplazaron por **anclas de contenido**: texto que debe aparecer en el pasaje devuelto, verificado a mano en el texto crudo de los PDFs.
+- Se añadió un conjunto **de validación retenido** (`eval_questions_validation.json`, 9 + 1 fuera de alcance). **No se ajusta el código mirando ese conjunto**: sirve para medir si lo corregido generaliza.
+- Se añadió un conjunto **en inglés** (`eval_questions_en.json`, 25 + 3 fuera de alcance), de diagnóstico: separa el fallo de traducción del fallo de búsqueda.
+- La métrica es **estricta**: acierta solo si en los 3 primeros hay un pasaje con las anclas (y, si se pide, el documento).
+
+**Resultados medidos** (k = 3, índice de 2 087 fragmentos)
+
+| Conjunto | Aciertos | Fuera de alcance respondidas |
+| --- | --- | --- |
+| Principal, español (16 + 2) | 9 de 16 (56 %) | 0 de 2 |
+| Validación retenido, español (9 + 1) | **1 de 9 (11 %)** | 0 de 1 |
+| Diagnóstico, inglés (25 + 3) | 13 de 25 (52 %) | 0 de 3 |
+
+El umbral del plan (80 %) **no se cumple** y el comando de evaluación sale con código 1. No se bajó el umbral ni se ajustaron las preguntas para que pasara.
+
+**Lectura honesta de los números**
+
+1. **Cero respuestas sin fuente:** ninguna pregunta fuera de alcance recibió pasaje (0 de 6). Es el criterio que más importa para no inventar protocolos, y se cumple.
+2. **La recuperación es débil.** El conjunto en inglés también falla en la mitad: el problema no es solo el idioma. Es búsqueda léxica sobre un documento de ~300 páginas con vocabulario técnico: una paráfrasis («energía diaria» frente a *energy requirements*) o una cifra en una tabla no se encuentran por coincidencia de palabras.
+3. **La brecha entre 56 % y 11 %** es el sobreajuste esperado: el glosario (40 entradas) se afinó mirando el conjunto principal. El conjunto retenido muestra el rendimiento sin ese ajuste, y ese es el número que hay que creer.
+4. **Fallos concretos** (posición del pasaje correcto en el ranking, en una medición intermedia): dolor de cabeza, puesto 21; síntomas del CO₂, 27; presión mínima de cabina, 19; botiquín, 26.
+
+**Verificado contra el texto fuente** (consultando los fragmentos indexados)
+
+- Ruido de sueño: `[V2 6079]` y NC-40, para misiones de más de 30 días (Vol. 2, p. 98). Coincide con el documento de contexto. La fila de la tabla resumen (p. 94) cita «V2 6077; V2 6078; V2 6080; V2 6083» porque agrupa otros límites: no es una discrepancia.
+- Las cifras clave del contexto (1,3 mSv/día, 600 mSv de carrera, 250 mSv por evento solar, 80 % de capacidad aeróbica, 95 % de hueso, 30 % de diluyente, 95 dBA en alarmas) aparecen en el texto indexado con los números de requisito que el contexto indica en el texto cercano. Los fragmentos largos rara vez llevan el requisito propio en su campo `requirement_ref` (la mayoría de las cifras están en fragmentos sin él), así que **la cita sale con documento y página, no siempre con número de requisito.**
+- **Limitación abierta, sin corregir:** si el título de la sección que precede a `[V1 4033]` termina en minúscula («…Galactic Cosmic Radiation [V1 4033]»), la regla lo toma por cita y el requisito queda sin `requirement_ref` (Vol. 1, p. 44). Antes de la corrección de paréntesis esa cifra se citaba con el número equivocado (V1 4030); ahora se cita sin número, que es más honesto, pero incompleto.
+
+**Decisiones que quedan para el equipo (no las tomé)**
+
+1. **Modelo de embeddings multilingüe** (decisión pendiente n.º 5). Es la solución de fondo a la recuperación débil. Cuesta: descargar un modelo (requiere permiso explícito), dependencias pesadas (PyTorch u ONNX), y empaquetarlo sin conexión en Docker. Alternativa barata y parcial: ampliar el glosario revisándolo con el equipo, sabiendo que no generaliza.
+2. **Estado de evidencia.** El RAG da `TB` a todo Technical Brief; el catálogo de demostración marca TB-003 como `VERIFICADO`. Hay que decidir cuál vale.
+3. **Revisión del glosario** (40 entradas, mías, sin revisar por nadie del equipo).
+4. **Licencia de los PDFs:** sigue `no_verificada`; por eso nada se empaqueta ni se versiona.
+
+**Qué no cambió:** el asistente sigue sin decidir alertas y solo responde con pasajes citados; ante la duda no responde («sin información»). La debilidad de recuperación se traduce en que **no responde más veces de las debidas**, no en que invente.
+
+**Lo que sigue sin hacerse en F12:** buscador de pasajes en la web (12.6), tablas como imagen sin transcribir, selección de fuente por perfil (depende de `main.py`, de Dev A).
+
+**Estado:** F12 PARCIAL. Ingesta y evaluación reales hechas; el umbral de recuperación del plan (80 %) no se cumple.
+
+**Verificación al cierre:** 120 pruebas de Python pasan; `ruff check`, `ruff format --check` y `mypy` estrictos limpios.

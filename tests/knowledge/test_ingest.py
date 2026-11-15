@@ -200,6 +200,65 @@ class TestCommand:
         assert code == 2
         assert "licencia" in capsys.readouterr().err
 
+    def run(self, tmp_path: Path, *extra: str) -> Path:
+        self.write_manifest(tmp_path / "manifest.json")
+        write_pdf(tmp_path, "good.pdf", [TEXT])
+        out = tmp_path / "chunks.jsonl"
+        main(
+            [
+                "--manifest",
+                str(tmp_path / "manifest.json"),
+                "--pdf-dir",
+                str(tmp_path),
+                "--out",
+                str(out),
+                *extra,
+            ]
+        )
+        return out
+
+    def test_without_rebuild_the_chunks_of_a_previous_run_are_kept(self, tmp_path: Path) -> None:
+        out = tmp_path / "chunks.jsonl"
+        JsonlChunkStore(out).add(chunk_page("STALE", 1, "obsolete text from an old run", "TB"))
+
+        self.run(tmp_path)
+
+        assert {c.document_code for c in JsonlChunkStore(out).all()} == {"STALE", "GOOD"}
+
+    def test_rebuild_drops_the_chunks_of_a_previous_run(self, tmp_path: Path) -> None:
+        # Si cambian las reglas de corte, los ids cambian y los fragmentos viejos quedarían huérfanos.
+        out = tmp_path / "chunks.jsonl"
+        JsonlChunkStore(out).add(chunk_page("STALE", 1, "obsolete text from an old run", "TB"))
+
+        self.run(tmp_path, "--rebuild")
+
+        assert {c.document_code for c in JsonlChunkStore(out).all()} == {"GOOD"}
+
+    def test_a_rebuild_that_indexes_nothing_does_not_destroy_the_existing_index(
+        self, tmp_path: Path
+    ) -> None:
+        # Sin PDFs en la carpeta, reconstruir dejaría el índice vacío: se conserva el anterior.
+        self.write_manifest(tmp_path / "manifest.json")
+        out = tmp_path / "chunks.jsonl"
+        JsonlChunkStore(out).add(
+            chunk_page("KEEP", 1, "text that must survive a failed rebuild", "TB")
+        )
+
+        code = main(
+            [
+                "--manifest",
+                str(tmp_path / "manifest.json"),
+                "--pdf-dir",
+                str(tmp_path),
+                "--out",
+                str(out),
+                "--rebuild",
+            ]
+        )
+
+        assert code == 1
+        assert {c.document_code for c in JsonlChunkStore(out).all()} == {"KEEP"}
+
     def test_exits_with_an_error_code_when_nothing_could_be_indexed(self, tmp_path: Path) -> None:
         self.write_manifest(tmp_path / "manifest.json")
 

@@ -48,7 +48,7 @@ class EvalResult:
 
 def load_cases(path: Path) -> list[EvalCase]:
     raw = json.loads(path.read_text(encoding="utf-8"))
-    return [
+    cases = [
         EvalCase(
             question=item["question"],
             expected_documents=tuple(item.get("expected_documents", ())),
@@ -57,6 +57,12 @@ def load_cases(path: Path) -> list[EvalCase]:
         )
         for item in raw["cases"]
     ]
+    for case in cases:
+        if not (case.out_of_scope or case.expected_documents or case.expected_contains):
+            raise ValueError(
+                f"caso sin expectativa (ni documento, ni texto, ni fuera de alcance): {case.question}"
+            )
+    return cases
 
 
 def evaluate(search: PassageSource, cases: Sequence[EvalCase], k: int = 3) -> EvalResult:
@@ -70,8 +76,10 @@ def evaluate(search: PassageSource, cases: Sequence[EvalCase], k: int = 3) -> Ev
             continue
 
         result.in_scope += 1
+        # Sin documentos esperados vale cualquiera: los Technical Brief citan los mismos requisitos
+        # que la norma, así que lo que importa es que el texto esperado esté en el extracto.
         hit = any(
-            passage.document_code in case.expected_documents
+            (not case.expected_documents or passage.document_code in case.expected_documents)
             and all(text.lower() in passage.excerpt.lower() for text in case.expected_contains)
             for passage in passages[:k]
         )
@@ -99,6 +107,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 2
+
+    for path, name in ((args.glossary, "glosario"), (args.questions, "archivo de preguntas")):
+        if not path.exists():
+            print(f"No existe el {name}: {path}", file=sys.stderr)
+            return 2
 
     source = RagKnowledgeSource.from_index(args.index, args.glossary)
     result = evaluate(source, load_cases(args.questions), k=args.k)

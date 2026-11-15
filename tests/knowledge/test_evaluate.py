@@ -65,6 +65,25 @@ def test_a_case_can_also_require_text_in_the_passage() -> None:
     assert evaluate(FakeSearch(wrong), cases).hits == 0
 
 
+def test_a_case_with_only_expected_text_accepts_any_document_that_has_it() -> None:
+    # Los Technical Brief citan los mismos requisitos que la norma: importa el contenido.
+    cases = [EvalCase("q1", expected_contains=("13.5 psi/min",))]
+
+    found = {"q1": [passage("BRIEF", "...shall not exceed 13.5 psi/min.")]}
+    not_found = {"q1": [passage("BRIEF", "unrelated")]}
+
+    assert evaluate(FakeSearch(found), cases).hits == 1
+    assert evaluate(FakeSearch(not_found), cases).hits == 0
+
+
+def test_loading_a_case_without_any_expectation_is_an_error(tmp_path: Path) -> None:
+    path = tmp_path / "questions.json"
+    path.write_text(json.dumps({"cases": [{"question": "¿qué?"}]}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="sin expectativa"):
+        load_cases(path)
+
+
 def test_an_out_of_scope_question_must_not_get_any_passage() -> None:
     cases = [EvalCase("capital?", out_of_scope=True), EvalCase("recipe?", out_of_scope=True)]
 
@@ -92,7 +111,7 @@ def test_the_real_question_set_has_about_fifteen_cases_with_a_clear_expectation(
     cases = load_cases(QUESTIONS)
 
     assert len(cases) >= 15
-    assert all(c.out_of_scope or c.expected_documents for c in cases)
+    assert all(c.out_of_scope or c.expected_documents or c.expected_contains for c in cases)
     assert any(c.out_of_scope for c in cases)
 
 
@@ -155,6 +174,40 @@ class TestCommand:
 
         assert code == 0
         assert "Aciertos: 1 de 1" in capsys.readouterr().out
+
+    def test_fails_clearly_when_the_questions_file_does_not_exist(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        code = main(
+            [
+                "--index",
+                str(self.build_index(tmp_path)),
+                "--glossary",
+                str(GLOSSARY),
+                "--questions",
+                str(tmp_path / "no-existe.json"),
+            ]
+        )
+
+        assert code == 2
+        assert "preguntas" in capsys.readouterr().err
+
+    def test_fails_clearly_when_the_glossary_does_not_exist(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        code = main(
+            [
+                "--index",
+                str(self.build_index(tmp_path)),
+                "--glossary",
+                str(tmp_path / "no-existe.json"),
+                "--questions",
+                str(self.write_questions(tmp_path)),
+            ]
+        )
+
+        assert code == 2
+        assert "glosario" in capsys.readouterr().err
 
     def test_fails_clearly_when_there_is_no_index_yet(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]

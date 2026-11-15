@@ -11,9 +11,18 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from spaceapp.modules.knowledge.ingest.chunking import Chunk
 from spaceapp.modules.knowledge.ingest.manifest import ManifestError, load_manifest
 from spaceapp.modules.knowledge.ingest.pipeline import ingest_manifest
-from spaceapp.modules.knowledge.ingest.store import JsonlChunkStore
+from spaceapp.modules.knowledge.ingest.store import InMemoryChunkStore, JsonlChunkStore
+
+
+def _replace_index(path: Path, chunks: list[Chunk]) -> None:
+    """Escribe el índice nuevo aparte y lo pone en su lugar de una vez."""
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.unlink(missing_ok=True)
+    JsonlChunkStore(temporary).add(chunks)
+    temporary.replace(path)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -26,6 +35,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--include-optional", action="store_true", help="intenta también los documentos opcionales"
     )
+    parser.add_argument(
+        "--rebuild",
+        action="store_true",
+        help="descarta el índice anterior; úsalo si cambiaron las reglas de corte",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -34,9 +48,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Manifiesto inválido: {error}", file=sys.stderr)
         return 2
 
-    report = ingest_manifest(
-        entries, args.pdf_dir, JsonlChunkStore(args.out), include_optional=args.include_optional
-    )
+    # Al reconstruir se indexa en memoria y solo se reemplaza el archivo si algo se indexó:
+    # una reconstrucción sin PDFs a mano no debe dejar el índice vacío.
+    store = InMemoryChunkStore() if args.rebuild else JsonlChunkStore(args.out)
+    report = ingest_manifest(entries, args.pdf_dir, store, include_optional=args.include_optional)
+    if args.rebuild and report.ingested:
+        _replace_index(args.out, store.all())
+    elif args.rebuild:
+        print(f"No se indexó nada: se conserva el índice anterior en {args.out}", file=sys.stderr)
 
     print(f"Ingeridos: {', '.join(report.ingested) or 'ninguno'}")
     if report.missing:
