@@ -2,7 +2,7 @@
 
 > NASA Space Apps 2026 · monitor de salud para astronautas
 > Registro cronológico de lo que se hace y de cada cambio que se produce, incluidos los que se hacen **fuera del repositorio** (instalaciones, servicios) y los errores corregidos.
-> Última actualización: 15 de noviembre de 2026, 08:00.
+> Última actualización: 15 de noviembre de 2026, 08:15.
 
 ## Cómo se mantiene esta bitácora
 
@@ -437,6 +437,12 @@
 - **Pruebas nuevas:** `incident_code`; códigos secuenciales en el orden de apertura, en GraphQL y en el evento; umbrales de `env-co2-1h` y regla de tendencia; `code` en el mensaje de `/ws`; y la migración contra una base con tres tickets previos (todos reciben un número distinto).
 - **TDD:** las pruebas se escribieron primero y fallaron (RED: `incident_code` no existía). Las del servicio y la migración se escribieron después del código y se verificaron en verde.
 - **Para Dev B:** el código del ticket tiene cuatro dígitos (`INC-0001`); si sus pruebas esperan `INC-001`, hay que ajustarlas.
+
+### B-030 · Push de `dev-A` (bitácora, revisión del remoto, especificación y B-029)
+- **Qué (pedido del usuario):** `git push origin dev-A` (`0611573..6b56088`), a la rama `dev-A` y a ninguna otra. Subieron 5 commits: B-024 y B-025 (flujo de ramas), B-026 (intento de abrir los PRs), B-027 (la bitácora pasa a `bitacora-dev-a.md`), B-028 (especificación del front) y B-029 (código del ticket y umbrales en `Rule`). Después se subió este registro.
+- **Verificación:** `git rev-list --left-right --count dev-A...origin/dev-A` → `0 0`.
+- **Efecto:** `dev-A` ya trae el contrato final y la especificación v2 para Dev B. `testing` y `main` no cambian: no se abrió ningún PR.
+- **Pendiente:** abrir y fusionar los PRs `dev-A → testing` y `dev-B → testing` (el usuario, desde la web).
 
 ---
 
