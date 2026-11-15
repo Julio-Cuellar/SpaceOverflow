@@ -7,6 +7,7 @@ import type {
   Series,
   Rule,
   Session,
+  Ship,
 } from "../model";
 import * as op from "./operations";
 import { createStream } from "../../data/ws/stream";
@@ -190,7 +191,7 @@ export function backendGateway(config: BackendConfig): Gateway {
       }
       case "ship": {
         const [ship, incidents, types] = await Promise.all([
-          query<Pick<Snapshot, "ship">>(
+          query<{ ship: unknown }>(
             op.SHIP,
             { habitatId: config.habitatId },
             signal,
@@ -202,7 +203,26 @@ export function backendGateway(config: BackendConfig): Gateway {
           ),
           query<Pick<Snapshot, "incidentTypes">>(op.TYPES, {}, signal),
         ]);
-        return { ...ship, ...types, incidents };
+        const { habitatId, canvas, ...rest } = ship.ship as Omit<Ship, "id" | "canvas"> & {
+          habitatId: string;
+          canvas: Partial<Ship["canvas"]> | null;
+        };
+        const width = Number(canvas?.width);
+        const height = Number(canvas?.height);
+        if (!(width > 0) || !(height > 0))
+          throw new ServiceError(
+            "SHIP_INVALID",
+            "The ship plan has no drawing size. It cannot be displayed.",
+          );
+        return {
+          ship: {
+            ...rest,
+            id: habitatId,
+            canvas: { width, height },
+          },
+          ...types,
+          incidents,
+        };
       }
       case "tasks":
         return query<Pick<Snapshot, "tasks" | "groundPlan" | "streak">>(
@@ -268,6 +288,11 @@ export function backendGateway(config: BackendConfig): Gateway {
   };
   const execute = async (command: Command) => {
     const { type, ...variables } = command;
+    if (type === "setConsent" || type === "recordBaseline" || type === "syncGroundLinkNow")
+      throw new ServiceError(
+        "NOT_AVAILABLE",
+        "This operation is not available in the backend yet.",
+      );
     if (type === "scenario") {
       await restJson(
         `${config.apiBase}/api/v1/sim/scenarios/${encodeURIComponent(command.key)}:${command.action}`,

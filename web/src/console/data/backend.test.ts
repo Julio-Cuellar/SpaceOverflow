@@ -29,7 +29,18 @@ describe("Backend integration", () => {
       if (body.query.includes("IncidentCatalog"))
         return json({ data: { incidentTypes: [] } });
       if (body.query.includes("query Habitat"))
-        return json({ data: { ship: { id: "real-uuid", zones: [] } } });
+        return json({
+          data: {
+            ship: {
+              habitatId: "real-uuid",
+              code: "transit-ship",
+              name: "Transit ship",
+              kind: "transit",
+              canvas: { width: 968, height: 372 },
+              zones: [],
+            },
+          },
+        });
       return json({
         data: {
           incidents: {
@@ -48,7 +59,27 @@ describe("Backend integration", () => {
     });
     const data = await g.read("ship");
     expect(data.incidents?.map((i) => i.id)).toEqual(["first", "second"]);
+    expect(data.ship).toMatchObject({
+      id: "real-uuid",
+      canvas: { width: 968, height: 372 },
+    });
     expect(fetchImpl).toHaveBeenCalledTimes(4);
+  });
+  it("refuses the operations Dev A's backend does not have yet, without calling it", async () => {
+    const fetchImpl = vi.fn();
+    const g = backendGateway({
+      ...config,
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+    for (const command of [
+      { type: "setConsent", category: "tasks", shared: false },
+      { type: "recordBaseline", metric: "weight_kg", value: 70 },
+      { type: "syncGroundLinkNow" },
+    ] as const)
+      await expect(g.execute(command)).rejects.toMatchObject({
+        code: "NOT_AVAILABLE",
+      });
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
   it("surfaces typed errors in English and never assumes mutation success", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(

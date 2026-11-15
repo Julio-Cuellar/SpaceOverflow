@@ -41,7 +41,7 @@ export interface Citation {
 }
 export interface Recommendation {
   body: string;
-  composedBy: string;
+  composedBy?: string;
   sourceKind: string;
   actions: { key: string; title: string; description: string }[];
   citations: Citation[];

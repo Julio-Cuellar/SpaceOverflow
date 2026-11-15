@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { buildSchema, parse, validate } from "graphql";
 import { describe, expect, it } from "vitest";
-import { queryDocuments, mutations } from "./operations";
+import { queryDocuments, mutations, pendingMutations } from "./operations";
 const exported = resolve(
   process.cwd(),
   "../contracts/schema.generated.graphql",
@@ -22,6 +22,15 @@ describe(
       "validates operation %# against the selected schema",
       (document) => {
         expect(validate(schema, parse(document)).map((e) => e.message)).toEqual(
+          [],
+        );
+      },
+    );
+    it.each(Object.entries(pendingMutations))(
+      "validates pending operation %s against the integration target",
+      (_name, document) => {
+        const proposed = buildSchema(readFileSync(target, "utf8"));
+        expect(validate(proposed, parse(document)).map((e) => e.message)).toEqual(
           [],
         );
       },
