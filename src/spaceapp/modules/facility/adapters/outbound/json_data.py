@@ -1,4 +1,4 @@
-"""Carga el plano y el catálogo de tipos desde `data/facility/`."""
+"""Loads the floor plan and the type catalog from `data/facility/`."""
 
 from __future__ import annotations
 

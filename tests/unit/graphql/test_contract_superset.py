@@ -1,4 +1,4 @@
-"""El esquema real incluye todo lo que Dev B definió en contracts/schema.graphql."""
+"""The real schema includes everything Dev B defined in contracts/schema.graphql."""
 
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ def test_every_type_field_and_enum_value_of_the_frontend_contract_exists() -> No
         if name.startswith("__"):
             continue
         actual = ours.type_map.get(name)
-        assert actual is not None, f"falta el tipo {name}"
+        assert actual is not None, f"missing type {name}"
         if isinstance(wanted_type, GraphQLEnumType):
             assert isinstance(actual, GraphQLEnumType)
             assert set(wanted_type.values) <= set(actual.values), name
         elif isinstance(wanted_type, GraphQLObjectType):
             assert isinstance(actual, GraphQLObjectType)
             for field, wanted_field in wanted_type.fields.items():
-                assert field in actual.fields, f"falta {name}.{field}"
+                assert field in actual.fields, f"missing {name}.{field}"
                 assert str(actual.fields[field].type) == str(wanted_field.type), f"{name}.{field}"
                 assert set(wanted_field.args) <= set(actual.fields[field].args), f"{name}.{field}"
 

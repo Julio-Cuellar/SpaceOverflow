@@ -1,4 +1,4 @@
-"""Perfiles de ejecución y los adaptadores que activa cada uno (plan, sección 12)."""
+"""Runtime profiles and the adapters each one activates (architecture plan, section 12)."""
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -7,7 +7,7 @@ from enum import StrEnum
 class Profile(StrEnum):
     DEV1 = "dev1"
     DEV2 = "dev2"
-    JURADO = "jurado"
+    JURY = "jury"
 
 
 @dataclass(frozen=True)
@@ -22,9 +22,9 @@ class AdapterSet:
 
 _ADAPTERS = {
     Profile.DEV1: AdapterSet("whisper", "demo_and_rag", "ollama", autonomous_voice=True),
-    # Alexa procesa la voz en la nube: no es autónoma y hay que decirlo.
+    # Alexa processes voice in the cloud: it is not autonomous and that must be stated.
     Profile.DEV2: AdapterSet("alexa", "demo_and_rag", "ollama", autonomous_voice=False),
-    Profile.JURADO: AdapterSet(
+    Profile.JURY: AdapterSet(
         "whisper", "rag_fallback_demo", "ollama_fallback_template", autonomous_voice=True
     ),
 }

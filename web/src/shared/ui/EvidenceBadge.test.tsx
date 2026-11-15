@@ -4,26 +4,26 @@ import { EvidenceBadge } from './EvidenceBadge'
 
 describe('EvidenceBadge', () => {
   it('labels each evidence state with its own text', () => {
-    const { rerender } = render(<EvidenceBadge state="VERIFICADO" />)
-    expect(screen.getByText('VERIFICADO')).toBeInTheDocument()
+    const { rerender } = render(<EvidenceBadge state="VERIFIED" />)
+    expect(screen.getByText('VERIFIED')).toBeInTheDocument()
 
     rerender(<EvidenceBadge state="TB" />)
     expect(screen.getByText('TB')).toBeInTheDocument()
 
-    rerender(<EvidenceBadge state="SIMULADO" />)
-    expect(screen.getByText('SIMULADO')).toBeInTheDocument()
+    rerender(<EvidenceBadge state="SIMULATED" />)
+    expect(screen.getByText('SIMULATED')).toBeInTheDocument()
   })
 
   it('labels a demo value as DEMO and says in its title that it is not from NASA', () => {
     render(<EvidenceBadge state="DEMO" />)
 
     expect(screen.getByText('DEMO')).toBeInTheDocument()
-    expect(screen.getByTitle(/no es de NASA/i)).toBeInTheDocument()
+    expect(screen.getByTitle(/not from NASA/i)).toBeInTheDocument()
   })
 
-  it('labels a value with no verified source as NO VERIFICADO', () => {
-    render(<EvidenceBadge state="NO_VERIFICADO" />)
+  it('labels a value with no verified source as UNVERIFIED', () => {
+    render(<EvidenceBadge state="UNVERIFIED" />)
 
-    expect(screen.getByText('NO VERIFICADO')).toBeInTheDocument()
+    expect(screen.getByText('UNVERIFIED')).toBeInTheDocument()
   })
 })

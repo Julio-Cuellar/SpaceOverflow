@@ -1,4 +1,4 @@
-"""Lectura de PDFs: texto por página, con errores claros. Funciona sin internet."""
+"""PDF reading: text per page, with clear errors. It works without internet."""
 
 from __future__ import annotations
 
@@ -9,15 +9,15 @@ from pypdf.errors import PyPdfError
 
 
 class PdfReadError(Exception):
-    """No se pudo leer el archivo: no existe o no es un PDF válido."""
+    """The file could not be read: it does not exist or is not a valid PDF."""
 
 
 def extract_pages(path: Path) -> list[str]:
-    """Texto de cada página, en orden. Las tablas que vienen como imagen no salen aquí."""
+    """Text of each page, in order. Tables that come as an image do not appear here."""
     try:
         reader = PdfReader(str(path))
         return [page.extract_text() or "" for page in reader.pages]
     except FileNotFoundError as error:
-        raise PdfReadError(f"no existe el archivo: {path}") from error
+        raise PdfReadError(f"the file does not exist: {path}") from error
     except (PyPdfError, OSError) as error:
         raise PdfReadError(f"no se pudo leer {path.name}: {error}") from error

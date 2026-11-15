@@ -1,4 +1,4 @@
-"""R1: ingesta de lecturas por lotes. R4: control de escenarios del simulador."""
+"""R1: batch ingestion of readings. R4: simulator scenario control."""
 
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def build_router(get_simulation: Any) -> APIRouter:
     async def scenario(key_action: str, body: ScenarioBody, request: Request) -> dict[str, Any]:
         key, _, action = key_action.partition(":")
         if action not in ("start", "stop"):
-            raise HTTPException(404, detail="la acción debe ser start o stop")
+            raise HTTPException(404, detail="the action must be start or stop")
         svc: SimulationService = get_simulation(request.app)
         try:
             if action == "start":
@@ -72,9 +72,9 @@ def build_router(get_simulation: Any) -> APIRouter:
             await svc.stop_scenario(key, body.zone)
             return {"key": key, "zone": body.zone, "state": "stopped"}
         except UnknownScenario as err:
-            raise HTTPException(404, detail=f"escenario desconocido: {key}") from err
+            raise HTTPException(404, detail=f"unknown scenario: {key}") from err
         except UnknownZone as err:
-            raise HTTPException(422, detail=f"zona desconocida: {body.zone}") from err
+            raise HTTPException(422, detail=f"unknown zone: {body.zone}") from err
         except ValueError as err:
             raise HTTPException(422, detail=str(err)) from err
 

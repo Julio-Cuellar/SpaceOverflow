@@ -1,4 +1,4 @@
-"""El generador de tools/docgen es la fuente del plan: debe reproducirlo tal cual."""
+"""The tools/docgen generator is the source of the plan: it must reproduce it as is."""
 
 import re
 import subprocess
@@ -6,12 +6,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-PLAN = ROOT / "docs" / "plan-arquitectura.md"
+PLAN = ROOT / "docs" / "architecture-plan.md"
 
 
 def artifact_url() -> str:
     m = re.search(r"https://claude\.ai/artifact/\S+", PLAN.read_text(encoding="utf-8"))
-    assert m, "el plan debe enlazar al artefacto"
+    assert m, "the plan must link to the artifact"
     return m.group(0)
 
 
@@ -47,13 +47,13 @@ def test_docgen_builds_the_interactive_page_without_leftover_placeholders(tmp_pa
     assert result.returncode == 0, result.stderr
     page = html.read_text(encoding="utf-8")
     assert "__DATA__" not in page
-    assert "<title>Arquitectura Monitor de Salud</title>" in page
+    assert "<title>Health Monitor Architecture</title>" in page
     assert "const D = {" in page
 
 
 def test_docgen_fails_clearly_when_the_template_has_an_unknown_placeholder(tmp_path: Path):
     template = tmp_path / "template.md"
-    template.write_text("# Plan\n\n{{MARCADOR_INEXISTENTE}}\n", encoding="utf-8")
+    template.write_text("# Plan\n\n{{UNKNOWN_PLACEHOLDER}}\n", encoding="utf-8")
     result = subprocess.run(
         [
             sys.executable,
@@ -71,4 +71,4 @@ def test_docgen_fails_clearly_when_the_template_has_an_unknown_placeholder(tmp_p
         check=False,
     )
     assert result.returncode != 0
-    assert "MARCADOR_INEXISTENTE" in result.stderr
+    assert "UNKNOWN_PLACEHOLDER" in result.stderr

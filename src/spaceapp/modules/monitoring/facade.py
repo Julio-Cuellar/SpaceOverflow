@@ -1,4 +1,4 @@
-"""Consultas de solo lectura que Monitoreo expone a otros módulos."""
+"""Read-only queries that Monitoring exposes to other modules."""
 
 from __future__ import annotations
 
@@ -36,10 +36,15 @@ class RuleView:
     evidence_state: str
     action_key: str
     hrp_hazard: str
+    kind: str
+    operator: str
+    threshold: float
+    unit: str
+    window_s: int
 
 
 class ActiveAlertsQuery:
-    """Alertas activas. La usan Nave e incidencias y el Asistente."""
+    """Active alerts. Used by Facility and the Assistant."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory
@@ -106,7 +111,7 @@ def _alert_view(row: Any) -> AlertView:
 
 
 class AlertReadQuery:
-    """Alertas para la interfaz: de la más nueva a la más vieja, con paginación por llave."""
+    """Alerts for the interface: newest to oldest, with keyset pagination."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory
@@ -118,7 +123,7 @@ class AlertReadQuery:
         after: tuple[datetime, UUID] | None = None,
         status: str | None = None,
     ) -> tuple[list[AlertView], bool]:
-        """Hasta `first` alertas después de la llave `(raised_at, id)` y si quedan más."""
+        """Up to `first` alerts after the key `(raised_at, id)`, and whether more remain."""
         where: list[str] = []
         params: dict[str, Any] = {"n": first + 1}
         if after is not None:
@@ -142,7 +147,7 @@ class AlertReadQuery:
 
 
 class RuleQuery:
-    """Regla y acción de una alerta. La usan Conocimiento y la interfaz."""
+    """An alert's rule and action. Used by Knowledge and the interface."""
 
     def __init__(self, catalog: RuleCatalog) -> None:
         self._rules = catalog.by_key()
@@ -163,4 +168,9 @@ class RuleQuery:
             r.evidence_state,
             r.action_key,
             r.hrp_hazard,
+            r.kind,
+            r.operator,
+            r.threshold,
+            r.unit,
+            r.window_s,
         )

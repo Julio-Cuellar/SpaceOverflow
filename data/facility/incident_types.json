@@ -1,54 +1,54 @@
 {
   "version": "2026-11-14",
-  "note": "Propuesta de 12 categorías y 61 tipos (plan, sección 13.9). Solo los VERIFICADO salen de la norma.",
+  "note": "Proposal of 12 categories and 61 types (architecture plan, section 13.9). Only the VERIFIED ones come from the standard.",
   "categories": [
     {
       "key": "atm",
-      "name": "Atmósfera y soporte vital"
+      "name": "Atmosphere and life support"
     },
     {
       "key": "fire",
-      "name": "Fuego y humo"
+      "name": "Fire and smoke"
     },
     {
       "key": "water",
-      "name": "Agua y alimentos"
+      "name": "Water and food"
     },
     {
       "key": "power",
-      "name": "Energía y térmico"
+      "name": "Power and thermal"
     },
     {
       "key": "struct",
-      "name": "Estructura y mecánica"
+      "name": "Structure and mechanics"
     },
     {
       "key": "nav",
-      "name": "Propulsión, navegación y control"
+      "name": "Propulsion, navigation and control"
     },
     {
       "key": "comms",
-      "name": "Comunicaciones y datos"
+      "name": "Communications and data"
     },
     {
       "key": "rad",
-      "name": "Radiación"
+      "name": "Radiation"
     },
     {
       "key": "med",
-      "name": "Salud de la tripulación"
+      "name": "Crew health"
     },
     {
       "key": "eva",
-      "name": "Actividades extravehiculares (EVA)"
+      "name": "Extravehicular activities (EVA)"
     },
     {
       "key": "cargo",
-      "name": "Carga, equipo y ciencia"
+      "name": "Cargo, equipment and science"
     },
     {
       "key": "hab",
-      "name": "Habitabilidad y procedimientos"
+      "name": "Habitability and procedures"
     }
   ],
   "pending_rules": [
@@ -77,7 +77,7 @@
     {
       "key": "co2_high",
       "category": "atm",
-      "name": "CO₂ alto",
+      "name": "High CO₂",
       "detection": "AUTO",
       "rule_keys": [
         "env-co2-pre",
@@ -85,20 +85,20 @@
         "env-co2-crit",
         "env-trend-co2"
       ],
-      "default_severity": "alerta",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "alert",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar ventilación y filtros de CO₂",
-        "Medir CO₂ en zonas locales"
+        "Check ventilation and CO₂ filters",
+        "Measure CO₂ in local zones"
       ]
     },
     {
       "key": "hypoxia",
       "category": "atm",
-      "name": "Hipoxia (PIO₂ baja)",
+      "name": "Hypoxia (low PIO₂)",
       "detection": "AUTO",
       "rule_keys": [
         "env-pio2-low-pre",
@@ -106,97 +106,97 @@
         "env-pio2-abs-low",
         "env-trend-pio2"
       ],
-      "default_severity": "critico",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "critical",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "eclss",
         "*"
       ],
       "suggested_actions": [
-        "Revisar suministro de O₂ y presión",
-        "Reducir el esfuerzo físico"
+        "Check O₂ supply and pressure",
+        "Reduce physical effort"
       ]
     },
     {
       "key": "hyperoxia",
       "category": "atm",
-      "name": "Hiperoxia (PIO₂ alta)",
+      "name": "Hyperoxia (high PIO₂)",
       "detection": "AUTO",
       "rule_keys": [
         "env-pio2-high-pre",
         "env-pio2-high"
       ],
-      "default_severity": "alerta",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "alert",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "eclss",
         "*"
       ],
       "suggested_actions": [
-        "Revisar el aporte de O₂",
-        "Bajar la presión parcial de O₂"
+        "Check the O₂ supply",
+        "Lower the O₂ partial pressure"
       ]
     },
     {
       "key": "pressure_leak",
       "category": "atm",
-      "name": "Fuga de presión o despresurización rápida",
+      "name": "Pressure leak or rapid depressurization",
       "detection": "AUTO",
       "rule_keys": [
         "env-dpdt"
       ],
-      "default_severity": "critico",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "critical",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "air",
         "eng",
         "*"
       ],
       "suggested_actions": [
-        "Verificar integridad de escotillas y sellos",
-        "Aislar la zona"
+        "Verify hatch and seal integrity",
+        "Isolate the zone"
       ]
     },
     {
       "key": "pressure_range",
       "category": "atm",
-      "name": "Presión total fuera de rango",
+      "name": "Total pressure out of range",
       "detection": "AUTO",
       "rule_keys": [
         "env-ptotal-low",
         "env-ptotal-high",
         "env-trend-pressure"
       ],
-      "default_severity": "alerta",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "alert",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Verificar sensores y estanqueidad"
+        "Verify sensors and airtightness"
       ]
     },
     {
       "key": "diluent_low",
       "category": "atm",
-      "name": "Diluyente (N₂) bajo",
+      "name": "Low diluent (N₂)",
       "detection": "AUTO",
       "rule_keys": [
         "env-n2"
       ],
-      "default_severity": "alerta",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "alert",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Verificar la composición de la atmósfera"
+        "Verify the atmosphere composition"
       ]
     },
     {
       "key": "humidity",
       "category": "atm",
-      "name": "Humedad fuera de rango",
+      "name": "Humidity out of range",
       "detection": "AUTO",
       "rule_keys": [
         "env-rh-low-pre",
@@ -205,19 +205,19 @@
         "env-rh-high",
         "env-trend-rh"
       ],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar el condensador y la ventilación"
+        "Check the condenser and ventilation"
       ]
     },
     {
       "key": "temperature",
       "category": "atm",
-      "name": "Temperatura fuera de rango",
+      "name": "Temperature out of range",
       "detection": "AUTO",
       "rule_keys": [
         "env-t-low-pre",
@@ -226,24 +226,24 @@
         "env-t-high",
         "env-trend-t"
       ],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar el lazo térmico y la ventilación"
+        "Check the thermal loop and ventilation"
       ]
     },
     {
       "key": "combustion_gases",
       "category": "atm",
-      "name": "Gases de combustión o contaminantes (CO, HCN, HCl, HF)",
+      "name": "Combustion gases or contaminants (CO, HCN, HCl, HF)",
       "detection": "AUTO",
       "rule_keys": [
         "env-combustion"
       ],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "galley",
@@ -251,98 +251,98 @@
         "lab"
       ],
       "suggested_actions": [
-        "Ventilar y aislar la zona",
-        "Avisar al oficial médico (CMO)"
+        "Ventilate and isolate the zone",
+        "Notify the chief medical officer (CMO)"
       ]
     },
     {
       "key": "air_contaminant",
       "category": "atm",
-      "name": "Metano u otro contaminante del aire",
+      "name": "Methane or other air contaminant",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "lab",
         "eclss"
       ],
       "suggested_actions": [
-        "Ventilar la zona",
-        "Consultar la lista de límites de contaminantes (SMAC, pendiente)"
+        "Ventilate the zone",
+        "Consult the contaminant limits list (SMAC, pending)"
       ]
     },
     {
       "key": "filter_failure",
       "category": "atm",
-      "name": "Falla de filtro o cartucho de CO₂",
+      "name": "CO₂ filter or cartridge failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "eclss"
       ],
       "suggested_actions": [
-        "Cambiar el cartucho y registrar horas de uso"
+        "Replace the cartridge and log usage hours"
       ]
     },
     {
       "key": "ventilation_failure",
       "category": "atm",
-      "name": "Falla de ventilación",
+      "name": "Ventilation failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar ventiladores y ductos"
+        "Check fans and ducts"
       ]
     },
     {
       "key": "condenser_failure",
       "category": "atm",
-      "name": "Falla del condensador o del reciclaje de agua",
+      "name": "Condenser or water recycling failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "eclss"
       ],
       "suggested_actions": [
-        "Inspeccionar el condensador"
+        "Inspect the condenser"
       ]
     },
     {
       "key": "co2_pocket",
       "category": "atm",
-      "name": "Bolsa local de CO₂ que el sensor fijo no ve",
+      "name": "Local CO₂ pocket the fixed sensor cannot see",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "TB",
       "typical_zones": [
         "crew",
         "*"
       ],
       "suggested_actions": [
-        "Medir CO₂ en la zona con un sensor portátil",
-        "Mejorar la circulación de aire"
+        "Measure CO₂ in the zone with a portable sensor",
+        "Improve air circulation"
       ]
     },
     {
       "key": "smoke_fire",
       "category": "fire",
-      "name": "Humo o incendio",
+      "name": "Smoke or fire",
       "detection": "AUTO",
       "rule_keys": [
         "env-smoke"
       ],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "galley",
@@ -350,744 +350,744 @@
         "store"
       ],
       "suggested_actions": [
-        "Activar el procedimiento de incendio",
-        "Aislar la zona"
+        "Activate the fire procedure",
+        "Isolate the zone"
       ]
     },
     {
       "key": "burning_smell",
       "category": "fire",
-      "name": "Olor a quemado o sobrecalentamiento",
+      "name": "Burning smell or overheating",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Desconectar el equipo sospechoso",
-        "Inspeccionar la zona"
+        "Disconnect the suspect equipment",
+        "Inspect the zone"
       ]
     },
     {
       "key": "suppression_failure",
       "category": "fire",
-      "name": "Falla del sistema de extinción",
+      "name": "Fire suppression system failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar los extintores y el sistema"
+        "Check the extinguishers and the system"
       ]
     },
     {
       "key": "water_low",
       "category": "water",
-      "name": "Agua potable bajo el mínimo (2.5 L por tripulante al día)",
+      "name": "Drinking water below the minimum (2.5 L per crew member per day)",
       "detection": "AUTO",
       "rule_keys": [
         "water-budget"
       ],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "TB",
       "typical_zones": [
         "galley",
         "store"
       ],
       "suggested_actions": [
-        "Revisar el inventario y el reciclaje"
+        "Check inventory and recycling"
       ]
     },
     {
       "key": "water_contaminated",
       "category": "water",
-      "name": "Contaminación del agua",
+      "name": "Water contamination",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "galley",
         "eclss"
       ],
       "suggested_actions": [
-        "Dejar de consumir y tomar muestra"
+        "Stop consuming and take a sample"
       ]
     },
     {
       "key": "water_leak",
       "category": "water",
-      "name": "Fuga de agua o condensación",
+      "name": "Water leak or condensation",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Localizar y contener la fuga"
+        "Locate and contain the leak"
       ]
     },
     {
       "key": "food_shortage",
       "category": "water",
-      "name": "Alimento insuficiente o dañado",
+      "name": "Insufficient or spoiled food",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "galley",
         "store"
       ],
       "suggested_actions": [
-        "Revisar el inventario y ajustar el menú"
+        "Check inventory and adjust the menu"
       ]
     },
     {
       "key": "electrical_fault",
       "category": "power",
-      "name": "Falla eléctrica o sobrecarga",
+      "name": "Electrical fault or overload",
       "detection": "AUTO",
       "rule_keys": [
         "power-bus-fault"
       ],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "eng"
       ],
       "suggested_actions": [
-        "Revisar el bus de energía"
+        "Check the power bus"
       ]
     },
     {
       "key": "power_low",
       "category": "power",
-      "name": "Energía o batería baja",
+      "name": "Low power or battery",
       "detection": "AUTO",
       "rule_keys": [
         "power-bus-low"
       ],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "eng"
       ],
       "suggested_actions": [
-        "Reducir cargas no esenciales"
+        "Reduce non-essential loads"
       ]
     },
     {
       "key": "short_circuit",
       "category": "power",
-      "name": "Cortocircuito o arco eléctrico",
+      "name": "Short circuit or electric arc",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Cortar la alimentación del circuito"
+        "Cut power to the circuit"
       ]
     },
     {
       "key": "thermal_loop_failure",
       "category": "power",
-      "name": "Falla del lazo térmico o de radiadores",
+      "name": "Thermal loop or radiator failure",
       "detection": "AUTO",
       "rule_keys": [
         "therm-loop"
       ],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "eng"
       ],
       "suggested_actions": [
-        "Revisar el lazo y los radiadores"
+        "Check the loop and radiators"
       ]
     },
     {
       "key": "debris_impact",
       "category": "struct",
-      "name": "Impacto de micrometeoroide o desechos",
+      "name": "Micrometeoroid or debris impact",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Inspeccionar el casco y la presión"
+        "Inspect the hull and pressure"
       ]
     },
     {
       "key": "hull_damage",
       "category": "struct",
-      "name": "Fuga o daño en el casco",
+      "name": "Hull leak or damage",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Aislar el módulo y verificar la presión"
+        "Isolate the module and verify pressure"
       ]
     },
     {
       "key": "hatch_failure",
       "category": "struct",
-      "name": "Falla de escotilla o de sello",
+      "name": "Hatch or seal failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "air",
         "*"
       ],
       "suggested_actions": [
-        "Inspeccionar el sello"
+        "Inspect the seal"
       ]
     },
     {
       "key": "airlock_failure",
       "category": "struct",
-      "name": "Falla de la esclusa",
+      "name": "Airlock failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "air"
       ],
       "suggested_actions": [
-        "Suspender actividades extravehiculares"
+        "Suspend extravehicular activities"
       ]
     },
     {
       "key": "noise_limit",
       "category": "struct",
-      "name": "Ruido sobre el límite",
+      "name": "Noise above the limit",
       "detection": "AUTO",
       "rule_keys": [
         "env-noise"
       ],
-      "default_severity": "atencion",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "attention",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "crew",
         "eng"
       ],
       "suggested_actions": [
-        "Reducir la fuente de ruido"
+        "Reduce the noise source"
       ]
     },
     {
       "key": "vibration_sleep",
       "category": "struct",
-      "name": "Vibración sobre 0.01 g RMS durante el sueño",
+      "name": "Vibration above 0.01 g RMS during sleep",
       "detection": "AUTO",
       "rule_keys": [
         "env-vibration"
       ],
-      "default_severity": "atencion",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "attention",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "crew"
       ],
       "suggested_actions": [
-        "Identificar y amortiguar la fuente"
+        "Identify and dampen the source"
       ]
     },
     {
       "key": "thruster_failure",
       "category": "nav",
-      "name": "Falla de propulsor o de combustible",
+      "name": "Thruster or fuel failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "eng"
       ],
       "suggested_actions": [
-        "Evaluar con el centro de control"
+        "Assess with mission control"
       ]
     },
     {
       "key": "trajectory_deviation",
       "category": "nav",
-      "name": "Desvío de trayectoria",
+      "name": "Trajectory deviation",
       "detection": "AUTO",
       "rule_keys": [
         "traj"
       ],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "bridge"
       ],
       "suggested_actions": [
-        "Recalcular y corregir"
+        "Recalculate and correct"
       ]
     },
     {
       "key": "attitude_loss",
       "category": "nav",
-      "name": "Pérdida de orientación",
+      "name": "Loss of attitude",
       "detection": "AUTO",
       "rule_keys": [
         "attitude"
       ],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "bridge"
       ],
       "suggested_actions": [
-        "Recuperar la orientación"
+        "Recover attitude"
       ]
     },
     {
       "key": "control_failure",
       "category": "nav",
-      "name": "Falla de un sistema de control",
+      "name": "Control system failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "bridge"
       ],
       "suggested_actions": [
-        "Pasar a control de respaldo"
+        "Switch to backup control"
       ]
     },
     {
       "key": "link_loss",
       "category": "comms",
-      "name": "Pérdida o degradación del enlace con Tierra",
+      "name": "Ground link loss or degradation",
       "detection": "AUTO",
       "rule_keys": [
         "link-state"
       ],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "bridge"
       ],
       "suggested_actions": [
-        "Continuar en modo autónomo",
-        "Reintentar el enlace"
+        "Continue in autonomous mode",
+        "Retry the link"
       ]
     },
     {
       "key": "sensor_down",
       "category": "comms",
-      "name": "Sensor caído o con lecturas imposibles",
+      "name": "Sensor down or with impossible readings",
       "detection": "AUTO",
       "rule_keys": [
         "sensor-health-down"
       ],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar o reemplazar el sensor"
+        "Check or replace the sensor"
       ]
     },
     {
       "key": "sensor_uncalibrated",
       "category": "comms",
-      "name": "Sensor sin calibrar",
+      "name": "Uncalibrated sensor",
       "detection": "AUTO",
       "rule_keys": [
         "sensor-health-calibration"
       ],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Calibrar el sensor"
+        "Calibrate the sensor"
       ]
     },
     {
       "key": "system_failure",
       "category": "comms",
-      "name": "Falla del propio sistema (eventos muertos, retraso del outbox)",
+      "name": "Failure of the system itself (dead events, outbox lag)",
       "detection": "AUTO",
       "rule_keys": [
         "outbox-health"
       ],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "bridge"
       ],
       "suggested_actions": [
-        "Revisar /ready y reencolar eventos"
+        "Check /ready and requeue events"
       ]
     },
     {
       "key": "onboard_software",
       "category": "comms",
-      "name": "Falla de software a bordo",
+      "name": "Onboard software failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "bridge"
       ],
       "suggested_actions": [
-        "Reiniciar el servicio afectado"
+        "Restart the affected service"
       ]
     },
     {
       "key": "spe_event",
       "category": "rad",
-      "name": "Evento de partículas solares",
+      "name": "Solar particle event",
       "detection": "AUTO",
       "rule_keys": [
         "rad-spe"
       ],
-      "default_severity": "critico",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "critical",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Ir al refugio de radiación",
-        "Activar monitoreo personal"
+        "Go to the radiation shelter",
+        "Activate personal monitoring"
       ]
     },
     {
       "key": "gcr_daily",
       "category": "rad",
-      "name": "Dosis diaria de rayos cósmicos sobre 1.3 mSv/día en espacio libre",
+      "name": "Daily cosmic ray dose above 1.3 mSv/day in free space",
       "detection": "AUTO",
       "rule_keys": [
         "rad-gcr-day"
       ],
-      "default_severity": "alerta",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "alert",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar el blindaje y el plan de actividades"
+        "Check the shielding and the activity plan"
       ]
     },
     {
       "key": "dose_limit",
       "category": "rad",
-      "name": "Dosis acumulada hacia el límite por órgano o de carrera",
+      "name": "Cumulative dose approaching the organ or career limit",
       "detection": "AUTO",
       "rule_keys": [
         "rad-dose"
       ],
-      "default_severity": "alerta",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "alert",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Reducir la exposición del tripulante"
+        "Reduce the crew member exposure"
       ]
     },
     {
       "key": "dosimeter_failure",
       "category": "rad",
-      "name": "Falla del dosímetro",
+      "name": "Dosimeter failure",
       "detection": "AUTO",
       "rule_keys": [
         "sensor-health-dosimeter"
       ],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Reemplazar el dosímetro"
+        "Replace the dosimeter"
       ]
     },
     {
       "key": "injury",
       "category": "med",
-      "name": "Lesión o accidente",
+      "name": "Injury or accident",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Atender y avisar al oficial médico (CMO)"
+        "Treat and notify the chief medical officer (CMO)"
       ]
     },
     {
       "key": "illness_fever",
       "category": "med",
-      "name": "Enfermedad, fiebre o infección",
+      "name": "Illness, fever or infection",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "med",
         "crew"
       ],
       "suggested_actions": [
-        "Medir temperatura y avisar al CMO"
+        "Measure temperature and notify the CMO"
       ]
     },
     {
       "key": "space_motion_sickness",
       "category": "med",
-      "name": "Mareo espacial",
+      "name": "Space motion sickness",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "TB",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Reposo y seguimiento (dura unos 3 días en promedio)"
+        "Rest and follow-up (lasts about 3 days on average)"
       ]
     },
     {
       "key": "med_reaction",
       "category": "med",
-      "name": "Reacción a un medicamento o fármaco poco efectivo",
+      "name": "Medication reaction or ineffective drug",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "med"
       ],
       "suggested_actions": [
-        "Registrar la reacción y consultar al CMO"
+        "Log the reaction and consult the CMO"
       ]
     },
     {
       "key": "deconditioning",
       "category": "med",
-      "name": "Pérdida de capacidad aeróbica, fuerza o densidad ósea bajo los criterios",
+      "name": "Loss of aerobic capacity, strength or bone density below the criteria",
       "detection": "AUTO",
       "rule_keys": [
         "body-baseline"
       ],
-      "default_severity": "alerta",
-      "evidence_state": "VERIFICADO",
+      "default_severity": "alert",
+      "evidence_state": "VERIFIED",
       "typical_zones": [
         "gym"
       ],
       "suggested_actions": [
-        "Revisar el plan de ejercicio"
+        "Review the exercise plan"
       ]
     },
     {
       "key": "fatigue_sleep",
       "category": "med",
-      "name": "Fatiga o privación de sueño",
+      "name": "Fatigue or sleep deprivation",
       "detection": "AUTO",
       "rule_keys": [
         "body-sleep"
       ],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "crew"
       ],
       "suggested_actions": [
-        "Revisar el horario y el entorno de sueño"
+        "Review the schedule and sleep environment"
       ]
     },
     {
       "key": "behavioral",
       "category": "med",
-      "name": "Salud conductual: aislamiento, estrés o conflicto",
+      "name": "Behavioral health: isolation, stress or conflict",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "crew",
         "galley"
       ],
       "suggested_actions": [
-        "Conversación de apoyo y aviso al CMO"
+        "Supportive conversation and notify the CMO"
       ]
     },
     {
       "key": "med_kit_depleted",
       "category": "med",
-      "name": "Botiquín agotado o equipo médico averiado",
+      "name": "Medical kit depleted or medical equipment broken",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "med"
       ],
       "suggested_actions": [
-        "Revisar el inventario del botiquín"
+        "Check the medical kit inventory"
       ]
     },
     {
       "key": "suit_failure",
       "category": "eva",
-      "name": "Falla de traje o de su consumo de oxígeno",
+      "name": "Suit failure or its oxygen consumption",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "air"
       ],
       "suggested_actions": [
-        "Regresar a la esclusa"
+        "Return to the airlock"
       ]
     },
     {
       "key": "eva_return_delay",
       "category": "eva",
-      "name": "Retraso en el regreso o problema en la esclusa",
+      "name": "Return delay or airlock problem",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "air"
       ],
       "suggested_actions": [
-        "Coordinar el regreso"
+        "Coordinate the return"
       ]
     },
     {
       "key": "instrument_failure",
       "category": "cargo",
-      "name": "Falla de un instrumento o experimento",
+      "name": "Instrument or experiment failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "lab"
       ],
       "suggested_actions": [
-        "Diagnosticar el instrumento"
+        "Diagnose the instrument"
       ]
     },
     {
       "key": "chemical_spill",
       "category": "cargo",
-      "name": "Derrame o fuga química",
+      "name": "Chemical spill or leak",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "critico",
+      "default_severity": "critical",
       "evidence_state": "DEMO",
       "typical_zones": [
         "lab"
       ],
       "suggested_actions": [
-        "Contener y ventilar la zona"
+        "Contain and ventilate the zone"
       ]
     },
     {
       "key": "bio_contamination",
       "category": "cargo",
-      "name": "Contaminación biológica",
+      "name": "Biological contamination",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "lab"
       ],
       "suggested_actions": [
-        "Aislar y descontaminar"
+        "Isolate and decontaminate"
       ]
     },
     {
       "key": "loose_cargo",
       "category": "cargo",
-      "name": "Carga mal sujeta o herramienta perdida",
+      "name": "Loose cargo or lost tool",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "store"
       ],
       "suggested_actions": [
-        "Asegurar la carga y registrar el inventario"
+        "Secure the cargo and log the inventory"
       ]
     },
     {
       "key": "lighting_circadian",
       "category": "hab",
-      "name": "Iluminación o ritmo circadiano alterado",
+      "name": "Disrupted lighting or circadian rhythm",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "crew"
       ],
       "suggested_actions": [
-        "Ajustar la iluminación"
+        "Adjust the lighting"
       ]
     },
     {
       "key": "procedure_error",
       "category": "hab",
-      "name": "Error de procedimiento o tarea omitida",
+      "name": "Procedure error or skipped task",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "atencion",
+      "default_severity": "attention",
       "evidence_state": "DEMO",
       "typical_zones": [
         "*"
       ],
       "suggested_actions": [
-        "Revisar el procedimiento y repetir el paso"
+        "Review the procedure and repeat the step"
       ]
     },
     {
       "key": "security_breach",
       "category": "hab",
-      "name": "Acceso no autorizado o fallo de seguridad informática",
+      "name": "Unauthorized access or cybersecurity failure",
       "detection": "MANUAL",
       "rule_keys": [],
-      "default_severity": "alerta",
+      "default_severity": "alert",
       "evidence_state": "DEMO",
       "typical_zones": [
         "bridge"
       ],
       "suggested_actions": [
-        "Aislar el sistema y avisar al centro de control"
+        "Isolate the system and notify mission control"
       ]
     }
   ]

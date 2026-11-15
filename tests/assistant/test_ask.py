@@ -21,11 +21,11 @@ from spaceapp.modules.knowledge.contracts import CitationDTO
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 
 DEMO_CATALOG = Path(__file__).resolve().parents[2] / "data" / "knowledge" / "demo_catalog.json"
-HEADACHE = "¿Por qué me duele la cabeza?"
+HEADACHE = "Why do I have a headache?"
 
 
 class FakeLlm:
-    """Modelo de prueba: emite tokens, puede tardar o fallar, y registra las llamadas."""
+    """Test model: emits tokens, can be slow or fail, and records the calls."""
 
     available = True
 
@@ -49,7 +49,7 @@ class FakeLlm:
 
 
 class FakeAlerts:
-    """Solo lectura: el asistente no tiene ningún puerto para cambiar una alerta."""
+    """Read-only: the assistant has no port to change an alert."""
 
     def __init__(self, titles: Sequence[str] = ()) -> None:
         self._titles = list(titles)
@@ -82,25 +82,100 @@ def test_answers_a_headache_question_with_the_tb004_passage_and_its_citation() -
     result = assistant(uuid.uuid4(), HEADACHE)
 
     assert result.outcome is AskOutcome.ANSWERED
-    assert "dolor de cabeza entre 2.8 y 4.5 mmhg" in result.text.lower()
+    assert "headache between 2.8 and 4.5 mmhg" in result.text.lower()
     assert result.citations[0].document_code == "OCHMO-TB-004 CO₂"
     assert result.citations[0].evidence_state == "TB"
 
 
-def test_mentions_the_active_alert_without_changing_it() -> None:
-    assistant, _ = build(alerts=FakeAlerts(["CO₂ alto (Alerta)"]))
+class OnePassage:
+    def __init__(self, excerpt: str) -> None:
+        self._passage = CitationDTO(
+            document_code="DOC", requirement_ref=None, page=1, excerpt=excerpt, evidence_state="TB"
+        )
+
+    def search(self, text: str, k: int) -> list[CitationDTO]:
+        return [self._passage]
+
+
+def test_the_template_shows_only_the_part_of_each_passage_that_answers_the_question() -> None:
+    filler = "Lorem ipsum filler sentence without relevance to anything at all, repeated here. "
+    passage = (
+        filler * 6 + "The headache threshold is between 2.8 and 4.5 mmHg of ppCO2. " + filler * 6
+    )
+    assistant = AskAssistant(
+        passages=OnePassage(passage),
+        llm=NullLlmGateway(),
+        conversations=InMemoryConversations(),
+        alerts=FakeAlerts(),
+        publisher=ListPublisher(),
+    )
+
+    result = assistant(uuid.uuid4(), "What is the headache threshold?")
+
+    assert "between 2.8 and 4.5 mmHg" in result.text
+    assert len(result.text) < len(passage) / 2
+    assert result.citations[0].excerpt == passage  # the citation keeps the full excerpt
+
+
+def test_the_template_text_has_no_source_label_after_each_passage() -> None:
+    assistant, _ = build()
 
     result = assistant(uuid.uuid4(), HEADACHE)
 
-    assert "Alerta activa: CO₂ alto (Alerta)" in result.text
-    assert "no cambia la alerta" in result.text
+    assert result.composed_by == "plantilla"
+    assert "VERIFIED" not in result.text
+    assert " · " not in result.text
+    assert result.citations[0].evidence_state == "TB"  # the sources stay in the citations
+
+
+def test_mentions_the_active_alert_without_changing_it() -> None:
+    assistant, _ = build(alerts=FakeAlerts(["High CO₂ (Alert)"]))
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert "According to the loaded sources:" in result.text
+    assert "Active alert: High CO₂ (Alert)" in result.text
+    assert "does not change the alert" in result.text
+
+
+def test_a_model_answer_with_a_figure_the_passages_do_not_have_is_replaced_by_the_passages() -> (
+    None
+):
+    llm = FakeLlm(tokens=["Headache appears ", "above 9.9 mmHg."])
+    assistant, _ = build(llm=llm)
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert result.composed_by == "plantilla"
+    assert "9.9" not in result.text
+    assert "2.8" in result.text
+
+
+def test_a_model_answer_in_spanish_is_replaced_by_the_passages() -> None:
+    llm = FakeLlm(tokens=["El headache aparece ", "entre 2.8 y 4.5 mmHg en la cabina."])
+    assistant, _ = build(llm=llm)
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert result.composed_by == "plantilla"
+    assert "en la cabina" not in result.text
+
+
+def test_a_model_answer_that_only_uses_figures_from_the_passages_is_kept() -> None:
+    llm = FakeLlm(tokens=["Headache appears ", "between 2.8 and 4.5 mmHg."])
+    assistant, _ = build(llm=llm)
+
+    result = assistant(uuid.uuid4(), HEADACHE)
+
+    assert result.composed_by == "llm"
+    assert result.text.startswith("Headache appears between 2.8 and 4.5 mmHg.")
 
 
 def test_answers_no_information_without_calling_the_model_when_no_passage_is_relevant() -> None:
     llm = FakeLlm(tokens=["esto no debe salir"])
     assistant, _ = build(llm=llm)
 
-    result = assistant(uuid.uuid4(), "¿Cómo cambio el filtro de la esclusa?")
+    result = assistant(uuid.uuid4(), "How do I change the airlock filter?")
 
     assert result.outcome is AskOutcome.NO_INFO
     assert result.text == NO_INFO_TEXT
@@ -124,7 +199,7 @@ def test_falls_back_to_the_passages_when_the_model_exceeds_the_time_limit() -> N
     result = assistant(uuid.uuid4(), HEADACHE)
 
     assert result.composed_by == "plantilla"
-    assert "dolor de cabeza entre 2.8 y 4.5 mmhg" in result.text.lower()
+    assert "headache between 2.8 and 4.5 mmhg" in result.text.lower()
 
 
 def test_falls_back_to_the_passages_when_the_model_fails() -> None:
@@ -192,7 +267,7 @@ def test_publishes_the_no_information_answer_too_with_no_citations() -> None:
     publisher = ListPublisher()
     assistant, _ = build(publisher=publisher)
 
-    assistant(uuid.uuid4(), "¿Cómo cambio el filtro de la esclusa?")
+    assistant(uuid.uuid4(), "How do I change the airlock filter?")
 
     [event] = publisher.events
     assert event.text == NO_INFO_TEXT

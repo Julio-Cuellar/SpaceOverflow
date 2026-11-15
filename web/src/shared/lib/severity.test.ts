@@ -12,19 +12,19 @@ describe('severityMeta', () => {
 
   it('uses the symbols of the project spec for normal, attention and critical', () => {
     expect(severityMeta('NORMAL').symbol).toBe('●')
-    expect(severityMeta('ATENCION').symbol).toBe('▲')
-    expect(severityMeta('CRITICO').symbol).toBe('■')
+    expect(severityMeta('ATTENTION').symbol).toBe('▲')
+    expect(severityMeta('CRITICAL').symbol).toBe('■')
   })
 })
 
 describe('worstSeverity', () => {
   it('returns the most severe level of a list', () => {
-    expect(worstSeverity(['NORMAL', 'CRITICO', 'ATENCION'])).toBe('CRITICO')
+    expect(worstSeverity(['NORMAL', 'CRITICAL', 'ATTENTION'])).toBe('CRITICAL')
   })
 
-  it('ranks ALERTA between ATENCION and CRITICO', () => {
-    expect(worstSeverity(['ATENCION', 'ALERTA'])).toBe('ALERTA')
-    expect(worstSeverity(['ALERTA', 'CRITICO'])).toBe('CRITICO')
+  it('ranks ALERT between ATTENTION and CRITICAL', () => {
+    expect(worstSeverity(['ATTENTION', 'ALERT'])).toBe('ALERT')
+    expect(worstSeverity(['ALERT', 'CRITICAL'])).toBe('CRITICAL')
   })
 
   it('returns NORMAL for an empty list', () => {

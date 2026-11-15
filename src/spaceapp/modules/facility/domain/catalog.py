@@ -1,11 +1,11 @@
-"""Catálogo de tipos de incidencia (ADR-9): categoría, detección, severidad, zonas y acciones."""
+"""Incident type catalog (ADR-9): category, detection, severity, zones and actions."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-SEVERITIES = ("atencion", "alerta", "critico")
-EVIDENCE_STATES = ("VERIFICADO", "TB", "DEMO", "NO_VERIFICADO")
+SEVERITIES = ("attention", "alert", "critical")
+EVIDENCE_STATES = ("VERIFIED", "TB", "DEMO", "UNVERIFIED")
 DETECTIONS = ("AUTO", "MANUAL")
 
 
@@ -37,25 +37,23 @@ class IncidentCatalog:
         seen: dict[str, str] = {}
         keys = [t.key for t in self.types]
         if len(keys) != len(set(keys)):
-            raise InvalidCatalog("claves de tipo repetidas")
+            raise InvalidCatalog("duplicate type keys")
         for t in self.types:
             if t.category not in self.categories:
-                raise InvalidCatalog(f"{t.key}: categoría desconocida {t.category!r}")
+                raise InvalidCatalog(f"{t.key}: unknown category {t.category!r}")
             if t.default_severity not in SEVERITIES:
-                raise InvalidCatalog(f"{t.key}: severidad desconocida {t.default_severity!r}")
+                raise InvalidCatalog(f"{t.key}: unknown severity {t.default_severity!r}")
             if t.evidence_state not in EVIDENCE_STATES:
-                raise InvalidCatalog(
-                    f"{t.key}: estado de evidencia desconocido {t.evidence_state!r}"
-                )
+                raise InvalidCatalog(f"{t.key}: unknown evidence state {t.evidence_state!r}")
             if t.detection not in DETECTIONS:
-                raise InvalidCatalog(f"{t.key}: detección desconocida {t.detection!r}")
+                raise InvalidCatalog(f"{t.key}: unknown detection {t.detection!r}")
             if t.detection == "AUTO" and not t.rule_keys:
-                raise InvalidCatalog(f"{t.key}: un tipo AUTO necesita al menos una regla")
+                raise InvalidCatalog(f"{t.key}: an AUTO type needs at least one rule")
             if t.detection == "MANUAL" and t.rule_keys:
-                raise InvalidCatalog(f"{t.key}: un tipo MANUAL no lleva reglas")
+                raise InvalidCatalog(f"{t.key}: a MANUAL type takes no rules")
             for rule in t.rule_keys:
                 if rule in seen:
-                    raise InvalidCatalog(f"la regla {rule} está en {seen[rule]} y en {t.key}")
+                    raise InvalidCatalog(f"rule {rule} is in both {seen[rule]} and {t.key}")
                 seen[rule] = t.key
 
     def get(self, key: str) -> IncidentType | None:

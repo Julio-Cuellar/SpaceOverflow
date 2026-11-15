@@ -1,10 +1,10 @@
-"""Exporta los contratos que consume la interfaz de Dev B (tarea 5.4).
+"""Exports the contracts consumed by Dev B's interface (task 5.4).
 
-    uv run python -m spaceapp.interfaces.contracts_export           # escribe contracts/
-    uv run python -m spaceapp.interfaces.contracts_export --check   # falla si algo cambió
+    uv run python -m spaceapp.interfaces.contracts_export           # writes contracts/
+    uv run python -m spaceapp.interfaces.contracts_export --check   # fails if anything changed
 
-`contracts/schema.graphql` es el borrador de Dev B y no se toca: el esquema completo va en
-`schema.generated.graphql` y una prueba exige que el borrador sea un subconjunto.
+`contracts/schema.graphql` is Dev B's draft and is left untouched: the full schema goes in
+`schema.generated.graphql` and a test requires the draft to be a subset.
 """
 
 from __future__ import annotations
@@ -27,9 +27,9 @@ def _json(value: Any) -> str:
 
 
 def _openapi() -> str:
-    from spaceapp.main import create_app  # aquí, para no importar main al cargar el módulo
+    from spaceapp.main import create_app  # here, to avoid importing main when the module loads
 
-    # Con el perfil de desarrollo, para que aparezcan también las rutas de operación (R8).
+    # With the development profile, so the operations routes (R8) also show up.
     return _json(create_app(Settings(profile=Profile.DEV1)).openapi())
 
 
@@ -47,7 +47,9 @@ def render(name: str) -> str:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     parser.add_argument("--out", type=Path, default=ROOT / "contracts")
-    parser.add_argument("--check", action="store_true", help="no escribe; falla si hay cambios")
+    parser.add_argument(
+        "--check", action="store_true", help="does not write; fails if there are changes"
+    )
     args = parser.parse_args(argv)
     stale: list[str] = []
     for name in CONTRACTS:
@@ -61,9 +63,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
-            print(f"escrito {path}")
+            print(f"written {path}")
     if stale:
-        print(f"desactualizados: {', '.join(stale)}", file=sys.stderr)
+        print(f"stale: {', '.join(stale)}", file=sys.stderr)
         return 1
     return 0
 

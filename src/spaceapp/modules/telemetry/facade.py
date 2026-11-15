@@ -1,4 +1,4 @@
-"""Consultas de solo lectura que Telemetría expone a otros módulos."""
+"""Read-only queries that Telemetry exposes to other modules."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ class ReadingSample:
 
 
 class SqlReadingQuery:
-    """Lecturas de una zona. Las usa Monitoreo para evaluar sus reglas."""
+    """Readings of a zone. Monitoring uses them to evaluate its rules."""
 
     def __init__(self, session: AsyncSession) -> None:
         self._s = session
@@ -43,7 +43,7 @@ class SqlReadingQuery:
     async def rollup_mean(
         self, zone_id: UUID, metric: str, window_s: int, until: datetime
     ) -> float | None:
-        """Promedio de la ventana ponderado por la cantidad de muestras de cada minuto."""
+        """Window average weighted by the number of samples in each minute."""
         value = (
             await self._s.execute(
                 text(
@@ -88,7 +88,7 @@ RAW_LIMIT = 10_000
 
 
 class TelemetryViews:
-    """Lecturas para la interfaz: el último valor de cada sensor y series por zona."""
+    """Readings for the interface: the latest value of each sensor and series per zone."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory
@@ -114,7 +114,7 @@ class TelemetryViews:
         *,
         raw: bool = False,
     ) -> list[SeriesView]:
-        """Una serie por métrica con sensor en la zona. Por minuto (rollup) o cruda."""
+        """One series per metric with a sensor in the zone. Per minute (rollup) or raw."""
         if raw:
             points_sql = (
                 "SELECT ts, value, value, value FROM telemetry.reading "

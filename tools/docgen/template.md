@@ -1,81 +1,81 @@
-# Plan de arquitectura: monitor de salud para astronautas
+# Architecture plan: health monitor for astronauts
 
-> NASA Space Apps 2026 · reto *Create Health Monitoring Software for Astronauts on Space Missions*
-> Estado: **propuesta, pendiente de confirmación**. No se ha escrito código.
-> Fecha: 14 de noviembre de 2026. Contexto de origen: [`spaceapps-health-monitor-context.md`](spaceapps-health-monitor-context.md).
-> Artefacto visual e interactivo para trabajar con este plan: {{ARTIFACT_URL}}
+> NASA Space Apps 2026 · challenge *Create Health Monitoring Software for Astronauts on Space Missions*
+> Status: **proposal, pending confirmation**. No code has been written.
+> Date: November 14, 2026. Source context: [`spaceapps-health-monitor-context.md`](spaceapps-health-monitor-context.md).
+> Visual, interactive artifact for working with this plan: {{ARTIFACT_URL}}
 
-Este documento define cómo se construye el sistema. No repite los umbrales médicos ni las fuentes: esos viven en el documento de contexto y se cargan como catálogo de reglas con su estado de evidencia (`VERIFICADO`, `TB`, `DEMO`).
+This document defines how the system is built. It does not repeat the medical thresholds or the sources: those live in the context document and are loaded as a rule catalog with its evidence state (`VERIFIED`, `TB`, `DEMO`).
 
-## 1. Qué se va a construir
+## 1. What will be built
 
-**Requisitos de arquitectura que pediste**
+**Architecture requirements you asked for**
 
-- Arquitectura hexagonal (puertos y adaptadores), organizada como **monolito modular**.
-- **Bus de eventos con outbox** transaccional.
-- Python con **FastAPI**, **PostgreSQL**, **GraphQL** y **WebSockets**.
-- Diagramas: ER con sus relaciones, secuencia y comunicación entre módulos. Tabla de comunicaciones por canal. Documento `.md` y artefacto visual con elementos interactivos. Plan de experiencia de usuario.
-- **Tareas diarias de la tripulación** de tres tipos: salud, nave (mantenimiento) e incidentes del lugar donde estén.
-- **Panel de la nave:** plano con las zonas físicas. Ante una incidencia aparece el **ticket** con descripción, severidad y ubicación, y la zona se marca con un color. Ahí mismo se ven, en gráficas, los niveles de CO₂, nitrógeno, oxígeno, humedad y demás, medidos de forma continua, con alertas ante anomalías.
-- Un **cuerpo humano** en el panel de la tripulación, con indicadores por órgano.
+- Hexagonal architecture (ports and adapters), organized as a **modular monolith**.
+- **Event bus with a transactional outbox**.
+- Python with **FastAPI**, **PostgreSQL**, **GraphQL** and **WebSockets**.
+- Diagrams: ER with its relations, sequence and communication between modules. Communication table per channel. A `.md` document and a visual artifact with interactive elements. User experience plan.
+- **Daily crew tasks** of three kinds: health, ship (maintenance) and incidents wherever they are.
+- **Ship panel:** floor plan with the physical zones. When an incident occurs, the **ticket** appears with description, severity and location, and the zone is marked with a color. Right there, charts show the CO₂, nitrogen, oxygen, humidity and other levels, measured continuously, with alerts on anomalies.
+- A **human body** in the crew panel, with per-organ indicators.
 
-**Restricciones que vienen del contexto del proyecto**
+**Constraints that come from the project context**
 
-- Debe funcionar **sin internet y sin enlace con Tierra** (voz, modelo y base de conocimiento locales).
-- El **motor de reglas es determinista**. El modelo de lenguaje explica, nunca decide una alerta.
-- Es un prototipo de apoyo a la decisión, **no un dispositivo médico**. Toda cifra sin fuente verificada se rotula `DEMO`.
-- El oxígeno se evalúa como presión parcial (`PIO₂ = (P_total − 47 mmHg) × FO₂`), no como porcentaje.
-- Entrega reproducible en Docker, con los perfiles `dev1`, `dev2` y `jurado`.
+- It must work **without internet and without a ground link** (local voice, model and knowledge base).
+- The **rules engine is deterministic**. The language model explains, it never decides an alert.
+- It is a decision-support prototype, **not a medical device**. Every figure without a verified source is labeled `DEMO`.
+- Oxygen is evaluated as partial pressure (`PIO₂ = (P_total − 47 mmHg) × FO₂`), not as a percentage.
+- Reproducible delivery in Docker, with the profiles `dev1`, `dev2` and `jury`.
 
-## 2. Principios
+## 2. Principles
 
 {{PRINCIPLES}}
 
-## 3. Decisiones de arquitectura
+## 3. Architecture decisions
 
 {{ADRS}}
 
 ## 4. Stack
 
-| Capa | Elección | Motivo |
+| Layer | Choice | Reason |
 | --- | --- | --- |
-| Lenguaje y API | Python 3.12, FastAPI, Uvicorn | Pedido. ASGI nativo para HTTP, GraphQL y WebSocket en un proceso |
-| GraphQL | Strawberry montado en FastAPI, con DataLoaders | Tipado con dataclasses y buena integración ASGI |
-| Tiempo real | WebSocket de Starlette, un endpoint `/ws` | Un solo canal de push. Sin suscripciones GraphQL |
-| Base de datos | PostgreSQL 16, SQLAlchemy 2.0 async, asyncpg, Alembic | Pedido. `LISTEN/NOTIFY` y `SKIP LOCKED` para el outbox |
-| Vectores | pgvector | Una sola base. Cae a búsqueda de texto completo |
-| Validación | Pydantic v2 | Contratos de eventos y DTO |
-| Voz y lenguaje (local) | Whisper (faster-whisper), Ollama. n8n opcional | Del documento de contexto |
-| Pruebas | pytest, pytest-asyncio, testcontainers, hypothesis | PostgreSQL real para el outbox |
-| Calidad | ruff, mypy, import-linter | Hace cumplir los límites entre módulos |
-| Empaquetado | Docker y Docker Compose | Imagen para el jurado |
-| Interfaz | SPA con React, Vite y TypeScript. Cliente GraphQL urql. Plano y cuerpo en SVG, gráficas con uPlot | **Supuesto**: no indicaste frontend. No afecta al backend |
+| Language and API | Python 3.12, FastAPI, Uvicorn | Requested. Native ASGI for HTTP, GraphQL and WebSocket in one process |
+| GraphQL | Strawberry mounted on FastAPI, with DataLoaders | Typing with dataclasses and good ASGI integration |
+| Realtime | Starlette WebSocket, a single `/ws` endpoint | A single push channel. No GraphQL subscriptions |
+| Database | PostgreSQL 16, SQLAlchemy 2.0 async, asyncpg, Alembic | Requested. `LISTEN/NOTIFY` and `SKIP LOCKED` for the outbox |
+| Vectors | pgvector | A single database. Falls back to full-text search |
+| Validation | Pydantic v2 | Event contracts and DTOs |
+| Voice and language (local) | Whisper (faster-whisper), Ollama. n8n optional | From the context document |
+| Tests | pytest, pytest-asyncio, testcontainers, hypothesis | Real PostgreSQL for the outbox |
+| Quality | ruff, mypy, import-linter | Enforces the boundaries between modules |
+| Packaging | Docker and Docker Compose | Image for the jury |
+| Interface | SPA with React, Vite and TypeScript. urql GraphQL client. Floor plan and body in SVG, charts with uPlot | **Assumption**: you did not specify a frontend. It does not affect the backend |
 
-## 5. Arquitectura
+## 5. Architecture
 
-### 5.1 Anatomía de un módulo
+### 5.1 Anatomy of a module
 
-Cada módulo es un hexágono pequeño. El dominio no importa nada de FastAPI, SQLAlchemy, Strawberry ni de otros módulos.
+Each module is a small hexagon. The domain imports nothing from FastAPI, SQLAlchemy, Strawberry or other modules.
 
 ```mermaid
 flowchart LR
-  subgraph IN["Adaptadores de entrada"]
-    R["Router REST"]
-    G["Resolver GraphQL"]
-    H["Handler de eventos"]
+  subgraph IN["Inbound adapters"]
+    R["REST router"]
+    G["GraphQL resolver"]
+    H["Event handler"]
   end
-  subgraph APP["Aplicación"]
-    UC["Casos de uso"]
-    PI(["Puertos de entrada"])
-    PO(["Puertos de salida"])
+  subgraph APP["Application"]
+    UC["Use cases"]
+    PI(["Inbound ports"])
+    PO(["Outbound ports"])
   end
-  subgraph DOM["Dominio"]
-    D["Agregados, reglas, valores"]
+  subgraph DOM["Domain"]
+    D["Aggregates, rules, values"]
   end
-  subgraph OUT["Adaptadores de salida"]
-    SQL["Repositorio SQLAlchemy"]
-    OB["Outbox (misma transacción)"]
-    EXT["Whisper, Ollama, simulador, GroundLink"]
+  subgraph OUT["Outbound adapters"]
+    SQL["SQLAlchemy repository"]
+    OB["Outbox (same transaction)"]
+    EXT["Whisper, Ollama, simulator, GroundLink"]
   end
   R --> PI
   G --> PI
@@ -88,69 +88,69 @@ flowchart LR
   PO --> EXT
 ```
 
-### 5.2 Estructura del repositorio
+### 5.2 Repository structure
 
 ```text
 src/spaceapp/
-  main.py                    # composition root: elige adaptadores según el perfil
+  main.py                    # composition root: picks adapters according to the profile
   platform/
     outbox/                  # OutboxEvent, UnitOfWork, relay, inbox
-    profiles.py              # dev1, dev2, jurado
+    profiles.py              # dev1, dev2, jury
     config.py, logging.py, db.py
   modules/
-    <modulo>/                # telemetry, monitoring, knowledge, assistant, facility,
+    <module>/                # telemetry, monitoring, knowledge, assistant, facility,
       domain/                #   crew, engagement, groundlink
-      application/           # casos de uso y handlers
-      ports/                 # interfaces de entrada y salida
+      application/           # use cases and handlers
+      ports/                 # inbound and outbound interfaces
       adapters/
         inbound/             # rest.py, graphql.py, events.py
         outbound/            # sql.py, ollama.py, whisper.py, simulator.py ...
-      contracts.py           # eventos públicos y DTO. Lo único que otros módulos importan
-      facade.py              # consultas de solo lectura expuestas a otros módulos
+      contracts.py           # public events and DTOs. The only thing other modules import
+      facade.py              # read-only queries exposed to other modules
   interfaces/
-    graphql/schema.py        # une los resolvers de cada módulo
-    ws/gateway.py            # módulo realtime
-rules/catalog/*.json         # catálogo de reglas con fuente y estado
-migrations/                  # un esquema de PostgreSQL por módulo
+    graphql/schema.py        # joins each module's resolvers
+    ws/gateway.py            # realtime module
+rules/catalog/*.json         # rule catalog with source and state
+migrations/                  # one PostgreSQL schema per module
 tests/{unit,contract,integration,e2e,architecture}
-docker/                      # Dockerfile y compose
+docker/                      # Dockerfile and compose
 ```
 
-### 5.3 Reglas de dependencia (las revisa import-linter en CI)
+### 5.3 Dependency rules (checked by import-linter in CI)
 
-1. `domain` no importa nada fuera de la biblioteca estándar y de su propio módulo.
-2. `application` importa `domain` y `ports` del mismo módulo.
-3. Un módulo solo importa de otro su `contracts` y su `facade`. Nunca `domain`, `adapters` ni modelos SQL.
-4. Los adaptadores de entrada de un módulo no se llaman entre sí.
-5. Solo `main.py` conoce a todos los adaptadores.
-6. Un módulo escribe únicamente en su propio esquema. Entre módulos no hay claves foráneas.
+1. `domain` imports nothing outside the standard library and its own module.
+2. `application` imports `domain` and `ports` of the same module.
+3. A module only imports another's `contracts` and `facade`. Never `domain`, `adapters` or SQL models.
+4. The inbound adapters of one module do not call each other.
+5. Only `main.py` knows all the adapters.
+6. A module writes only to its own schema. There are no foreign keys between modules.
 
-### 5.4 Mapa de módulos: eventos y lecturas
+### 5.4 Module map: events and reads
 
-Las flechas continuas son eventos de dominio por el outbox. Las discontinuas son lecturas síncronas de solo lectura por fachada.
+Solid arrows are domain events through the outbox. Dashed arrows are read-only synchronous reads through a facade.
 
 {{MODULE_MAP}}
 
-### 5.5 Módulos
+### 5.5 Modules
 
 {{MODULES}}
 
-**Lecturas síncronas permitidas** (nunca escrituras):
+**Allowed synchronous reads** (never writes):
 
 {{SYNC}}
 
-## 6. Bus de eventos con outbox
+## 6. Event bus with outbox
 
-### 6.1 Cómo funciona
+### 6.1 How it works
 
-1. Un caso de uso cambia el estado **y** añade el evento al outbox dentro de la **misma transacción** (`UnitOfWork`). Se evita la doble escritura.
-2. Al confirmar la transacción se ejecuta `pg_notify('outbox_new')`.
-3. El **relay** (tarea `asyncio` en el mismo proceso) despierta por `LISTEN`, o a los 500 ms por sondeo, y toma pendientes con `FOR UPDATE SKIP LOCKED`, en orden de `id`.
-4. Por cada evento llama a los handlers suscritos. Cada handler corre en su propia transacción e inserta `(consumer, event_id)` en `inbox_processed`. Si ya existe, lo omite.
-5. Si todos los handlers terminan, el evento pasa a `done`. Si alguno falla, `attempts + 1` y `next_attempt_at` con espera exponencial (1, 2, 4 … 60 s). A los 8 intentos pasa a `dead`.
-6. Garantía de entrega: **al menos una vez**. Los handlers son idempotentes gracias al inbox.
+1. A use case changes the state **and** adds the event to the outbox within the **same transaction** (`UnitOfWork`). The dual write is avoided.
+2. When the transaction commits, `pg_notify('outbox_new')` runs.
+3. The **relay** (an `asyncio` task in the same process) wakes up on `LISTEN`, or after 500 ms by polling, and takes pending rows with `FOR UPDATE SKIP LOCKED`, in `id` order.
+4. For each event it calls the subscribed handlers. Each handler runs in its own transaction and inserts `(consumer, event_id)` into `inbox_processed`. If it already exists, it is skipped.
+5. If all handlers finish, the event becomes `done`. If any fails, `attempts + 1` and `next_attempt_at` with exponential wait (1, 2, 4 … 60 s). After 8 attempts it becomes `dead`.
+6. Delivery guarantee: **at least once**. Handlers are idempotent thanks to the inbox.
 
-### 6.2 Sobre del evento
+### 6.2 Event envelope
 
 ```json
 {
@@ -163,13 +163,13 @@ Las flechas continuas son eventos de dominio por el outbox. Las discontinuas son
   "partition_key": "habitat:hab-01",
   "correlation_id": "…",
   "causation_id": "…",
-  "payload": { "rule_key": "env-pio2-low", "severity": "rojo", "evidence_state": "VERIFICADO" }
+  "payload": { "rule_key": "env-pio2-low", "severity": "CRITICAL", "evidence_state": "VERIFIED" }
 }
 ```
 
-Nombres: `modulo.hecho_en_pasado`. Los payload son modelos Pydantic en `contracts.py`. Solo se permiten cambios aditivos dentro de una versión. Una ruptura crea `version: 2` y se publica en paralelo un tiempo.
+Names: `module.past_tense_fact`. Payloads are Pydantic models in `contracts.py`. Only additive changes are allowed within a version. A breaking change creates `version: 2` and both are published in parallel for a while.
 
-### 6.3 Tabla del outbox
+### 6.3 Outbox table
 
 ```sql
 CREATE SCHEMA platform;
@@ -198,62 +198,62 @@ CREATE TABLE platform.inbox_processed (
 );
 ```
 
-### 6.4 Decisiones de detalle
+### 6.4 Detail decisions
 
-- **Zonas:** cada sensor pertenece a una zona de la nave. El evento `readings_recorded` y la alerta llevan `zone_id`. Así Monitoreo evalúa por zona y Nave e incidencias sabe dónde pintar.
-- **Lecturas de sensores:** no se publica un evento por lectura. Se guarda el lote y se emite **un** `readings_recorded` por lote, con los últimos valores para reglas instantáneas. Las reglas con ventana consultan `ReadingQuery` sobre `reading_rollup_1m`.
-- **Orden:** un solo worker garantiza orden por `id`. Si hiciera falta paralelizar, se reparte por `partition_key`.
-- **Retención:** los eventos `done` se conservan 24 h. Sirven para el `resume` del WebSocket y para depuración. Después se borran.
-- **Sin Kafka ni Redis:** hay que operar sin internet y con pocas piezas. El puerto `EventBus` permite reemplazar el transporte sin tocar los módulos.
-- **Observabilidad:** `/ready` informa pendientes, muertos y retraso del más antiguo.
+- **Zones:** every sensor belongs to a ship zone. The `readings_recorded` event and the alert carry `zone_id`. That way Monitoring evaluates per zone and Facility knows where to paint.
+- **Sensor readings:** no event is published per reading. The batch is stored and **one** `readings_recorded` is emitted per batch, with the latest values for instantaneous rules. Windowed rules query `ReadingQuery` over `reading_rollup_1m`.
+- **Order:** a single worker guarantees order by `id`. If parallelizing is needed, it is split by `partition_key`.
+- **Retention:** `done` events are kept for 24 h. They serve the WebSocket `resume` and debugging. After that they are deleted.
+- **No Kafka or Redis:** the system must run without internet and with few pieces. The `EventBus` port allows replacing the transport without touching the modules.
+- **Observability:** `/ready` reports pending, dead and the lag of the oldest.
 
-## 7. Modelo de datos (ER)
+## 7. Data model (ER)
 
-Cada módulo tiene su esquema de PostgreSQL. Las líneas continuas son claves foráneas dentro del módulo. Las discontinuas son **referencias blandas** a otro módulo: solo guardan el id, sin restricción.
+Each module has its own PostgreSQL schema. Solid lines are foreign keys inside the module. Dashed lines are **soft references** to another module: they only store the id, with no constraint.
 
-### 7.1 Vista general entre módulos
+### 7.1 Overview across modules
 
 {{ER_OVERVIEW}}
 
 {{ER_ALL}}
 
-Notas del modelo:
+Model notes:
 
-- `reading` se **particiona por día** y lleva índice BRIN en `ts`. `reading_rollup_1m` se mantiene desde el handler de ingesta.
-- `alert.dedupe_key` es único mientras la alerta esté activa (índice parcial). Evita tormentas de alertas iguales.
-- `rule.evidence_state` y `sensor.origin` son obligatorios y viajan hasta la interfaz.
-- `chunk.embedding` es opcional. Sin él, se busca por texto completo.
-- `habitat` y `zone` viven en `facility`. El plano de cada zona (`zone.layout`) es JSON, así que cambiar de nave a base lunar es cambiar datos.
-- `incident.source` es `ALERTA` o `MANUAL`. Un ticket automático guarda `source_alert_id` como referencia blanda.
-- `task.kind` es `SALUD`, `NAVE` o `INCIDENTE`. Las tareas de incidente llevan `incident_id` y `zone_id`.
-- `rule.kind` es `umbral` (límite de la norma o demostración) o `tendencia` (anomalía respecto a la historia reciente, siempre demostración).
-- `rule.params` guarda los ajustes propios de una regla (ventanas y mínimos del detector de tendencia, cambio mínimo de presión) y `rule.supersedes` las reglas más leves que reemplaza cuando se cumple. Cada regla tiene una severidad fija: subir de Atención a Alerta es resolver la alerta leve y levantar la grave.
-- `alert.clear_streak` cuenta las evaluaciones limpias seguidas. La alerta se resuelve al llegar a la histéresis (3 por defecto), salvo que otra regla más grave la reemplace.
+- `reading` is **partitioned by day** and has a BRIN index on `ts`. `reading_rollup_1m` is maintained from the ingestion handler.
+- `alert.dedupe_key` is unique while the alert is active (partial index). It prevents storms of identical alerts.
+- `rule.evidence_state` and `sensor.origin` are mandatory and travel all the way to the interface.
+- `chunk.embedding` is optional. Without it, search is full-text.
+- `habitat` and `zone` live in `facility`. Each zone's floor plan (`zone.layout`) is JSON, so switching from a ship to a lunar base means changing data.
+- `incident.source` is `ALERT` or `MANUAL`. An automatic ticket stores `source_alert_id` as a soft reference.
+- `task.kind` is `HEALTH`, `SHIP` or `INCIDENT`. Incident tasks carry `incident_id` and `zone_id`.
+- `rule.kind` is `threshold` (standard limit or demo) or `trend` (anomaly against recent history, always demo).
+- `rule.params` stores a rule's own settings (windows and minimums of the trend detector, minimum pressure change) and `rule.supersedes` the milder rules it replaces when it fires. Each rule has a fixed severity: going from Attention to Alert means resolving the mild alert and raising the serious one.
+- `alert.clear_streak` counts consecutive clean evaluations. The alert resolves when it reaches the hysteresis (3 by default), unless another, more serious rule replaces it.
 
-## 8. Diagramas de secuencia
+## 8. Sequence diagrams
 
 {{SEQS}}
 
-## 9. Diagrama de comunicación (escenario: CO₂ que sube)
+## 9. Communication diagram (scenario: rising CO₂)
 
-Los números son el orden de los mensajes. Todo lo que sale del outbox pasa por el relay.
+The numbers are the order of the messages. Everything that leaves the outbox goes through the relay.
 
 ```mermaid
 flowchart LR
-  S["Sensores / simulador"]
+  S["Sensors / simulator"]
   REST["REST"]
-  TEL["Telemetría"]
+  TEL["Telemetry"]
   OB[("Outbox · Relay")]
-  MON["Monitoreo"]
-  KNW["Conocimiento"]
-  ENG["Misiones"]
-  UPL["Enlace con Tierra"]
+  MON["Monitoring"]
+  KNW["Knowledge"]
+  ENG["Missions"]
+  UPL["Ground link"]
   RT["Realtime WS"]
-  UI["Cliente UI"]
-  LLM["Ollama (opcional)"]
-  S -->|"1: POST lecturas"| REST
+  UI["UI client"]
+  LLM["Ollama (optional)"]
+  S -->|"1: POST readings"| REST
   REST -->|"2: IngestReadings"| TEL
-  TEL -->|"3: lecturas + readings_recorded (1 tx)"| OB
+  TEL -->|"3: readings + readings_recorded (1 tx)"| OB
   OB -->|"4: readings_recorded"| MON
   MON -->|"5: alert + alert_raised (1 tx)"| OB
   OB -->|"6: alert_raised"| RT
@@ -265,22 +265,22 @@ flowchart LR
   OB -->|"12: alert_raised"| ENG
   ENG -->|"13: task_assigned"| OB
   OB -->|"14: alert_raised"| UPL
-  KNW -.->|"15: redactar (opcional)"| LLM
+  KNW -.->|"15: compose (optional)"| LLM
   UI -->|"16: GraphQL acknowledgeAlert"| MON
 ```
 
-### 9.1 Escenario: incidente en una zona de la nave
+### 9.1 Scenario: incident in a ship zone
 
 ```mermaid
 flowchart LR
-  TEL["Telemetría"]
+  TEL["Telemetry"]
   OB[("Outbox · Relay")]
-  MON["Monitoreo"]
-  FAC["Nave e incidencias"]
-  ENG["Misiones y tareas"]
-  UPL["Enlace con Tierra"]
+  MON["Monitoring"]
+  FAC["Facility"]
+  ENG["Missions and tasks"]
+  UPL["Ground link"]
   RT["Realtime WS"]
-  UI["Cliente UI"]
+  UI["UI client"]
   TEL -->|"1: readings_recorded (zone_id)"| OB
   OB -->|"2: readings_recorded"| MON
   MON -->|"3: alert_raised (zone_id)"| OB
@@ -297,16 +297,16 @@ flowchart LR
   UI -->|"14: GraphQL resolveIncident"| FAC
 ```
 
-## 10. Canales y eventos de comunicación
+## 10. Communication channels and events
 
-**Cuándo usar cada canal**
+**When to use each channel**
 
-| Canal | Úsalo para | No lo uses para |
+| Channel | Use it for | Do not use it for |
 | --- | --- | --- |
-| REST | Entradas de máquina: lotes de sensores, audio, webhook de Alexa, control del simulador, salud y operación | Consultas de la interfaz |
-| GraphQL | Todo lo que la interfaz pide o cambia: consultas con forma a medida y mutaciones con resultado tipado | Push del servidor. No hay suscripciones |
-| WebSocket | Todo lo que el servidor empuja: ticks, alertas, recomendaciones, tareas, streaming del asistente, estado del enlace | Comandos. Las acciones del usuario van por GraphQL |
-| Evento (outbox) | Comunicación entre módulos dentro del proceso | Datos de alta frecuencia, como una lectura individual |
+| REST | Machine inputs: sensor batches, audio, Alexa webhook, simulator control, health and operations | Interface queries |
+| GraphQL | Everything the interface asks for or changes: queries with a tailored shape and mutations with a typed result | Server push. There are no subscriptions |
+| WebSocket | Everything the server pushes: ticks, alerts, recommendations, tasks, assistant streaming, link state | Commands. User actions go through GraphQL |
+| Event (outbox) | Communication between modules inside the process | High-frequency data, such as an individual reading |
 
 ### 10.1 REST
 
@@ -318,26 +318,26 @@ flowchart LR
 
 ### 10.3 WebSocket (`/ws`)
 
-Mensaje del servidor: `{ "seq": 18342, "topic": "alerts", "type": "alert.raised", "at": "…", "data": { … } }`. `seq` es el `id` del outbox cuando el mensaje nace de un evento. En los ticks es `null`.
+Server message: `{ "seq": 18342, "topic": "alerts", "type": "alert.raised", "at": "…", "data": { … } }`. `seq` is the outbox `id` when the message comes from an event. On ticks it is `null`.
 
-Presión inversa: cola por cliente de 500 mensajes. Si se llena, se descartan primero los `telemetry.tick`. Las alertas no se descartan.
+Backpressure: a per-client queue of 500 messages. If it fills up, `telemetry.tick` messages are dropped first. Alerts are never dropped.
 
 {{WS}}
 
-### 10.4 Eventos de dominio
+### 10.4 Domain events
 
 {{EVT}}
 
-### 10.5 Matriz emisor × receptor
+### 10.5 Emitter × receiver matrix
 
 {{MATRIX}}
 
-## 11. Esbozo del contrato GraphQL
+## 11. GraphQL contract sketch
 
 ```graphql
-enum EvidenceState { VERIFICADO TB DEMO NO_VERIFICADO }
+enum EvidenceState { VERIFIED TB DEMO UNVERIFIED }
 enum DataOrigin { SIMULATED REPLAY REAL }
-enum CauseHint { AMBIENTE CUERPO INDETERMINADO }
+enum CauseHint { ENVIRONMENT BODY INDETERMINATE }
 
 type Rule {
   key: String!  parameter: String!  operator: String!  threshold: Float!  unit: String!
@@ -370,250 +370,250 @@ type Mutation {
 }
 ```
 
-Reglas: errores esperados como tipos en una `union`, no como excepciones. Paginación por cursor. DataLoaders contra N+1. Límite de profundidad y de costo de consulta.
+Rules: expected errors as types in a `union`, not as exceptions. Cursor pagination. DataLoaders against N+1. Query depth and cost limits.
 
-## 12. Perfiles de ejecución
+## 12. Execution profiles
 
-La variable `SPACEAPP_PROFILE` elige los adaptadores en `main.py`. El nombre y el valor por defecto `jurado` son una **propuesta**, no una decisión tuya todavía.
+The `SPACEAPP_PROFILE` variable chooses the adapters in `main.py`. The name and the `jury` default are a **proposal**, not a decision of yours yet.
 
 {{PROFILES}}
 
-## 13. Experiencia de usuario
+## 13. User experience
 
-### 13.1 Usuarios
+### 13.1 Users
 
-| Usuario | Contexto | Qué necesita |
+| User | Context | What they need |
 | --- | --- | --- |
-| Astronauta (principal) | Cabina, a veces con guantes, ruido y poco tiempo. Pantalla fija o tableta | Entender su estado de un vistazo, actuar en una alerta y preguntar sin teclear |
-| Centro de control (secundario) | En Tierra, con enlace intermitente y demora | Ver lo que la tripulación autorizó, en orden y sin duplicados |
-| Jurado y equipo | Revisan código y ejecutan la imagen | Arrancar sin configurar nada y poder forzar escenarios |
+| Astronaut (primary) | Cabin, sometimes wearing gloves, with noise and little time. Fixed screen or tablet | Understand their state at a glance, act on an alert and ask without typing |
+| Mission control (secondary) | On Ground, with an intermittent link and delay | See what the crew authorized, in order and without duplicates |
+| Jury and team | Review the code and run the image | Start without configuring anything and be able to force scenarios |
 
-### 13.2 Principios de experiencia
+### 13.2 Experience principles
 
-1. **Acciones antes que explicación** en una alerta crítica. Primero qué hacer, después por qué.
-2. **El color nunca va solo.** Cada estado lleva forma, icono y texto: ● Normal, ▲ Atención, ■ Crítico.
-3. **Toda cifra muestra su origen**: documento, requisito y estado (`VERIFICADO`, `TB`, `DEMO`). Los datos del cuerpo llevan la marca «simulado».
-4. **Banner permanente:** «Prototipo de apoyo a la decisión. No es un dispositivo médico».
-5. **El enlace con Tierra siempre visible**, también cuando todo funciona sin él.
-6. **Nada se ejecuta por voz sin confirmar** lo transcrito. Siempre hay entrada por texto.
-7. **Gamificación sobria:** rutinas y hábitos sí, alertas críticas nunca. No se premia ignorar ni acelerar una alerta.
-8. **Objetivos táctiles de 48 px o más**, contraste AA y modo oscuro por defecto para la cabina.
+1. **Actions before explanation** on a critical alert. First what to do, then why.
+2. **Color never stands alone.** Every state carries a shape, an icon and text: ● Normal, ▲ Attention, ■ Critical.
+3. **Every figure shows its origin**: document, requirement and state (`VERIFIED`, `TB`, `DEMO`). Body data carries the "simulated" mark.
+4. **Permanent banner:** "Decision-support prototype. Not a medical device."
+5. **The ground link is always visible**, even when everything works without it.
+6. **Nothing runs by voice without confirming** the transcript. There is always text input.
+7. **Sober gamification:** routines and habits yes, critical alerts never. Ignoring or rushing an alert is never rewarded.
+8. **Touch targets of 48 px or more**, AA contrast and dark mode by default for the cabin.
 
-### 13.3 Pantallas
+### 13.3 Screens
 
-| Pantalla | Contenido | Datos y canales |
+| Screen | Content | Data and channels |
 | --- | --- | --- |
-| Panel de cabina | Semáforo global, tarjetas de cabina y radiación, cuerpo humano con indicadores por órgano, gráficas dinámicas, chip de enlace, selector de entorno (nave, estación, rover, base) | `dashboard` y `readings` por GraphQL. `telemetry.tick` por WS |
-| Detalle de alerta | Acciones, regla, valores medidos, causa probable (aire o cuerpo), fuente y estado, cuándo escalar a CMO o a Tierra | `alert(id)`. `alert.*` y `recommendation.*` por WS |
-| Asistente | Hablar o escribir, transcripción editable, respuesta con citas, modo local o nube | REST audio. `confirmUtterance`. `assistant.*` por WS |
-| Tareas del día | Tres tipos: salud, nave (mantenimiento) e incidentes. Recordatorios, racha, logros y «¿funcionó la medida?» | `tasks(kind)`, `completeTask`. `task.assigned` por WS |
-| Nueva tarea | Formulario corto: tipo (salud o nave), título, zona y fecha. Disponible en las tareas del día | `createTask`. Se publica `task_created` |
-| Centro de control (Tierra) | Plantillas del plan, borrador de la versión siguiente, publicar, estado por tarea (enviada, recibida, aplicada, completada, bloqueada) y control del enlace (ver 13.11) | Rol `ground`: `groundTasks`, `saveGroundTemplate`, `publishGroundPlan` |
-| Panel de la nave | Plano de zonas con color e icono de severidad, tickets, gráficas de gases y clima por zona (ver 13.7) | `ship`, `incidents`, `zoneReadings`. `incident.*`, `zone.status` y `telemetry.tick` por WS |
-| Tendencias y línea base | Comparación con la línea base personal, sueño de varios días | `readings`, `crewMember` |
-| Enlace y privacidad | Estado del enlace, cola, consentimiento por categoría, vista previa del lote | `groundLinkStatus`, `setConsent`. `groundlink.state` por WS |
-| Escenarios (modo demo) | Elegir escenario y velocidad, ver el perfil activo | REST `sim/scenarios` |
+| Cabin panel | Global status light, cabin and radiation cards, human body with per-organ indicators, dynamic charts, link chip, environment selector (ship, station, rover, base) | `dashboard` and `readings` over GraphQL. `telemetry.tick` over WS |
+| Alert detail | Actions, rule, measured values, probable cause (air or body), source and state, when to escalate to the CMO or to Ground | `alert(id)`. `alert.*` and `recommendation.*` over WS |
+| Assistant | Speak or type, editable transcript, answer with citations, local or cloud mode | REST audio. `confirmUtterance`. `assistant.*` over WS |
+| Tasks of the day | Three kinds: health, ship (maintenance) and incidents. Reminders, streak, achievements and "did the measure work?" | `tasks(kind)`, `completeTask`. `task.assigned` over WS |
+| New task | Short form: kind (health or ship), title, zone and date. Available in the tasks of the day | `createTask`. `task_created` is published |
+| Mission control (Ground) | Plan templates, draft of the next version, publish, status per task (sent, received, applied, completed, blocked) and link control (see 13.11) | `ground` role: `groundTasks`, `saveGroundTemplate`, `publishGroundPlan` |
+| Ship panel | Zone floor plan with color and severity icon, tickets, gas and climate charts per zone (see 13.7) | `ship`, `incidents`, `zoneReadings`. `incident.*`, `zone.status` and `telemetry.tick` over WS |
+| Trends and baseline | Comparison with the personal baseline, multi-day sleep | `readings`, `crewMember` |
+| Link and privacy | Link state, queue, consent per category, batch preview | `groundLinkStatus`, `setConsent`. `groundlink.state` over WS |
+| Scenarios (demo mode) | Choose scenario and speed, see the active profile | REST `sim/scenarios` |
 
-### 13.4 Recorrido
+### 13.4 Journey
 
 {{JOURNEY}}
 
-### 13.5 Estados y errores
+### 13.5 States and errors
 
-- **Sin datos aún:** esqueleto con la frase «Esperando lecturas del simulador», no un panel vacío.
-- **WebSocket caído:** barra «Reconectando… mostrando el último dato de hace N s». Al volver se envía `resume`.
-- **Modelo lento o ausente:** la recomendación de plantilla ya está en pantalla. El texto enriquecido aparece cuando llega, sin saltos.
-- **Transcripción dudosa:** el texto queda resaltado para corregir antes de enviar.
-- **Sin pasaje que respalde la respuesta:** «No tengo esa información en las fuentes cargadas». Nunca se inventa un protocolo.
+- **No data yet:** skeleton with the phrase "Waiting for simulator readings", not an empty panel.
+- **WebSocket down:** bar "Reconnecting… showing the last data from N s ago". When it returns, `resume` is sent.
+- **Slow or absent model:** the template recommendation is already on screen. The enriched text appears when it arrives, without jumps.
+- **Doubtful transcript:** the text is highlighted for correction before sending.
+- **No passage supports the answer:** "I do not have that information in the loaded sources." A protocol is never made up.
 
-### 13.6 Cuerpo humano en el panel
+### 13.6 Human body in the panel
 
-Una silueta con seis indicadores: cabeza (ánimo y cefalea), pulmones (SpO₂), corazón (frecuencia cardíaca), sangre y órganos (radiación), huesos y músculo (línea base) y temperatura. Cada indicador usa el mismo semáforo con icono, y al tocarlo muestra el valor, el peligro del programa de investigación humana de NASA con el que se relaciona (radiación, microgravedad, aislamiento, entorno cerrado) y su estado de evidencia. Los valores del cuerpo son de demostración y llevan la etiqueta.
+A silhouette with six indicators: head (mood and headache), lungs (SpO₂), heart (heart rate), blood and organs (radiation), bones and muscle (baseline) and temperature. Each indicator uses the same status light with an icon, and when tapped it shows the value, the NASA human research program hazard it relates to (radiation, microgravity, isolation, closed environment) and its evidence state. Body values are demo data and carry the label.
 
-### 13.7 Panel de la nave
+### 13.7 Ship panel
 
-- **Plano:** vista esquemática de la nave con las zonas físicas (puente, laboratorio, enfermería, esclusa, soporte vital, ingeniería, almacén, gimnasio, cocina y dormitorios). Las zonas son datos en `zone.layout`.
-- **Color por estado:** verde normal, ámbar atención, rojo alerta, magenta crítico. Cada estado lleva un icono y el crítico además un trazado rayado, para no depender solo del color.
-- **Ticket de incidencia:** identificador, **descripción**, **severidad**, **ubicación** (zona y cubierta), origen (alerta automática o reporte manual), historial y tareas asociadas. El ticket aparece en una lista y como marca sobre su zona en el plano.
-- **Atmósfera por zona:** al elegir una zona se ven gráficas de O₂ (PIO₂), CO₂ (ppCO₂), N₂, humedad, temperatura y presión, con las bandas de severidad dibujadas. Se miden de forma continua (1 Hz en la demo).
-- **Alertas:** por umbral (norma, `TB` o `DEMO`) y por **anomalía de tendencia** (cambio fuera de lo normal respecto a la historia reciente, `DEMO`). Solo severidad Alerta o mayor abre ticket automático. La tendencia genera un aviso de atención.
-- **Cierre:** al normalizarse los valores, el ticket se marca «valores normales, puede cerrarse». La tripulación decide cerrarlo.
-- **Reporte manual:** cualquier tripulante puede abrir un ticket eligiendo zona, severidad y descripción.
+- **Floor plan:** schematic view of the ship with the physical zones (bridge, laboratory, infirmary, airlock, life support, engineering, storage, gym, galley and crew quarters). Zones are data in `zone.layout`.
+- **Color by status:** green normal, amber attention, red alert, magenta critical. Each status carries an icon and critical also a hatched pattern, so it does not depend on color alone.
+- **Incident ticket:** identifier, **description**, **severity**, **location** (zone and deck), origin (automatic alert or manual report), history and associated tasks. The ticket appears in a list and as a mark over its zone on the floor plan.
+- **Atmosphere per zone:** choosing a zone shows charts of O₂ (PIO₂), CO₂ (ppCO₂), N₂, humidity, temperature and pressure, with the severity bands drawn. They are measured continuously (1 Hz in the demo).
+- **Alerts:** by threshold (standard, `TB` or `DEMO`) and by **trend anomaly** (a change outside normal relative to recent history, `DEMO`). Only severity Alert or higher opens an automatic ticket. A trend generates an attention notice.
+- **Closing:** when values normalize, the ticket is marked "values normal, can be closed". The crew decides to close it.
+- **Manual report:** any crew member can open a ticket by choosing zone, severity and description.
 
-### 13.8 Tareas diarias de la tripulación
+### 13.8 Daily crew tasks
 
-Cada tarea tiene un **tipo** (salud, nave o incidente) y un **origen** (Tierra, sistema o tripulación). El origen se muestra siempre en la tarjeta.
+Each task has a **kind** (health, ship or incident) and an **origin** (Ground, system or crew). The origin is always shown on the card.
 
-| Tipo | Origen | Ejemplos (demostración) |
+| Kind | Origin | Examples (demo) |
 | --- | --- | --- |
-| Salud | Rutina de salud y recomendaciones de alertas | Ejercicio de resistencia, registrar ánimo, medir presión arterial, revisar ventilación tras una alerta de CO₂ |
-| Nave | Mantenimiento diario por zona | Inspeccionar sellos de la esclusa, revisar el cartucho de CO₂ del soporte vital, verificar filtros del laboratorio, revisar el botiquín |
-| Incidente | Se crean al abrirse un ticket | Acciones sugeridas para la regla que se disparó, o «evaluar y atender» en un reporte manual |
+| Health | Health routine and alert recommendations | Endurance exercise, log mood, measure blood pressure, check ventilation after a CO₂ alert |
+| Ship | Daily maintenance per zone | Inspect airlock seals, check the life support CO₂ cartridge, verify laboratory filters, check the medical kit |
+| Incident | Created when a ticket opens | Suggested actions for the rule that fired, or "assess and attend" on a manual report |
 
-Cada tarea tiene recordatorio. Las de incidente se enlazan con su ticket y se completan al cerrarlo. Todas registran si la medida funcionó. Solo las rutinas de salud cuentan para racha y logros.
+Every task has a reminder. Incident tasks are linked to their ticket and are completed when it closes. All of them record whether the measure worked. Only health routines count toward the streak and achievements.
 
-### 13.9 Catálogo de tipos de incidencia
+### 13.9 Incident type catalog
 
-Los tickets se clasifican por **categoría** y **tipo**. El catálogo es un dato versionado (`incident_type`). Cada tipo define su detección (`AUTO` con una regla, o `MANUAL`), severidad por defecto, zonas típicas, acciones sugeridas y estado de evidencia. Es una **propuesta**: solo los marcados `VERIFICADO` salen de la norma y el resto es `DEMO`.
+Tickets are classified by **category** and **type**. The catalog is versioned data (`incident_type`). Each type defines its detection (`AUTO` with a rule, or `MANUAL`), default severity, typical zones, suggested actions and evidence state. It is a **proposal**: only those marked `VERIFIED` come from the standard and the rest is `DEMO`.
 
-El formulario de reporte manual pide primero la categoría, luego el tipo, y propone severidad, zona y acciones. Los tickets automáticos heredan el tipo de la regla que se disparó.
+The manual report form asks first for the category, then the type, and proposes severity, zone and actions. Automatic tickets inherit the type of the rule that fired.
 
 {{ITYPES}}
 
-### 13.10 Prototipo interactivo
+### 13.10 Interactive prototype
 
-El artefacto incluye un simulador con las reglas de PIO₂ y ppCO₂ del catálogo, las pantallas clave como maqueta navegable, el panel de la nave con simulación continua por zona y el cuerpo humano con indicadores. Sirve para acordar el comportamiento antes de programar.
+The artifact includes a simulator with the PIO₂ and ppCO₂ rules from the catalog, the key screens as a navigable mock-up, the ship panel with continuous per-zone simulation and the human body with indicators. It serves to agree on the behavior before programming.
 
-### 13.11 Tareas: plan desde Tierra y tareas propias
+### 13.11 Tasks: plan from Ground and own tasks
 
-**Decisión:** el centro de control puede programar tareas (opción B) y la tripulación puede crear las suyas. La nave no depende del enlace en ningún momento.
+**Decision:** mission control can schedule tasks (option B) and the crew can create their own. The ship does not depend on the link at any time.
 
-**Orígenes**
+**Origins**
 
-| Origen | Quién lo crea | Qué puede hacer la tripulación |
+| Origin | Who creates it | What the crew can do |
 | --- | --- | --- |
-| `TIERRA` | Panel del centro de control, dentro de un plan versionado | Completar, posponer, anotar y **bloquear con motivo**. No puede borrarla ni editarla |
-| `SISTEMA` | Recomendaciones de alertas, tickets y catálogo local de rutinas | Completar, posponer y registrar si funcionó |
-| `TRIPULACION` | La propia tripulación | Crear, editar, completar y **borrar** |
+| `GROUND` | Mission control panel, inside a versioned plan | Complete, snooze, annotate and **block with a reason**. They cannot delete or edit it |
+| `SYSTEM` | Alert recommendations, tickets and the local routine catalog | Complete, snooze and record whether it worked |
+| `CREW` | The crew themselves | Create, edit, complete and **delete** |
 
-**Modelo**
+**Model**
 
-- `task_template` guarda la plantilla (tipo, recurrencia, zona, a quién se asigna, origen y `plan_version`). `task` es una instancia con `template_id`, `origin` y `blocked_reason`.
-- En el módulo de enlace, `inbound_plan` registra cada plan recibido (versión, hash, estado, rechazos). `ground_plan` y `ground_template` son el borrador y la versión publicada del lado de Tierra.
-- Los planes cruzan como un lote: `groundlink.ground_plan_received` entra, `engagement.ground_plan_applied` sale como confirmación (secuencia 8.4).
+- `task_template` stores the template (kind, recurrence, zone, who it is assigned to, origin and `plan_version`). `task` is an instance with `template_id`, `origin` and `blocked_reason`.
+- In the link module, `inbound_plan` records each received plan (version, hash, status, rejections). `ground_plan` and `ground_template` are the draft and the published version on the Ground side.
+- Plans cross as a batch: `groundlink.ground_plan_received` comes in, `engagement.ground_plan_applied` goes out as the confirmation (sequence 8.4).
 
-**Reglas de conflicto**
+**Conflict rules**
 
-| Situación | Regla |
+| Situation | Rule |
 | --- | --- |
-| Llega el plan v12 y la v11 ya se aplicó | Se aplica en una transacción. Lo ya completado hoy no se toca. Los cambios rigen desde la siguiente instancia |
-| Llega una versión menor o repetida | Se ignora. La respuesta es idempotente |
-| Llega un plan corrupto (hash inválido) | Se rechaza completo con motivo. Se conserva el plan anterior |
-| Un ítem del plan no se puede aplicar (zona inexistente, asignado inexistente) | Se rechaza solo ese ítem, con motivo, y se aplica el resto |
-| Tierra cancela una tarea que la tripulación ya completó | Se conserva como completada. La cancelación afecta solo a instancias futuras |
-| La tripulación no puede cumplir una tarea de Tierra | Se bloquea con motivo. No se borra. Se informa a Tierra cuando haya enlace |
-| Tierra y la tripulación tienen una tarea con el mismo título | Conviven. Cada una conserva su origen |
-| Se corta el enlace | Se usa el último plan aplicado. Las tareas propias siguen creándose |
-| Una alerta crítica genera tareas de incidente | Son locales y siempre prevalecen. Tierra no puede borrarlas |
-| Las tareas propias | No suben a Tierra salvo que el consentimiento de la categoría «tareas» lo permita |
+| Plan v12 arrives and v11 was already applied | Applied in one transaction. What was already completed today is not touched. Changes apply from the next instance |
+| A lower or repeated version arrives | Ignored. The response is idempotent |
+| A corrupt plan arrives (invalid hash) | Rejected entirely with a reason. The previous plan is kept |
+| One plan item cannot be applied (nonexistent zone, nonexistent assignee) | Only that item is rejected, with a reason, and the rest is applied |
+| Ground cancels a task the crew already completed | Kept as completed. The cancellation only affects future instances |
+| The crew cannot do a Ground task | Blocked with a reason. Not deleted. Ground is informed when there is a link |
+| Ground and the crew have a task with the same title | They coexist. Each keeps its origin |
+| The link drops | The last applied plan is used. Own tasks keep being created |
+| A critical alert generates incident tasks | They are local and always prevail. Ground cannot delete them |
+| Own tasks | They do not go up to Ground unless the consent for the "tasks" category allows it |
 
-**Panel del centro de control**
+**Mission control panel**
 
-- Lista de plantillas activas con su estado en la nave (pendiente de envío, recibida, aplicada, completada hoy, bloqueada con motivo).
-- Borrador de la versión siguiente: añadir una plantilla, marcar una para cancelar.
-- Publicar: asigna la versión siguiente y envía por el enlace. Si no hay enlace queda en cola.
-- Control del enlace con retardo configurable, para ensayar cortes y llegadas tardías.
-- Para el MVP es la misma SPA con rol `ground`, conectada por el adaptador GroundLink simulado. Un despliegue aparte en Tierra queda fuera de alcance.
+- List of active templates with their status on the ship (pending send, received, applied, completed today, blocked with a reason).
+- Draft of the next version: add a template, mark one for cancellation.
+- Publish: assigns the next version and sends it over the link. If there is no link it stays queued.
+- Link control with configurable delay, to rehearse cuts and late arrivals.
+- For the MVP it is the same SPA with the `ground` role, connected through the simulated GroundLink adapter. A separate deployment on Ground is out of scope.
 
-**Integridad:** cada lote lleva un hash. Una firma con clave previa a la misión queda como mejora (ver preguntas abiertas).
+**Integrity:** every batch carries a hash. A signature with a pre-mission key remains as an improvement (see open questions).
 
-## 14. Estrategia de pruebas
+## 14. Testing strategy
 
-| Nivel | Qué prueba | Herramienta |
+| Level | What it tests | Tool |
 | --- | --- | --- |
-| Unitarias de dominio | Motor de reglas con los seis vectores del documento de contexto, PIO₂, ventanas, deduplicación | pytest, hypothesis |
-| Contrato | Cada evento valida contra su modelo Pydantic y versión | pytest |
-| Integración | Outbox con PostgreSQL real: atomicidad, duplicados, caída del relay, backoff, `dead`, orden | testcontainers |
-| Arquitectura | Reglas de dependencia entre módulos | import-linter en CI |
-| Extremo a extremo | Escenario de CO₂ → alerta por WS en menos de 1 s → reconocer por GraphQL | pytest + cliente WS |
-| Extremo a extremo (nave) | Escenario por zona → ticket con zona y severidad → zona pintada → normalización → cierre | pytest + cliente WS |
-| Plan desde Tierra | Plan v12 con corte de enlace y llegada tardía: idempotencia, versión menor ignorada, ítem rechazado sin bloquear el resto, lo completado no se pierde | pytest, testcontainers |
-| Catálogo de incidencias | Cada tipo AUTO apunta a una regla existente. Las claves son únicas | pytest |
-| Anomalías | La detección de tendencia no dispara con ruido normal y sí con una deriva sostenida | pytest, hypothesis |
-| Sin conexión | Contenedor sin red: perfil `jurado` funciona completo | Docker, prueba manual en otra máquina |
+| Domain unit | Rules engine with the six vectors from the context document, PIO₂, windows, deduplication | pytest, hypothesis |
+| Contract | Each event validates against its Pydantic model and version | pytest |
+| Integration | Outbox with real PostgreSQL: atomicity, duplicates, relay crash, backoff, `dead`, order | testcontainers |
+| Architecture | Dependency rules between modules | import-linter in CI |
+| End to end | CO₂ scenario → alert over WS in under 1 s → acknowledge via GraphQL | pytest + WS client |
+| End to end (ship) | Per-zone scenario → ticket with zone and severity → zone painted → normalization → closing | pytest + WS client |
+| Plan from Ground | Plan v12 with link cut and late arrival: idempotency, lower version ignored, item rejected without blocking the rest, completed work not lost | pytest, testcontainers |
+| Incident catalog | Every AUTO type points to an existing rule. Keys are unique | pytest |
+| Anomalies | Trend detection does not fire on normal noise and does fire on a sustained drift | pytest, hypothesis |
+| Offline | Container without network: the `jury` profile works completely | Docker, manual test on another machine |
 
-## 15. Plan por fases
+## 15. Plan by phase
 
-La sección 16 reparte estas fases entre dos desarrolladores. P0 es el producto mínimo defendible. P1 y P2 se recortan sin romper nada, porque cada puerto tiene un adaptador nulo.
+Section 16 splits these phases between two developers. P0 is the minimum defensible product. P1 and P2 can be cut without breaking anything, because every port has a null adapter.
 
 {{ROADMAP}}
 
-## 16. Reparto entre dos desarrolladores
+## 16. Split between two developers
 
-El plan se divide para que dos personas trabajen **a la vez** sin esperarse. El corte sigue la arquitectura: cada módulo tiene un solo dueño, la interfaz queda con uno de los dos y **todo el RAG queda en manos de un solo desarrollador (B)**.
+The plan is divided so that two people work **at the same time** without waiting for each other. The cut follows the architecture: each module has a single owner, the interface stays with one of the two and **all of the RAG stays in the hands of a single developer (B)**.
 
-### 16.1 Cómo se reparte
+### 16.1 How it is split
 
-- **Dev A · núcleo y tiempo real:** plataforma (outbox y relay), telemetría y simulador, monitoreo y reglas, nave e incidencias, tripulación, misiones y tareas, enlace con Tierra y el gateway GraphQL y WebSocket.
-- **Dev B · interfaz, conocimiento y RAG:** toda la SPA (panel de cabina, panel de la nave, tareas, asistente, panel de Tierra) y los módulos `knowledge` y `assistant` con Ollama, Whisper y Alexa.
-- **Fase 0 y entrega:** son conjuntas. Se hacen entre los dos y fijan los contratos.
-- **Detalle por desarrollador:** [`tareas-dev-a.md`](tareas-dev-a.md) y [`tareas-dev-b.md`](tareas-dev-b.md).
+- **Dev A · core and realtime:** platform (outbox and relay), telemetry and simulator, monitoring and rules, facility, crew, missions and tasks, ground link and the GraphQL and WebSocket gateway.
+- **Dev B · interface, knowledge and RAG:** the whole SPA (cabin panel, ship panel, tasks, assistant, Ground panel) and the `knowledge` and `assistant` modules with Ollama, Whisper and Alexa.
+- **Phase 0 and delivery:** these are joint. The two do them together and fix the contracts.
+- **Detail per developer:** [`tasks-dev-a.md`](tasks-dev-a.md) and [`tasks-dev-b.md`](tasks-dev-b.md).
 
-### 16.2 Dueño de cada módulo
+### 16.2 Owner of each module
 
 {{OWNERS}}
 
-`crew` es un módulo pequeño (línea base y consentimientos) y se queda con A, porque sus eventos los consumen Monitoreo y el enlace.
+`crew` is a small module (baseline and consents) and stays with A, because its events are consumed by Monitoring and the link.
 
-### 16.3 Horas por fase
+### 16.3 Hours per phase
 
-Las horas son de una persona. Las fases F10 y F11 se parten: A hace el backend y B la interfaz.
+Hours are per person. Phases F10 and F11 are split: A does the backend and B the interface.
 
 {{ALLOC}}
 
-### 16.4 Línea de tiempo
+### 16.4 Timeline
 
-Las horas son de trabajo por persona, no de reloj. Los bloques rojos son el RAG.
+Hours are working hours per person, not wall-clock. The red blocks are the RAG.
 
 {{GANTT}}
 
-**Cola de trabajo de Dev A**
+**Dev A work queue**
 
 {{LANE_A}}
 
-**Cola de trabajo de Dev B**
+**Dev B work queue**
 
 {{LANE_B}}
 
-- **A tiene 1 h de holgura** antes de la entrega (espera a B). Sirve para pruebas de integración y para ayudar con los contratos.
-- **B tiene el RAG completo (F12) dentro del tiempo antes de la entrega.** F12 está marcada P1 en el plan, pero cabe en la holgura de B sin retrasar el hito de entrega. Subirla a P0 es una decisión pendiente.
+- **A has 1 h of slack** before delivery (waiting for B). It is used for integration tests and to help with the contracts.
+- **B has the complete RAG (F12) within the time before delivery.** F12 is marked P1 in the plan, but it fits in B's slack without delaying the delivery milestone. Raising it to P0 is a pending decision.
 
-### 16.5 Hitos de integración
+### 16.5 Integration milestones
 
-Cada hito es una pausa corta: se cambian los mocks por lo real y se corre una prueba de extremo a extremo.
+Each milestone is a short pause: mocks are swapped for the real thing and an end-to-end test is run.
 
 {{MILESTONES}}
 
-### 16.6 Contratos entre los dos desarrolladores
+### 16.6 Contracts between the two developers
 
 {{CROSS}}
 
-### 16.7 Cómo trabajar sin bloquearse
+### 16.7 How to work without blocking each other
 
 {{SPLIT_RULES}}
 
-### 16.8 El RAG en una sola mano
+### 16.8 The RAG in one pair of hands
 
-Todo el RAG es de **Dev B** y suma {{RAG_HOURS}} (fases F8, F12, F13, F14 y F16). Incluye:
+All of the RAG belongs to **Dev B** and adds up to {{RAG_HOURS}} (phases F8, F12, F13, F14 and F16). It includes:
 
 {{RAG_SCOPE}}
 
-**Por qué en una sola persona:** el RAG tiene muchas decisiones encadenadas (fragmentación, búsqueda, política de respuesta, redacción con Ollama, voz). Si las toman dos personas, se pierde coherencia en las citas y en el «no tengo esa información».
+**Why in a single person:** the RAG has many chained decisions (chunking, search, answer policy, composition with Ollama, voice). If two people make them, coherence is lost in the citations and in the "I do not have that information".
 
-**Qué necesita de A (solo tres puntos):**
+**What it needs from A (only three points):**
 
-1. El evento `monitoring.alert_raised` y la fachada `RuleQuery`.
-2. El bus de eventos. Mientras tanto usa el bus en memoria.
-3. El gateway, para registrar sus resolvers GraphQL y publicar `recommendation_ready` y `answer_ready` hacia WebSocket.
+1. The `monitoring.alert_raised` event and the `RuleQuery` facade.
+2. The event bus. Meanwhile it uses the in-memory bus.
+3. The gateway, to register its GraphQL resolvers and publish `recommendation_ready` and `answer_ready` toward WebSocket.
 
-**Qué entrega a A:** el evento `knowledge.recommendation_ready` y la fachada `ActionCatalogQuery`, que usa Misiones.
+**What it delivers to A:** the `knowledge.recommendation_ready` event and the `ActionCatalogQuery` facade, which Missions uses.
 
-**Si B se atrasa:** el adaptador demo de Conocimiento sigue funcionando, así que el resto del sistema no se detiene. Las decisiones abiertas del RAG siguen pendientes (solo pasajes con cita o también redacción con Ollama, y si n8n sigue o se descarta).
+**If B falls behind:** the Knowledge demo adapter keeps working, so the rest of the system does not stop. The open RAG decisions are still pending (citable passages only or also composition with Ollama, and whether n8n stays or is dropped).
 
-### 16.9 Riesgos del reparto
+### 16.9 Split risks
 
 {{SPLIT_RISKS}}
 
-## 17. Riesgos
+## 17. Risks
 
 {{RISKS}}
 
-## 18. Preguntas abiertas y supuestos
+## 18. Open questions and assumptions
 
-No decidí estos puntos. Dejé un supuesto conservador y lo marqué.
+I did not decide these points. I left a conservative assumption and marked it.
 
 {{OPEN}}
 
-## 19. Siguiente paso
+## 19. Next step
 
-Esperando tu confirmación del plan. Puedes responder «sí», «modifica: …» o elegir otro orden de fases. Con el «sí» empieza la **Fase 0 conjunta**: repositorio, contratos y bus en memoria. Después Dev A sigue con F1 (outbox) y Dev B con F6 (interfaz de cabina) sobre mocks.
+Waiting for your confirmation of the plan. You can answer "yes", "change: …" or choose another phase order. With the "yes", the **joint Phase 0** starts: repository, contracts and in-memory bus. After that Dev A continues with F1 (outbox) and Dev B with F6 (cabin interface) on mocks.

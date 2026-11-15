@@ -1,9 +1,9 @@
-export const SEVERITIES = ['NORMAL', 'ATENCION', 'ALERTA', 'CRITICO'] as const
+export const SEVERITIES = ['NORMAL', 'ATTENTION', 'ALERT', 'CRITICAL'] as const
 
 export type Severity = (typeof SEVERITIES)[number]
 
 interface SeverityMeta {
-  /** Forma y texto van siempre con el color: el color nunca va solo. */
+  /** Shape and text always accompany the color: color is never alone. */
   symbol: string
   label: string
   rank: number
@@ -12,9 +12,9 @@ interface SeverityMeta {
 
 const META: Record<Severity, SeverityMeta> = {
   NORMAL: { symbol: '●', label: 'Normal', rank: 0, token: '--sev-normal' },
-  ATENCION: { symbol: '▲', label: 'Atención', rank: 1, token: '--sev-atencion' },
-  ALERTA: { symbol: '◆', label: 'Alerta', rank: 2, token: '--sev-alerta' },
-  CRITICO: { symbol: '■', label: 'Crítico', rank: 3, token: '--sev-critico' },
+  ATTENTION: { symbol: '▲', label: 'Attention', rank: 1, token: '--sev-attention' },
+  ALERT: { symbol: '◆', label: 'Alert', rank: 2, token: '--sev-alert' },
+  CRITICAL: { symbol: '■', label: 'Critical', rank: 3, token: '--sev-critical' },
 }
 
 export function severityMeta(level: Severity): SeverityMeta {

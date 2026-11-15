@@ -1,4 +1,4 @@
-"""Contexto de cada operación GraphQL: los servicios que arma el composition root."""
+"""Context of each GraphQL operation: the services assembled by the composition root."""
 
 from __future__ import annotations
 
@@ -8,8 +8,11 @@ from uuid import UUID
 
 from strawberry.fastapi import BaseContext
 
+from spaceapp.modules.engagement.application.service import EngagementService
+from spaceapp.modules.engagement.facade import TaskQuery
 from spaceapp.modules.facility.application.service import FacilityService
 from spaceapp.modules.facility.facade import IncidentQuery, ShipQuery
+from spaceapp.modules.groundlink.application.ground import GroundControl
 from spaceapp.modules.knowledge.domain.model import Recommendation
 from spaceapp.modules.knowledge.facade import KnowledgeQuery
 from spaceapp.modules.monitoring.application.acknowledge_alert import AckResult
@@ -25,14 +28,17 @@ class Services:
     rules: RuleQuery
     telemetry: TelemetryViews
     knowledge: KnowledgeQuery
-    recommendation_for: Callable[[UUID], Recommendation | None]
+    recommendation_for: Callable[[UUID, str], Recommendation | None]
     acknowledge: Callable[[UUID, str | None], Awaitable[AckResult]]
     facility: FacilityService
     ship: ShipQuery
     incidents: IncidentQuery
-    # Quién firma las acciones hasta que exista la selección de perfil.
+    engagement: EngagementService
+    tasks: TaskQuery
+    ground: GroundControl
+    # Who signs actions until profile selection exists.
     crew_member: UUID
-    # Solo en los perfiles de desarrollo; en `jurado` es None y la consulta devuelve null.
+    # Only in the development profiles; in `jury` it is None and the query returns null.
     outbox_stats: Callable[[], Awaitable[OutboxStats]] | None = None
 
 

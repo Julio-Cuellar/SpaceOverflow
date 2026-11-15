@@ -1,15 +1,15 @@
-"""Vocabulario compartido entre módulos (kernel compartido)."""
+"""Vocabulary shared between modules (shared kernel)."""
 
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-Severity = Literal["atencion", "alerta", "critico"]
-EvidenceState = Literal["VERIFICADO", "TB", "DEMO", "NO_VERIFICADO"]
+Severity = Literal["attention", "alert", "critical"]
+EvidenceState = Literal["VERIFIED", "TB", "DEMO", "UNVERIFIED"]
 
 
 class Citation(BaseModel):
-    """Cita de una fuente. Toda recomendación o respuesta la lleva."""
+    """Citation of a source. Every recommendation or answer carries one."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 

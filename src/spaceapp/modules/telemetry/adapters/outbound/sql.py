@@ -1,4 +1,4 @@
-"""Repositorio de telemetría sobre PostgreSQL."""
+"""Telemetry repository on PostgreSQL."""
 
 from __future__ import annotations
 

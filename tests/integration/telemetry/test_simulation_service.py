@@ -49,8 +49,8 @@ def test_the_layout_describes_ten_zones_with_stable_ids():
         "galley",
         "crew",
     ]
-    assert LAYOUT.habitat_code == "nave-transito"
-    assert LAYOUT.zone_id("lab") == zone_id("nave-transito", "lab")
+    assert LAYOUT.habitat_code == "transit-ship"
+    assert LAYOUT.zone_id("lab") == zone_id("transit-ship", "lab")
 
 
 async def test_ensure_sensors_registers_five_simulated_sensors_per_zone_once(session_factory):
@@ -92,7 +92,7 @@ async def test_a_tick_ingests_what_is_due_and_emits_one_event(session_factory):
     await svc.ensure_sensors()
     first = await svc.tick(T0)
     second = await svc.tick(T0 + timedelta(seconds=1))
-    assert (first.accepted, second.accepted) == (50, 10)  # al segundo solo la presión
+    assert (first.accepted, second.accepted) == (50, 10)  # at the second, only the pressure
     payloads = [
         ReadingsRecorded.model_validate(e.payload)
         for e in await events(session_factory, "telemetry.readings_recorded")
@@ -124,7 +124,7 @@ async def test_starting_and_stopping_a_scenario_is_recorded_and_announced(sessio
         "co2_slow",
         "started",
         2.0,
-        zone_id("nave-transito", "lab"),
+        zone_id("transit-ship", "lab"),
     )
     await svc.stop_scenario("co2_slow", "lab", now=T0 + timedelta(seconds=30))
     row = (await _runs(session_factory))[0]

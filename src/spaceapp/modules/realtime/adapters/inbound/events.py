@@ -1,4 +1,4 @@
-"""Entrada por eventos del gateway: traduce lo que pasa en el sistema y lo reparte."""
+"""Event input of the gateway: translates what happens in the system and distributes it."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ class RealtimeEvents:
         self._seq_of = seq_of
 
     async def on_event(self, envelope: EventEnvelope, ctx: HandlerContext) -> None:
-        # El seq es el id del outbox. Los ticks no lo llevan: no se reenvían con `resume`.
+        # The seq is the outbox id. Ticks do not carry it: they are not resent with `resume`.
         seq = None
         if self._seq_of is not None and envelope.type in REPLAYABLE_TYPES:
             seq = await self._seq_of(ctx.session, envelope.event_id)

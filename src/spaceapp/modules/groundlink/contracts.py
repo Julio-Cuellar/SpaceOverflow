@@ -1,4 +1,4 @@
-"""Eventos públicos del Enlace con Tierra."""
+"""Public events of the Ground link."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ class PlanChange(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     change: Literal["NEW", "UPDATE", "CANCEL"]
-    kind: Literal["SALUD", "NAVE"] | None = None
+    kind: Literal["HEALTH", "SHIP"] | None = None
     title: str | None = None
     recurrence: str | None = None
     zone_code: str | None = None

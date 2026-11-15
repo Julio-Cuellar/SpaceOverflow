@@ -1,16 +1,16 @@
 import type { WsMessage } from './types'
 
 export interface StreamOptions {
-  /** Tope de mensajes pendientes antes de descartar ticks. Las alertas nunca se descartan. */
+  /** Cap on pending messages before ticks are dropped. Alerts are never dropped. */
   maxPending?: number
 }
 
 export interface Stream {
-  /** Devuelve false si el mensaje ya se aplicó o es más viejo que el último seq. */
+  /** Returns false if the message was already applied or is older than the last seq. */
   push: (message: WsMessage) => boolean
-  /** Entrega los pendientes en orden de llegada y vacía la cola. */
+  /** Delivers the pending messages in order of arrival and empties the queue. */
   drain: () => WsMessage[]
-  /** Último seq aplicado. Se envía en `resume` al reconectar. */
+  /** Last applied seq. Sent in `resume` on reconnection. */
   lastSeq: () => number
 }
 
@@ -19,7 +19,7 @@ const tickKey = (message: WsMessage): string => {
   return `${data.zone_id ?? ''}:${data.metric ?? ''}`
 }
 
-/** Cola de un cliente: deduplica por seq, coalesce ticks y descarta ticks antes que alertas. */
+/** A client queue: deduplicates by seq, coalesces ticks and drops ticks before alerts. */
 export function createStream(options: StreamOptions = {}): Stream {
   const maxPending = options.maxPending ?? 500
   let pending: WsMessage[] = []
@@ -39,14 +39,14 @@ export function createStream(options: StreamOptions = {}): Stream {
         lastSeq = message.seq
         pending.push(message)
       } else {
-        // Un tick reemplaza al anterior de la misma zona y métrica: solo importa el último valor.
+        // A tick replaces the previous one of the same zone and metric: only the last value matters.
         const key = tickKey(message)
         pending = pending.filter((m) => !(m.type === 'telemetry.tick' && tickKey(m) === key))
         pending.push(message)
       }
 
       while (pending.length > maxPending && dropOldestTick()) {
-        // Se descartan ticks hasta volver al tope. Si no quedan ticks, las alertas se conservan.
+        // Ticks are dropped until the queue is back under the cap. If no ticks remain, alerts are kept.
       }
       return true
     },

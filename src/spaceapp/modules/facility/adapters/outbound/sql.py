@@ -1,4 +1,4 @@
-"""Repositorio de Nave e incidencias sobre PostgreSQL. Trabaja en la transacción recibida."""
+"""Facility repository on PostgreSQL. Works inside the received transaction."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ class SqlFacilityRepository:
         self._s = session
 
     async def ensure_plan(self, plan: Plan) -> None:
-        """Sincroniza hábitat y zonas con el plano. El estado de cada zona se conserva."""
+        """Syncs habitat and zones with the floor plan. Each zone's status is preserved."""
         await self._s.execute(
             text(
                 "INSERT INTO facility.habitat (id, code, name, kind, p_total_nominal_kpa) "
@@ -98,7 +98,7 @@ class SqlFacilityRepository:
     async def open_ticket_severities(self, zone_id: UUID) -> list[str]:
         rows = await self._s.execute(
             text(
-                "SELECT severity FROM facility.incident WHERE zone_id = :z AND status <> 'resuelta'"
+                "SELECT severity FROM facility.incident WHERE zone_id = :z AND status <> 'resolved'"
             ),
             {"z": zone_id},
         )
@@ -122,7 +122,7 @@ class SqlFacilityRepository:
         row = (
             await self._s.execute(
                 text(
-                    _TICKET + " WHERE zone_id = :z AND source = 'ALERTA' AND status <> 'resuelta' "
+                    _TICKET + " WHERE zone_id = :z AND source = 'ALERT' AND status <> 'resolved' "
                     "FOR UPDATE"
                 ),
                 {"z": zone_id},
@@ -149,12 +149,12 @@ class SqlFacilityRepository:
         description: str,
         severity: str,
         at: datetime,
-    ) -> None:
-        await self._s.execute(
+    ) -> int:
+        number = await self._s.execute(
             text(
                 "INSERT INTO facility.incident (id, habitat_id, zone_id, type_key, source, "
                 "source_alert_id, reported_by, title, description, severity, opened_at) VALUES "
-                "(:id, :h, :z, :t, :src, :a, :r, :title, :d, :sev, :at)"
+                "(:id, :h, :z, :t, :src, :a, :r, :title, :d, :sev, :at) RETURNING number"
             ),
             {
                 "id": incident_id,
@@ -170,6 +170,7 @@ class SqlFacilityRepository:
                 "at": at,
             },
         )
+        return int(number.scalar_one())
 
     async def set_severity(self, incident_id: UUID, severity: str) -> None:
         await self._s.execute(
@@ -178,7 +179,7 @@ class SqlFacilityRepository:
         )
 
     async def set_status(self, incident_id: UUID, status: str, at: datetime) -> None:
-        column = {"reconocida": "acknowledged_at", "resuelta": "resolved_at"}[status]
+        column = {"acknowledged": "acknowledged_at", "resolved": "resolved_at"}[status]
         await self._s.execute(
             text(f"UPDATE facility.incident SET status = :s, {column} = :t WHERE id = :i"),
             {"s": status, "t": at, "i": incident_id},

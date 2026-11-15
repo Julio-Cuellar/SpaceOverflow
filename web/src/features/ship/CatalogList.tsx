@@ -5,7 +5,7 @@ import { SevPill } from '../../shared/ui/SevPill'
 
 interface CatalogListProps {
   types: IncidentTypeView[]
-  /** Rellena el formulario de reporte con el tipo elegido. */
+  /** Pre-fills the report form with the chosen type. */
   onReport: (typeKey: string) => void
 }
 
@@ -14,7 +14,7 @@ const DETECTION_LABEL: Record<IncidentTypeView['detection'], string> = {
   MANUAL: 'MANUAL',
 }
 
-/** Catálogo de tipos de incidencia, filtrable por categoría. */
+/** Catalog of incident types, filterable by category. */
 export function CatalogList({ types, onReport }: CatalogListProps) {
   const categoryId = useId()
   const categories = [...new Set(types.map((t) => t.category))]
@@ -23,10 +23,10 @@ export function CatalogList({ types, onReport }: CatalogListProps) {
   const visible = category === '' ? types : types.filter((t) => t.category === category)
 
   return (
-    <section aria-label="Catálogo de incidencias">
-      <label htmlFor={categoryId}>Categoría</label>
+    <section aria-label="Incident catalog">
+      <label htmlFor={categoryId}>Category</label>
       <select id={categoryId} value={category} onChange={(e) => setCategory(e.target.value)}>
-        <option value="">Todas las categorías</option>
+        <option value="">All categories</option>
         {categories.map((c) => (
           <option key={c} value={c}>
             {c}
@@ -34,16 +34,16 @@ export function CatalogList({ types, onReport }: CatalogListProps) {
         ))}
       </select>
 
-      <p>{visible.length} tipos</p>
+      <p>{visible.length} types</p>
 
       <ul>
         {visible.map((type) => (
           <li key={type.key}>
             <strong>{type.name}</strong> <span>{DETECTION_LABEL[type.detection]}</span>{' '}
             <SevPill level={type.defaultSeverity} /> <EvidenceBadge state={type.evidenceState} />
-            <p>Zonas típicas: {type.typicalZones.join(', ')}</p>
+            <p>Typical zones: {type.typicalZones.join(', ')}</p>
             <button type="button" onClick={() => onReport(type.key)}>
-              Reportar
+              Report
             </button>
           </li>
         ))}

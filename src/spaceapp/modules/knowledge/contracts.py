@@ -1,4 +1,4 @@
-"""Eventos públicos de Conocimiento. Otros módulos solo pueden importar esto y la fachada."""
+"""Public events of Knowledge. Other modules may only import this and the facade."""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ from uuid import UUID
 from spaceapp.platform.events import EventPayload
 from spaceapp.platform.vocab import Citation
 
-# La cita es del kernel compartido (`platform/vocab`): una sola definición para todos los módulos.
-# El alias conserva el nombre con el que la usa el asistente.
+# The citation belongs to the shared kernel (`platform/vocab`): a single definition for all
+# modules. The alias keeps the name the assistant uses it with.
 CitationDTO = Citation
 
 
 class RecommendationReady(EventPayload):
-    """`knowledge.recommendation_ready`: la plantilla ya está lista, sin esperar a ningún modelo."""
+    """`knowledge.recommendation_ready`: the template is ready, without waiting for any model."""
 
     event_type: ClassVar[str] = "knowledge.recommendation_ready"
     alert_id: UUID
@@ -24,7 +24,7 @@ class RecommendationReady(EventPayload):
 
 
 class RecommendationEnriched(EventPayload):
-    """`knowledge.recommendation_enriched`: la misma recomendación redactada por el modelo local."""
+    """`knowledge.recommendation_enriched`: the same recommendation written by the local model."""
 
     event_type: ClassVar[str] = "knowledge.recommendation_enriched"
     recommendation_id: UUID

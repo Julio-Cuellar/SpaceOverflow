@@ -1,3 +1,3 @@
-"""El gateway en tiempo real no publica eventos: solo se suscribe."""
+"""The realtime gateway publishes no events: it only subscribes."""
 
 EVENTS: dict[str, type] = {}

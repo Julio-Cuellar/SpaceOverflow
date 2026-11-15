@@ -1,4 +1,4 @@
-"""Ingesta: del PDF a fragmentos citables. Idempotente: reejecutarla no duplica nada."""
+"""Ingestion: from the PDF to citable fragments. Idempotent: running it again duplicates nothing."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ def ingest_manifest(
     store: ChunkStore,
     include_optional: bool = False,
 ) -> IngestReport:
-    """Indexa los documentos leídos. Un documento con problemas no detiene a los demás."""
+    """Indexes the documents that were read. A document with problems does not stop the others."""
     report = IngestReport()
     for entry in entries:
         if not (entry.indexed_by_default or (include_optional and entry.optional)):
@@ -62,7 +62,7 @@ def ingest_manifest(
             continue
 
         if result.chunks == 0:
-            # Sin texto extraíble: suele ser un escaneo. Se avisa en lugar de ignorarlo.
+            # No extractable text: it is usually a scan. A warning is given instead of ignoring it.
             report.empty.append(entry.code)
         else:
             report.ingested.append(entry.code)

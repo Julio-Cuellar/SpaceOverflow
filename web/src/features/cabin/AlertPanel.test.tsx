@@ -4,37 +4,37 @@ import { describe, expect, it, vi } from 'vitest'
 import { AlertPanel, type AlertView } from './AlertPanel'
 
 const co2Alert: AlertView = {
-  severity: 'ALERTA',
-  ruleText: 'El promedio de 1 hora de ppCO₂ supera el límite de 3 mmHg de la norma.',
+  severity: 'ALERT',
+  ruleText: 'The 1-hour average ppCO₂ exceeds the standard limit of 3 mmHg.',
   measured: 'ppCO₂ 3.4 mmHg',
-  causeHint: 'AMBIENTE',
+  causeHint: 'ENVIRONMENT',
   actions: [
     {
-      key: 'revisar_ventilacion_y_filtros',
-      title: 'Revisar ventilación y filtros de CO₂',
-      description: 'Comprobar que los ventiladores y los filtros funcionan.',
+      key: 'check_ventilation_and_filters',
+      title: 'Check ventilation and CO₂ filters',
+      description: 'Check that the fans and filters are working.',
     },
     {
-      key: 'medir_co2_en_zonas_locales',
-      title: 'Medir CO₂ en zonas locales',
-      description: 'Usar un sensor portátil en la zona donde sube el valor.',
+      key: 'measure_co2_in_local_zones',
+      title: 'Measure CO₂ in local zones',
+      description: 'Use a portable sensor in the zone where the value is rising.',
     },
   ],
   source: {
     documentCode: 'NASA-STD-3001 Vol. 2 Rev F',
     requirementRef: 'V2 6004',
-    evidenceState: 'VERIFICADO',
+    evidenceState: 'VERIFIED',
   },
-  escalateWhen: 'Si el valor sigue por encima de 3 mmHg tras revisar la ventilación.',
-  body: 'Esta recomendación usa un dato de demostración, no de NASA.',
+  escalateWhen: 'If the value stays above 3 mmHg after checking ventilation.',
+  body: 'This recommendation uses demo data, not NASA data.',
 }
 
 describe('AlertPanel', () => {
   it('shows what to do before why it happened', () => {
     render(<AlertPanel alert={co2Alert} onAcknowledge={() => {}} />)
 
-    const actions = screen.getByRole('heading', { name: 'Qué hacer' })
-    const why = screen.getByRole('heading', { name: 'Por qué' })
+    const actions = screen.getByRole('heading', { name: 'What to do' })
+    const why = screen.getByRole('heading', { name: 'Why' })
 
     expect(actions.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
@@ -43,21 +43,21 @@ describe('AlertPanel', () => {
     render(<AlertPanel alert={co2Alert} onAcknowledge={() => {}} />)
 
     const items = screen.getAllByRole('listitem').map((li) => li.textContent)
-    expect(items[0]).toContain('Revisar ventilación y filtros de CO₂')
-    expect(items[1]).toContain('Medir CO₂ en zonas locales')
+    expect(items[0]).toContain('Check ventilation and CO₂ filters')
+    expect(items[1]).toContain('Measure CO₂ in local zones')
   })
 
   it('names the probable cause as air or body, never as a diagnosis', () => {
     render(<AlertPanel alert={co2Alert} onAcknowledge={() => {}} />)
 
-    expect(screen.getByText('Causa probable: aire')).toBeInTheDocument()
+    expect(screen.getByText('Probable cause: air')).toBeInTheDocument()
   })
 
   it('shows the rule source with its document, requirement and evidence state', () => {
     render(<AlertPanel alert={co2Alert} onAcknowledge={() => {}} />)
 
     expect(screen.getByText(/NASA-STD-3001 Vol\. 2 Rev F · V2 6004/)).toBeInTheDocument()
-    expect(screen.getByText('VERIFICADO')).toBeInTheDocument()
+    expect(screen.getByText('VERIFIED')).toBeInTheDocument()
   })
 
   it('shows only the document when the rule has no requirement', () => {
@@ -65,35 +65,35 @@ describe('AlertPanel', () => {
       <AlertPanel
         alert={{
           ...co2Alert,
-          source: { documentCode: 'Demostración (sin requisito)', requirementRef: null, evidenceState: 'DEMO' },
+          source: { documentCode: 'Demo (no requirement)', requirementRef: null, evidenceState: 'DEMO' },
         }}
         onAcknowledge={() => {}}
       />,
     )
 
-    expect(screen.getByText(/Fuente: Demostración \(sin requisito\)/)).toBeInTheDocument()
+    expect(screen.getByText(/Source: Demo \(no requirement\)/)).toBeInTheDocument()
     expect(screen.queryByText(/·/)).not.toBeInTheDocument()
   })
 
   it('says it is demo data when the recommendation comes from the demo source', () => {
     render(<AlertPanel alert={co2Alert} onAcknowledge={() => {}} />)
 
-    expect(screen.getByText(/dato de demostración, no de NASA/)).toBeInTheDocument()
+    expect(screen.getByText(/demo data, not NASA data/)).toBeInTheDocument()
   })
 
   it('announces a critical alert assertively to assistive technology', () => {
     const { container } = render(
-      <AlertPanel alert={{ ...co2Alert, severity: 'CRITICO' }} onAcknowledge={() => {}} />,
+      <AlertPanel alert={{ ...co2Alert, severity: 'CRITICAL' }} onAcknowledge={() => {}} />,
     )
 
     expect(container.querySelector('section')).toHaveAttribute('aria-live', 'assertive')
   })
 
-  it('calls onAcknowledge when the crew presses Reconocer', async () => {
+  it('calls onAcknowledge when the crew presses Acknowledge', async () => {
     const onAcknowledge = vi.fn()
     render(<AlertPanel alert={co2Alert} onAcknowledge={onAcknowledge} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Reconocer' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Acknowledge' }))
 
     expect(onAcknowledge).toHaveBeenCalledTimes(1)
   })

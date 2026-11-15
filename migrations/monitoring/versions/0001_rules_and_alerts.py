@@ -1,4 +1,4 @@
-"""Reglas, alertas y reconocimientos de Monitoreo.
+"""Monitoring rules, alerts and acknowledgements.
 
 Revision ID: 0001
 Revises:
@@ -35,9 +35,9 @@ def upgrade() -> None:
           active             boolean NOT NULL DEFAULT true,
           params             jsonb   NOT NULL DEFAULT '{}'::jsonb,
           supersedes         jsonb   NOT NULL DEFAULT '[]'::jsonb,
-          CONSTRAINT rule_kind_chk CHECK (kind IN ('umbral', 'tendencia')),
-          CONSTRAINT rule_severity_chk CHECK (severity IN ('atencion', 'alerta', 'critico')),
-          CONSTRAINT rule_evidence_chk CHECK (evidence_state IN ('VERIFICADO', 'TB', 'DEMO'))
+          CONSTRAINT rule_kind_chk CHECK (kind IN ('threshold', 'trend')),
+          CONSTRAINT rule_severity_chk CHECK (severity IN ('attention', 'alert', 'critical')),
+          CONSTRAINT rule_evidence_chk CHECK (evidence_state IN ('VERIFIED', 'TB', 'DEMO'))
         )
         """
     )
@@ -58,7 +58,7 @@ def upgrade() -> None:
           raised_at       timestamptz NOT NULL,
           acknowledged_at timestamptz,
           resolved_at     timestamptz,
-          CONSTRAINT alert_severity_chk CHECK (severity IN ('atencion', 'alerta', 'critico')),
+          CONSTRAINT alert_severity_chk CHECK (severity IN ('attention', 'alert', 'critical')),
           CONSTRAINT alert_status_chk CHECK (status IN ('raised', 'acknowledged', 'resolved'))
         )
         """

@@ -1,0 +1,8 @@
+# Assistant variant on llama3.2:3b. It downloads nothing: it starts from the model already pulled.
+# Measured on this machine (16 threads, Docker with 4 GB): with 16 threads it generates ~2.6 tok/s and
+# with 4 threads about 6 tok/s (see docker/ollama/README.md). Answers are capped to stay under ~30 s.
+FROM llama3.2:3b
+PARAMETER num_thread 4
+PARAMETER num_predict 150
+PARAMETER num_ctx 2048
+PARAMETER temperature 0.2

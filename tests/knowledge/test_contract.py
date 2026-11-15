@@ -14,8 +14,8 @@ CITATION = {
     "document_code": "NASA-STD-3001 Vol. 2 Rev F",
     "requirement_ref": "V2 6004",
     "page": None,
-    "excerpt": "ppCO2 promedio de 1 h ≤ 3 mmHg",
-    "evidence_state": "VERIFICADO",
+    "excerpt": "1 h average ppCO2 ≤ 3 mmHg",
+    "evidence_state": "VERIFIED",
 }
 
 
@@ -33,7 +33,7 @@ def test_recommendation_ready_has_exactly_the_payload_of_the_plan() -> None:
     event = RecommendationReady(
         alert_id=uuid.uuid4(),
         recommendation_id=uuid.uuid4(),
-        action_keys=["revisar_ventilacion_y_filtros"],
+        action_keys=["check_ventilation_and_filters"],
         citations=[Citation.model_validate(CITATION)],
     )
 
@@ -71,6 +71,6 @@ def test_citation_rejects_an_evidence_state_outside_the_contract() -> None:
                 "alert_id": str(uuid.uuid4()),
                 "recommendation_id": str(uuid.uuid4()),
                 "action_keys": ["x"],
-                "citations": [{**CITATION, "evidence_state": "SIMULADO"}],
+                "citations": [{**CITATION, "evidence_state": "SIMULATED"}],
             }
         )

@@ -1,0 +1,13 @@
+{
+  "evidence_state": "DEMO",
+  "note": "Demo daily tasks (architecture plan, section 13.8). Health routines count toward the streak; ship routines do not.",
+  "templates": [
+    {"key": "exercise", "kind": "HEALTH", "title": "Resistance exercise, 30 min", "recurrence": "DAILY", "zone_code": "gym", "due_time": "10:00"},
+    {"key": "blood_pressure", "kind": "HEALTH", "title": "Measure blood pressure with the cuff", "recurrence": "DAILY", "zone_code": "med", "due_time": "08:00"},
+    {"key": "mood", "kind": "HEALTH", "title": "Log your mood", "recurrence": "DAILY", "zone_code": null, "due_time": "18:00"},
+    {"key": "seals", "kind": "SHIP", "title": "Inspect the airlock seals", "recurrence": "DAILY", "zone_code": "air", "due_time": "09:00"},
+    {"key": "cartridge", "kind": "SHIP", "title": "Check the CO₂ cartridge and log its hours of use", "recurrence": "DAILY", "zone_code": "eclss", "due_time": "11:00"},
+    {"key": "filters", "kind": "SHIP", "title": "Check the laboratory air filters", "recurrence": "DAILY", "zone_code": "lab", "due_time": "14:00"},
+    {"key": "medkit", "kind": "SHIP", "title": "Check the medical kit inventory", "recurrence": "DAILY", "zone_code": "med", "due_time": "16:00"}
+  ]
+}

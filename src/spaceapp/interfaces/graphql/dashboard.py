@@ -1,4 +1,4 @@
-"""Signos vitales de la cabina para el tablero. Función pura sobre lecturas y alertas activas."""
+"""Cabin vital signs for the dashboard. Pure function over readings and active alerts."""
 
 from __future__ import annotations
 
@@ -12,16 +12,16 @@ from spaceapp.modules.monitoring.domain.units import kpa_to_mmhg
 from spaceapp.modules.monitoring.facade import ActiveAlertView, RuleView
 from spaceapp.modules.telemetry.facade import LatestReadingView
 
-# (clave, etiqueta) en el orden en que se muestran. `pio2` se deriva de presión y oxígeno.
+# (key, label) in display order. `pio2` is derived from pressure and oxygen.
 VITALS: tuple[tuple[str, str], ...] = (
-    ("pressure_kpa", "Presión total"),
-    ("o2_pct", "Oxígeno"),
+    ("pressure_kpa", "Total pressure"),
+    ("o2_pct", "Oxygen"),
     ("co2_mmhg", "CO₂"),
-    ("temperature_c", "Temperatura"),
-    ("humidity_pct", "Humedad relativa"),
-    ("pio2", "PIO₂ (oxígeno inspirado)"),
+    ("temperature_c", "Temperature"),
+    ("humidity_pct", "Relative humidity"),
+    ("pio2", "PIO₂ (inspired oxygen)"),
 )
-# Parámetro de una regla -> signo vital que colorea. `n2_pct` no tiene signo propio.
+# Rule parameter -> vital sign it colours. `n2_pct` has no vital sign of its own.
 PARAMETER_TO_VITAL = {
     "ppco2": "co2_mmhg",
     "pio2": "pio2",
@@ -30,8 +30,8 @@ PARAMETER_TO_VITAL = {
     "humidity_pct": "humidity_pct",
     "temperature_c": "temperature_c",
 }
-SEVERITY_ORDER = {"normal": 0, "atencion": 1, "alerta": 2, "critico": 3}
-EVIDENCE_ORDER = {"VERIFICADO": 0, "TB": 1, "DEMO": 2, "NO_VERIFICADO": 3}
+SEVERITY_ORDER = {"normal": 0, "attention": 1, "alert": 2, "critical": 3}
+EVIDENCE_ORDER = {"VERIFIED": 0, "TB": 1, "DEMO": 2, "UNVERIFIED": 3}
 
 
 @dataclass(frozen=True)
@@ -60,13 +60,13 @@ def build_dashboard(
     alerts: Sequence[ActiveAlertView],
     rules: Mapping[str, RuleView],
 ) -> tuple[str, list[VitalData]]:
-    """Severidad global y signos vitales.
+    """Global severity and vital signs.
 
-    Sin alerta, un signo es el promedio de las zonas y no tiene zona. Con alertas, manda la
-    peor: su severidad, su zona, el valor de esa zona y la evidencia de su regla.
+    With no alert, a vital sign is the average across zones and has no zone. With alerts,
+    the worst one rules: its severity, its zone, that zone's value and its rule's evidence.
     """
     global_severity = _worst(a.severity for a in alerts)
-    cabin = [r for r in latest if r.domain == "cabina" and r.zone_id is not None]
+    cabin = [r for r in latest if r.domain == "cabin" and r.zone_id is not None]
     if not cabin:
         return global_severity, []
 

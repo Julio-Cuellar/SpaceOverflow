@@ -10,9 +10,10 @@ from spaceapp.platform.outbox.publisher import add_to_outbox
 
 
 class UnitOfWork:
-    """Una transacción para el estado del caso de uso y sus eventos.
+    """One transaction for the use case state and its events.
 
-    Si el bloque termina bien, estado y eventos se confirman juntos. Si falla, ninguno.
+    If the block finishes successfully, state and events are committed together.
+    If it fails, neither is.
     """
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
@@ -22,7 +23,7 @@ class UnitOfWork:
     @property
     def session(self) -> AsyncSession:
         if self._session is None:
-            raise RuntimeError("UnitOfWork no está activo")
+            raise RuntimeError("UnitOfWork is not active")
         return self._session
 
     async def __aenter__(self) -> Self:

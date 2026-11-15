@@ -7,7 +7,7 @@ interface ShipPlanProps {
   onSelectZone: (zoneId: string) => void
 }
 
-/** Plano de la nave. Las zonas salen de `zone.layout`: cambiar los datos cambia el plano. */
+/** Ship floor plan. The zones come from `zone.layout`: changing the data changes the plan. */
 export function ShipPlan({ zones, tickets, onSelectZone }: ShipPlanProps) {
   const viewBox = zones.reduce(
     (box, z) => ({
@@ -21,13 +21,13 @@ export function ShipPlan({ zones, tickets, onSelectZone }: ShipPlanProps) {
     <div className="ship-plan">
       <svg
         role="group"
-        aria-label="Plano de la nave"
+        aria-label="Ship floor plan"
         viewBox={`0 0 ${viewBox.w} ${viewBox.h}`}
         width="100%"
       >
         {zones.map((zone) => {
           const meta = severityMeta(zone.status)
-          const zoneTickets = tickets.filter((t) => t.zoneId === zone.id && t.status !== 'RESUELTO')
+          const zoneTickets = tickets.filter((t) => t.zoneId === zone.id && t.status !== 'RESOLVED')
           const pin =
             zoneTickets.length === 0
               ? null
@@ -53,8 +53,8 @@ export function ShipPlan({ zones, tickets, onSelectZone }: ShipPlanProps) {
                 height={zone.layout.h}
                 fill="none"
                 stroke={`var(${meta.token})`}
-                strokeWidth={zone.status === 'CRITICO' ? 3 : 2}
-                strokeDasharray={zone.status === 'CRITICO' ? '6 4' : undefined}
+                strokeWidth={zone.status === 'CRITICAL' ? 3 : 2}
+                strokeDasharray={zone.status === 'CRITICAL' ? '6 4' : undefined}
               />
               <text x={zone.layout.x + 6} y={zone.layout.y + 16} fill={`var(${meta.token})`}>
                 {meta.symbol} {zone.name}

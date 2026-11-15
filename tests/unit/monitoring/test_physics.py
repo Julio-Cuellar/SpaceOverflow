@@ -27,7 +27,7 @@ def test_standard_atmosphere_converts_between_units():
 @pytest.mark.parametrize(
     ("p_mmhg", "o2", "expected"),
     [
-        (760.0, 0.21, 149.73),  # vector 1 del documento de contexto
+        (760.0, 0.21, 149.73),  # vector 1 from the context document
         (760.0, 0.18, 128.34),  # vector 2
         (kpa_to_mmhg(56.5), 0.34, 128.1),  # vector 3
     ],
@@ -37,19 +37,19 @@ def test_inspired_o2_partial_pressure_matches_the_context_vectors(p_mmhg, o2, ex
 
 
 def test_o2_is_evaluated_as_partial_pressure_not_as_percentage():
-    # El mismo 21 % de O2 deja de ser normoxia si baja la presión total.
+    # The same 21 % O2 stops being normoxia if the total pressure drops.
     assert partial_pressure_o2(kpa_to_mmhg(101.3), 0.21) > 145
     assert partial_pressure_o2(kpa_to_mmhg(70.0), 0.21) < 122
 
 
 @pytest.mark.parametrize(("p", "f"), [(47.0, 0.21), (30.0, 0.21), (760.0, 0.0), (760.0, 1.2)])
 def test_inspired_o2_rejects_impossible_inputs(p, f):
-    with pytest.raises(ValueError, match=r"presión|fracción"):
+    with pytest.raises(ValueError, match=r"pressure|fraction"):
         partial_pressure_o2(p, f)
 
 
 def test_the_same_co2_limit_is_a_different_percentage_at_other_pressures():
-    # Documento de contexto: 3 mmHg = 0.39 % a 760 mmHg, pero 0.71 % a 56.5 kPa.
+    # Context document: 3 mmHg = 0.39 % at 760 mmHg, but 0.71 % at 56.5 kPa.
     assert co2_mmhg_to_percent(3.0, 760.0) == pytest.approx(0.39, abs=0.01)
     assert co2_mmhg_to_percent(3.0, kpa_to_mmhg(56.5)) == pytest.approx(0.71, abs=0.01)
 
@@ -73,5 +73,5 @@ def test_pressure_rate_is_the_absolute_change_per_minute():
 
 
 def test_pressure_rate_needs_positive_time():
-    with pytest.raises(ValueError, match="tiempo"):
+    with pytest.raises(ValueError, match="time"):
         pressure_rate_psi_per_min(14.7, 12.0, 0.0)

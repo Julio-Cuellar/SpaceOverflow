@@ -28,7 +28,7 @@ def test_the_real_code_respects_every_contract():
 
 
 def _canary(tmp: Path, body: str) -> subprocess.CompletedProcess[str]:
-    """Replica la config real sobre un árbol mínimo con una violación."""
+    """Replicates the real config on a minimal tree with one violation."""
     cfg = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     tmp.joinpath("pyproject.toml").write_text(
         cfg[cfg.index("[tool.importlinter]") :], encoding="utf-8"

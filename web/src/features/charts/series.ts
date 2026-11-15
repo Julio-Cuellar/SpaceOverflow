@@ -1,5 +1,5 @@
 export interface Point {
-  /** Segundos desde el inicio de la serie. */
+  /** Seconds since the start of the series. */
   t: number
   v: number
 }
@@ -14,13 +14,13 @@ export interface Domain {
   max: number
 }
 
-/** Lecturas de los últimos `windowSeconds` segundos hasta `now`. */
+/** Readings from the last `windowSeconds` seconds up to `now`. */
 export function windowSeries(points: readonly Point[], now: number, windowSeconds: number): Point[] {
   const start = now - windowSeconds
   return points.filter((p) => p.t >= start && p.t <= now)
 }
 
-/** Puntos SVG del trazo. El valor más alto queda más cerca de la parte superior. */
+/** SVG points of the stroke. The higher value ends up nearer the top. */
 export function toPolyline(points: readonly Point[], box: Box, domain: Domain): string {
   if (points.length === 0) return ''
   const tMin = points[0].t

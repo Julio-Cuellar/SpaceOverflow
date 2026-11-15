@@ -1,4 +1,4 @@
-"""Entorno de Alembic del esquema `telemetry` (sensores, lecturas y escenarios)."""
+"""Alembic environment for the `telemetry` schema (sensors, readings and scenarios)."""
 
 from spaceapp.platform.migrations_env import run
 

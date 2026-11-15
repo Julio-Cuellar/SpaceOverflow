@@ -1,4 +1,4 @@
-"""Plano del hábitat: zonas con su geometría. Es dato: cambiar de nave es cambiar JSON."""
+"""Habitat floor plan: zones with their geometry. It is data: changing ship means changing JSON."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ class Plan:
         codes = [z.code for z in self.zone_plans]
         repeated = sorted({c for c in codes if codes.count(c) > 1})
         if repeated:
-            raise InvalidPlan(f"códigos de zona repetidos: {', '.join(repeated)}")
+            raise InvalidPlan(f"duplicate zone codes: {', '.join(repeated)}")
 
     @property
     def habitat_id(self) -> UUID:

@@ -1,4 +1,4 @@
-"""Suscripción de Nave e incidencias a las alertas de Monitoreo."""
+"""Facility subscription to Monitoring alerts."""
 
 from __future__ import annotations
 

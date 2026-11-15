@@ -1,4 +1,4 @@
-"""Eventos públicos de Telemetría."""
+"""Public Telemetry events."""
 
 from __future__ import annotations
 

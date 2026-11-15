@@ -1,8 +1,8 @@
-<title>Arquitectura Monitor de Salud</title>
+<title>Health Monitor Architecture</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Concepto: mesa de trabajo técnica. Cabecera compacta, navegación fija por secciones, un diagrama o un simulador por sección.
-   Color: tinta azul-grisácea, un acento teal, un color por canal, semáforo aparte. El estado de evidencia se distingue por forma, no por color. */
+/* Concept: technical workbench. Compact header, fixed navigation by section, one diagram or simulator per section.
+   Color: blue-gray ink, one teal accent, one color per channel, a separate status light. Evidence state is told apart by shape, not by color. */
 :root {
   --bg: #eef1f4; --surface: #ffffff; --surface2: #f5f7f9; --ink: #121b24; --muted: #56646f; --line: #d3dbe2;
   --accent: #14506e; --accent-ink: #ffffff; --accent-soft: #dbe9f1;
@@ -48,7 +48,7 @@ button { cursor: pointer; }
 .eyebrow { font: 500 11px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
 .muted { color: var(--muted); }
 
-/* navegación */
+/* navigation */
 .nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin-inline: -16px; padding-inline: 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
 .nav .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; scrollbar-width: none; }
 .nav a { white-space: nowrap; padding: 6px 12px; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 500; font-size: 14px; }
@@ -77,7 +77,7 @@ details.adr[open] summary::before { content: "−"; }
 details.adr p { color: var(--muted); font-size: 14px; padding: 6px 0 2px 22px; max-width: 70ch; }
 .adr .id { font: 500 12px var(--font-mono); color: var(--muted); }
 
-/* secciones */
+/* sections */
 section.sec { padding-block: 44px 8px; border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 section.sec > header { display: grid; gap: 8px; margin-bottom: 20px; }
 section.sec > header p { color: var(--muted); max-width: 72ch; }
@@ -98,13 +98,13 @@ section.sec > header p { color: var(--muted); max-width: 72ch; }
 .ch-WS { background: color-mix(in srgb, var(--c-ws) 18%, transparent); color: var(--c-ws); }
 .ch-EVT { background: color-mix(in srgb, var(--c-evt) 16%, transparent); color: var(--c-evt); }
 .ev { font: 600 10.5px/1 var(--font-mono); padding: 3px 6px; border-radius: 3px; border: 1px solid var(--ink); white-space: nowrap; }
-.ev-VERIFICADO { background: var(--ink); color: var(--bg); }
+.ev-VERIFIED { background: var(--ink); color: var(--bg); }
 .ev-TB { background: transparent; color: var(--ink); }
 .ev-DEMO, .ev-SIM { background: transparent; color: var(--muted); border: 1px dashed var(--muted); }
 .sev { display: inline-flex; gap: 5px; align-items: center; font-weight: 600; font-size: 13px; }
 .sev-0 { color: var(--ok); } .sev-1 { color: var(--warn); } .sev-2 { color: var(--bad); } .sev-3 { color: var(--crit); }
 
-/* mapa de módulos */
+/* module map */
 .mapgrid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; }
 .map svg { width: 100%; height: auto; display: block; min-width: 640px; }
 .map text { font-family: var(--font-body); fill: var(--ink); }
@@ -131,7 +131,7 @@ section.sec > header p { color: var(--muted); max-width: 72ch; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--muted); margin-top: 10px; }
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
 
-/* tabla de canales */
+/* channel table */
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 12px; }
 .toolbar input[type=search], .toolbar select { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 10px; min-width: 0; }
 .toolbar input[type=search] { width: min(260px, 100%); }
@@ -167,7 +167,7 @@ table.mini { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .mini th { text-align: left; font: 500 10.5px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--line); }
 .mini td { padding: 6px 8px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); overflow-wrap: anywhere; }
 
-/* secuencias */
+/* sequences */
 .seqbox { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); max-height: 520px; overflow: auto; }
 .seqin { position: relative; }
 .seqhead { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -273,7 +273,7 @@ svg.erlines path.rl.fade { opacity: 0.12; }
 .uxp b { display: block; font-weight: 600; }
 .uxp span { color: var(--muted); }
 
-/* cuerpo humano */
+/* human body */
 .bodycard { display: grid; gap: 14px 22px; grid-template-columns: 150px minmax(0, 1fr); align-items: start; }
 .bodycard > * { min-width: 0; }
 .body svg { width: 150px; height: auto; display: block; }
@@ -289,7 +289,7 @@ svg.erlines path.rl.fade { opacity: 0.12; }
 .brow .dot { width: 10px; height: 10px; border-radius: 50%; }
 .bdet { border-top: 1px solid var(--line); padding-top: 10px; font-size: 13.5px; display: grid; gap: 4px; }
 
-/* panel de la nave */
+/* ship panel */
 .shipgrid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; margin-bottom: 16px; }
 .shipgrid > * { min-width: 0; }
 .ship svg { width: 100%; height: auto; display: block; min-width: 620px; }
@@ -344,8 +344,8 @@ svg.erlines path.rl.fade { opacity: 0.12; }
 .tgroup { display: grid; gap: 8px; margin-bottom: 14px; }
 .tgroup h5 { margin: 0; font: 500 11px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 
-.tag-TIERRA { border-color: var(--c-rest); color: var(--c-rest); }
-.tag-TRIPULACION { border-color: var(--c-evt); color: var(--c-evt); }
+.tag-GROUND { border-color: var(--c-rest); color: var(--c-rest); }
+.tag-CREW { border-color: var(--c-evt); color: var(--c-evt); }
 .task select { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 5px 8px; max-width: 100%; }
 .pipe { display: flex; flex-wrap: wrap; gap: 6px; }
 .pipe .s { padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; color: var(--muted); }
@@ -401,33 +401,33 @@ svg.erlines path.rl.fade { opacity: 0.12; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 </style>
 
-<nav class="nav" aria-label="Secciones"><div class="wrap" id="nav"></div></nav>
+<nav class="nav" aria-label="Sections"><div class="wrap" id="nav"></div></nav>
 
 <div class="wrap">
   <header class="hero" id="top">
     <div>
-      <div class="eyebrow">NASA Space Apps 2026 · reto de salud para astronautas</div>
-      <h1 style="margin-top:12px">Plan de arquitectura del monitor de salud</h1>
-      <p class="lead">Monolito modular con hexágonos por módulo, bus de eventos con outbox en PostgreSQL, y tres canales con una función cada uno: REST para máquinas, GraphQL para la interfaz y WebSocket para lo que el servidor empuja. Funciona sin internet.</p>
+      <div class="eyebrow">NASA Space Apps 2026 · astronaut health challenge</div>
+      <h1 style="margin-top:12px">Health monitor architecture plan</h1>
+      <p class="lead">Modular monolith with hexagons per module, an event bus with a PostgreSQL outbox, and three channels with one job each: REST for machines, GraphQL for the interface and WebSocket for what the server pushes. Works without internet.</p>
     </div>
     <div class="stats" id="stats"></div>
     <div class="cols">
       <div>
-        <h3 style="margin-bottom:12px">Principios</h3>
+        <h3 style="margin-bottom:12px">Principles</h3>
         <ol class="plist" id="principles"></ol>
       </div>
       <div>
-        <h3 style="margin-bottom:12px">Decisiones de arquitectura</h3>
+        <h3 style="margin-bottom:12px">Architecture decisions</h3>
         <div id="adrs"></div>
       </div>
     </div>
   </header>
 
-  <section class="sec" id="modulos">
+  <section class="sec" id="modules">
     <header>
-      <div class="eyebrow">Comunicación entre módulos</div>
-      <h2>Mapa de módulos</h2>
-      <p>Selecciona un módulo para ver qué publica, a qué se suscribe y qué canales expone. Los módulos punteados intercambian eventos con el seleccionado. Las lecturas síncronas van por fachadas de solo lectura.</p>
+      <div class="eyebrow">Communication between modules</div>
+      <h2>Module map</h2>
+      <p>Select a module to see what it publishes, what it subscribes to and which channels it exposes. Dotted modules exchange events with the selected one. Synchronous reads go through read-only facades.</p>
     </header>
     <div class="chips" id="map-chips" style="margin-bottom:12px"></div>
     <div class="mapgrid">
@@ -437,11 +437,11 @@ svg.erlines path.rl.fade { opacity: 0.12; }
     <div class="legend" id="maplegend"></div>
   </section>
 
-  <section class="sec" id="canales">
+  <section class="sec" id="channels">
     <header>
-      <div class="eyebrow">Contratos</div>
-      <h2>Canales y eventos de comunicación</h2>
-      <p>Todos los mensajes del sistema. Filtra por canal o módulo y abre una fila para ver payload y garantías de entrega.</p>
+      <div class="eyebrow">Contracts</div>
+      <h2>Communication channels and events</h2>
+      <p>Every message in the system. Filter by channel or module and open a row to see the payload and delivery guarantees.</p>
     </header>
     <div class="toolbar" id="tb-tools"></div>
     <div class="panel scroll" style="padding:0"><table class="tbl" id="tbl"></table></div>
@@ -449,30 +449,30 @@ svg.erlines path.rl.fade { opacity: 0.12; }
 
   <section class="sec" id="outbox">
     <header>
-      <div class="eyebrow">Simulador</div>
-      <h2>Outbox, relay e inbox</h2>
-      <p>Emite eventos, ejecuta ciclos del relay y fuerza el fallo de un consumidor. Mira cómo el inbox evita duplicados y cómo un evento termina muerto tras ocho intentos.</p>
+      <div class="eyebrow">Simulator</div>
+      <h2>Outbox, relay and inbox</h2>
+      <p>Emit events, run relay cycles and force a consumer to fail. See how the inbox prevents duplicates and how an event ends up dead after eight attempts.</p>
     </header>
     <div class="obgrid">
       <div class="panel ctl">
-        <label>Evento a emitir
+        <label>Event to emit
           <select id="ob-type"></select>
         </label>
         <div class="btnrow">
-          <button class="btn pri" id="ob-emit">Emitir con el cambio de estado</button>
-          <button class="btn" id="ob-cycle">Ciclo del relay</button>
+          <button class="btn pri" id="ob-emit">Emit with the state change</button>
+          <button class="btn" id="ob-cycle">Relay cycle</button>
           <button class="btn" id="ob-auto" aria-pressed="false">Auto</button>
         </div>
-        <label>Consumidor que falla
+        <label>Consumer that fails
           <select id="ob-fail"></select>
         </label>
         <div class="btnrow">
-          <button class="btn" id="ob-dup">Entregar de nuevo el último hecho</button>
-          <button class="btn" id="ob-replay">Reencolar muertos</button>
-          <button class="btn" id="ob-reset">Reiniciar</button>
+          <button class="btn" id="ob-dup">Deliver the last fact again</button>
+          <button class="btn" id="ob-replay">Requeue dead</button>
+          <button class="btn" id="ob-reset">Reset</button>
         </div>
-        <p class="muted" style="font-size:13px">En el simulador no se espera el backoff real (1, 2, 4 … 60 s). Cada ciclo procesa un evento pendiente.</p>
-        <h3>Registro</h3>
+        <p class="muted" style="font-size:13px">The simulator does not wait for the real backoff (1, 2, 4 … 60 s). Each cycle processes one pending event.</p>
+        <h3>Log</h3>
         <div class="log" id="ob-log" aria-live="polite"></div>
       </div>
       <div class="panel" style="display:grid;gap:14px;align-content:start">
@@ -488,20 +488,20 @@ svg.erlines path.rl.fade { opacity: 0.12; }
     </div>
   </section>
 
-  <section class="sec" id="secuencias">
+  <section class="sec" id="sequences">
     <header>
-      <div class="eyebrow">Diagramas de secuencia</div>
-      <h2>Qué pasa, paso a paso</h2>
-      <p>Avanza con los botones, haz clic en un mensaje o pulsa Reproducir. La línea continua es una llamada, la de guiones un mensaje asíncrono y la punteada una respuesta.</p>
+      <div class="eyebrow">Sequence diagrams</div>
+      <h2>What happens, step by step</h2>
+      <p>Move forward with the buttons, click a message or press Play. The solid line is a call, the dashed line an asynchronous message and the dotted line a response.</p>
     </header>
     <div class="chips" id="seq-tabs" role="tablist" style="margin-bottom:12px"></div>
     <p class="muted" id="seq-sub" style="margin-bottom:10px"></p>
     <div class="seqbox" id="seqbox"></div>
     <div class="toolbar" style="margin-top:12px">
-      <button class="btn" id="sq-prev">Anterior</button>
-      <button class="btn pri" id="sq-next">Siguiente</button>
-      <button class="btn" id="sq-play" aria-pressed="false">Reproducir</button>
-      <button class="btn" id="sq-reset">Reiniciar</button>
+      <button class="btn" id="sq-prev">Previous</button>
+      <button class="btn pri" id="sq-next">Next</button>
+      <button class="btn" id="sq-play" aria-pressed="false">Play</button>
+      <button class="btn" id="sq-reset">Reset</button>
       <span class="count" id="sq-count"></span>
     </div>
     <div class="caption panel" id="sq-cap" aria-live="polite"></div>
@@ -509,9 +509,9 @@ svg.erlines path.rl.fade { opacity: 0.12; }
 
   <section class="sec" id="er">
     <header>
-      <div class="eyebrow">Modelo de datos</div>
-      <h2>Diagrama ER por módulo</h2>
-      <p>Un esquema de PostgreSQL por módulo. Las claves foráneas viven dentro del módulo. Entre módulos solo hay referencias blandas por id. Selecciona una tabla para ver sus relaciones.</p>
+      <div class="eyebrow">Data model</div>
+      <h2>ER diagram per module</h2>
+      <p>One PostgreSQL schema per module. Foreign keys live inside the module. Between modules there are only soft references by id. Select a table to see its relations.</p>
     </header>
     <div class="chips" id="er-chips" style="margin-bottom:10px"></div>
     <div class="erinfo" id="er-info" aria-live="polite"></div>
@@ -520,9 +520,9 @@ svg.erlines path.rl.fade { opacity: 0.12; }
 
   <section class="sec" id="ux">
     <header>
-      <div class="eyebrow">Experiencia de usuario</div>
-      <h2>Recorrido y prototipo</h2>
-      <p>Elige una etapa del recorrido. El prototipo usa las reglas reales de PIO₂, ppCO₂, presión total y velocidad de cambio del catálogo. Las bandas amarillas y los valores del cuerpo son de demostración y llevan la etiqueta.</p>
+      <div class="eyebrow">User experience</div>
+      <h2>Journey and prototype</h2>
+      <p>Pick a stage of the journey. The prototype uses the real PIO₂, ppCO₂, total pressure and rate-of-change rules from the catalog. The yellow bands and the body values are demo data and carry the label.</p>
     </header>
     <div class="jrn panel">
       <div class="chips" id="j-chips"></div>
@@ -530,7 +530,7 @@ svg.erlines path.rl.fade { opacity: 0.12; }
     </div>
     <div class="proto">
       <div class="panel">
-        <h3 style="margin-bottom:10px">Condiciones de la cabina</h3>
+        <h3 style="margin-bottom:10px">Cabin conditions</h3>
         <div class="chips" id="sc-chips" style="margin-bottom:12px"></div>
         <div style="display:grid;gap:12px" id="sliders"></div>
         <div class="engine" id="engine"></div>
@@ -543,11 +543,11 @@ svg.erlines path.rl.fade { opacity: 0.12; }
     <div class="uxp" id="uxp"></div>
   </section>
 
-  <section class="sec" id="nave">
+  <section class="sec" id="ship">
     <header>
-      <div class="eyebrow">Panel de la nave</div>
-      <h2>Plano, incidencias y atmósfera por zona</h2>
-      <p>Las lecturas se simulan cada segundo en cada zona. Provoca una anomalía y mira cómo se pinta la zona, aparece el ticket con su descripción, severidad y ubicación, y se crean las tareas. El ejemplo inicial ya trae el CO₂ alto en el laboratorio.</p>
+      <div class="eyebrow">Ship panel</div>
+      <h2>Floor plan, incidents and atmosphere by zone</h2>
+      <p>Readings are simulated every second in each zone. Trigger an anomaly and watch the zone change color, the ticket appear with its description, severity and location, and the tasks get created. The initial example already has high CO₂ in the lab.</p>
     </header>
     <div class="toolbar" id="ship-tools"></div>
     <div class="shipgrid">
@@ -558,24 +558,24 @@ svg.erlines path.rl.fade { opacity: 0.12; }
     <div class="shipgrid">
       <div class="panel" id="ship-tasks"><div id="ship-tasks-list"></div><div id="ship-tasks-form"></div></div>
       <div class="panel">
-        <h3 style="margin-bottom:8px">Eventos del sistema</h3>
-        <p class="muted" style="font-size:13px;margin-bottom:8px">Lo que viajaría por el bus de eventos en cada cambio.</p>
+        <h3 style="margin-bottom:8px">System events</h3>
+        <p class="muted" style="font-size:13px;margin-bottom:8px">What would travel over the event bus on each change.</p>
         <div class="log" id="ship-log" aria-live="polite"></div>
       </div>
     </div>
     <div class="panel" id="ship-catalog" style="margin-top:16px"></div>
   </section>
 
-  <section class="sec" id="tierra">
+  <section class="sec" id="ground">
     <header>
-      <div class="eyebrow">Centro de control · opción B</div>
-      <h2>Plan de tareas desde Tierra</h2>
-      <p>Tierra publica planes versionados con tareas de salud y de nave. La nave los aplica, conserva el último si se corta el enlace y deja a la tripulación crear sus propias tareas o bloquear las de Tierra con motivo. Corta el enlace, publica un plan y mira cómo queda en cola y llega después.</p>
+      <div class="eyebrow">Mission control · option B</div>
+      <h2>Task plan from Ground</h2>
+      <p>Ground publishes versioned plans with health and ship tasks. The ship applies them, keeps the last one if the link drops and lets the crew create their own tasks or block the Ground ones with a reason. Cut the link, publish a plan and watch it queue up and arrive later.</p>
     </header>
     <div class="toolbar" id="gr-tools"></div>
     <div class="shipgrid">
       <div class="panel" id="gr-panel">
-        <h3 style="margin-bottom:8px">Panel del centro de control</h3>
+        <h3 style="margin-bottom:8px">Mission control panel</h3>
         <div id="gr-status" style="display:grid;gap:10px;margin-bottom:12px"></div>
         <div id="gr-tpl"></div>
         <div id="gr-form"></div>
@@ -584,46 +584,46 @@ svg.erlines path.rl.fade { opacity: 0.12; }
     </div>
     <div class="shipgrid">
       <div class="panel" id="gr-rules"></div>
-      <div class="panel"><h3 style="margin-bottom:8px">Eventos del enlace</h3><div class="log" id="gr-log" aria-live="polite"></div></div>
+      <div class="panel"><h3 style="margin-bottom:8px">Ground link events</h3><div class="log" id="gr-log" aria-live="polite"></div></div>
     </div>
   </section>
 
   <section class="sec" id="plan">
     <header>
-      <div class="eyebrow">Ejecución</div>
-      <h2>Plan por fases</h2>
-      <p>Las horas son de una persona. P0 es el producto mínimo defendible. Marca lo que vayas terminando: se guarda en este navegador.</p>
+      <div class="eyebrow">Execution</div>
+      <h2>Plan by phase</h2>
+      <p>Hours are per person. P0 is the minimum defensible product. Check off what you finish: it is saved in this browser.</p>
     </header>
     <div class="toolbar" id="rm-tools"></div>
     <div class="rm" id="rm"></div>
 
-    <h3 style="margin:32px 0 10px">Riesgos</h3>
+    <h3 style="margin:32px 0 10px">Risks</h3>
     <div class="panel scroll" style="padding:0"><table class="rk" id="risks"></table></div>
 
-    <h3 style="margin:32px 0 10px">Supuestos y preguntas abiertas</h3>
+    <h3 style="margin:32px 0 10px">Assumptions and open questions</h3>
     <ol class="plist" id="open"></ol>
-    <div class="foot">Documento completo en <code>docs/plan-arquitectura.md</code>. Esperando tu confirmación para empezar con la Fase 0 conjunta.</div>
+    <div class="foot">Full document in <code>docs/architecture-plan.md</code>. Waiting for your confirmation to start the joint Phase 0.</div>
   </section>
 
-  <section class="sec" id="reparto">
+  <section class="sec" id="split">
     <header>
-      <div class="eyebrow">Dos desarrolladores en paralelo</div>
-      <h2>Reparto del plan</h2>
-      <p>Cada módulo tiene un solo dueño, la interfaz es de Dev B y todo el RAG queda en una sola persona. Los contratos se congelan primero y B trabaja sobre mocks hasta que A los vuelve reales. Haz clic en un bloque de la línea de tiempo para ver sus entregables.</p>
+      <div class="eyebrow">Two developers in parallel</div>
+      <h2>Plan split</h2>
+      <p>Each module has a single owner, the interface belongs to Dev B and all of the RAG sits with one person. Contracts are frozen first and B works on mocks until A makes them real. Click a block on the timeline to see its deliverables.</p>
     </header>
     <div class="meters" id="sp-meters"></div>
     <div class="toolbar" id="sp-tools"></div>
     <div class="panel tl scroll" id="sp-time"></div>
     <div class="panel" id="sp-detail" style="margin-top:14px"></div>
-    <h3 style="margin:30px 0 10px">Dueño de cada módulo</h3>
+    <h3 style="margin:30px 0 10px">Owner of each module</h3>
     <div class="owngrid" id="sp-own"></div>
-    <h3 style="margin:30px 0 10px">Contratos entre los dos desarrolladores</h3>
+    <h3 style="margin:30px 0 10px">Contracts between the two developers</h3>
     <div id="sp-cross" style="display:grid;gap:14px"></div>
     <div class="cols" style="margin-top:30px">
-      <div><h3 style="margin-bottom:10px">Cómo trabajar sin bloquearse</h3><ol class="plist" id="sp-rules"></ol></div>
-      <div><h3 style="margin-bottom:10px">El RAG en una sola mano</h3><div id="sp-rag"></div></div>
+      <div><h3 style="margin-bottom:10px">How to work without blocking each other</h3><ol class="plist" id="sp-rules"></ol></div>
+      <div><h3 style="margin-bottom:10px">The RAG in one pair of hands</h3><div id="sp-rag"></div></div>
     </div>
-    <h3 style="margin:30px 0 10px">Riesgos del reparto</h3>
+    <h3 style="margin:30px 0 10px">Split risks</h3>
     <div class="panel scroll" style="padding:0"><table class="rk" id="sp-risks"></table></div>
   </section>
 </div>
@@ -656,17 +656,17 @@ function sv(tag, attrs, ...kids) {
 function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
 const MOD = Object.fromEntries(D.modules.map(m => [m.key, m]));
 const NAME = Object.assign(Object.fromEntries(D.modules.map(m => [m.key, m.name])), D.externals);
-const CHL = { REST: "REST", GQL: "GraphQL", WS: "WebSocket", EVT: "Evento" };
+const CHL = { REST: "REST", GQL: "GraphQL", WS: "WebSocket", EVT: "Event" };
 const CHV = { REST: "--c-rest", GQL: "--c-gql", WS: "--c-ws", EVT: "--c-evt" };
 const evRows = D.rows.filter(r => r.ch === "EVT");
 const pubs = k => evRows.filter(r => r.from_ === k);
 const subs = k => evRows.filter(r => r.to.includes(k));
 const short = t => t.split(".").slice(1).join(".");
 const devTag = x => el("span", { class: "devtag dev-" + x, text: "Dev " + x });
-const evBadge = s => el("span", { class: "ev ev-" + s, text: s === "SIM" ? "SIMULADO" : s });
+const evBadge = s => el("span", { class: "ev ev-" + s, text: s === "SIM" ? "SIMULATED" : s });
 
-/* ---------- navegación y portada ---------- */
-const SECS = [["modulos", "Módulos"], ["canales", "Canales"], ["outbox", "Outbox"], ["secuencias", "Secuencias"], ["er", "Modelo ER"], ["ux", "Experiencia"], ["nave", "Nave"], ["tierra", "Tierra"], ["plan", "Plan"], ["reparto", "Reparto"]];
+/* ---------- navigation and cover ---------- */
+const SECS = [["modules", "Modules"], ["channels", "Channels"], ["outbox", "Outbox"], ["sequences", "Sequences"], ["er", "ER model"], ["ux", "Experience"], ["ship", "Ship"], ["ground", "Ground"], ["plan", "Plan"], ["split", "Split"]];
 SECS.forEach(([id, t]) => $("#nav").append(el("a", { href: "#" + id, "data-id": id, text: t })));
 const obs = new IntersectionObserver(es => {
   es.forEach(e => { if (e.isIntersecting) document.querySelectorAll(".nav a").forEach(a => a.classList.toggle("on", a.dataset.id === e.target.id)); });
@@ -674,12 +674,12 @@ const obs = new IntersectionObserver(es => {
 SECS.forEach(([id]) => obs.observe($("#" + id)));
 
 const nTables = Object.values(D.er).reduce((a, t) => a + Object.keys(t).length, 0);
-[[D.modules.length - 1, "módulos de dominio"], [evRows.length, "eventos de dominio"], [D.rows.filter(r => r.ch === "REST").length, "rutas REST"], [D.rows.filter(r => r.ch === "GQL").length, "operaciones GraphQL"], [D.rows.filter(r => r.ch === "WS").length, "mensajes WebSocket"], [nTables, "tablas en " + Object.keys(D.er).length + " esquemas"]]
+[[D.modules.length - 1, "domain modules"], [evRows.length, "domain events"], [D.rows.filter(r => r.ch === "REST").length, "REST routes"], [D.rows.filter(r => r.ch === "GQL").length, "GraphQL operations"], [D.rows.filter(r => r.ch === "WS").length, "WebSocket messages"], [nTables, "tables in " + Object.keys(D.er).length + " schemas"]]
   .forEach(([n, l]) => $("#stats").append(el("div", { class: "stat" }, el("b", { text: n }), el("span", { text: l }))));
 D.principles.forEach((p, i) => $("#principles").append(el("li", {}, el("span", { class: "n", text: String(i + 1).padStart(2, "0") }), el("div", {}, el("b", { text: p.t }), el("span", { text: p.d })))));
 D.adrs.forEach(a => $("#adrs").append(el("details", { class: "adr" }, el("summary", {}, el("span", { class: "id", text: a.id }), el("span", { text: a.t })), el("p", { text: a.d }))));
 
-/* ---------- mapa de módulos ---------- */
+/* ---------- module map ---------- */
 const POS = { telemetry: [40, 100], monitoring: [216, 100], facility: [392, 100], knowledge: [568, 100], assistant: [744, 100], crew: [128, 380], engagement: [304, 380], groundlink: [480, 380], realtime: [656, 380] };
 const NW = 160, NH = 70;
 const chOn = { REST: true, GQL: true, WS: true, EVT: true };
@@ -700,7 +700,7 @@ function chansOf(k) {
 }
 function drawMap() {
   const box = $("#map"); box.textContent = "";
-  const svg = sv("svg", { viewBox: "0 0 960 650", role: "img", "aria-label": "Mapa de módulos conectados por el bus de eventos" });
+  const svg = sv("svg", { viewBox: "0 0 960 650", role: "img", "aria-label": "Map of modules connected by the event bus" });
   const part = partners(selMod);
   const dimmed = k => selMod && k !== selMod && !part.has(k);
   const arrow = (x1, y1, x2, y2, faint, dim) => {
@@ -708,27 +708,27 @@ function drawMap() {
     return sv("g", { class: "edge" + (faint ? " faint" : "") + (dim ? " dim" : "") }, l);
   };
   svg.append(sv("defs", {}, sv("marker", { id: "ah", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, sv("path", { d: "M0 0 L10 5 L0 10 z", fill: "var(--c-evt)" }))));
-  // externos
+  // external
   const ext = (x, y, w, t, sub) => sv("g", { class: "ext" }, sv("rect", { x, y, width: w, height: 40, rx: 8 }), sv("text", { x: x + w / 2, y: y + 18, "text-anchor": "middle", "font-size": 13, "font-weight": 600, text: t }), sv("text", { x: x + w / 2, y: y + 32, "text-anchor": "middle", class: "t-sm", text: sub }));
-  svg.append(ext(30, 14, 180, "Sensores / Simulador", "origen SIMULATED"));
-  svg.append(ext(610, 14, 270, "Ollama · Whisper", "locales, detrás de puertos"));
-  svg.append(ext(60, 604, 380, "Cliente UI · Alexa (solo dev2)", "GraphQL, WebSocket y REST"));
-  svg.append(ext(560, 604, 340, "Centro de control (Tierra)", "enlace intermitente"));
+  svg.append(ext(30, 14, 180, "Sensors / Simulator", "SIMULATED origin"));
+  svg.append(ext(610, 14, 270, "Ollama · Whisper", "local, behind ports"));
+  svg.append(ext(60, 604, 380, "UI client · Alexa (dev2 only)", "GraphQL, WebSocket and REST"));
+  svg.append(ext(560, 604, 340, "Mission control (Ground)", "intermittent link"));
   const ln = (x1, y1, x2, y2, cls, dash) => sv("line", { x1, y1, x2, y2, stroke: `var(${cls})`, "stroke-width": 2, "stroke-dasharray": dash || null });
   if (chOn.REST) svg.append(ln(120, 54, 120, 100, "--c-rest"));
   svg.append(ln(648, 54, 648, 100, "--m9", "4 3"), ln(824, 54, 824, 100, "--m9", "4 3"));
   svg.append(ln(250, 544, 250, 604, "--c-gql"), ln(290, 544, 290, 604, "--c-ws"), ln(210, 544, 210, 604, "--c-rest"));
-  // banda de interfaces
+  // interface band
   svg.append(sv("g", { class: "band" }, sv("rect", { x: 40, y: 500, width: 880, height: 44, rx: 8 }),
     ...[["REST", 180], ["GraphQL", 480], ["WebSocket", 780]].map(([t, x], i) => sv("g", {}, sv("circle", { cx: x - 52, cy: 522, r: 5, fill: `var(${["--c-rest", "--c-gql", "--c-ws"][i]})` }), sv("text", { x: x - 40, y: 527, "font-size": 13, "font-weight": 600, text: t })))));
   svg.append(ln(600, 450, 600, 604, "--m9", "4 3"));
   // bus
-  const bus = sv("g", { class: "bus" + (selMod === "platform" ? " sel" : ""), tabindex: 0, role: "button", "aria-label": "Plataforma: bus y outbox", style: "cursor:pointer", onclick: () => pick("platform"), onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick("platform"); } } },
+  const bus = sv("g", { class: "bus" + (selMod === "platform" ? " sel" : ""), tabindex: 0, role: "button", "aria-label": "Platform: bus and outbox", style: "cursor:pointer", onclick: () => pick("platform"), onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick("platform"); } } },
     sv("rect", { x: 40, y: 250, width: 880, height: 50, rx: 10 }),
-    sv("text", { x: 480, y: 273, "text-anchor": "middle", "font-size": 14, "font-weight": 650, text: "Bus de eventos · Outbox + Relay" }),
+    sv("text", { x: 480, y: 273, "text-anchor": "middle", "font-size": 14, "font-weight": 650, text: "Event bus · Outbox + Relay" }),
     sv("text", { x: 480, y: 290, "text-anchor": "middle", class: "t-sm", text: "PostgreSQL: outbox_event, inbox_processed, LISTEN/NOTIFY" }));
   svg.append(bus);
-  // nodos y aristas
+  // nodes and edges
   for (const [k, [x, y]] of Object.entries(POS)) {
     const top = y < 250, cx = x + NW / 2, p = pubs(k).length, s = subs(k).length;
     const dim = dimmed(k);
@@ -753,48 +753,48 @@ function drawMap() {
 function pick(k) { selMod = k; drawMap(); drawModPanel(); }
 function drawModPanel() {
   const m = MOD[selMod], box = $("#modpanel"); box.textContent = "";
-  box.append(el("h3", { text: m.name }), el("div", { style: "margin:4px 0 10px" }, devTag(D.owner[selMod]), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: "dueño del módulo" })), el("p", { class: "role", text: m.role }));
+  box.append(el("h3", { text: m.name }), el("div", { style: "margin:4px 0 10px" }, devTag(D.owner[selMod]), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: "module owner" })), el("p", { class: "role", text: m.role }));
   const sec = (t, nodes) => { box.append(el("h4", { text: t })); box.append(nodes); };
-  if (m.aggregates.length) sec("Agregados", el("div", { class: "chips" }, m.aggregates.map(a => el("span", { class: "tag", text: a }))));
-  sec("Puertos de entrada", el("ul", {}, m.ports_in.map(p => el("li", { text: p }))));
-  sec("Puertos de salida", el("ul", {}, m.ports_out.map(p => el("li", { text: p }))));
+  if (m.aggregates.length) sec("Aggregates", el("div", { class: "chips" }, m.aggregates.map(a => el("span", { class: "tag", text: a }))));
+  sec("Inbound ports", el("ul", {}, m.ports_in.map(p => el("li", { text: p }))));
+  sec("Outbound ports", el("ul", {}, m.ports_out.map(p => el("li", { text: p }))));
   if (chOn.EVT) {
     const p = pubs(selMod), s = subs(selMod);
-    sec("Publica (" + p.length + ")", p.length ? el("ul", {}, p.map(r => el("li", {}, el("span", { class: "pill ch-EVT", text: short(r.route) }), el("span", { class: "to", text: "→ " + r.to.map(t => MOD[t].short).join(", ") })))) : el("p", { class: "muted", text: "Ninguno. Solo consume." }));
-    sec("Se suscribe a (" + s.length + ")", s.length ? el("ul", {}, s.map(r => el("li", {}, el("span", { class: "pill ch-EVT", text: r.route }), el("span", { class: "to", text: "de " + MOD[r.from_].short })))) : el("p", { class: "muted", text: "Ninguno. Solo publica." }));
+    sec("Publishes (" + p.length + ")", p.length ? el("ul", {}, p.map(r => el("li", {}, el("span", { class: "pill ch-EVT", text: short(r.route) }), el("span", { class: "to", text: "→ " + r.to.map(t => MOD[t].short).join(", ") })))) : el("p", { class: "muted", text: "None. Consume only." }));
+    sec("Subscribes to (" + s.length + ")", s.length ? el("ul", {}, s.map(r => el("li", {}, el("span", { class: "pill ch-EVT", text: r.route }), el("span", { class: "to", text: "from " + MOD[r.from_].short })))) : el("p", { class: "muted", text: "None. Publish only." }));
   }
   const api = D.rows.filter(r => r.mod === selMod && r.ch !== "EVT" && chOn[r.ch]);
-  if (api.length) sec("Expone (" + api.length + ")", el("ul", {}, api.map(r => el("li", {}, el("span", { class: "pill ch-" + r.ch, text: CHL[r.ch] }), el("span", { class: "mono", text: r.route })))));
+  if (api.length) sec("Exposes (" + api.length + ")", el("ul", {}, api.map(r => el("li", {}, el("span", { class: "pill ch-" + r.ch, text: CHL[r.ch] }), el("span", { class: "mono", text: r.route })))));
   const rd = D.sync.filter(r => r.a === selMod);
-  if (rd.length) sec("Lecturas síncronas", el("ul", {}, rd.map(r => el("li", {}, el("span", { class: "tag", text: r.port }), el("span", { class: "to", text: "de " + NAME[r.b] })))));
-  if (m.adapters.length) sec("Adaptadores", el("div", { class: "chips" }, m.adapters.map(a => el("span", { class: "tag", text: a }))));
+  if (rd.length) sec("Synchronous reads", el("ul", {}, rd.map(r => el("li", {}, el("span", { class: "tag", text: r.port }), el("span", { class: "to", text: "from " + NAME[r.b] })))));
+  if (m.adapters.length) sec("Adapters", el("div", { class: "chips" }, m.adapters.map(a => el("span", { class: "tag", text: a }))));
 }
 const mc = $("#map-chips");
-mc.append(el("span", { class: "muted", style: "font-size:13px;margin-right:4px", text: "Mostrar:" }));
-mc.append(el("button", { class: "chip", "aria-pressed": "false", onclick: e => { const on = $("#map").classList.toggle("byown"); e.currentTarget.setAttribute("aria-pressed", String(on)); } }, el("span", { class: "dot", style: "color:var(--dev-a)" }), el("span", { class: "dot", style: "color:var(--dev-b)" }), "Dueño: Dev A / Dev B"));
+mc.append(el("span", { class: "muted", style: "font-size:13px;margin-right:4px", text: "Show:" }));
+mc.append(el("button", { class: "chip", "aria-pressed": "false", onclick: e => { const on = $("#map").classList.toggle("byown"); e.currentTarget.setAttribute("aria-pressed", String(on)); } }, el("span", { class: "dot", style: "color:var(--dev-a)" }), el("span", { class: "dot", style: "color:var(--dev-b)" }), "Owner: Dev A / Dev B"));
 Object.keys(CHL).forEach(c => {
   const b = el("button", { class: "chip", "aria-pressed": "true", onclick: () => { chOn[c] = !chOn[c]; b.setAttribute("aria-pressed", chOn[c]); drawMap(); drawModPanel(); } }, el("span", { class: "dot", style: `color:var(${CHV[c]})` }), CHL[c]);
   mc.append(b);
 });
-$("#maplegend").append(...[["--c-evt", "▲ publica · ▼ se suscribe"], ["--c-rest", "REST"], ["--c-gql", "GraphQL"], ["--c-ws", "WebSocket"]].map(([c, t]) => el("span", {}, el("i", { style: `background:var(${c})` }), t)));
+$("#maplegend").append(...[["--c-evt", "▲ publishes · ▼ subscribes"], ["--c-rest", "REST"], ["--c-gql", "GraphQL"], ["--c-ws", "WebSocket"]].map(([c, t]) => el("span", {}, el("i", { style: `background:var(${c})` }), t)));
 drawMap(); drawModPanel();
 
-/* ---------- tabla de canales ---------- */
+/* ---------- channel table ---------- */
 const tf = { ch: "ALL", mod: "ALL", q: "" };
 const tt = $("#tb-tools");
 const chipRow = el("div", { class: "chips" });
-[["ALL", "Todos"], ...Object.entries(CHL)].forEach(([k, l]) => {
+[["ALL", "All"], ...Object.entries(CHL)].forEach(([k, l]) => {
   const b = el("button", { class: "chip", "aria-pressed": String(k === "ALL"), "data-k": k, onclick: () => { tf.ch = k; chipRow.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.k === k))); drawTbl(); } }, k !== "ALL" ? el("span", { class: "dot", style: `color:var(${CHV[k]})` }) : null, l);
   chipRow.append(b);
 });
-const modSel = el("select", { "aria-label": "Módulo", onchange: e => { tf.mod = e.target.value; drawTbl(); } }, el("option", { value: "ALL", text: "Todos los módulos" }), ...D.modules.map(m => el("option", { value: m.key, text: m.name })));
-const qIn = el("input", { type: "search", placeholder: "Buscar ruta, evento o texto", "aria-label": "Buscar", oninput: e => { tf.q = e.target.value.toLowerCase(); drawTbl(); } });
+const modSel = el("select", { "aria-label": "Module", onchange: e => { tf.mod = e.target.value; drawTbl(); } }, el("option", { value: "ALL", text: "All modules" }), ...D.modules.map(m => el("option", { value: m.key, text: m.name })));
+const qIn = el("input", { type: "search", placeholder: "Search route, event or text", "aria-label": "Search", oninput: e => { tf.q = e.target.value.toLowerCase(); drawTbl(); } });
 const cnt = el("span", { class: "count" });
 tt.append(chipRow, modSel, qIn, cnt);
 const openRow = new Set();
 function drawTbl() {
   const t = $("#tbl"); t.textContent = "";
-  t.append(el("thead", {}, el("tr", {}, ["ID", "Canal", "Ruta o evento", "De → a", "Qué hace"].map(h => el("th", { text: h })))));
+  t.append(el("thead", {}, el("tr", {}, ["ID", "Channel", "Route or event", "From → to", "What it does"].map(h => el("th", { text: h })))));
   const body = el("tbody");
   const rows = D.rows.filter(r => (tf.ch === "ALL" || r.ch === tf.ch) && (tf.mod === "ALL" || r.mod === tf.mod || r.from_ === tf.mod || r.to.includes(tf.mod)) && (!tf.q || (r.route + r.what + r.payload).toLowerCase().includes(tf.q)));
   rows.forEach(r => {
@@ -803,11 +803,11 @@ function drawTbl() {
       el("td", { class: "mono", text: r.id }), el("td", {}, el("span", { class: "pill ch-" + r.ch, text: CHL[r.ch] })),
       el("td", { class: "route", text: r.route }), el("td", { text: NAME[r.from_] + " → " + r.to.map(x => NAME[x]).join(", ") }), el("td", { text: r.what }));
     body.append(tr);
-    if (open) body.append(el("tr", { class: "det" }, el("td", { colspan: 5 }, el("dl", {}, el("dt", { text: "Payload" }), el("dd", { class: "mono", text: r.payload }), el("dt", { text: "Entrega" }), el("dd", { text: r.delivery }), el("dt", { text: "Módulo dueño" }), el("dd", { text: NAME[r.mod] })))));
+    if (open) body.append(el("tr", { class: "det" }, el("td", { colspan: 5 }, el("dl", {}, el("dt", { text: "Payload" }), el("dd", { class: "mono", text: r.payload }), el("dt", { text: "Delivery" }), el("dd", { text: r.delivery }), el("dt", { text: "Owner module" }), el("dd", { text: NAME[r.mod] })))));
   });
-  if (!rows.length) body.append(el("tr", {}, el("td", { colspan: 5, class: "muted", text: "Ningún mensaje coincide con el filtro." })));
+  if (!rows.length) body.append(el("tr", {}, el("td", { colspan: 5, class: "muted", text: "No message matches the filter." })));
   t.append(body);
-  cnt.textContent = rows.length + " de " + D.rows.length;
+  cnt.textContent = rows.length + " of " + D.rows.length;
 }
 drawTbl();
 
@@ -816,65 +816,65 @@ const OB = { rows: [], inbox: [], log: [], next: 1, timer: null, last: null };
 const obType = $("#ob-type"), obFail = $("#ob-fail");
 evRows.forEach(r => obType.append(el("option", { value: r.route, text: r.route })));
 obType.value = "monitoring.alert_raised";
-obFail.append(el("option", { value: "", text: "Ninguno" }));
+obFail.append(el("option", { value: "", text: "None" }));
 D.modules.filter(m => m.key !== "platform").forEach(m => obFail.append(el("option", { value: m.key, text: m.name })));
 function lg(t, c) { OB.log.unshift({ t, c }); OB.log = OB.log.slice(0, 40); }
 function obDraw() {
   const t = $("#ob-table"); t.textContent = "";
-  t.append(el("tr", {}, ["id", "type", "status", "intentos", "last_error"].map(h => el("th", { text: h }))));
-  OB.rows.slice(-8).reverse().forEach(r => t.append(el("tr", {}, el("td", { text: r.id }), el("td", { text: r.type }), el("td", {}, el("span", { class: "st st-" + r.status, text: r.status })), el("td", { text: r.attempts + (r.status === "pending" && r.attempts ? " · próx. " + Math.min(60, 2 ** (r.attempts - 1)) + " s" : "") }), el("td", { text: r.err || "" }))));
-  if (!OB.rows.length) t.append(el("tr", {}, el("td", { colspan: 5, class: "muted", text: "Vacío. Emite un evento." })));
+  t.append(el("tr", {}, ["id", "type", "status", "attempts", "last_error"].map(h => el("th", { text: h }))));
+  OB.rows.slice(-8).reverse().forEach(r => t.append(el("tr", {}, el("td", { text: r.id }), el("td", { text: r.type }), el("td", {}, el("span", { class: "st st-" + r.status, text: r.status })), el("td", { text: r.attempts + (r.status === "pending" && r.attempts ? " · next in " + Math.min(60, 2 ** (r.attempts - 1)) + " s" : "") }), el("td", { text: r.err || "" }))));
+  if (!OB.rows.length) t.append(el("tr", {}, el("td", { colspan: 5, class: "muted", text: "Empty. Emit an event." })));
   const ib = $("#ob-inbox"); ib.textContent = "";
   ib.append(el("tr", {}, ["consumer", "event"].map(h => el("th", { text: h }))));
   OB.inbox.slice(-8).reverse().forEach(i => ib.append(el("tr", {}, el("td", { text: i.c }), el("td", { text: "#" + i.id }))));
-  if (!OB.inbox.length) ib.append(el("tr", {}, el("td", { colspan: 2, class: "muted", text: "Vacío." })));
+  if (!OB.inbox.length) ib.append(el("tr", {}, el("td", { colspan: 2, class: "muted", text: "Empty." })));
   const lgb = $("#ob-log"); lgb.textContent = "";
   OB.log.forEach(l => lgb.append(el("div", { class: l.c || "", text: l.t })));
-  if (!OB.log.length) lgb.append(el("div", { class: "muted", text: "Sin actividad." }));
+  if (!OB.log.length) lgb.append(el("div", { class: "muted", text: "No activity." }));
 }
 function obEmit() {
   const row = evRows.find(r => r.route === obType.value);
   const e = { id: OB.next++, type: row.route, status: "pending", attempts: 0, err: "", to: row.to.filter(x => x !== "realtime" || true) };
   OB.rows.push(e);
-  lg(`BEGIN · cambio de estado en ${row.from_} · INSERT outbox #${e.id} ${e.type} · COMMIT · NOTIFY`, "");
+  lg(`BEGIN · state change in ${row.from_} · INSERT outbox #${e.id} ${e.type} · COMMIT · NOTIFY`, "");
   obDraw();
 }
 function obCycle() {
   const e = OB.rows.find(r => r.status === "pending");
-  if (!e) { lg("Relay: nada pendiente.", "l-skip"); obDraw(); return; }
+  if (!e) { lg("Relay: nothing pending.", "l-skip"); obDraw(); return; }
   lg(`Relay: SELECT … FOR UPDATE SKIP LOCKED → #${e.id} ${e.type}`, "");
   let fail = false;
   const failing = obFail.value;
   for (const c of e.to) {
-    if (OB.inbox.some(i => i.c === c && i.id === e.id)) { lg(`  ${c}: ya está en inbox, se omite`, "l-skip"); continue; }
-    if (c === failing) { lg(`  ${c}: excepción en el handler`, "l-bad"); e.err = `${c}: handler lanzó excepción`; fail = true; continue; }
+    if (OB.inbox.some(i => i.c === c && i.id === e.id)) { lg(`  ${c}: already in inbox, skipped`, "l-skip"); continue; }
+    if (c === failing) { lg(`  ${c}: exception in the handler`, "l-bad"); e.err = `${c}: handler threw an exception`; fail = true; continue; }
     OB.inbox.push({ c, id: e.id });
-    lg(`  ${c}: handler ejecutado, inbox registrado`, "l-ok");
+    lg(`  ${c}: handler executed, inbox recorded`, "l-ok");
   }
   if (!fail) { e.status = "done"; e.err = ""; OB.last = e; lg(`  #${e.id} → done`, "l-ok"); }
   else {
     e.attempts++;
-    if (e.attempts >= 8) { e.status = "dead"; lg(`  #${e.id} → dead tras 8 intentos`, "l-bad"); }
-    else lg(`  #${e.id} intento ${e.attempts}, próximo en ${Math.min(60, 2 ** (e.attempts - 1))} s`, "l-skip");
+    if (e.attempts >= 8) { e.status = "dead"; lg(`  #${e.id} → dead after 8 attempts`, "l-bad"); }
+    else lg(`  #${e.id} attempt ${e.attempts}, next in ${Math.min(60, 2 ** (e.attempts - 1))} s`, "l-skip");
   }
   obDraw();
 }
 $("#ob-emit").onclick = obEmit;
 $("#ob-cycle").onclick = obCycle;
 $("#ob-dup").onclick = () => {
-  const e = OB.last; if (!e) { lg("Aún no hay un evento terminado para duplicar.", "l-skip"); obDraw(); return; }
-  lg(`Entrega duplicada de #${e.id} (el relay se reinició antes de marcar done)`, "l-skip");
-  e.to.forEach(c => lg(`  ${c}: ${OB.inbox.some(i => i.c === c && i.id === e.id) ? "ya está en inbox, se omite" : "se ejecuta"}`, "l-skip"));
+  const e = OB.last; if (!e) { lg("There is no finished event to duplicate yet.", "l-skip"); obDraw(); return; }
+  lg(`Duplicate delivery of #${e.id} (the relay restarted before marking done)`, "l-skip");
+  e.to.forEach(c => lg(`  ${c}: ${OB.inbox.some(i => i.c === c && i.id === e.id) ? "already in inbox, skipped" : "executed"}`, "l-skip"));
   obDraw();
 };
-$("#ob-replay").onclick = () => { const d = OB.rows.filter(r => r.status === "dead"); d.forEach(r => { r.status = "pending"; r.attempts = 0; r.err = ""; }); lg(d.length ? `Reencolados ${d.length} eventos muertos` : "No hay eventos muertos.", d.length ? "l-ok" : "l-skip"); obDraw(); };
+$("#ob-replay").onclick = () => { const d = OB.rows.filter(r => r.status === "dead"); d.forEach(r => { r.status = "pending"; r.attempts = 0; r.err = ""; }); lg(d.length ? `Requeued ${d.length} dead events` : "There are no dead events.", d.length ? "l-ok" : "l-skip"); obDraw(); };
 $("#ob-reset").onclick = () => { OB.rows = []; OB.inbox = []; OB.log = []; OB.next = 1; OB.last = null; stopAuto(); obDraw(); };
 function stopAuto() { clearInterval(OB.timer); OB.timer = null; $("#ob-auto").setAttribute("aria-pressed", "false"); $("#ob-auto").textContent = "Auto"; }
-$("#ob-auto").onclick = () => { if (OB.timer) return stopAuto(); $("#ob-auto").setAttribute("aria-pressed", "true"); $("#ob-auto").textContent = "Detener"; OB.timer = setInterval(obCycle, 700); };
-lg("Ejemplo inicial: se emite monitoring.alert_raised y el relay lo entrega.", "");
+$("#ob-auto").onclick = () => { if (OB.timer) return stopAuto(); $("#ob-auto").setAttribute("aria-pressed", "true"); $("#ob-auto").textContent = "Stop"; OB.timer = setInterval(obCycle, 700); };
+lg("Initial example: monitoring.alert_raised is emitted and the relay delivers it.", "");
 obEmit(); obCycle();
 
-/* ---------- secuencias ---------- */
+/* ---------- sequences ---------- */
 const SQ = { i: 0, cur: -1, timer: null };
 const tabs = $("#seq-tabs");
 D.seqs.forEach((s, i) => tabs.append(el("button", { class: "chip", role: "tab", "aria-pressed": String(i === 0), onclick: () => { SQ.i = i; SQ.cur = -1; stopPlay(); tabs.querySelectorAll("button").forEach((b, j) => b.setAttribute("aria-pressed", String(j === i))); drawSeq(); } }, s.title)));
@@ -882,11 +882,11 @@ const PCOL = { sensors: "--m9", rest: "--c-rest", gql: "--c-gql", tel: "--m2", b
 const pcol = k => `var(${PCOL[k] || "--m9"})`;
 (function () {
   const leg = el("div", { class: "sqleg" });
-  [["", "Llamada"], ["7 3", "Mensaje asíncrono"], ["2 3", "Respuesta"]].forEach(([dash, t]) => {
+  [["", "Call"], ["7 3", "Asynchronous message"], ["2 3", "Response"]].forEach(([dash, t]) => {
     const s = sv("svg", { width: 34, height: 10, viewBox: "0 0 34 10" }, sv("line", { x1: 0, y1: 5, x2: 28, y2: 5, stroke: "var(--ink)", "stroke-width": 2, "stroke-dasharray": dash || null }), sv("path", { d: "M34 5 l-7 -4 v8 z", fill: "var(--ink)" }));
     leg.append(el("span", {}, s, t));
   });
-  leg.append(el("span", { class: "muted", text: "El color de cada flecha es el del participante que la envía." }));
+  leg.append(el("span", { class: "muted", text: "The color of each arrow is that of the participant that sends it." }));
   $("#seq-sub").after(leg);
 })();
 function drawSeq() {
@@ -922,18 +922,18 @@ function drawSeq() {
   box.append(inner); box.scrollTop = keep;
   if (SQ.cur >= 0) { const y = top + SQ.cur * rowH + 52; if (y < box.scrollTop + 70 || y > box.scrollTop + box.clientHeight - 20) box.scrollTop = Math.max(0, y - box.clientHeight / 2); }
   const cap = $("#sq-cap"); cap.textContent = "";
-  if (SQ.cur < 0) cap.append(el("b", { text: "Listo para empezar" }), el("span", { class: "muted", text: `${s.steps.length} pasos. Pulsa Siguiente o Reproducir.` }));
-  else { const st = s.steps[SQ.cur]; cap.append(el("b", { text: `Paso ${SQ.cur + 1} de ${s.steps.length}: ${D.participants[st.a]} → ${D.participants[st.b]}` }), el("span", { class: "mono", text: st.label }), el("span", { text: st.detail })); }
+  if (SQ.cur < 0) cap.append(el("b", { text: "Ready to start" }), el("span", { class: "muted", text: `${s.steps.length} steps. Press Next or Play.` }));
+  else { const st = s.steps[SQ.cur]; cap.append(el("b", { text: `Step ${SQ.cur + 1} of ${s.steps.length}: ${D.participants[st.a]} → ${D.participants[st.b]}` }), el("span", { class: "mono", text: st.label }), el("span", { text: st.detail })); }
   $("#sq-count").textContent = Math.max(0, SQ.cur + 1) + " / " + s.steps.length;
   $("#sq-prev").disabled = SQ.cur < 0; $("#sq-next").disabled = SQ.cur >= s.steps.length - 1;
 }
-function stopPlay() { clearInterval(SQ.timer); SQ.timer = null; const b = $("#sq-play"); b.setAttribute("aria-pressed", "false"); b.textContent = "Reproducir"; }
+function stopPlay() { clearInterval(SQ.timer); SQ.timer = null; const b = $("#sq-play"); b.setAttribute("aria-pressed", "false"); b.textContent = "Play"; }
 $("#sq-next").onclick = () => { SQ.cur = Math.min(D.seqs[SQ.i].steps.length - 1, SQ.cur + 1); drawSeq(); };
 $("#sq-prev").onclick = () => { SQ.cur = Math.max(-1, SQ.cur - 1); drawSeq(); };
 $("#sq-reset").onclick = () => { SQ.cur = -1; stopPlay(); drawSeq(); };
 $("#sq-play").onclick = () => {
   if (SQ.timer) return stopPlay();
-  const b = $("#sq-play"); b.setAttribute("aria-pressed", "true"); b.textContent = "Pausar";
+  const b = $("#sq-play"); b.setAttribute("aria-pressed", "true"); b.textContent = "Pause";
   if (SQ.cur >= D.seqs[SQ.i].steps.length - 1) SQ.cur = -1;
   SQ.timer = setInterval(() => { if (SQ.cur >= D.seqs[SQ.i].steps.length - 1) return stopPlay(); SQ.cur++; drawSeq(); }, 1600);
   SQ.cur = Math.max(0, SQ.cur); drawSeq();
@@ -952,27 +952,27 @@ function relOf(t) {
   return { parents, children };
 }
 const erChips = $("#er-chips");
-["ALL", ...erModsOrder].forEach(k => erChips.append(el("button", { class: "chip", "aria-pressed": String(k === "ALL"), "data-k": k, onclick: () => { erFilter = k; erChips.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); drawER(); } }, k === "ALL" ? "Todos" : el("span", { class: "dot", style: `color:var(${MC[k]})` }), k === "ALL" ? "" : NAME[k])));
+["ALL", ...erModsOrder].forEach(k => erChips.append(el("button", { class: "chip", "aria-pressed": String(k === "ALL"), "data-k": k, onclick: () => { erFilter = k; erChips.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === k))); drawER(); } }, k === "ALL" ? "All" : el("span", { class: "dot", style: `color:var(${MC[k]})` }), k === "ALL" ? "" : NAME[k])));
 function drawER() {
   const root = $("#er-grid"); root.textContent = ""; erBlocks = [];
   const rel = erSel ? relOf(erSel) : null;
   const relSet = rel ? new Set([...rel.parents.map(p => p.t), ...rel.children.map(c => c.t)]) : new Set();
   const info = $("#er-info"); info.textContent = "";
-  if (!erSel) info.append(el("span", { class: "muted", text: "Las líneas unen cada clave foránea con su tabla padre: continuas dentro del módulo (FK), punteadas hacia otro módulo (referencia blanda). Selecciona una tabla para resaltar las suyas." }));
+  if (!erSel) info.append(el("span", { class: "muted", text: "The lines join each foreign key to its parent table: solid inside the module (FK), dotted toward another module (soft reference). Select a table to highlight its own." }));
   else {
-    info.append(el("b", { class: "mono", text: erSel }), el("span", { class: "muted", text: " · esquema " + D.tblmod[erSel] }), el("br"));
-    info.append("Depende de: " + (rel.parents.length ? rel.parents.map(p => `${p.t}.${p.col} (${p.hard ? "FK" : "ref blanda"})`).join(", ") : "nada") + ". Referenciada por: " + (rel.children.length ? rel.children.map(c => `${c.t}.${c.col} (${c.hard ? "FK" : "ref blanda"})`).join(", ") : "nadie") + ".");
+    info.append(el("b", { class: "mono", text: erSel }), el("span", { class: "muted", text: " · schema " + D.tblmod[erSel] }), el("br"));
+    info.append("Depends on: " + (rel.parents.length ? rel.parents.map(p => `${p.t}.${p.col} (${p.hard ? "FK" : "soft ref"})`).join(", ") : "nothing") + ". Referenced by: " + (rel.children.length ? rel.children.map(c => `${c.t}.${c.col} (${c.hard ? "FK" : "soft ref"})`).join(", ") : "no one") + ".");
   }
   const cls = t => "tcard" + (t === erSel ? " sel" : relSet.has(t) ? " rel" : erSel ? " dim" : "");
   erModsOrder.filter(m => erFilter === "ALL" || m === erFilter).forEach(m => {
     const tabs = D.er[m], rels = [];
     Object.entries(tabs).forEach(([t, cols]) => cols.forEach(c => { if (c.r) rels.push({ child: t, col: c.n, parent: c.r, hard: D.tblmod[c.r] === m, nullable: c.f.includes("N") }); }));
     const stubs = [...new Set(rels.filter(r => !r.hard).map(r => r.parent))];
-    root.append(el("div", { class: "mod-h" }, el("i", { style: `background:var(${MC[m]})` }), `${NAME[m]} `, el("span", { class: "tag", text: "esquema " + m }), el("span", { class: "tag", text: rels.length + " relaciones" })));
+    root.append(el("div", { class: "mod-h" }, el("i", { style: `background:var(${MC[m]})` }), `${NAME[m]} `, el("span", { class: "tag", text: "schema " + m }), el("span", { class: "tag", text: rels.length + " relations" })));
     const wrap = el("div", { class: "erwrap", style: `--mc:var(${MC[m]})` }), grid = el("div", { class: "ergrid" }), svg = sv("svg", { class: "erlines" }), cards = {};
     Object.entries(tabs).forEach(([t, cols]) => {
       const card = el("button", { class: cls(t), style: `--mc:var(${MC[m]})`, onclick: () => { erSel = erSel === t ? null : t; drawER(); }, "aria-pressed": String(t === erSel) },
-        el("div", { class: "th" }, el("span", { text: t }), t === "reading" ? el("span", { class: "k", text: "PARTICIONADA" }) : null),
+        el("div", { class: "th" }, el("span", { text: t }), t === "reading" ? el("span", { class: "k", text: "PARTITIONED" }) : null),
         el("ul", {}, cols.map(c => el("li", { "data-col": c.n, class: c.r && D.tblmod[c.r] === m ? "fk" : "" },
           el("span", { text: c.n + (c.f.includes("N") ? "?" : "") }),
           c.f.includes("PK") ? el("span", { class: "k", text: "PK" }) : null,
@@ -983,13 +983,13 @@ function drawER() {
     });
     stubs.forEach(t => {
       const pk = colsOf(t).filter(c => c.f.includes("PK")).map(c => c.n).join(", ");
-      const card = el("button", { class: cls(t) + " stub", onclick: () => { erSel = erSel === t ? null : t; drawER(); }, "aria-label": "Tabla de otro módulo: " + t },
-        el("div", { class: "th" }, el("span", { text: t }), el("span", { class: "k", text: "otro módulo" })),
-        el("ul", {}, el("li", {}, el("span", { text: pk }), el("span", { class: "k", text: "PK" }), el("span", { class: "ty", text: "esquema " + D.tblmod[t] }))));
+      const card = el("button", { class: cls(t) + " stub", onclick: () => { erSel = erSel === t ? null : t; drawER(); }, "aria-label": "Table from another module: " + t },
+        el("div", { class: "th" }, el("span", { text: t }), el("span", { class: "k", text: "other module" })),
+        el("ul", {}, el("li", {}, el("span", { text: pk }), el("span", { class: "k", text: "PK" }), el("span", { class: "ty", text: "schema " + D.tblmod[t] }))));
       cards[t] = card; grid.append(card);
     });
     wrap.append(svg, grid); root.append(wrap);
-    root.append(el("ul", { class: "rellist" }, rels.map(r => el("li", {}, el("b", { text: `${r.child}.${r.col}` }), ` → ${r.parent} · ${r.hard ? "FK" : "ref blanda"} · ${r.nullable ? "0..1" : "1"} a N`))));
+    root.append(el("ul", { class: "rellist" }, rels.map(r => el("li", {}, el("b", { text: `${r.child}.${r.col}` }), ` → ${r.parent} · ${r.hard ? "FK" : "soft ref"} · ${r.nullable ? "0..1" : "1"}to N`))));
     erBlocks.push({ m, wrap, svg, cards, rels });
   });
   requestAnimationFrame(drawLines);
@@ -1012,7 +1012,7 @@ function drawLines() {
       else if (pc.right <= cc.left - 8) { x1 = cc.left - wr.left; x2 = pc.right - wr.left; const xm = (x1 + x2) / 2; d = `M${x1} ${y1} C${xm} ${y1} ${xm} ${y2} ${x2} ${y2}`; l1 = [x1 - 6, "end"]; l2 = [x2 + 12, "start"]; }
       else { x1 = cc.right - wr.left; x2 = pc.right - wr.left; const xm = Math.max(x1, x2) + 20 + (idx % 3) * 6; d = `M${x1} ${y1} H${xm} V${y2} H${x2}`; l1 = [x1 + 6, "start"]; l2 = [x2 + 12, "start"]; }
       const on = erSel && (r.child === erSel || r.parent === erSel), fade = erSel && !on;
-      const path = sv("path", { class: "rl " + (r.hard ? "hard" : "soft") + (on ? " hl" : "") + (fade ? " fade" : ""), d, "marker-end": `url(#erarr-${b.m})` }, sv("title", { text: `${r.child}.${r.col} → ${r.parent} (${r.hard ? "FK" : "ref blanda"})` }));
+      const path = sv("path", { class: "rl " + (r.hard ? "hard" : "soft") + (on ? " hl" : "") + (fade ? " fade" : ""), d, "marker-end": `url(#erarr-${b.m})` }, sv("title", { text: `${r.child}.${r.col} → ${r.parent} (${r.hard ? "FK" : "soft ref"})` }));
       svg.append(path, sv("circle", { cx: x1, cy: y1, r: 3, fill: r.hard ? `var(${MC[b.m]})` : "var(--muted)", opacity: fade ? 0.15 : 1 }));
       if (!fade) svg.append(lab(l1[0], y1 - 5, "N", l1[1]), lab(l2[0], y2 - 5, r.nullable ? "0..1" : "1", l2[1]));
     });
@@ -1022,40 +1022,40 @@ new ResizeObserver(() => requestAnimationFrame(drawLines)).observe($("#er-grid")
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => drawLines());
 drawER();
 
-/* ---------- UX: recorrido y prototipo ---------- */
+/* ---------- UX: journey and prototype ---------- */
 const SC = {
   normal: { l: "Normal", kpa: 101.3, o2: 21, co2: 0.6, rate: 0, head: false },
-  co2pre: { l: "CO₂ sube", kpa: 101.3, o2: 21, co2: 2.7, rate: 0, head: false },
-  co2alto: { l: "CO₂ alto con dolor de cabeza", kpa: 101.3, o2: 21, co2: 3.4, rate: 0, head: true },
-  hipo34: { l: "Hipoxia leve a 56.5 kPa", kpa: 56.5, o2: 34, co2: 0.8, rate: 0, head: false },
-  hipo21: { l: "21 % de O₂ a 70 kPa", kpa: 70, o2: 21, co2: 0.8, rate: 0, head: false },
-  despres: { l: "Despresurización rápida", kpa: 90, o2: 21, co2: 0.8, rate: 28, head: false },
-  cuerpo: { l: "Dolor de cabeza, aire normal", kpa: 101.3, o2: 21, co2: 0.6, rate: 0, head: true },
+  co2pre: { l: "CO₂ rising", kpa: 101.3, o2: 21, co2: 2.7, rate: 0, head: false },
+  co2high: { l: "High CO₂ with headache", kpa: 101.3, o2: 21, co2: 3.4, rate: 0, head: true },
+  hypo34: { l: "Mild hypoxia at 56.5 kPa", kpa: 56.5, o2: 34, co2: 0.8, rate: 0, head: false },
+  hypo21: { l: "21 % O₂ at 70 kPa", kpa: 70, o2: 21, co2: 0.8, rate: 0, head: false },
+  depress: { l: "Rapid depressurization", kpa: 90, o2: 21, co2: 0.8, rate: 28, head: false },
+  bodyonly: { l: "Headache, normal air", kpa: 101.3, o2: 21, co2: 0.6, rate: 0, head: true },
 };
-const UX = { ...SC.normal, link: true, tab: "panel", ack: {}, done: {}, eff: {}, consent: { alertas: true, vitales: false, ambiente: true, sueno: false, conversaciones: false, tareas: true }, chat: [], scenario: "normal", bodySel: "lungs", tf: "ALL", block: {} };
-const SEVN = ["Normal", "Atención", "Alerta", "Crítico"], SEVI = ["●", "▲", "■", "■"];
+const UX = { ...SC.normal, link: true, tab: "panel", ack: {}, done: {}, eff: {}, consent: { alerts: true, vitals: false, environment: true, sleep: false, conversations: false, tasks: true }, chat: [], scenario: "normal", bodySel: "lungs", tf: "ALL", block: {} };
+const SEVN = ["Normal", "Attention", "Alert", "Critical"], SEVI = ["●", "▲", "■", "■"];
 function evalState(s) {
   const pmm = s.kpa * 7.50062, pio2 = (pmm - 47) * s.o2 / 100;
   const out = [];
-  let sev = 0, band = "normoxia (145 a 155 mmHg)", ev = "VERIFICADO";
-  if (pio2 > 356) { sev = 2; band = "sobre el límite indefinido de 356 mmHg"; }
-  else if (pio2 <= 122) { sev = 3; band = "bajo el límite absoluto de 122 mmHg"; }
-  else if (pio2 < 127) { sev = 2; band = "bajo 127 mmHg"; }
-  else if (pio2 < 145) { sev = 1; band = "bajo la normoxia (145 a 155)"; ev = "DEMO"; }
-  else if (pio2 > 155) { sev = 1; band = "sobre la normoxia, dentro del límite"; ev = "DEMO"; }
-  out.push({ key: "env-pio2", name: "PIO₂", val: pio2.toFixed(1), unit: "mmHg", sev, band, req: "V2 6003 · Tabla 6.2-1", doc: "NASA-STD-3001 Vol. 2 Rev F", ev, formula: `(${pmm.toFixed(1)} − 47) × ${(s.o2 / 100).toFixed(2)}`, kind: "o2", acts: ["Revisar suministro de O₂ y presión de cabina", "Reducir el esfuerzo físico", "Avisar al oficial médico (CMO)"] });
+  let sev = 0, band = "normoxia (145 to 155 mmHg)", ev = "VERIFIED";
+  if (pio2 > 356) { sev = 2; band = "above the indefinite limit of 356 mmHg"; }
+  else if (pio2 <= 122) { sev = 3; band = "below the absolute limit of 122 mmHg"; }
+  else if (pio2 < 127) { sev = 2; band = "below 127 mmHg"; }
+  else if (pio2 < 145) { sev = 1; band = "below normoxia (145 to 155)"; ev = "DEMO"; }
+  else if (pio2 > 155) { sev = 1; band = "above normoxia, within the limit"; ev = "DEMO"; }
+  out.push({ key: "env-pio2", name: "PIO₂", val: pio2.toFixed(1), unit: "mmHg", sev, band, req: "V2 6003 · Tabla 6.2-1", doc: "NASA-STD-3001 Vol. 2 Rev F", ev, formula: `(${pmm.toFixed(1)} − 47) × ${(s.o2 / 100).toFixed(2)}`, kind: "o2", acts: ["Check the O₂ supply and cabin pressure", "Reduce physical exertion", "Notify the Chief Medical Officer (CMO)"] });
   const pOut = s.kpa < 34.5 || s.kpa > 103;
-  out.push({ key: "env-ptotal", name: "Presión total", val: s.kpa.toFixed(1), unit: "kPa", sev: pOut ? 2 : 0, band: pOut ? "fuera de 34.5 a 103 kPa" : "dentro de 34.5 a 103 kPa", req: "V2 6006", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: "VERIFICADO", kind: "p", acts: ["Verificar sensores y estanqueidad", "Avisar al oficial médico (CMO)"] });
-  let cs = 0, cb = "bajo 2.5 mmHg", ce = "VERIFICADO";
-  if (s.co2 > 3) { cs = 2; cb = "sobre 3 mmHg (promedio de 1 h)"; } else if (s.co2 >= 2.5) { cs = 1; cb = "pre-alerta desde 2.5 mmHg"; ce = "DEMO"; }
-  out.push({ key: "env-co2-1h", name: "ppCO₂ (promedio 1 h)", val: s.co2.toFixed(1), unit: "mmHg", sev: cs, band: cb, req: "V2 6004", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: ce, kind: "co2", acts: ["Revisar ventilación y filtros de CO₂", "Medir CO₂ en zonas locales: los sensores fijos no ven bolsas", "Reducir la actividad física"] });
+  out.push({ key: "env-ptotal", name: "Total pressure", val: s.kpa.toFixed(1), unit: "kPa", sev: pOut ? 2 : 0, band: pOut ? "outside 34.5 to 103 kPa" : "within 34.5 to 103 kPa", req: "V2 6006", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: "VERIFIED", kind: "p", acts: ["Check sensors and airtightness", "Notify the Chief Medical Officer (CMO)"] });
+  let cs = 0, cb = "below 2.5 mmHg", ce = "VERIFIED";
+  if (s.co2 > 3) { cs = 2; cb = "above 3 mmHg (1 h average)"; } else if (s.co2 >= 2.5) { cs = 1; cb = "pre-alert from 2.5 mmHg"; ce = "DEMO"; }
+  out.push({ key: "env-co2-1h", name: "ppCO₂ (1 h average)", val: s.co2.toFixed(1), unit: "mmHg", sev: cs, band: cb, req: "V2 6004", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: ce, kind: "co2", acts: ["Check ventilation and CO₂ filters", "Measure CO₂ in local zones: fixed sensors do not see pockets", "Reduce physical activity"] });
   const rs = s.rate > 13.5 ? 2 : 0;
-  out.push({ key: "env-dpdt", name: "Velocidad de cambio de presión", val: s.rate.toFixed(1), unit: "psi/min", sev: rs, band: rs ? "sobre 13.5 psi/min" : "dentro de 13.5 psi/min", req: "V2 6007", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: "VERIFICADO", kind: "r", acts: ["Verificar integridad de escotillas y sellos", "Prepararse para un procedimiento de despresurización"] });
+  out.push({ key: "env-dpdt", name: "Pressure rate of change", val: s.rate.toFixed(1), unit: "psi/min", sev: rs, band: rs ? "above 13.5 psi/min" : "within 13.5 psi/min", req: "V2 6007", doc: "NASA-STD-3001 Vol. 2 Rev F", ev: "VERIFIED", kind: "r", acts: ["Check the integrity of hatches and seals", "Prepare for a depressurization procedure"] });
   const amb = Math.max(...out.map(o => o.sev));
   let cause = null;
-  if (amb > 0 && s.head) cause = ["AMBIENTE", "Hay un parámetro de cabina fuera de rango y el astronauta reporta síntomas. El aire es la causa más probable."];
-  else if (amb > 0) cause = ["AMBIENTE", "Un parámetro de cabina está fuera de rango. Aún no hay síntomas reportados."];
-  else if (s.head) cause = ["CUERPO", "La cabina está dentro de límites. NASA advierte que el desplazamiento de fluidos en microgravedad también causa estos síntomas."];
+  if (amb > 0 && s.head) cause = ["ENVIRONMENT", "A cabin parameter is out of range and the astronaut reports symptoms. The air is the most likely cause."];
+  else if (amb > 0) cause = ["ENVIRONMENT", "A cabin parameter is out of range. No symptoms reported yet."];
+  else if (s.head) cause = ["BODY", "The cabin is within limits. NASA warns that fluid shifts in microgravity also cause these symptoms."];
   const low = Math.max(0, 145 - pio2);
   const body = { hr: Math.min(140, Math.round(62 + (s.head ? 7 : 0) + low * 0.25)), spo2: Math.max(70, Math.round(98 - low * 0.2)) };
   return { pio2, rules: out, global: Math.max(...out.map(o => o.sev)), alerts: out.filter(o => o.sev > 0).sort((a, b) => b.sev - a.sev), cause, body };
@@ -1071,25 +1071,25 @@ function gauge(val, lo, hi, stops) {
   return el("div", { class: "gauge", style: `background:${gaugeBg(stops, lo, hi)}` }, el("i", { style: `left:${pct}%` }));
 }
 const jc = $("#j-chips");
-const JSET = { rutina: ["normal", "panel", true], amarilla: ["co2pre", "panel", true], roja: ["hipo21", "alerta", true], nave: ["normal", "nave", true], plan: ["normal", "misiones", true], voz: ["co2alto", "asistente", true], enlace: ["normal", "enlace", false] };
-let jSel = "rutina";
+const JSET = { routine: ["normal", "panel", true], prealert: ["co2pre", "panel", true], critical: ["hypo21", "alert", true], ship: ["normal", "ship", true], plan: ["normal", "tasks", true], voice: ["co2high", "assistant", true], groundlink: ["normal", "link", false] };
+let jSel = "routine";
 D.journey.forEach(j => jc.append(el("button", { class: "chip", "aria-pressed": String(j.key === jSel), "data-k": j.key, onclick: () => { jSel = j.key; const [sc, tab, link] = JSET[j.key]; Object.assign(UX, SC[sc], { tab, link, scenario: sc }); drawJourney(); drawProto(); } }, j.title)));
 function drawJourney() {
   jc.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.k === jSel)));
   const j = D.journey.find(x => x.key === jSel), box = $("#j-info"); box.textContent = "";
-  [["Qué necesita", j.goal], ["Qué ve", j.sees], ["Qué ocurre en el sistema", j.system], ["Cómo sabemos que funciona", j.metric]].forEach(([h, t]) => box.append(el("div", {}, el("h4", { text: h }), el("p", { text: t }))));
+  [["What it needs", j.goal], ["What it sees", j.sees], ["What happens in the system", j.system], ["How we know it works", j.metric]].forEach(([h, t]) => box.append(el("div", {}, el("h4", { text: h }), el("p", { text: t }))));
 }
 const scc = $("#sc-chips");
 Object.entries(SC).forEach(([k, v]) => scc.append(el("button", { class: "chip", "data-k": k, "aria-pressed": String(k === UX.scenario), onclick: () => { Object.assign(UX, v, { scenario: k }); drawProto(); } }, v.l)));
-const SLD = [["kpa", "Presión total", "kPa", 30, 110, 0.1], ["o2", "Oxígeno (fracción)", "%", 15, 100, 0.5], ["co2", "ppCO₂ promedio de 1 h", "mmHg", 0, 6, 0.1], ["rate", "Velocidad de cambio de presión", "psi/min", 0, 30, 0.5]];
+const SLD = [["kpa", "Total pressure", "kPa", 30, 110, 0.1], ["o2", "Oxygen (fraction)", "%", 15, 100, 0.5], ["co2", "ppCO₂ 1 h average", "mmHg", 0, 6, 0.1], ["rate", "Pressure rate of change", "psi/min", 0, 30, 0.5]];
 const slBox = $("#sliders");
 SLD.forEach(([k, l, u, mn, mx, st]) => {
   const out = el("b"); const inp = el("input", { type: "range", id: "sl-" + k, min: mn, max: mx, step: st, value: UX[k], "aria-label": l, oninput: e => { UX[k] = parseFloat(e.target.value); UX.scenario = ""; drawProto(true); } });
   slBox.append(el("label", { class: "sl", for: "sl-" + k }, el("span", { class: "v" }, el("span", { text: l }), out), inp)); inp._out = out; inp._u = u;
 });
-slBox.append(el("label", { class: "chk", for: "hd" }, el("input", { type: "checkbox", id: "hd", onchange: e => { UX.head = e.target.checked; UX.scenario = ""; drawProto(true); } }), "Dolor de cabeza reportado"));
-slBox.append(el("label", { class: "chk", for: "lk" }, el("input", { type: "checkbox", id: "lk", checked: true, onchange: e => setLink(e.target.checked) }), "Enlace con Tierra activo"));
-const DT = [["panel", "Panel de cabina"], ["alerta", "Detalle de alerta"], ["asistente", "Asistente"], ["misiones", "Tareas del día"], ["nave", "Nave"], ["enlace", "Enlace y privacidad"]];
+slBox.append(el("label", { class: "chk", for: "hd" }, el("input", { type: "checkbox", id: "hd", onchange: e => { UX.head = e.target.checked; UX.scenario = ""; drawProto(true); } }), "Headache reported"));
+slBox.append(el("label", { class: "chk", for: "lk" }, el("input", { type: "checkbox", id: "lk", checked: true, onchange: e => setLink(e.target.checked) }), "Ground link active"));
+const DT = [["panel", "Cabin panel"], ["alert", "Alert detail"], ["assistant", "Assistant"], ["tasks", "Tasks of the day"], ["ship", "Ship"], ["link", "Link and privacy"]];
 const dtabs = $("#dtabs");
 DT.forEach(([k, l]) => dtabs.append(el("button", { role: "tab", "data-k": k, onclick: () => { UX.tab = k; drawProto(); } }, l)));
 
@@ -1100,30 +1100,30 @@ function drawProto(keepSliders) {
   $("#hd").checked = UX.head; $("#lk").checked = UX.link;
   dtabs.querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.k === UX.tab)));
   const eng = $("#engine"); eng.textContent = "";
-  eng.append(el("h3", { text: "Motor de reglas" }));
+  eng.append(el("h3", { text: "Rules engine" }));
   S.rules.forEach(r => eng.append(el("div", { class: "rl" }, el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between" }, el("span", {}, `${r.name}: `, el("b", { class: "mono", text: r.val + " " + r.unit })), sevEl(r.sev)), el("code", { text: (r.formula ? r.formula + " · " : "") + r.band + " · " + r.req }), el("span", {}, evBadge(r.ev)))));
-  eng.append(el("p", { class: "muted", style: "font-size:12px", text: "Límites de la norma: VERIFICADO. Bandas amarillas y vitales del cuerpo: propuesta del equipo o demostración." }));
+  eng.append(el("p", { class: "muted", style: "font-size:12px", text: "Limits from the standard: VERIFIED. Yellow bands and body vitals: team proposal or demo." }));
   const sc = $("#screen"); sc.textContent = "";
-  ({ panel: pPanel, alerta: pAlert, asistente: pChat, misiones: pTasks, nave: pShip, enlace: pLink })[UX.tab](sc, S);
+  ({ panel: pPanel, alert: pAlert, assistant: pChat, tasks: pTasks, ship: pShip, link: pLink })[UX.tab](sc, S);
 }
-const banner = () => el("div", { class: "banner", text: "Datos simulados. Prototipo de apoyo a la decisión, no es un dispositivo médico." });
-function linkChip() { return el("span", { class: "tag", text: UX.link ? "Enlace con Tierra: activo" : "Sin enlace · modo autónomo" }); }
+const banner = () => el("div", { class: "banner", text: "Simulated data. Decision-support prototype. Not a medical device." });
+function linkChip() { return el("span", { class: "tag", text: UX.link ? "Ground link: active" : "No link · autonomous mode" }); }
 function bodyMarks(S) {
   const hrSev = S.body.hr - 62 >= 40 ? 2 : S.body.hr - 62 >= 25 ? 1 : 0;
   const spSev = S.body.spo2 < 90 ? 2 : S.body.spo2 < 95 ? 1 : 0;
   return [
-    { k: "head", n: "Cabeza · ánimo y cefalea", v: UX.head ? "Dolor de cabeza reportado" : "Sin síntomas reportados", sev: UX.head ? 1 : 0, x: 80, y: 34, haz: "Aislamiento y confinamiento. Entorno cerrado hostil: CO₂ e hipoxia dan cefalea.", ev: "DEMO" },
-    { k: "lungs", n: "Pulmones · SpO₂", v: S.body.spo2 + " %", sev: spSev, x: 63, y: 98, haz: "Entorno cerrado hostil: la presión parcial de O₂ de la cabina.", ev: "DEMO" },
-    { k: "heart", n: "Corazón · frecuencia", v: S.body.hr + " lpm (base 62)", sev: hrSev, x: 97, y: 112, haz: "Campos gravitacionales: la microgravedad redistribuye los fluidos. Eventos cardiovasculares.", ev: "DEMO" },
-    { k: "blood", n: "Sangre y órganos · radiación", v: "0.42 mSv/día", sev: 0, x: 80, y: 150, haz: "Radiación espacial. Límite GCR en espacio libre: menos de 1.3 mSv/día (V1 4033, VERIFICADO).", ev: "SIM" },
-    { k: "temp", n: "Temperatura corporal", v: "36.6 °C", sev: 0, x: 80, y: 184, haz: "Cambios inmunes y respuesta a infecciones. Sin umbral citable en los documentos leídos.", ev: "DEMO" },
-    { k: "bones", n: "Huesos y músculo · línea base", v: "97 % de la previa", sev: 0, x: 66, y: 262, haz: "Campos gravitacionales: pérdida de densidad ósea. Criterio de la norma: 95 % o más en cadera y columna (V1 4027, VERIFICADO).", ev: "DEMO" },
+    { k: "head", n: "Head · mood and headache", v: UX.head ? "Headache reported" : "No symptoms reported", sev: UX.head ? 1 : 0, x: 80, y: 34, haz: "Isolation and confinement. Hostile closed environment: CO₂ and hypoxia cause headache.", ev: "DEMO" },
+    { k: "lungs", n: "Lungs · SpO₂", v: S.body.spo2 + " %", sev: spSev, x: 63, y: 98, haz: "Hostile closed environment: the partial pressure of O₂ in the cabin.", ev: "DEMO" },
+    { k: "heart", n: "Heart · rate", v: S.body.hr + " bpm (baseline 62)", sev: hrSev, x: 97, y: 112, haz: "Gravitational fields: microgravity redistributes fluids. Cardiovascular events.", ev: "DEMO" },
+    { k: "blood", n: "Blood and organs · radiation", v: "0.42 mSv/day", sev: 0, x: 80, y: 150, haz: "Space radiation. GCR limit in free space: less than 1.3 mSv/day (V1 4033, VERIFIED).", ev: "SIM" },
+    { k: "temp", n: "Body temperature", v: "36.6 °C", sev: 0, x: 80, y: 184, haz: "Immune changes and response to infections. No citable threshold in the documents read.", ev: "DEMO" },
+    { k: "bones", n: "Bones and muscle · baseline", v: "97 % of previous", sev: 0, x: 66, y: 262, haz: "Gravitational fields: bone density loss. Standard criterion: 95 % or more at hip and spine (V1 4027, VERIFIED).", ev: "DEMO" },
   ];
 }
 function bodyCard(S) {
   const M = bodyMarks(S), sel = M.find(m => m.k === UX.bodySel) || M[1];
   const tint = (cx, cy, rx, ry, sev) => sv("ellipse", { cx, cy, rx, ry, fill: sevColor(sev), opacity: sev ? 0.4 : 0.16 });
-  const svg = sv("svg", { viewBox: "0 0 160 340", role: "img", "aria-label": "Cuerpo humano con seis indicadores de salud" },
+  const svg = sv("svg", { viewBox: "0 0 160 340", role: "img", "aria-label": "Human body with six health indicators" },
     sv("circle", { class: "sil", cx: 80, cy: 34, r: 22 }), sv("rect", { class: "sil", x: 72, y: 54, width: 16, height: 14, rx: 4 }),
     sv("path", { class: "sil", d: "M46 70 Q80 60 114 70 L108 190 Q80 200 52 190 Z" }),
     sv("path", { class: "sil", d: "M46 72 Q22 90 18 160 L32 164 Q38 108 54 90 Z" }), sv("path", { class: "sil", d: "M114 72 Q138 90 142 160 L128 164 Q122 108 106 90 Z" }),
@@ -1133,84 +1133,84 @@ function bodyCard(S) {
       sv("circle", { class: "c", cx: m.x, cy: m.y, r: 11, fill: sevColor(m.sev) }), sv("text", { x: m.x, y: m.y + 3.5, "text-anchor": "middle", text: i + 1 }))));
   const rows = M.map((m, i) => el("button", { class: "brow" + (m.k === sel.k ? " sel" : ""), onclick: () => { UX.bodySel = m.k; drawProto(); } },
     el("span", { class: "dot", style: `background:${sevColor(m.sev)}` }), el("span", {}, `${i + 1}. ${m.n}`), el("span", { class: "mono", text: m.v })));
-  const det = el("div", { class: "bdet" }, el("div", {}, el("b", { text: sel.n + " " }), sevEl(sel.sev)), el("div", { text: sel.v }), el("div", { class: "muted", text: sel.haz }), el("div", {}, evBadge(sel.ev), sel.ev === "DEMO" ? " valor de demostración" : sel.ev === "SIM" ? " valor simulado" : ""));
-  return el("div", { class: "card" }, el("h5", { text: "Cuerpo del tripulante" }), el("div", { class: "bodycard" }, el("div", { class: "body" }, svg), el("div", { style: "display:grid;gap:10px;min-width:0" }, el("div", { class: "blist" }, rows), det)));
+  const det = el("div", { class: "bdet" }, el("div", {}, el("b", { text: sel.n + " " }), sevEl(sel.sev)), el("div", { text: sel.v }), el("div", { class: "muted", text: sel.haz }), el("div", {}, evBadge(sel.ev), sel.ev === "DEMO" ? " demo value" : sel.ev === "SIM" ? " simulated value" : ""));
+  return el("div", { class: "card" }, el("h5", { text: "Crew member body" }), el("div", { class: "bodycard" }, el("div", { class: "body" }, svg), el("div", { style: "display:grid;gap:10px;min-width:0" }, el("div", { class: "blist" }, rows), det)));
 }
 function pPanel(sc, S) {
   sc.append(banner(), el("div", { class: "topbar" }, el("div", { class: "glob", style: `color:${sevColor(S.global)}` }, SEVI[S.global], " ", SEVN[S.global]), linkChip()));
   const o = S.rules[0], c = S.rules[2], p = S.rules[1], r = S.rules[3];
   const card = (t, kids) => el("div", { class: "card" }, el("h5", { text: t }), ...kids);
   sc.append(el("div", { class: "cards3" },
-    card("Cabina · oxígeno", [el("div", { class: "big", style: `color:${sevColor(o.sev)}` }, o.val, el("small", { text: "mmHg PIO₂" })), gauge(S.pio2, 80, 180, [[80, 127, 2], [127, 145, 1], [145, 155, 0], [155, 180, 1]]), el("div", { class: "kv" }, el("span", { text: "Normoxia" }), el("span", { text: "145 a 155" })), sevEl(o.sev)]),
-    card("Cabina · CO₂", [el("div", { class: "big", style: `color:${sevColor(c.sev)}` }, c.val, el("small", { text: "mmHg" })), gauge(UX.co2, 0, 5, [[0, 2.5, 0], [2.5, 3, 1], [3, 5, 2]]), el("div", { class: "kv" }, el("span", { text: "Límite 1 h" }), el("span", { text: "3 mmHg" })), sevEl(c.sev)]),
-    card("Cabina · presión", [el("div", { class: "big", style: `color:${sevColor(Math.max(p.sev, r.sev))}` }, p.val, el("small", { text: "kPa" })), el("div", { class: "kv" }, el("span", { text: "Cambio" }), el("span", { text: r.val + " psi/min" })), el("div", { class: "kv" }, el("span", { text: "Rango" }), el("span", { text: "34.5 a 103 kPa" })), sevEl(Math.max(p.sev, r.sev))]),
-    card("Radiación", [el("div", { class: "big" }, "0.42", el("small", { text: "mSv/día" })), el("div", { class: "bar" }, el("i", { style: "width:32%;display:block" })), el("div", { class: "kv" }, el("span", { text: "Límite GCR espacio libre" }), el("span", { text: "< 1.3" })), el("span", {}, evBadge("SIM"), " valor; límite ", evBadge("VERIFICADO"))])));
+    card("Cabin · oxygen", [el("div", { class: "big", style: `color:${sevColor(o.sev)}` }, o.val, el("small", { text: "mmHg PIO₂" })), gauge(S.pio2, 80, 180, [[80, 127, 2], [127, 145, 1], [145, 155, 0], [155, 180, 1]]), el("div", { class: "kv" }, el("span", { text: "Normoxia" }), el("span", { text: "145 to 155" })), sevEl(o.sev)]),
+    card("Cabin · CO₂", [el("div", { class: "big", style: `color:${sevColor(c.sev)}` }, c.val, el("small", { text: "mmHg" })), gauge(UX.co2, 0, 5, [[0, 2.5, 0], [2.5, 3, 1], [3, 5, 2]]), el("div", { class: "kv" }, el("span", { text: "1 h limit" }), el("span", { text: "3 mmHg" })), sevEl(c.sev)]),
+    card("Cabin · pressure", [el("div", { class: "big", style: `color:${sevColor(Math.max(p.sev, r.sev))}` }, p.val, el("small", { text: "kPa" })), el("div", { class: "kv" }, el("span", { text: "Change" }), el("span", { text: r.val + " psi/min" })), el("div", { class: "kv" }, el("span", { text: "Range" }), el("span", { text: "34.5 to 103 kPa" })), sevEl(Math.max(p.sev, r.sev))]),
+    card("Radiation", [el("div", { class: "big" }, "0.42", el("small", { text: "mSv/day" })), el("div", { class: "bar" }, el("i", { style: "width:32%;display:block" })), el("div", { class: "kv" }, el("span", { text: "GCR limit free space" }), el("span", { text: "< 1.3" })), el("span", {}, evBadge("SIM"), " value; limit ", evBadge("VERIFIED"))])));
   sc.append(bodyCard(S));
-  if (S.cause) sc.append(el("div", { class: "card" }, el("h5", { text: "Causa probable" }), el("div", {}, el("b", { text: S.cause[0] + ". " }), S.cause[1]), el("span", {}, evBadge("DEMO"), " heurística de cruce cuerpo y ambiente")));
-  if (S.alerts.length) sc.append(el("button", { class: "btn pri", onclick: () => { UX.tab = "alerta"; drawProto(); }, text: `Ver ${S.alerts.length} ${S.alerts.length > 1 ? "alertas" : "alerta"}` }));
+  if (S.cause) sc.append(el("div", { class: "card" }, el("h5", { text: "Probable cause" }), el("div", {}, el("b", { text: S.cause[0] + ". " }), S.cause[1]), el("span", {}, evBadge("DEMO"), " body and environment cross-check heuristic")));
+  if (S.alerts.length) sc.append(el("button", { class: "btn pri", onclick: () => { UX.tab = "alert"; drawProto(); }, text: `View ${S.alerts.length} ${S.alerts.length > 1 ? "alerts" : "alert"}` }));
 }
 function pAlert(sc, S) {
   sc.append(banner());
-  if (!S.alerts.length) { sc.append(el("div", { class: "card" }, el("h5", { text: "Sin alertas activas" }), el("p", { text: "Cambia las condiciones de la cabina para disparar una regla." }))); return; }
+  if (!S.alerts.length) { sc.append(el("div", { class: "card" }, el("h5", { text: "No active alerts" }), el("p", { text: "Change the cabin conditions to trigger a rule." }))); return; }
   S.alerts.forEach(a => {
     const acked = UX.ack[a.key];
     sc.append(el("div", { class: "alertbox", style: `--sc:${sevColor(a.sev)}` },
       el("div", { class: "ah" }, el("span", {}, SEVI[a.sev] + " " + SEVN[a.sev].toUpperCase() + " · " + a.name), el("span", { class: "mono", style: "font-size:13px", text: a.val + " " + a.unit })),
       el("div", { class: "ab" },
-        el("div", {}, el("h5", { text: "Qué hacer" }), el("ol", {}, a.acts.map(t => el("li", { text: t }))), el("p", { style: "margin-top:6px" }, evBadge("DEMO"), " acciones de demostración. El catálogo real vendrá del RAG con cita.")),
-        el("div", {}, el("h5", { text: "Por qué" }), el("div", { text: `${a.name} ${a.val} ${a.unit}: ${a.band}.` }), a.formula ? el("code", { text: "PIO₂ = " + a.formula }) : null, el("div", { class: "cite" }, el("span", { text: `${a.doc} · ${a.req}` }), evBadge(a.ev))),
-        S.cause ? el("div", {}, el("h5", { text: "Causa probable" }), el("div", {}, el("b", { text: S.cause[0] + ". " }), S.cause[1])) : null,
-        el("div", {}, el("h5", { text: "Cuándo escalar" }), el("div", { text: a.sev >= 2 ? "Avisar ya al oficial médico (CMO). Si persiste, el cirujano de vuelo en Tierra decide." : "Si el valor sube o aparecen síntomas, avisar al oficial médico (CMO)." })),
-        el("div", { class: "btnrow" }, el("button", { class: "btn pri", disabled: acked, onclick: () => { UX.ack[a.key] = true; drawProto(); }, text: acked ? "Reconocida ✓" : "Reconocer" }), acked ? el("span", { class: "muted mono", style: "font-size:12px;align-self:center", text: "monitoring.alert_acknowledged → outbox" }) : null))));
+        el("div", {}, el("h5", { text: "What to do" }), el("ol", {}, a.acts.map(t => el("li", { text: t }))), el("p", { style: "margin-top:6px" }, evBadge("DEMO"), " demo actions. The real catalog will come from the RAG with a citation.")),
+        el("div", {}, el("h5", { text: "Why" }), el("div", { text: `${a.name} ${a.val} ${a.unit}: ${a.band}.` }), a.formula ? el("code", { text: "PIO₂ = " + a.formula }) : null, el("div", { class: "cite" }, el("span", { text: `${a.doc} · ${a.req}` }), evBadge(a.ev))),
+        S.cause ? el("div", {}, el("h5", { text: "Probable cause" }), el("div", {}, el("b", { text: S.cause[0] + ". " }), S.cause[1])) : null,
+        el("div", {}, el("h5", { text: "When to escalate" }), el("div", { text: a.sev >= 2 ? "Notify the Chief Medical Officer (CMO) now. If it persists, the flight surgeon on Ground decides." : "If the value rises or symptoms appear, notify the Chief Medical Officer (CMO)." })),
+        el("div", { class: "btnrow" }, el("button", { class: "btn pri", disabled: acked, onclick: () => { UX.ack[a.key] = true; drawProto(); }, text: acked ? "Acknowledged ✓" : "Acknowledge" }), acked ? el("span", { class: "muted mono", style: "font-size:12px;align-self:center", text: "monitoring.alert_acknowledged → outbox" }) : null))));
   });
 }
 function answer(q) {
   const t = q.toLowerCase(); const S = evalState(UX);
-  if (/co2|co₂|cabeza|dióxido|dioxido/.test(t)) return { t: `Entre 2.8 y 4.5 mmHg de CO₂ se observan dolores de cabeza. Por encima de 4.5 aparecen fatiga, mal sueño y náuseas. Ahora la cabina marca ${UX.co2.toFixed(1)} mmHg.`, c: ["OCHMO-TB-004 · CO₂", "TB"] };
-  if (/ox[ií]geno|hipoxia|piO2|pio2|mareo/.test(t)) return { t: `La hipoxia puede dar cambios mentales que el propio astronauta no percibe, visión reducida, fatiga, náuseas, dolor de cabeza y mareo. Por eso la alarma sale del sensor. PIO₂ actual: ${S.pio2.toFixed(1)} mmHg.`, c: ["OCHMO-TB-003 · Atmósfera habitable", "TB"] };
-  if (/presi[oó]n|despresur/.test(t)) return { t: "La presión total de cabina debe estar entre 34.5 y 103 kPa. Si cambia más de 1.0 psi, la velocidad no debe superar 13.5 psi/min.", c: ["NASA-STD-3001 Vol. 2 Rev F · V2 6006 y V2 6007", "VERIFICADO"] };
-  return { t: "No tengo esa información en las fuentes cargadas.", c: null };
+  if (/co2|co₂|head|carbon dioxide/.test(t)) return { t: `Headaches are observed between 2.8 and 4.5 mmHg of CO₂. Above 4.5, fatigue, poor sleep and nausea appear. The cabin now reads ${UX.co2.toFixed(1)} mmHg.`, c: ["OCHMO-TB-004 · CO₂", "TB"] };
+  if (/oxygen|hypoxia|pio2|dizz/.test(t)) return { t: `Hypoxia can cause mental changes the astronaut does not notice, reduced vision, fatigue, nausea, headache and dizziness. That is why the alarm comes from the sensor. Current PIO₂: ${S.pio2.toFixed(1)} mmHg.`, c: ["OCHMO-TB-003 · Habitable atmosphere", "TB"] };
+  if (/pressure|depressur/.test(t)) return { t: "Total cabin pressure must be between 34.5 and 103 kPa. If it changes by more than 1.0 psi, the rate must not exceed 13.5 psi/min.", c: ["NASA-STD-3001 Vol. 2 Rev F · V2 6006 y V2 6007", "VERIFIED"] };
+  return { t: "I do not have that information in the loaded sources.", c: null };
 }
 function pChat(sc) {
-  sc.append(banner(), el("div", { class: "topbar" }, el("span", { class: "tag", text: "Whisper local · Ollama local · sin internet" }), linkChip()));
+  sc.append(banner(), el("div", { class: "topbar" }, el("span", { class: "tag", text: "Local Whisper · local Ollama · no internet" }), linkChip()));
   const box = el("div", { class: "chat" });
-  if (!UX.chat.length) box.append(el("div", { class: "muted", style: "font-size:13px", text: "Haz una pregunta por texto o elige un ejemplo. En el producto, el audio se transcribe y se confirma antes de responder." }));
+  if (!UX.chat.length) box.append(el("div", { class: "muted", style: "font-size:13px", text: "Ask a question by text or pick an example. In the product, the audio is transcribed and confirmed before answering." }));
   UX.chat.forEach(m => {
-    box.append(el("div", { class: "bub me" }, el("span", { class: "tag", text: m.voice ? "voz, confirmada" : "texto" }), " ", m.q));
-    box.append(el("div", { class: "bub" }, m.a.t, m.a.c ? el("div", { class: "cite" }, el("span", { text: "Fuente: " + m.a.c[0] }), evBadge(m.a.c[1])) : el("div", { class: "cite muted", text: "Sin pasaje que respalde una respuesta. No se inventa un protocolo." })));
+    box.append(el("div", { class: "bub me" }, el("span", { class: "tag", text: m.voice ? "voice, confirmed" : "text" }), " ", m.q));
+    box.append(el("div", { class: "bub" }, m.a.t, m.a.c ? el("div", { class: "cite" }, el("span", { text: "Source: " + m.a.c[0] }), evBadge(m.a.c[1])) : el("div", { class: "cite muted", text: "No passage supports an answer. No protocol is made up." })));
   });
   const ask = (q, voice) => { if (!q.trim()) return; UX.chat.push({ q, a: answer(q), voice }); drawProto(); };
-  const inp = el("input", { type: "text", id: "q", placeholder: "Escribe tu pregunta", "aria-label": "Pregunta" });
-  const form = el("form", { onsubmit: e => { e.preventDefault(); ask(inp.value, false); } }, inp, el("button", { class: "btn pri", type: "submit", text: "Enviar" }));
-  sc.append(box, form, el("div", { class: "chips" }, ["¿Por qué me duele la cabeza?", "¿Qué pasa si baja el oxígeno?", "¿Qué presión debe tener la cabina?", "¿Cuántas calorías necesito hoy?"].map((q, i) => el("button", { class: "chip", onclick: () => ask(q, i === 0), text: q }))));
+  const inp = el("input", { type: "text", id: "q", placeholder: "Type your question", "aria-label": "Question" });
+  const form = el("form", { onsubmit: e => { e.preventDefault(); ask(inp.value, false); } }, inp, el("button", { class: "btn pri", type: "submit", text: "Send" }));
+  sc.append(box, form, el("div", { class: "chips" }, ["Why does my head hurt?", "What happens if oxygen drops?", "What pressure should the cabin have?", "How many calories do I need today?"].map((q, i) => el("button", { class: "chip", onclick: () => ask(q, i === 0), text: q }))));
 }
-const ROUT = [["ejercicio", "Ejercicio de resistencia, 30 min"], ["animo", "Registrar estado de ánimo"], ["tension", "Medir presión arterial con el tensiómetro"]];
-const NAVE_TASKS = [["n1", "air", "Inspeccionar los sellos de la esclusa"], ["n2", "eclss", "Revisar el cartucho de CO₂ y registrar sus horas de uso"], ["n3", "lab", "Verificar los filtros de aire del laboratorio"], ["n4", "med", "Revisar el inventario del botiquín médico"]];
-const TKIND = [["ALL", "Todas"], ["SALUD", "Salud"], ["NAVE", "Nave"], ["INCIDENTE", "Incidentes"]];
+const ROUT = [["exercise", "Endurance exercise, 30 min"], ["mood", "Log mood"], ["bp", "Measure blood pressure with the cuff"]];
+const SHIP_TASKS = [["n1", "air", "Inspect the airlock seals"], ["n2", "eclss", "Check the CO₂ cartridge and log its hours of use"], ["n3", "lab", "Check the laboratory air filters"], ["n4", "med", "Check the medical kit inventory"]];
+const TKIND = [["ALL", "All"], ["HEALTH", "Health"], ["SHIP", "Ship"], ["INCIDENT", "Incidents"]];
 function taskItems(S) {
-  const it = [], zl = z => z ? zname(z) : "toda la nave";
-  ST.tasks.forEach(tk => { const inc = ST.inc.find(i => i.id === tk.inc); if (inc && inc.status !== "resuelta") it.push({ k: tk.k, kind: "INCIDENTE", origin: "SISTEMA", g: "Incidentes abiertos", t: tk.title, sub: `${inc.id} · ${zname(tk.zone)}`, eff: true }); });
-  S.alerts.forEach(a => it.push({ k: "a-" + a.key, kind: "SALUD", origin: "SISTEMA", g: "Medidas por alertas de cabina", t: a.acts[0], sub: "Por " + a.name, eff: true }));
-  TPL.filter(t => t.origin === "TIERRA" && (t.active !== false || UX.done[t.id])).forEach(t => it.push({ k: t.id, kind: t.kind, origin: "TIERRA", g: "Plan de Tierra", t: t.title, sub: `${t.rec} · ${zl(t.zone)} · plan v${t.ver}` + (t.active === false ? " · cancelada para el futuro" : ""), tpl: t, eff: true }));
-  ROUT.forEach(([k, t]) => it.push({ k, kind: "SALUD", origin: "SISTEMA", g: "Rutina de salud", t, sub: "Recordatorio a las 18:00 · pospón 15 min" }));
-  NAVE_TASKS.forEach(([k, z, t]) => it.push({ k, kind: "NAVE", origin: "SISTEMA", g: "Mantenimiento diario de la nave", t, sub: zname(z) + " · tarea de demostración" }));
-  TPL.filter(t => t.origin === "TRIPULACION").forEach(t => it.push({ k: t.id, kind: t.kind, origin: "TRIPULACION", g: "Tareas propias de la tripulación", t: t.title, sub: `${t.rec} · ${zl(t.zone)}`, tpl: t, eff: true }));
+  const it = [], zl = z => z ? zname(z) : "the whole ship";
+  ST.tasks.forEach(tk => { const inc = ST.inc.find(i => i.id === tk.inc); if (inc && inc.status !== "resolved") it.push({ k: tk.k, kind: "INCIDENT", origin: "SYSTEM", g: "Open incidents", t: tk.title, sub: `${inc.id} · ${zname(tk.zone)}`, eff: true }); });
+  S.alerts.forEach(a => it.push({ k: "a-" + a.key, kind: "HEALTH", origin: "SYSTEM", g: "Actions for cabin alerts", t: a.acts[0], sub: "For " + a.name, eff: true }));
+  TPL.filter(t => t.origin === "GROUND" && (t.active !== false || UX.done[t.id])).forEach(t => it.push({ k: t.id, kind: t.kind, origin: "GROUND", g: "Ground plan", t: t.title, sub: `${t.rec} · ${zl(t.zone)} · plan v${t.ver}` + (t.active === false ? " · canceled for the future" : ""), tpl: t, eff: true }));
+  ROUT.forEach(([k, t]) => it.push({ k, kind: "HEALTH", origin: "SYSTEM", g: "Health routine", t, sub: "Reminder at 18:00 · snooze 15 min" }));
+  SHIP_TASKS.forEach(([k, z, t]) => it.push({ k, kind: "SHIP", origin: "SYSTEM", g: "Daily ship maintenance", t, sub: zname(z) + " · demo task" }));
+  TPL.filter(t => t.origin === "CREW").forEach(t => it.push({ k: t.id, kind: t.kind, origin: "CREW", g: "Crew's own tasks", t: t.title, sub: `${t.rec} · ${zl(t.zone)}`, tpl: t, eff: true }));
   return it;
 }
-const ORG = { TIERRA: "Tierra", SISTEMA: "Sistema", TRIPULACION: "Tripulación" };
+const ORG = { GROUND: "Ground", SYSTEM: "System", CREW: "Crew" };
 function taskRow(it) {
   const done = !!UX.done[it.k], blocked = UX.block[it.k], acts = [];
-  if (it.origin === "TIERRA" && !done) {
-    if (blocked) acts.push(el("button", { class: "btn", onclick: () => { delete UX.block[it.k]; refreshTasks(); }, text: "Quitar bloqueo" }));
-    else acts.push(el("select", { "aria-label": "No puedo cumplirla", onchange: e => { const v = e.target.value; if (!v) return; UX.block[it.k] = v; const m = `engagement.task_blocked · «${it.t}» · ${v} → realtime, groundlink`; shipLog(m, "l-skip"); grLog(m, "l-skip"); refreshTasks(); } }, el("option", { value: "", text: "No puedo cumplirla…" }), BLOCK_REASONS.map(r => el("option", { value: r, text: r }))));
+  if (it.origin === "GROUND" && !done) {
+    if (blocked) acts.push(el("button", { class: "btn", onclick: () => { delete UX.block[it.k]; refreshTasks(); }, text: "Remove block" }));
+    else acts.push(el("select", { "aria-label": "I cannot do it", onchange: e => { const v = e.target.value; if (!v) return; UX.block[it.k] = v; const m = `engagement.task_blocked · "${it.t}" · ${v} → realtime, groundlink`; shipLog(m, "l-skip"); grLog(m, "l-skip"); refreshTasks(); } }, el("option", { value: "", text: "I cannot do it…" }), BLOCK_REASONS.map(r => el("option", { value: r, text: r }))));
   }
-  if (it.origin === "TRIPULACION") acts.push(el("button", { class: "btn", onclick: () => { TPL.splice(TPL.indexOf(it.tpl), 1); delete UX.done[it.k]; shipLog(`engagement.task_deleted · «${it.t}» (origen TRIPULACION)`, ""); refreshTasks(); }, text: "Eliminar" }));
+  if (it.origin === "CREW") acts.push(el("button", { class: "btn", onclick: () => { TPL.splice(TPL.indexOf(it.tpl), 1); delete UX.done[it.k]; shipLog(`engagement.task_deleted · "${it.t}" (CREW origin)`, ""); refreshTasks(); }, text: "Delete" }));
   return el("div", { class: "task" + (done ? " done" : "") },
     el("input", { type: "checkbox", checked: done, disabled: !!blocked, "aria-label": it.t, onchange: e => { UX.done[it.k] = e.target.checked; refreshTasks(); } }),
     el("div", { class: "grow" }, el("div", { class: "tt", text: it.t }),
       el("div", { class: "muted", style: "font-size:12.5px" }, el("span", { class: "tag tag-" + it.origin, text: ORG[it.origin] }), " " + it.sub),
-      blocked ? el("div", { style: "margin-top:4px;font-size:13px" }, el("span", { class: "st st-dead", text: "bloqueada" }), " " + blocked) : null,
-      done && it.eff ? el("div", { class: "btnrow", style: "margin-top:6px;align-items:center" }, el("span", { text: "¿Funcionó?" }), ...[true, false].map(v => el("button", { class: "btn", onclick: () => { UX.eff[it.k] = v; refreshTasks(); }, text: (v ? "Sí" : "No") + (UX.eff[it.k] === v ? " ✓" : "") }))) : null,
+      blocked ? el("div", { style: "margin-top:4px;font-size:13px" }, el("span", { class: "st st-dead", text: "blocked" }), " " + blocked) : null,
+      done && it.eff ? el("div", { class: "btnrow", style: "margin-top:6px;align-items:center" }, el("span", { text: "Did it work?" }), ...[true, false].map(v => el("button", { class: "btn", onclick: () => { UX.eff[it.k] = v; refreshTasks(); }, text: (v ? "Yes" : "No") + (UX.eff[it.k] === v ? " ✓" : "") }))) : null,
       acts.length ? el("div", { class: "btnrow", style: "margin-top:6px" }, acts) : null));
 }
 function taskFilter(items) {
@@ -1220,74 +1220,74 @@ function taskGroups(items) {
   const groups = {};
   items.filter(i => UX.tf === "ALL" || i.kind === UX.tf).forEach(i => (groups[i.g] = groups[i.g] || []).push(i));
   const out = Object.entries(groups).map(([g, list]) => el("div", { class: "tgroup" }, el("h5", { text: g }), ...list.map(taskRow)));
-  return out.length ? out : [el("div", { class: "muted", style: "font-size:13px", text: "No hay tareas de este tipo." })];
+  return out.length ? out : [el("div", { class: "muted", style: "font-size:13px", text: "There are no tasks of this kind." })];
 }
 function refreshTasks() { drawProto(); shipDrawTasks(); if (typeof drawGround === "function") drawGround(); }
 function pTasks(sc, S) {
   const items = taskItems(S), n = ROUT.filter(([k]) => UX.done[k]).length;
-  sc.append(banner(), el("div", { class: "topbar" }, el("b", { text: `Rutinas de salud hoy: ${n} de 3` }), el("span", { class: "tag", text: n === 3 ? "Logro: Constancia" : "Racha: 4 días" })), taskFilter(items), ...taskGroups(items), newTaskForm(),
-    el("p", { class: "muted", style: "font-size:12.5px", text: "Solo las rutinas de salud suman a la racha. Las medidas por alertas, las de Tierra y los incidentes no dan puntos." }));
+  sc.append(banner(), el("div", { class: "topbar" }, el("b", { text: `Health routines today: ${n} of 3` }), el("span", { class: "tag", text: n === 3 ? "Achievement: Consistency" : "Streak: 4 days" })), taskFilter(items), ...taskGroups(items), newTaskForm(),
+    el("p", { class: "muted", style: "font-size:12.5px", text: "Only health routines add to the streak. Actions for alerts, Ground tasks and incidents give no points." }));
 }
 function pShip(sc) {
-  const open = ST.inc.filter(i => i.status !== "resuelta");
-  sc.append(banner(), el("div", { class: "topbar" }, el("b", { text: open.length ? `${open.length} ${open.length > 1 ? "incidencias abiertas" : "incidencia abierta"}` : "Sin incidencias abiertas" }), el("button", { class: "btn pri", onclick: () => $("#nave").scrollIntoView({ behavior: "smooth" }), text: "Abrir el panel de la nave" })));
-  open.forEach(i => sc.append(el("div", { class: "tk", style: `--sc:${sevColor(i.sev)}` }, el("div", { class: "h" }, el("span", { class: "id", text: i.id }), sevEl(i.sev)), el("div", { class: "t", text: i.title }), el("div", { class: "m" }, el("span", { text: "Ubicación: " + zname(i.zone) })))));
-  if (!open.length) sc.append(el("div", { class: "muted", style: "font-size:13px", text: "El plano muestra todas las zonas en verde." }));
+  const open = ST.inc.filter(i => i.status !== "resolved");
+  sc.append(banner(), el("div", { class: "topbar" }, el("b", { text: open.length ? `${open.length} ${open.length > 1 ? "open incidents" : "open incident"}` : "No open incidents" }), el("button", { class: "btn pri", onclick: () => $("#ship").scrollIntoView({ behavior: "smooth" }), text: "Open the ship panel" })));
+  open.forEach(i => sc.append(el("div", { class: "tk", style: `--sc:${sevColor(i.sev)}` }, el("div", { class: "h" }, el("span", { class: "id", text: i.id }), sevEl(i.sev)), el("div", { class: "t", text: i.title }), el("div", { class: "m" }, el("span", { text: "Location: " + zname(i.zone) })))));
+  if (!open.length) sc.append(el("div", { class: "muted", style: "font-size:13px", text: "The floor plan shows every zone in green." }));
 }
-const CATS = [["alertas", "Alertas críticas"], ["vitales", "Signos vitales (simulados)"], ["ambiente", "Ambiente de cabina"], ["sueno", "Sueño"], ["conversaciones", "Conversaciones con el asistente"], ["tareas", "Tareas (estado de las de Tierra y las propias)"]];
+const CATS = [["alerts", "Critical alerts"], ["vitals", "Vital signs (simulated)"], ["environment", "Cabin environment"], ["sleep", "Sleep"], ["conversations", "Conversations with the assistant"], ["tasks", "Tasks (status of Ground's and own)"]];
 function pLink(sc, S) {
-  sc.append(banner(), el("div", { class: "topbar" }, linkChip(), el("span", { class: "muted", style: "font-size:13px", text: UX.link ? "Se envía lo autorizado." : "Todo se guarda y se envía al reconectar." })));
+  sc.append(banner(), el("div", { class: "topbar" }, linkChip(), el("span", { class: "muted", style: "font-size:13px", text: UX.link ? "What is authorized is sent." : "Everything is saved and sent on reconnect." })));
   const items = [];
-  S.alerts.forEach(a => items.push(["alertas", `alert_raised · ${a.name}`]));
-  items.push(["ambiente", "readings · cabina (lote de 10 min)"], ["vitales", "readings · FC y SpO₂ (lote de 10 min)"], ["sueno", "sueño · noche anterior"], ["conversaciones", "assistant.answer_ready"], ["tareas", "tasks · estado y tareas propias"]);
+  S.alerts.forEach(a => items.push(["alerts", `alert_raised · ${a.name}`]));
+  items.push(["environment", "readings · cabin (10 min batch)"], ["vitals", "readings · HR and SpO₂ (10 min batch)"], ["sleep", "sleep · previous night"], ["conversations", "assistant.answer_ready"], ["tasks", "tasks · status and own tasks"]);
   const ok = items.filter(([c]) => UX.consent[c]);
-  sc.append(el("div", { class: "card" }, el("h5", { text: "Qué se comparte" }), ...CATS.map(([k, l]) => el("label", { class: "sw", for: "cs-" + k }, el("span", { text: l }), el("input", { type: "checkbox", id: "cs-" + k, checked: UX.consent[k], onchange: e => { UX.consent[k] = e.target.checked; drawProto(); } })))));
-  sc.append(el("div", { class: "card" }, el("h5", { text: `Vista previa del lote · ${ok.length} de ${items.length}` }), ...items.map(([c, t]) => el("div", { class: "kv" }, el("span", { class: "mono", style: "font-size:12.5px", text: t }), UX.consent[c] ? el("span", { class: "st st-pending", text: UX.link ? "se envía" : "en cola" }) : el("span", { class: "st st-dead", text: "retenido" })))));
+  sc.append(el("div", { class: "card" }, el("h5", { text: "What is shared" }), ...CATS.map(([k, l]) => el("label", { class: "sw", for: "cs-" + k }, el("span", { text: l }), el("input", { type: "checkbox", id: "cs-" + k, checked: UX.consent[k], onchange: e => { UX.consent[k] = e.target.checked; drawProto(); } })))));
+  sc.append(el("div", { class: "card" }, el("h5", { text: `Batch preview · ${ok.length} of ${items.length}` }), ...items.map(([c, t]) => el("div", { class: "kv" }, el("span", { class: "mono", style: "font-size:12.5px", text: t }), UX.consent[c] ? el("span", { class: "st st-pending", text: UX.link ? "sent" : "queued" }) : el("span", { class: "st st-dead", text: "withheld" })))));
 }
 drawJourney(); drawProto();
-$("#uxp").append(...[["Acciones antes que explicación", "En una alerta crítica se dice primero qué hacer."], ["El color nunca va solo", "● Normal, ▲ Atención, ■ Crítico: forma, icono y texto."], ["Cada cifra dice de dónde viene", "Documento, requisito y estado de evidencia."], ["El enlace siempre se ve", "También cuando todo funciona sin él."], ["Nada por voz sin confirmar", "Y siempre hay entrada por texto."], ["Gamificación sobria", "Rutinas sí. Alertas críticas nunca."], ["Estados vacíos y de error útiles", "Reconectando, modelo lento, sin pasaje: cada uno con su mensaje."], ["Táctil y legible en cabina", "Objetivos de 48 px, contraste AA, modo oscuro por defecto."]].map(([t, d]) => el("div", {}, el("b", { text: t }), el("span", { text: d }))));
+$("#uxp").append(...[["Actions before explanation", "A critical alert says what to do first."], ["Color never stands alone", "● Normal, ▲ Attention, ■ Critical: shape, icon and text."], ["Every figure says where it comes from", "Document, requirement and evidence state."], ["The link is always visible", "Even when everything works without it."], ["Nothing by voice without confirmation", "And there is always text input."], ["Sober gamification", "Routines yes. Critical alerts never."], ["Useful empty and error states", "Reconnecting, slow model, no passage: each with its own message."], ["Touch-friendly and readable in the cabin", "48 px targets, AA contrast, dark mode by default."]].map(([t, d]) => el("div", {}, el("b", { text: t }), el("span", { text: d }))));
 
-/* datos compartidos: catálogo de incidencias, plantillas de tareas y plan de Tierra */
+/* shared data: incident catalog, task templates and Ground plan */
 const IT = Object.fromEntries(D.itypes.map(t => [t.k, t])), IC = Object.fromEntries(D.icats.map(c => [c.k, c.n]));
 const typeOfAlert = a => ({ pio2: parseFloat(a.val) > 155 ? "hyperoxia" : "hypoxia", ptotal: "pressure_range", dpdt: "pressure_leak", co2: "co2_high", n2: "diluent_low", rh: "humidity", t: "temperature" })[a.rule] || null;
-const zlabel = z => z === "*" ? "Cualquiera" : zname(z);
+const zlabel = z => z === "*" ? "Any" : zname(z);
 let catSel = "ALL";
 const TPL = [
-  { id: "t-g1", kind: "SALUD", title: "Registrar la masa corporal", origin: "TIERRA", ver: 11, rec: "Diaria", zone: null },
-  { id: "t-g2", kind: "NAVE", title: "Inspeccionar el sellado de la escotilla del laboratorio", origin: "TIERRA", ver: 11, rec: "Diaria", zone: "lab" },
+  { id: "t-g1", kind: "HEALTH", title: "Log body mass", origin: "GROUND", ver: 11, rec: "Daily", zone: null },
+  { id: "t-g2", kind: "SHIP", title: "Inspect the laboratory hatch seal", origin: "GROUND", ver: 11, rec: "Daily", zone: "lab" },
 ];
-const GR = { ver: 11, applied: 11, draft: [], sent: null, delay: 2, log: [], snap: [], snapCrew: [], snapT: 0, n: 3, banner: "Plan v11 aplicado" };
-const BLOCK_REASONS = ["Sin recursos o repuestos", "Zona inaccesible", "Conflicto con otra tarea", "Riesgo para la tripulación", "Otro"];
-const tplStatus = t => UX.block[t.id] ? "Bloqueada: " + UX.block[t.id] : UX.done[t.id] ? (t.active === false ? "Completada · cancelada para el futuro" : "Completada hoy") : t.active === false ? "Cancelada" : "Aplicada · pendiente";
+const GR = { ver: 11, applied: 11, draft: [], sent: null, delay: 2, log: [], snap: [], snapCrew: [], snapT: 0, n: 3, banner: "Plan v11 applied" };
+const BLOCK_REASONS = ["No resources or spare parts", "Zone inaccessible", "Conflict with another task", "Risk to the crew", "Other"];
+const tplStatus = t => UX.block[t.id] ? "Blocked: " + UX.block[t.id] : UX.done[t.id] ? (t.active === false ? "Completed · canceled for the future" : "Completed today") : t.active === false ? "Canceled" : "Applied · pending";
 
-/* ---------- panel de la nave ---------- */
+/* ---------- ship panel ---------- */
 const DOC = "NASA-STD-3001 Vol. 2 Rev F", N_H = 90;
 const ZONES = [
-  { id: "eng", n: ["Ingeniería", "y propulsión"], x: 60, y: 56, w: 150, h: 104, base: { t: 24.2, rh: 40, co2: 0.8 } },
-  { id: "eclss", n: ["Soporte vital", "(ECLSS)"], x: 222, y: 56, w: 150, h: 104, base: { t: 22.8, rh: 48, co2: 0.7 } },
-  { id: "lab", n: ["Laboratorio"], x: 384, y: 56, w: 170, h: 104, base: { t: 22.6, rh: 44, co2: 0.7 } },
-  { id: "med", n: ["Enfermería"], x: 566, y: 56, w: 140, h: 104, base: { t: 22.4, rh: 45, co2: 0.5 } },
-  { id: "bridge", n: ["Puente", "de control"], x: 718, y: 56, w: 190, h: 104, base: { t: 22.2, rh: 42, co2: 0.6 } },
-  { id: "air", n: ["Esclusa"], x: 60, y: 212, w: 130, h: 104, base: { t: 21.5, rh: 38, co2: 0.4 } },
-  { id: "store", n: ["Almacén"], x: 202, y: 212, w: 140, h: 104, base: { t: 21.0, rh: 36, co2: 0.4 } },
-  { id: "gym", n: ["Gimnasio"], x: 354, y: 212, w: 150, h: 104, base: { t: 23.8, rh: 50, co2: 1.1 } },
-  { id: "galley", n: ["Cocina", "y comedor"], x: 516, y: 212, w: 170, h: 104, base: { t: 24.0, rh: 52, co2: 0.9 } },
-  { id: "crew", n: ["Dormitorios"], x: 698, y: 212, w: 210, h: 104, base: { t: 22.0, rh: 43, co2: 0.8 } },
+  { id: "eng", n: ["Engineering", "and propulsion"], x: 60, y: 56, w: 150, h: 104, base: { t: 24.2, rh: 40, co2: 0.8 } },
+  { id: "eclss", n: ["Life support", "(ECLSS)"], x: 222, y: 56, w: 150, h: 104, base: { t: 22.8, rh: 48, co2: 0.7 } },
+  { id: "lab", n: ["Laboratory"], x: 384, y: 56, w: 170, h: 104, base: { t: 22.6, rh: 44, co2: 0.7 } },
+  { id: "med", n: ["Infirmary"], x: 566, y: 56, w: 140, h: 104, base: { t: 22.4, rh: 45, co2: 0.5 } },
+  { id: "bridge", n: ["Control", "bridge"], x: 718, y: 56, w: 190, h: 104, base: { t: 22.2, rh: 42, co2: 0.6 } },
+  { id: "air", n: ["Airlock"], x: 60, y: 212, w: 130, h: 104, base: { t: 21.5, rh: 38, co2: 0.4 } },
+  { id: "store", n: ["Storage"], x: 202, y: 212, w: 140, h: 104, base: { t: 21.0, rh: 36, co2: 0.4 } },
+  { id: "gym", n: ["Gym"], x: 354, y: 212, w: 150, h: 104, base: { t: 23.8, rh: 50, co2: 1.1 } },
+  { id: "galley", n: ["Galley", "and dining"], x: 516, y: 212, w: 170, h: 104, base: { t: 24.0, rh: 52, co2: 0.9 } },
+  { id: "crew", n: ["Crew quarters"], x: 698, y: 212, w: 210, h: 104, base: { t: 22.0, rh: 43, co2: 0.8 } },
 ];
 const MET = [
-  { key: "pio2", n: "Oxígeno · PIO₂", u: "mmHg", lo: 80, hi: 180, dec: 1, bands: [[80, 122, 3], [122, 127, 2], [127, 145, 1], [145, 155, 0], [155, 180, 1]], normal: "145 a 155", ev: "VERIFICADO" },
-  { key: "co2", n: "CO₂ · ppCO₂ (media 30 s)", u: "mmHg", lo: 0, hi: 5, dec: 2, bands: [[0, 2.5, 0], [2.5, 3, 1], [3, 5, 2]], normal: "menos de 2.5", ev: "VERIFICADO", avg: true },
-  { key: "n2", n: "Nitrógeno · N₂", u: "%", lo: 0, hi: 100, dec: 1, bands: [[0, 30, 2], [30, 100, 0]], normal: "diluyente 30 o más", ev: "VERIFICADO" },
-  { key: "rh", n: "Humedad relativa", u: "%", lo: 0, hi: 100, dec: 0, bands: [[0, 25, 2], [25, 30, 1], [30, 60, 0], [60, 75, 1], [75, 100, 2]], normal: "30 a 60", ev: "DEMO" },
-  { key: "t", n: "Temperatura", u: "°C", lo: 10, hi: 35, dec: 1, bands: [[10, 18, 2], [18, 20, 1], [20, 25, 0], [25, 27, 1], [27, 35, 2]], normal: "20 a 25", ev: "DEMO" },
-  { key: "kpa", n: "Presión total", u: "kPa", lo: 30, hi: 110, dec: 1, bands: [[30, 34.5, 2], [34.5, 103, 0], [103, 110, 2]], normal: "34.5 a 103", ev: "VERIFICADO" },
+  { key: "pio2", n: "Oxygen · PIO₂", u: "mmHg", lo: 80, hi: 180, dec: 1, bands: [[80, 122, 3], [122, 127, 2], [127, 145, 1], [145, 155, 0], [155, 180, 1]], normal: "145 to 155", ev: "VERIFIED" },
+  { key: "co2", n: "CO₂ · ppCO₂ (30 s mean)", u: "mmHg", lo: 0, hi: 5, dec: 2, bands: [[0, 2.5, 0], [2.5, 3, 1], [3, 5, 2]], normal: "less than 2.5", ev: "VERIFIED", avg: true },
+  { key: "n2", n: "Nitrogen · N₂", u: "%", lo: 0, hi: 100, dec: 1, bands: [[0, 30, 2], [30, 100, 0]], normal: "diluent 30 or more", ev: "VERIFIED" },
+  { key: "rh", n: "Relative humidity", u: "%", lo: 0, hi: 100, dec: 0, bands: [[0, 25, 2], [25, 30, 1], [30, 60, 0], [60, 75, 1], [75, 100, 2]], normal: "30 to 60", ev: "DEMO" },
+  { key: "t", n: "Temperature", u: "°C", lo: 10, hi: 35, dec: 1, bands: [[10, 18, 2], [18, 20, 1], [20, 25, 0], [25, 27, 1], [27, 35, 2]], normal: "20 to 25", ev: "DEMO" },
+  { key: "kpa", n: "Total pressure", u: "kPa", lo: 30, hi: 110, dec: 1, bands: [[30, 34.5, 2], [34.5, 103, 0], [103, 110, 2]], normal: "34.5 to 103", ev: "VERIFIED" },
 ];
 const SCEN = [
-  ["co2lab", "CO₂ alto · Laboratorio", "lab", { co2: 3.6 }, 0.1],
-  ["leak", "Fuga de presión · Esclusa", "air", { kpa: 55 }, 0.05],
-  ["hum", "Humedad alta · Dormitorios", "crew", { rh: 82 }, 0.1],
-  ["o2", "Fallo de O₂ · Soporte vital", "eclss", { o2: 17.5 }, 0.1],
-  ["heat", "Calor · Ingeniería", "eng", { t: 29.5 }, 0.1],
+  ["co2lab", "High CO₂ · Laboratory", "lab", { co2: 3.6 }, 0.1],
+  ["leak", "Pressure leak · Airlock", "air", { kpa: 55 }, 0.05],
+  ["hum", "High humidity · Crew quarters", "crew", { rh: 82 }, 0.1],
+  ["o2", "O₂ failure · Life support", "eclss", { o2: 17.5 }, 0.1],
+  ["heat", "Heat · Engineering", "eng", { t: 29.5 }, 0.1],
 ];
 const ST = { t: 0, live: true, sel: "lab", inc: [], nextInc: 1, log: [], tasks: [], dirty: false, sig: "", timer: null };
 const zname = id => { const z = ZONES.find(x => x.id === id); return z ? z.n.join(" ") : id; };
@@ -1320,65 +1320,65 @@ function zoneEval(z) {
   const pio2 = L(h.pio2), kpa = L(h.kpa), co2a = mean(h.co2.slice(-30)), rh = L(h.rh), t = L(h.t), n2 = L(h.n2);
   const out = [], flagged = new Set(), anomalies = {};
   const add = (rule, metric, nm, val, unit, sev, band, req, ev, acts) => { if (sev > 0) { out.push({ key: z.id + ":" + rule, rule, metric, zone: z.id, name: nm, val, unit, sev, band, req, doc: DOC, ev, acts: acts.map(a => a.replace("{z}", name)) }); flagged.add(metric); } };
-  let s = 0, b = "normoxia", ev = "VERIFICADO";
-  if (pio2 <= 122) { s = 3; b = "bajo el límite absoluto de 122 mmHg"; } else if (pio2 < 127) { s = 2; b = "bajo 127 mmHg"; } else if (pio2 < 145) { s = 1; b = "bajo la normoxia (145 a 155)"; ev = "DEMO"; } else if (pio2 > 356) { s = 2; b = "sobre 356 mmHg"; } else if (pio2 > 155) { s = 1; b = "sobre la normoxia"; ev = "DEMO"; }
-  add("pio2", "pio2", "Oxígeno (PIO₂)", pio2.toFixed(1), "mmHg", s, b, "V2 6003 · Tabla 6.2-1", ev, ["Revisar el suministro de O₂ y la presión en {z}", "Reducir el esfuerzo físico", "Avisar al oficial médico (CMO)"]);
-  add("ptotal", "kpa", "Presión total", kpa.toFixed(1), "kPa", kpa < 34.5 || kpa > 103 ? 2 : 0, "fuera de 34.5 a 103 kPa", "V2 6006", "VERIFICADO", ["Verificar la estanqueidad y los sellos de {z}", "Aislar la zona si la presión sigue cayendo"]);
+  let s = 0, b = "normoxia", ev = "VERIFIED";
+  if (pio2 <= 122) { s = 3; b = "below the absolute limit of 122 mmHg"; } else if (pio2 < 127) { s = 2; b = "below 127 mmHg"; } else if (pio2 < 145) { s = 1; b = "below normoxia (145 to 155)"; ev = "DEMO"; } else if (pio2 > 356) { s = 2; b = "above 356 mmHg"; } else if (pio2 > 155) { s = 1; b = "above normoxia"; ev = "DEMO"; }
+  add("pio2", "pio2", "Oxygen (PIO₂)", pio2.toFixed(1), "mmHg", s, b, "V2 6003 · Tabla 6.2-1", ev, ["Check the O₂ supply and pressure in {z}", "Reduce physical exertion", "Notify the Chief Medical Officer (CMO)"]);
+  add("ptotal", "kpa", "Total pressure", kpa.toFixed(1), "kPa", kpa < 34.5 || kpa > 103 ? 2 : 0, "outside 34.5 to 103 kPa", "V2 6006", "VERIFIED", ["Check airtightness and seals in {z}", "Isolate the zone if pressure keeps falling"]);
   const psi = Math.abs(h.kpa[h.kpa.length - 11] - kpa) * 0.145038, rate = psi * 6;
-  add("dpdt", "kpa", "Velocidad de cambio de presión", rate.toFixed(1), "psi/min", psi > 1 && rate > 13.5 ? 2 : 0, "sobre 13.5 psi/min", "V2 6007", "VERIFICADO", ["Verificar la integridad de escotillas y sellos de {z}", "Prepararse para aislar la zona"]);
-  s = 0; b = "bajo 2.5 mmHg"; ev = "VERIFICADO";
-  if (co2a > 4.5) { s = 3; b = "sobre 4.5 mmHg: fatiga y náuseas"; ev = "TB"; } else if (co2a > 3) { s = 2; b = "sobre 3 mmHg (media móvil; en producción, 1 h)"; } else if (co2a >= 2.5) { s = 1; b = "pre-alerta desde 2.5 mmHg"; ev = "DEMO"; }
-  add("co2", "co2", "ppCO₂", co2a.toFixed(2), "mmHg", s, b, "V2 6004", ev, ["Revisar la ventilación y los filtros de CO₂ en {z}", "Medir CO₂ en zonas locales: los sensores fijos no ven bolsas", "Reducir la actividad física en la zona"]);
-  add("n2", "n2", "Diluyente (N₂)", n2.toFixed(1), "%", n2 < 30 ? 2 : 0, "bajo 30 %", "V2 6002", "VERIFICADO", ["Verificar la composición de la atmósfera en {z}"]);
+  add("dpdt", "kpa", "Pressure rate of change", rate.toFixed(1), "psi/min", psi > 1 && rate > 13.5 ? 2 : 0, "above 13.5 psi/min", "V2 6007", "VERIFIED", ["Check the integrity of hatches and seals in {z}", "Prepare to isolate the zone"]);
+  s = 0; b = "below 2.5 mmHg"; ev = "VERIFIED";
+  if (co2a > 4.5) { s = 3; b = "above 4.5 mmHg: fatigue and nausea"; ev = "TB"; } else if (co2a > 3) { s = 2; b = "above 3 mmHg (moving mean; in production, 1 h)"; } else if (co2a >= 2.5) { s = 1; b = "pre-alert from 2.5 mmHg"; ev = "DEMO"; }
+  add("co2", "co2", "ppCO₂", co2a.toFixed(2), "mmHg", s, b, "V2 6004", ev, ["Check ventilation and CO₂ filters in {z}", "Measure CO₂ in local zones: fixed sensors do not see pockets", "Reduce physical activity in the zone"]);
+  add("n2", "n2", "Diluent (N₂)", n2.toFixed(1), "%", n2 < 30 ? 2 : 0, "below 30 %", "V2 6002", "VERIFIED", ["Check the atmosphere composition in {z}"]);
   s = rh < 25 || rh > 75 ? 2 : rh < 30 || rh > 60 ? 1 : 0;
-  add("rh", "rh", "Humedad relativa", rh.toFixed(0), "%", s, s === 2 ? "fuera de 25 a 75 %" : "fuera de 30 a 60 %", "V2 6012 · V2 6013 (aproximado)", "DEMO", ["Revisar el condensador y la ventilación de {z}", "Secar las superficies y vigilar la condensación"]);
+  add("rh", "rh", "Relative humidity", rh.toFixed(0), "%", s, s === 2 ? "outside 25 to 75 %" : "outside 30 to 60 %", "V2 6012 · V2 6013 (approximate)", "DEMO", ["Check the condenser and ventilation in {z}", "Dry the surfaces and watch for condensation"]);
   s = t < 18 || t > 27 ? 2 : t < 20 || t > 25 ? 1 : 0;
-  add("t", "t", "Temperatura", t.toFixed(1), "°C", s, s === 2 ? "fuera de 18 a 27 °C" : "fuera de 20 a 25 °C", "V2 6012 · V2 6013 (aproximado)", "DEMO", ["Revisar el lazo térmico y la ventilación de {z}", "Reducir la carga de equipos en la zona"]);
-  [["co2", "CO₂", "mmHg", 0.6], ["rh", "Humedad", "%", 6], ["t", "Temperatura", "°C", 1.5], ["pio2", "Oxígeno (PIO₂)", "mmHg", 6], ["kpa", "Presión", "kPa", 4]].forEach(([m, nm, u, md]) => {
+  add("t", "t", "Temperature", t.toFixed(1), "°C", s, s === 2 ? "outside 18 to 27 °C" : "outside 20 to 25 °C", "V2 6012 · V2 6013 (approximate)", "DEMO", ["Check the thermal loop and ventilation in {z}", "Reduce the equipment load in the zone"]);
+  [["co2", "CO₂", "mmHg", 0.6], ["rh", "Humidity", "%", 6], ["t", "Temperature", "°C", 1.5], ["pio2", "Oxygen (PIO₂)", "mmHg", 6], ["kpa", "Pressure", "kPa", 4]].forEach(([m, nm, u, md]) => {
     if (flagged.has(m)) return;
     const a = h[m], base = a.slice(-60, -20), rec = mean(a.slice(-5)), mu = mean(base), sd = std(base);
-    if (Math.abs(rec - mu) > Math.max(4 * sd, md)) { anomalies[m] = true; add("trend-" + m, m, nm + ": tendencia anómala", rec.toFixed(2), u, 1, `cambio de ${rec - mu > 0 ? "+" : ""}${(rec - mu).toFixed(2)} ${u} frente a los 40 s previos`, "regla de tendencia", "DEMO", ["Revisar el sensor y la tendencia de " + nm + " en {z}"]); }
+    if (Math.abs(rec - mu) > Math.max(4 * sd, md)) { anomalies[m] = true; add("trend-" + m, m, nm + ": anomalous trend", rec.toFixed(2), u, 1, `change of ${rec - mu > 0 ? "+" : ""}${(rec - mu).toFixed(2)} ${u} versus the previous 40 s`, "trend rule", "DEMO", ["Check the sensor and the " + nm + " trend in {z}"]); }
   });
   return { alerts: out.sort((x, y) => y.sev - x.sev), anomalies };
 }
 function openIncident(o) {
   const id = "INC-" + String(ST.nextInc++).padStart(4, "0");
-  const inc = { id, zone: o.zone, type: o.type || null, auto: !!o.auto, manual: !o.auto, sev: o.sev, title: o.title, desc: o.desc, source: o.auto ? "Alerta automática · regla " + o.rule : "Reporte manual de la tripulación", status: "abierta", t0: ST.t, ev: o.ev || null, normal: false };
+  const inc = { id, zone: o.zone, type: o.type || null, auto: !!o.auto, manual: !o.auto, sev: o.sev, title: o.title, desc: o.desc, source: o.auto ? "Automatic alert · rule " + o.rule : "Manual crew report", status: "open", t0: ST.t, ev: o.ev || null, normal: false };
   ST.inc.unshift(inc);
-  const acts = o.acts && o.acts.length ? o.acts.slice(0, 2) : ["Evaluar y atender: " + o.title];
+  const acts = o.acts && o.acts.length ? o.acts.slice(0, 2) : ["Assess and attend: " + o.title];
   acts.forEach((a, i) => ST.tasks.push({ k: `${id}-t${i}`, inc: id, zone: o.zone, title: a }));
-  shipLog(`facility.incident_opened · ${id} (${SEVN[o.sev]}) en ${zname(o.zone)} → engagement, realtime, groundlink`, "l-bad");
-  shipLog(`engagement.task_assigned ×${acts.length} (kind=INCIDENTE) → realtime`, "");
+  shipLog(`facility.incident_opened · ${id} (${SEVN[o.sev]}) in ${zname(o.zone)} → engagement, realtime, groundlink`, "l-bad");
+  shipLog(`engagement.task_assigned ×${acts.length} (kind=INCIDENT) → realtime`, "");
   ST.dirty = true;
 }
 function shipEvaluate() {
   ZONES.forEach(z => {
     const ev = zoneEval(z); z.ev = ev;
     const hi = ev.alerts.filter(a => a.sev >= 2);
-    let inc = ST.inc.find(i => i.zone === z.id && i.auto && i.status !== "resuelta");
+    let inc = ST.inc.find(i => i.zone === z.id && i.auto && i.status !== "resolved");
     if (hi.length) {
-      const top = hi[0], desc = hi.map(a => `${a.name} = ${a.val} ${a.unit} (${a.band}; ${a.req})`).join(". ") + ". Fuente: " + DOC + ".";
+      const top = hi[0], desc = hi.map(a => `${a.name} = ${a.val} ${a.unit} (${a.band}; ${a.req})`).join(". ") + ". Source: " + DOC + ".";
       if (!inc) openIncident({ zone: z.id, auto: true, sev: top.sev, title: `${top.name}: ${top.band}`, desc, rule: top.rule, ev: top.ev, acts: top.acts, type: typeOfAlert(top) });
-      else { inc.desc = desc; inc.normal = false; if (top.sev > inc.sev) { inc.sev = top.sev; shipLog(`facility.incident_updated · ${inc.id} sube a ${SEVN[inc.sev]} → realtime, groundlink`, "l-bad"); } }
-    } else if (inc && !inc.normal) { inc.normal = true; shipLog(`monitoring.alert_resolved → facility · ${inc.id} con valores normales, puede cerrarse`, "l-ok"); ST.dirty = true; }
-    const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resuelta");
+      else { inc.desc = desc; inc.normal = false; if (top.sev > inc.sev) { inc.sev = top.sev; shipLog(`facility.incident_updated · ${inc.id} rises to ${SEVN[inc.sev]} → realtime, groundlink`, "l-bad"); } }
+    } else if (inc && !inc.normal) { inc.normal = true; shipLog(`monitoring.alert_resolved → facility · ${inc.id} values normal, can be closed`, "l-ok"); ST.dirty = true; }
+    const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resolved");
     const sev = Math.max(0, ...ev.alerts.map(a => a.sev), ...open.map(i => i.sev));
     if (sev !== z.status) { shipLog(`facility.zone_status_changed · ${zname(z.id)}: ${SEVN[z.status]} → ${SEVN[sev]} → realtime`, sev > z.status ? "l-skip" : "l-ok"); z.status = sev; }
   });
 }
-function incAck(id) { const i = ST.inc.find(x => x.id === id); i.status = "reconocida"; shipLog(`facility.incident_updated · ${id} reconocida → realtime, groundlink`, ""); shipDraw(true); }
+function incAck(id) { const i = ST.inc.find(x => x.id === id); i.status = "acknowledged"; shipLog(`facility.incident_updated · ${id} acknowledged → realtime, groundlink`, ""); shipDraw(true); }
 function incResolve(id) {
-  const i = ST.inc.find(x => x.id === id); i.status = "resuelta";
+  const i = ST.inc.find(x => x.id === id); i.status = "resolved";
   ST.tasks.filter(t => t.inc === id).forEach(t => { UX.done[t.k] = true; });
   shipLog(`facility.incident_resolved · ${id} → engagement, realtime, groundlink`, "l-ok");
   ST.dirty = true; shipEvaluate(); shipDraw(true);
 }
 function selZone(id) { ST.sel = id; shipDraw(true); }
 
-/* mapa */
+/* map */
 const MAPREF = {};
 function buildMap() {
-  const svg = sv("svg", { viewBox: "0 0 960 352", role: "img", "aria-label": "Plano esquemático de la nave con sus zonas" });
+  const svg = sv("svg", { viewBox: "0 0 960 352", role: "img", "aria-label": "Schematic floor plan of the ship with its zones" });
   svg.append(sv("defs", {}, sv("pattern", { id: "stripes", width: 9, height: 9, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, sv("line", { x1: 0, y1: 0, x2: 0, y2: 9, stroke: "var(--crit)", "stroke-width": 3.5, opacity: 0.5 }))));
   svg.append(sv("path", { class: "hull", d: "M30 36 H870 Q950 36 950 110 V262 Q950 336 870 336 H30 Z" }), sv("rect", { class: "cor", x: 50, y: 166, width: 880, height: 40, rx: 6 }), sv("text", { class: "zv", x: 490, y: 191, "text-anchor": "middle", text: "PASILLO CENTRAL · CUBIERTA PRINCIPAL" }));
   ZONES.forEach(z => {
@@ -1392,7 +1392,7 @@ function buildMap() {
     r.g = sv("g", { class: "zn s0", tabindex: 0, role: "button", onclick: () => selZone(z.id), onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selZone(z.id); } } }, r.rect, r.pat, ...r.names, r.st, r.vals, r.pin);
     MAPREF[z.id] = r; svg.append(r.g);
   });
-  const lg = el("div", { class: "zlegend" }, [0, 1, 2, 3].map(s => el("span", {}, el("span", { style: `display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:${sevColor(s)};opacity:.7` }), SEVI[s] + " " + SEVN[s])), el("span", { text: "Pasa el cursor o toca una zona para ver sus gráficas. El crítico lleva trazado rayado. La etiqueta INC marca el ticket." }));
+  const lg = el("div", { class: "zlegend" }, [0, 1, 2, 3].map(s => el("span", {}, el("span", { style: `display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:${sevColor(s)};opacity:.7` }), SEVI[s] + " " + SEVN[s])), el("span", { text: "Hover or tap a zone to see its charts. Critical has a hatched pattern. The INC label marks the ticket." }));
   $("#ship-map").append(svg, lg);
 }
 function updateMap() {
@@ -1404,7 +1404,7 @@ function updateMap() {
     r.st.textContent = `${SEVI[z.status]} ${SEVN[z.status]}`;
     r.vals.textContent = `CO₂ ${mean(h.co2.slice(-30)).toFixed(1)} | O₂ ${h.pio2[h.pio2.length - 1].toFixed(0)}`;
     r.pin.textContent = "";
-    const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resuelta").sort((a, b) => b.sev - a.sev);
+    const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resolved").sort((a, b) => b.sev - a.sev);
     if (open.length) {
       const txt = open[0].id + (open.length > 1 ? ` +${open.length - 1}` : ""), py = z.y + 12 + z.n.length * 15 + 6;
       r.pin.append(sv("rect", { x: z.x + 10, y: py, width: txt.length * 6.4 + 10, height: 16, rx: 3 }), sv("text", { x: z.x + 15, y: py + 12, text: txt }));
@@ -1412,55 +1412,55 @@ function updateMap() {
   });
 }
 
-/* gráficas de la zona */
+/* zone charts */
 function chartCard(z, m) {
   const arr = z.hist[m.key], cur = m.avg ? mean(arr.slice(-30)) : arr[arr.length - 1], sev = bandSev(m, cur), W = 300, H = 92, p = 6;
   const X = i => p + (W - 2 * p) * i / (N_H - 1), cl = v => Math.min(m.hi, Math.max(m.lo, v)), Y = v => p + (H - 2 * p) * (1 - (cl(v) - m.lo) / (m.hi - m.lo));
-  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${m.n}: ${cur.toFixed(m.dec)} ${m.u}, ${SEVN[sev]}, últimos 90 segundos` });
+  const svg = sv("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${m.n}: ${cur.toFixed(m.dec)} ${m.u}, ${SEVN[sev]}, last 90 seconds` });
   m.bands.forEach(([a, b, k]) => svg.append(sv("rect", { x: p, y: Y(b), width: W - 2 * p, height: Math.max(0, Y(a) - Y(b)), fill: sevColor(k), opacity: 0.17 })));
   svg.append(sv("polyline", { points: arr.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" "), fill: "none", stroke: "var(--ink)", "stroke-width": 1.7, "stroke-linejoin": "round" }), sv("circle", { cx: X(arr.length - 1), cy: Y(arr[arr.length - 1]), r: 4, fill: sevColor(sev), stroke: "var(--surface)", "stroke-width": 1.5 }));
   return el("div", { class: "ch" }, el("div", { class: "top" }, el("span", { text: m.n }), el("b", { style: `color:${sevColor(sev)}`, text: cur.toFixed(m.dec) + " " + m.u })), svg,
-    el("div", { class: "foot" }, el("span", { text: `${SEVI[sev]} ${SEVN[sev]} · normal ${m.normal}` }), el("span", {}, z.ev.anomalies[m.key] ? el("span", { class: "anom", text: "ANOMALÍA" }) : null, " ", evBadge(m.ev))));
+    el("div", { class: "foot" }, el("span", { text: `${SEVI[sev]} ${SEVN[sev]} · normal ${m.normal}` }), el("span", {}, z.ev.anomalies[m.key] ? el("span", { class: "anom", text: "ANOMALY" }) : null, " ", evBadge(m.ev))));
 }
 function drawZone() {
   const z = ZONES.find(x => x.id === ST.sel), box = $("#ship-zone"); box.textContent = "";
-  const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resuelta");
-  box.append(el("div", { class: "zhead" }, el("div", {}, el("h3", { text: zname(z.id) }), el("span", { class: "muted", style: "font-size:13px", text: `Cubierta principal · ${open.length} ${open.length === 1 ? "incidencia abierta" : "incidencias abiertas"}` })),
-    el("div", { style: "display:flex;gap:14px;align-items:center;flex-wrap:wrap" }, sevEl(z.status), el("span", { class: "live" + (ST.live ? "" : " off") }, el("i"), ST.live ? "en vivo · 1 Hz · últimos 90 s" : "medición en pausa"))));
-  if (z.ev.alerts.length) box.append(el("div", { class: "tgroup" }, el("h5", { text: "Alertas activas en esta zona" }), ...z.ev.alerts.map(a => el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13.5px" }, sevEl(a.sev), el("span", { text: `${a.name}: ${a.band}` }), evBadge(a.ev)))));
-  else box.append(el("div", { class: "ok-note", style: "margin-bottom:10px", text: "Sin alertas. Todos los parámetros están en rango y sin anomalías de tendencia." }));
+  const open = ST.inc.filter(i => i.zone === z.id && i.status !== "resolved");
+  box.append(el("div", { class: "zhead" }, el("div", {}, el("h3", { text: zname(z.id) }), el("span", { class: "muted", style: "font-size:13px", text: `Main deck · ${open.length} ${open.length === 1 ? "open incident" : "open incidents"}` })),
+    el("div", { style: "display:flex;gap:14px;align-items:center;flex-wrap:wrap" }, sevEl(z.status), el("span", { class: "live" + (ST.live ? "" : " off") }, el("i"), ST.live ? "live · 1 Hz · last 90 s" : "measurement paused"))));
+  if (z.ev.alerts.length) box.append(el("div", { class: "tgroup" }, el("h5", { text: "Active alerts in this zone" }), ...z.ev.alerts.map(a => el("div", { style: "display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:13.5px" }, sevEl(a.sev), el("span", { text: `${a.name}: ${a.band}` }), evBadge(a.ev)))));
+  else box.append(el("div", { class: "ok-note", style: "margin-bottom:10px", text: "No alerts. All parameters are in range with no trend anomalies." }));
   const ch = el("div", { class: "charts" }); MET.forEach(m => ch.append(chartCard(z, m))); box.append(ch);
 }
 
 /* tickets */
 function ticketCard(i) {
-  const res = i.status === "resuelta", can = i.manual || i.normal, tasks = ST.tasks.filter(t => t.inc === i.id);
+  const res = i.status === "resolved", can = i.manual || i.normal, tasks = ST.tasks.filter(t => t.inc === i.id);
   return el("div", { class: "tk" + (res ? " res" : "") + (ST.sel === i.zone ? " sel" : ""), style: `--sc:${sevColor(i.sev)}` },
     el("div", { class: "h" }, el("span", { class: "id", text: i.id }), sevEl(i.sev), el("span", { class: "tag", text: i.status }), i.ev ? evBadge(i.ev) : null, el("span", { class: "muted age", "data-id": i.id, style: "font-size:12px;margin-left:auto" })),
     el("div", { class: "t", text: i.title }),
-    el("div", { class: "m" }, el("span", { text: "Ubicación: " + zname(i.zone) + " · Cubierta principal" }), el("span", { text: "Origen: " + i.source }), i.type ? el("span", { text: "Tipo: " + IC[IT[i.type].c] + " · " + IT[i.type].n }) : null),
+    el("div", { class: "m" }, el("span", { text: "Location: " + zname(i.zone) + " · Main deck" }), el("span", { text: "Origin: " + i.source }), i.type ? el("span", { text: "Type: " + IC[IT[i.type].c] + " · " + IT[i.type].n }) : null),
     el("div", { class: "dsc", "data-id": i.id, style: "font-size:13.5px", text: i.desc }),
     tasks.length ? el("ul", { class: "tl" }, tasks.map(t => el("li", {}, el("label", {}, el("input", { type: "checkbox", checked: !!UX.done[t.k], onchange: e => { UX.done[t.k] = e.target.checked; refreshTasks(); drawTickets(true); } }), t.title)))) : null,
-    i.normal && !res ? el("div", { class: "ok-note", text: "Valores normales: puede cerrarse." }) : null,
-    el("div", { class: "btnrow" }, res ? null : (i.status === "abierta" ? el("button", { class: "btn", onclick: () => incAck(i.id), text: "Reconocer" }) : null), res ? null : el("button", { class: "btn pri", disabled: !can, onclick: () => incResolve(i.id), text: can ? "Resolver" : "Resolver (valores fuera de rango)" }), el("button", { class: "btn", onclick: () => selZone(i.zone), text: "Ver zona" })));
+    i.normal && !res ? el("div", { class: "ok-note", text: "Values normal: can be closed." }) : null,
+    el("div", { class: "btnrow" }, res ? null : (i.status === "open" ? el("button", { class: "btn", onclick: () => incAck(i.id), text: "Acknowledge" }) : null), res ? null : el("button", { class: "btn pri", disabled: !can, onclick: () => incResolve(i.id), text: can ? "Resolve" : "Resolve (values out of range)" }), el("button", { class: "btn", onclick: () => selZone(i.zone), text: "View zone" })));
 }
-const ageTxt = s => s < 60 ? `hace ${s} s` : `hace ${Math.floor(s / 60)} min`;
+const ageTxt = s => s < 60 ? `${s} s ago` : `${Math.floor(s / 60)} min ago`;
 function drawTickets(force) {
   const sig = JSON.stringify([ST.inc.map(i => [i.id, i.status, i.sev, i.normal]), ST.tasks.map(t => !!UX.done[t.k]), ST.sel]);
   if (force || sig !== ST.sig) {
     ST.sig = sig;
     const list = $("#tk-list"); list.textContent = "";
-    const open = ST.inc.filter(i => i.status !== "resuelta").sort((a, b) => b.sev - a.sev || b.t0 - a.t0), done = ST.inc.filter(i => i.status === "resuelta").slice(0, 2);
+    const open = ST.inc.filter(i => i.status !== "resolved").sort((a, b) => b.sev - a.sev || b.t0 - a.t0), done = ST.inc.filter(i => i.status === "resolved").slice(0, 2);
     open.concat(done).forEach(i => list.append(ticketCard(i)));
-    if (!ST.inc.length) list.append(el("div", { class: "muted", style: "font-size:13.5px", text: "Sin incidencias. Provoca una anomalía o reporta una manualmente." }));
-    $("#tk-count").textContent = `${open.length} ${open.length === 1 ? "abierta" : "abiertas"}`;
+    if (!ST.inc.length) list.append(el("div", { class: "muted", style: "font-size:13.5px", text: "No incidents. Trigger an anomaly or report one manually." }));
+    $("#tk-count").textContent = `${open.length} ${open.length === 1 ? "open" : "open"}`;
   }
   document.querySelectorAll("#tk-list .dsc").forEach(n => { const i = ST.inc.find(x => x.id === n.dataset.id); if (i && n.textContent !== i.desc) n.textContent = i.desc; });
   document.querySelectorAll("#tk-list .age").forEach(n => { const i = ST.inc.find(x => x.id === n.dataset.id); if (i) n.textContent = ageTxt(ST.t - i.t0); });
 }
 function buildTickets() {
   const box = $("#ship-tickets");
-  box.append(el("div", { class: "zhead" }, el("h3", { text: "Tickets de incidencia" }), el("span", { class: "muted", id: "tk-count" })), el("div", { class: "tklist", id: "tk-list" }));
+  box.append(el("div", { class: "zhead" }, el("h3", { text: "Incident tickets" }), el("span", { class: "muted", id: "tk-count" })), el("div", { class: "tklist", id: "tk-list" }));
   const zsel = el("select", { id: "nz" }, ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
   const csel = el("select", { id: "nc" }, D.icats.map(c => el("option", { value: c.k, text: c.n })));
   const tsel = el("select", { id: "ntp" });
@@ -1470,30 +1470,30 @@ function buildTickets() {
   csel.addEventListener("change", fillTypes); tsel.addEventListener("change", applyType);
   const form = el("form", { class: "newtk", onsubmit: e => {
     e.preventDefault();
-    const t = IT[tsel.value], title = $("#nt").value.trim() || t.n, d = $("#nd").value.trim() || "Sin descripción adicional.";
+    const t = IT[tsel.value], title = $("#nt").value.trim() || t.n, d = $("#nd").value.trim() || "No additional description.";
     openIncident({ zone: zsel.value, auto: false, sev: parseInt(ssel.value, 10), title, desc: d, acts: t.acts, type: t.k });
     $("#nt").value = ""; $("#nd").value = ""; ST.sel = zsel.value; shipDraw(true);
   } },
-    el("h3", { text: "Reportar una incidencia" }),
-    el("div", { class: "two" }, el("label", { for: "nc" }, "Categoría", csel), el("label", { for: "ntp" }, "Tipo", tsel)),
-    el("div", { class: "two" }, el("label", { for: "nz" }, "Zona", zsel), el("label", { for: "ns" }, "Severidad", ssel)),
-    el("label", { for: "nt" }, "Título", el("input", { type: "text", id: "nt", placeholder: "Si lo dejas vacío se usa el tipo" })),
-    el("label", { for: "nd" }, "Descripción", el("textarea", { id: "nd", rows: 3, placeholder: "Qué se observa y desde cuándo" })),
-    el("button", { class: "btn pri", type: "submit", text: "Crear ticket" }));
+    el("h3", { text: "Report an incident" }),
+    el("div", { class: "two" }, el("label", { for: "nc" }, "Category", csel), el("label", { for: "ntp" }, "Type", tsel)),
+    el("div", { class: "two" }, el("label", { for: "nz" }, "Zone", zsel), el("label", { for: "ns" }, "Severity", ssel)),
+    el("label", { for: "nt" }, "Title", el("input", { type: "text", id: "nt", placeholder: "If left empty the type is used" })),
+    el("label", { for: "nd" }, "Description", el("textarea", { id: "nd", rows: 3, placeholder: "What is observed and since when" })),
+    el("button", { class: "btn pri", type: "submit", text: "Create ticket" }));
   box.append(form); fillTypes();
 }
 
-/* tareas del día en el panel de la nave */
+/* tasks of the day in the ship panel */
 function shipDrawTasks() {
   const box = $("#ship-tasks-list"); if (!box) return; box.textContent = "";
   const items = taskItems(evalState(UX));
-  box.append(el("h3", { style: "margin-bottom:4px", text: "Tareas diarias de la tripulación" }), el("p", { class: "muted", style: "font-size:13px;margin-bottom:10px", text: "Salud, mantenimiento de la nave e incidentes del lugar donde estén. Las de incidente nacen al abrirse un ticket y se completan al cerrarlo." }), taskFilter(items), ...taskGroups(items));
+  box.append(el("h3", { style: "margin-bottom:4px", text: "Daily crew tasks" }), el("p", { class: "muted", style: "font-size:13px;margin-bottom:10px", text: "Health, ship maintenance and incidents wherever they are. Incident tasks are born when a ticket opens and are completed when it closes." }), taskFilter(items), ...taskGroups(items));
 }
 
-/* barra de herramientas, tick y arranque */
+/* toolbar, tick and startup */
 function shipDraw(force) {
   updateMap(); drawZone(); drawTickets(force);
-  if (ST.dirty) { ST.dirty = false; shipDrawTasks(); if (UX.tab === "misiones" || UX.tab === "nave") drawProto(); }
+  if (ST.dirty) { ST.dirty = false; shipDrawTasks(); if (UX.tab === "tasks" || UX.tab === "ship") drawProto(); }
 }
 function shipTick() {
   ST.t++;
@@ -1502,22 +1502,22 @@ function shipTick() {
 }
 function setLive(on) {
   ST.live = on; clearInterval(ST.timer); ST.timer = on ? setInterval(shipTick, 1000) : null;
-  $("#sh-live").textContent = on ? "Pausar medición" : "Reanudar medición"; drawZone();
+  $("#sh-live").textContent = on ? "Pause measurement" : "Resume measurement"; drawZone();
 }
 (function initShip() {
   const tools = $("#ship-tools");
-  tools.append(el("span", { class: "muted", style: "font-size:13px", text: "Provocar:" }));
+  tools.append(el("span", { class: "muted", style: "font-size:13px", text: "Trigger:" }));
   const chips = el("div", { class: "chips" });
   SCEN.forEach(sc => chips.append(el("button", { class: "chip", onclick: () => { const z = ZONES.find(x => x.id === sc[2]); Object.assign(z.tg, sc[3]); z.k = sc[4]; ST.sel = sc[2]; shipLog(`telemetry.scenario_changed · ${sc[1]} → realtime`, "l-skip"); shipDraw(true); } }, sc[1])));
-  chips.append(el("button", { class: "chip", onclick: () => { ZONES.forEach(z => { z.tg = { kpa: 101.3, o2: 21, co2: z.base.co2, t: z.base.t, rh: z.base.rh }; z.k = 0.1; }); shipLog("telemetry.scenario_changed · todo vuelve a valores normales", "l-ok"); shipDraw(true); } }, "Normalizar todo"));
-  tools.append(chips, el("button", { class: "btn", id: "sh-live", onclick: () => setLive(!ST.live), text: "Pausar medición" }));
+  chips.append(el("button", { class: "chip", onclick: () => { ZONES.forEach(z => { z.tg = { kpa: 101.3, o2: 21, co2: z.base.co2, t: z.base.t, rh: z.base.rh }; z.k = 0.1; }); shipLog("telemetry.scenario_changed · everything returns to normal values", "l-ok"); shipDraw(true); } }, "Normalize all"));
+  tools.append(chips, el("button", { class: "btn", id: "sh-live", onclick: () => setLive(!ST.live), text: "Pause measurement" }));
   buildMap(); buildTickets();
-  shipLog("Ejemplo inicial: el CO₂ del laboratorio ya venía subiendo.", "");
+  shipLog("Initial example: the laboratory CO₂ was already rising.", "");
   shipEvaluate(); ST.dirty = true; shipDraw(true); shipDrawTasks(); drawProto();
   ST.timer = setInterval(shipTick, 1000);
 })();
 
-/* ---------- catálogo de tipos de incidencia ---------- */
+/* ---------- incident type catalog ---------- */
 function reportType(k) {
   const t = IT[k]; $("#nc").value = t.c; $("#nc").dispatchEvent(new Event("change")); $("#ntp").value = k; $("#ntp").dispatchEvent(new Event("change"));
   $("#ship-tickets").scrollIntoView({ behavior: "smooth", block: "center" }); $("#nt").focus();
@@ -1525,21 +1525,21 @@ function reportType(k) {
 function drawCatalog() {
   const box = $("#ship-catalog"); box.textContent = "";
   const n = catSel === "ALL" ? D.itypes.length : D.itypes.filter(t => t.c === catSel).length;
-  box.append(el("h3", { style: "margin-bottom:4px", text: "Catálogo de tipos de incidencia" }), el("p", { class: "muted", style: "font-size:13px;margin-bottom:10px", text: `${D.itypes.length} tipos en ${D.icats.length} categorías. Es una propuesta: solo los marcados VERIFICADO salen de la norma. Los AUTO se detectan por regla y los MANUAL los reporta la tripulación.` }));
-  box.append(el("div", { class: "chips", style: "margin-bottom:10px" }, [["ALL", "Todas"], ...D.icats.map(c => [c.k, c.n])].map(([k, l]) => el("button", { class: "chip", "aria-pressed": String(catSel === k), onclick: () => { catSel = k; drawCatalog(); } }, l))));
-  const tb = el("table", { class: "tbl", style: "min-width:760px" }, el("thead", {}, el("tr", {}, ["Tipo", "Detección", "Severidad", "Evidencia", "Zonas típicas", ""].map(h => el("th", { text: h })))));
+  box.append(el("h3", { style: "margin-bottom:4px", text: "Incident type catalog" }), el("p", { class: "muted", style: "font-size:13px;margin-bottom:10px", text: `${D.itypes.length} types in ${D.icats.length} categories. This is a proposal: only those marked VERIFIED come from the standard. AUTO ones are detected by rule and MANUAL ones are reported by the crew.` }));
+  box.append(el("div", { class: "chips", style: "margin-bottom:10px" }, [["ALL", "All"], ...D.icats.map(c => [c.k, c.n])].map(([k, l]) => el("button", { class: "chip", "aria-pressed": String(catSel === k), onclick: () => { catSel = k; drawCatalog(); } }, l))));
+  const tb = el("table", { class: "tbl", style: "min-width:760px" }, el("thead", {}, el("tr", {}, ["Type", "Detection", "Severity", "Evidence", "Typical zones", ""].map(h => el("th", { text: h })))));
   const body = el("tbody");
   D.itypes.filter(t => catSel === "ALL" || t.c === catSel).forEach(t => body.append(el("tr", {},
     el("td", {}, el("div", { text: t.n }), catSel === "ALL" ? el("div", { class: "muted", style: "font-size:12px", text: IC[t.c] }) : null),
     el("td", {}, el("span", { class: "pill " + (t.det === "AUTO" ? "ch-EVT" : "ch-REST"), text: t.det }), t.rule ? el("div", { class: "mono muted", style: "font-size:11.5px", text: t.rule }) : null),
     el("td", {}, sevEl(t.sev)), el("td", {}, evBadge(t.ev)), el("td", { style: "font-size:13px", text: t.zones.map(zlabel).join(", ") }),
-    el("td", {}, el("button", { class: "btn", onclick: () => reportType(t.k), text: "Reportar" })))));
+    el("td", {}, el("button", { class: "btn", onclick: () => reportType(t.k), text: "Report" })))));
   tb.append(body);
-  box.append(el("div", { class: "scroll", style: "max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px" }, tb), el("div", { class: "muted", style: "font-size:12.5px;margin-top:6px", text: `${n} tipos mostrados.` }));
+  box.append(el("div", { class: "scroll", style: "max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px" }, tb), el("div", { class: "muted", style: "font-size:12.5px;margin-top:6px", text: `${n} types shown.` }));
 }
 
-/* ---------- tareas: origen, tareas propias y plan desde Tierra ---------- */
-function snapshot() { GR.snap = TPL.filter(t => t.origin === "TIERRA").map(t => ({ id: t.id, title: t.title, st: tplStatus(t) })); GR.snapCrew = TPL.filter(t => t.origin === "TRIPULACION").map(t => ({ title: t.title, kind: t.kind, st: tplStatus(t) })); GR.snapT = ST.t; }
+/* ---------- tasks: origin, own tasks and plan from Ground ---------- */
+function snapshot() { GR.snap = TPL.filter(t => t.origin === "GROUND").map(t => ({ id: t.id, title: t.title, st: tplStatus(t) })); GR.snapCrew = TPL.filter(t => t.origin === "CREW").map(t => ({ title: t.title, kind: t.kind, st: tplStatus(t) })); GR.snapT = ST.t; }
 function grLog(txt, cls) { GR.log.unshift({ t: "t+" + ST.t + " s", txt, cls: cls || "" }); GR.log = GR.log.slice(0, 30); const b = $("#gr-log"); if (!b) return; b.textContent = ""; GR.log.forEach(l => b.append(el("div", { class: l.cls, text: `${l.t} · ${l.txt}` }))); }
 function setLink(v) {
   if (UX.link === v) return;
@@ -1549,133 +1549,133 @@ function setLink(v) {
   drawProto(true); drawGround();
 }
 function createCrewTask(kind, title, zone) {
-  TPL.push({ id: "t-c" + (GR.n++), kind, title, origin: "TRIPULACION", rec: "Una vez", zone: zone || null, active: true });
-  const m = `engagement.task_created · «${title}» (origen TRIPULACION) → realtime` + (UX.consent.tareas ? ", groundlink" : " (no sube a Tierra: sin consentimiento)");
+  TPL.push({ id: "t-c" + (GR.n++), kind, title, origin: "CREW", rec: "Once", zone: zone || null, active: true });
+  const m = `engagement.task_created · "${title}" (CREW origin) → realtime` + (UX.consent.tasks ? ", groundlink" : " (not sent to Ground: no consent)");
   shipLog(m, "l-ok"); grLog(m, "l-ok"); ST.dirty = true; refreshTasks(); drawGround();
 }
 function newTaskForm() {
-  const kind = el("select", { "aria-label": "Tipo de tarea" }, el("option", { value: "SALUD", text: "Salud" }), el("option", { value: "NAVE", text: "Nave" }));
-  const zone = el("select", { "aria-label": "Zona" }, el("option", { value: "", text: "Sin zona" }), ...ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
-  const title = el("input", { type: "text", placeholder: "Ej. Cambiar el filtro de la cocina", "aria-label": "Título de la tarea" });
+  const kind = el("select", { "aria-label": "Task type" }, el("option", { value: "HEALTH", text: "Health" }), el("option", { value: "SHIP", text: "Ship" }));
+  const zone = el("select", { "aria-label": "Zone" }, el("option", { value: "", text: "No zone" }), ...ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
+  const title = el("input", { type: "text", placeholder: "E.g. Replace the galley filter", "aria-label": "Task title" });
   return el("form", { class: "newtk", onsubmit: e => { e.preventDefault(); const t = title.value.trim(); if (!t) { title.focus(); return; } createCrewTask(kind.value, t, zone.value); title.value = ""; } },
-    el("h3", { text: "Nueva tarea propia" }), el("div", { class: "two" }, el("label", {}, "Tipo", kind), el("label", {}, "Zona", zone)), el("label", {}, "Título", title),
-    el("button", { class: "btn pri", type: "submit", text: "Crear tarea" }), el("span", { class: "muted", style: "font-size:12.5px", text: "Funciona sin enlace. Solo sube a Tierra si el consentimiento de tareas está activo." }));
+    el("h3", { text: "New own task" }), el("div", { class: "two" }, el("label", {}, "Type", kind), el("label", {}, "Zone", zone)), el("label", {}, "Title", title),
+    el("button", { class: "btn pri", type: "submit", text: "Create task" }), el("span", { class: "muted", style: "font-size:12.5px", text: "Works without a link. Only goes up to Ground if the tasks consent is on." }));
 }
 
-/* ---------- plan desde Tierra (opción B) ---------- */
+/* ---------- plan from Ground (option B) ---------- */
 function publishPlan() {
   const test = $("#gr-test").value;
   if (!GR.draft.length || (GR.sent && !GR.sent.acked)) return;
   const changes = GR.draft.slice();
-  if (test === "zona") changes.push({ change: "NEW", kind: "NAVE", title: "Tarea con zona inexistente (prueba)", rec: "Diaria", zone: "__x" });
-  const ver = test === "repetida" ? GR.applied : GR.ver + 1;
-  if (test !== "repetida") GR.ver = ver;
-  GR.sent = { ver, changes, test, stage: UX.link ? "transito" : "cola", eta: GR.delay, acked: false, result: "", draftBack: GR.draft.slice() };
+  if (test === "zone") changes.push({ change: "NEW", kind: "SHIP", title: "Task with a nonexistent zone (test)", rec: "Daily", zone: "__x" });
+  const ver = test === "repeated" ? GR.applied : GR.ver + 1;
+  if (test !== "repeated") GR.ver = ver;
+  GR.sent = { ver, changes, test, stage: UX.link ? "transit" : "queued", eta: GR.delay, acked: false, result: "", draftBack: GR.draft.slice() };
   GR.draft = [];
-  grLog(`Tierra publica el plan v${ver} (${changes.length} cambios)` + (UX.link ? "" : ". Sin enlace: queda en cola"), UX.link ? "" : "l-skip");
+  grLog(`Ground publishes plan v${ver} (${changes.length} changes)` + (UX.link ? "" : ". No link: it stays queued"), UX.link ? "" : "l-skip");
   drawGround();
 }
 function receivePlan(p) {
-  if (p.test === "corrupto") { p.stage = "rechazado"; p.eta = GR.delay; p.result = `Rechazado: el hash no coincide. Se conserva la v${GR.applied}.`; grLog(`groundlink.inbound_plan v${p.ver}: ${p.result}`, "l-bad"); shipLog(`groundlink.inbound_plan v${p.ver} rechazado (hash inválido)`, "l-bad"); return; }
-  if (p.ver <= GR.applied) { p.stage = "ignorado"; p.eta = GR.delay; p.result = `Ignorado: la v${p.ver} ya está aplicada (idempotente).`; grLog(`groundlink.inbound_plan v${p.ver}: ${p.result}`, "l-skip"); shipLog(`groundlink.inbound_plan v${p.ver} ignorado (repetido)`, "l-skip"); return; }
-  p.stage = "recibido"; p.eta = 1; grLog(`groundlink.ground_plan_received v${p.ver} → engagement, realtime`, "l-ok"); shipLog(`groundlink.ground_plan_received v${p.ver} → engagement, realtime`, "l-ok");
+  if (p.test === "corrupt") { p.stage = "rejected"; p.eta = GR.delay; p.result = `Rejected: the hash does not match. v${GR.applied} is kept.`; grLog(`groundlink.inbound_plan v${p.ver}: ${p.result}`, "l-bad"); shipLog(`groundlink.inbound_plan v${p.ver} rejected (invalid hash)`, "l-bad"); return; }
+  if (p.ver <= GR.applied) { p.stage = "ignored"; p.eta = GR.delay; p.result = `Ignored: v${p.ver} is already applied (idempotent).`; grLog(`groundlink.inbound_plan v${p.ver}: ${p.result}`, "l-skip"); shipLog(`groundlink.inbound_plan v${p.ver} ignored (repeated)`, "l-skip"); return; }
+  p.stage = "received"; p.eta = 1; grLog(`groundlink.ground_plan_received v${p.ver} → engagement, realtime`, "l-ok"); shipLog(`groundlink.ground_plan_received v${p.ver} → engagement, realtime`, "l-ok");
 }
 function applyPlan(p) {
   const rej = []; let n = 0;
   p.changes.forEach(c => {
-    if (c.change === "NEW") { if (c.zone === "__x") { rej.push(`«${c.title}»: la zona no existe`); return; } TPL.push({ id: "t-g" + (GR.n++), kind: c.kind, title: c.title, origin: "TIERRA", ver: p.ver, rec: c.rec, zone: c.zone || null }); n++; }
-    else if (c.change === "CANCEL") { const t = TPL.find(x => x.id === c.target); if (t) { t.active = false; n++; } else rej.push("cancelación: la plantilla no existe"); }
+    if (c.change === "NEW") { if (c.zone === "__x") { rej.push(`"${c.title}": the zone does not exist`); return; } TPL.push({ id: "t-g" + (GR.n++), kind: c.kind, title: c.title, origin: "GROUND", ver: p.ver, rec: c.rec, zone: c.zone || null }); n++; }
+    else if (c.change === "CANCEL") { const t = TPL.find(x => x.id === c.target); if (t) { t.active = false; n++; } else rej.push("cancellation: the template does not exist"); }
   });
-  GR.applied = p.ver; p.rejected = rej; p.stage = "aplicado"; p.eta = GR.delay;
-  p.result = `Aplicado: ${n} cambios` + (rej.length ? `, ${rej.length} rechazado(s): ${rej.join("; ")}` : "") + ".";
-  GR.banner = `Plan v${p.ver} aplicado` + (rej.length ? " con rechazos" : "");
-  const m = `engagement.ground_plan_applied v${p.ver}: ${n} aplicados` + (rej.length ? `, ${rej.length} rechazados` : "") + " → groundlink, realtime";
+  GR.applied = p.ver; p.rejected = rej; p.stage = "applied"; p.eta = GR.delay;
+  p.result = `Applied: ${n} changes` + (rej.length ? `, ${rej.length} rejected: ${rej.join("; ")}` : "") + ".";
+  GR.banner = `Plan v${p.ver} applied` + (rej.length ? " with rejections" : "");
+  const m = `engagement.ground_plan_applied v${p.ver}: ${n} applied` + (rej.length ? `, ${rej.length} rejected` : "") + " → groundlink, realtime";
   grLog(m, rej.length ? "l-skip" : "l-ok"); shipLog(m, rej.length ? "l-skip" : "l-ok"); ST.dirty = true; refreshTasks();
 }
 function groundTick() {
   const p = GR.sent;
   if (p && !p.acked) {
-    if (p.stage === "cola") { if (UX.link) { p.stage = "transito"; p.eta = GR.delay; grLog(`Vuelve el enlace: el plan v${p.ver} sale hacia la nave`, "l-ok"); } }
-    else if (p.stage === "transito") { if (!UX.link) { p.stage = "cola"; grLog("Se cortó el enlace: el plan queda en cola", "l-skip"); } else if (--p.eta <= 0) receivePlan(p); }
-    else if (p.stage === "recibido") { if (--p.eta <= 0) applyPlan(p); }
+    if (p.stage === "queued") { if (UX.link) { p.stage = "transit"; p.eta = GR.delay; grLog(`The link is back: plan v${p.ver} leaves for the ship`, "l-ok"); } }
+    else if (p.stage === "transit") { if (!UX.link) { p.stage = "queued"; grLog("The link dropped: the plan stays queued", "l-skip"); } else if (--p.eta <= 0) receivePlan(p); }
+    else if (p.stage === "received") { if (--p.eta <= 0) applyPlan(p); }
     else if (UX.link && --p.eta <= 0) {
-      p.acked = true; if (p.stage === "aplicado") p.stage = "confirmado";
-      if (p.stage === "rechazado") { GR.draft = p.draftBack; GR.ver = GR.applied; }
-      grLog(`Tierra recibe la confirmación del plan v${p.ver}`, "l-ok");
+      p.acked = true; if (p.stage === "applied") p.stage = "confirmed";
+      if (p.stage === "rejected") { GR.draft = p.draftBack; GR.ver = GR.applied; }
+      grLog(`Ground receives the confirmation of plan v${p.ver}`, "l-ok");
     }
   }
-  if (UX.link && UX.consent.tareas) snapshot();
+  if (UX.link && UX.consent.tasks) snapshot();
   drawGround();
 }
-const PIPE = ["Publicado", "En el enlace", "Recibido", "Aplicado", "Confirmado"];
-function pipeStep(p) { return { cola: 0, transito: 1, recibido: 2, aplicado: 3, confirmado: 4, rechazado: 2, ignorado: 2 }[p.stage]; }
+const PIPE = ["Published", "On the link", "Received", "Applied", "Confirmed"];
+function pipeStep(p) { return { queued: 0, transit: 1, received: 2, applied: 3, confirmed: 4, rejected: 2, ignored: 2 }[p.stage]; }
 function drawGround() {
   const st = $("#gr-status"); if (!st) return;
   if (!$("#gr-pub")) return;
-  const lk = $("#gr-link"); if (lk) { lk.textContent = UX.link ? "Enlace activo · cortar" : "Sin enlace · restablecer"; lk.setAttribute("aria-pressed", String(UX.link)); }
-  const sig = JSON.stringify([UX.link, GR.sent && [GR.sent.stage, GR.sent.eta, GR.sent.acked, GR.sent.result], GR.draft, GR.ver, GR.applied, TPL.map(t => [t.id, t.active, tplStatus(t)]), GR.snap, GR.snapCrew, UX.consent.tareas, GR.banner, $("#gr-test") && $("#gr-test").value, UX.link ? 0 : ST.t - GR.snapT, UX.block, Object.keys(UX.done).length, taskItems(evalState(UX)).length]);
+  const lk = $("#gr-link"); if (lk) { lk.textContent = UX.link ? "Link active · cut" : "No link · restore"; lk.setAttribute("aria-pressed", String(UX.link)); }
+  const sig = JSON.stringify([UX.link, GR.sent && [GR.sent.stage, GR.sent.eta, GR.sent.acked, GR.sent.result], GR.draft, GR.ver, GR.applied, TPL.map(t => [t.id, t.active, tplStatus(t)]), GR.snap, GR.snapCrew, UX.consent.tasks, GR.banner, $("#gr-test") && $("#gr-test").value, UX.link ? 0 : ST.t - GR.snapT, UX.block, Object.keys(UX.done).length, taskItems(evalState(UX)).length]);
   if (sig === GR.sig) return; GR.sig = sig;
   st.textContent = "";
   const p = GR.sent;
-  st.append(el("div", { class: "topbar" }, el("span", { class: "tag", text: UX.link ? "Enlace activo" : "Sin enlace" }), el("span", { class: "mono", style: "font-size:12.5px", text: `Última versión aplicada en la nave: v${GR.applied} · publicada: v${GR.ver}` })));
+  st.append(el("div", { class: "topbar" }, el("span", { class: "tag", text: UX.link ? "Link active" : "No link" }), el("span", { class: "mono", style: "font-size:12.5px", text: `Last version applied on the ship: v${GR.applied} · published: v${GR.ver}` })));
   if (p) {
-    const cur = pipeStep(p), bad = p.stage === "rechazado" || p.stage === "ignorado";
+    const cur = pipeStep(p), bad = p.stage === "rejected" || p.stage === "ignored";
     st.append(el("div", { class: "pipe" }, PIPE.map((s, i) => el("span", { class: "s" + (i < cur || (i === cur && p.acked) ? " done" : i === cur ? " on" : "") + (bad && i === cur ? " bad" : ""), text: (i < cur ? "✓ " : "") + s }))),
-      el("div", { style: "font-size:13.5px", text: `Plan v${p.ver}: ` + (p.result || ({ cola: "en cola, esperando enlace", transito: `en tránsito (${p.eta} s)`, recibido: "recibido, aplicando" }[p.stage] || "")) + (p.stage === "aplicado" && !p.acked ? ` Confirmación en camino${UX.link ? ` (${p.eta} s)` : ", esperando enlace"}.` : "") }));
-  } else st.append(el("div", { class: "muted", style: "font-size:13px", text: "Aún no se publicó ninguna versión nueva." }));
+      el("div", { style: "font-size:13.5px", text: `Plan v${p.ver}: ` + (p.result || ({ queued: "queued, waiting for the link", transit: `in transit (${p.eta} s)`, received: "received, applying" }[p.stage] || "")) + (p.stage === "applied" && !p.acked ? ` Confirmation on its way${UX.link ? ` (${p.eta} s)` : ", waiting for the link"}.` : "") }));
+  } else st.append(el("div", { class: "muted", style: "font-size:13px", text: "No new version has been published yet." }));
   const tpl = $("#gr-tpl"); tpl.textContent = "";
-  const stale = !UX.link ? ` · último dato hace ${ST.t - GR.snapT} s` : "";
-  tpl.append(el("h5", { class: "mono muted", style: "margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: "Plantillas de Tierra y su estado en la nave" + stale }));
-  const act = TPL.filter(t => t.origin === "TIERRA" && t.active !== false);
-  if (!act.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "No hay plantillas activas." }));
+  const stale = !UX.link ? ` · last data ${ST.t - GR.snapT} s ago` : "";
+  tpl.append(el("h5", { class: "mono muted", style: "margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: "Ground templates and their status on the ship" + stale }));
+  const act = TPL.filter(t => t.origin === "GROUND" && t.active !== false);
+  if (!act.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "There are no active templates." }));
   act.forEach(t => {
     const s = (GR.snap.find(x => x.id === t.id) || {}).st, cancel = GR.draft.some(d => d.change === "CANCEL" && d.target === t.id);
-    tpl.append(el("div", { class: "task" }, el("div", { class: "grow" }, el("div", { class: "tt", text: t.title }), el("div", { class: "muted", style: "font-size:12.5px" }, `${t.kind} · ${t.rec} · ${t.zone ? zname(t.zone) : "toda la nave"} · v${t.ver}`), el("div", { style: "font-size:12.5px;margin-top:2px" }, UX.consent.tareas ? (s || "sin datos") : "Sin datos: la tripulación no comparte tareas")),
-      el("button", { class: "btn", disabled: cancel, onclick: () => { GR.draft.push({ change: "CANCEL", target: t.id, title: t.title }); drawGround(); }, text: cancel ? "Cancelación en borrador" : "Cancelar" })));
+    tpl.append(el("div", { class: "task" }, el("div", { class: "grow" }, el("div", { class: "tt", text: t.title }), el("div", { class: "muted", style: "font-size:12.5px" }, `${t.kind} · ${t.rec} · ${t.zone ? zname(t.zone) : "the whole ship"} · v${t.ver}`), el("div", { style: "font-size:12.5px;margin-top:2px" }, UX.consent.tasks ? (s || "no data") : "No data: the crew does not share tasks")),
+      el("button", { class: "btn", disabled: cancel, onclick: () => { GR.draft.push({ change: "CANCEL", target: t.id, title: t.title }); drawGround(); }, text: cancel ? "Cancellation in draft" : "Cancel" })));
   });
-  tpl.append(el("h5", { class: "mono muted", style: "margin:14px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: `Borrador de la v${GR.ver + 1}` }));
-  if (!GR.draft.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "Sin cambios. Añade una plantilla o cancela una." }));
-  GR.draft.forEach((d, i) => tpl.append(el("div", { class: "task" }, el("div", { class: "grow" }, el("div", { class: "tt" }, el("span", { class: "tag", text: d.change === "NEW" ? "NUEVA" : "CANCELAR" }), " " + d.title), d.change === "NEW" ? el("div", { class: "muted", style: "font-size:12.5px", text: `${d.kind} · ${d.rec} · ${d.zone ? zname(d.zone) : "toda la nave"}` }) : null), el("button", { class: "btn", onclick: () => { GR.draft.splice(i, 1); drawGround(); }, text: "Quitar" }))));
+  tpl.append(el("h5", { class: "mono muted", style: "margin:14px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: `Draft of v${GR.ver + 1}` }));
+  if (!GR.draft.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "No changes. Add a template or cancel one." }));
+  GR.draft.forEach((d, i) => tpl.append(el("div", { class: "task" }, el("div", { class: "grow" }, el("div", { class: "tt" }, el("span", { class: "tag", text: d.change === "NEW" ? "NEW" : "CANCEL" }), " " + d.title), d.change === "NEW" ? el("div", { class: "muted", style: "font-size:12.5px", text: `${d.kind} · ${d.rec} · ${d.zone ? zname(d.zone) : "the whole ship"}` }) : null), el("button", { class: "btn", onclick: () => { GR.draft.splice(i, 1); drawGround(); }, text: "Remove" }))));
   const inflight = GR.sent && !GR.sent.acked, pub = $("#gr-pub");
   pub.disabled = !GR.draft.length || !!inflight;
-  pub.textContent = inflight ? `Plan v${GR.sent.ver} en curso` : `Publicar plan v${$("#gr-test").value === "repetida" ? GR.applied : GR.ver + 1} (${GR.draft.length} cambios)`;
-  if (UX.consent.tareas) { tpl.append(el("h5", { class: "mono muted", style: "margin:14px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: "Tareas propias de la tripulación (compartidas)" })); if (!GR.snapCrew.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "Ninguna." })); GR.snapCrew.forEach(c => tpl.append(el("div", { class: "kv", style: "padding:4px 0" }, el("span", { text: c.title }), el("span", { class: "mono", style: "font-size:12.5px", text: c.st })))); }
-  else tpl.append(el("div", { class: "muted", style: "font-size:13px;margin-top:12px", text: "La tripulación no comparte sus tareas propias." }));
-  // lado nave
+  pub.textContent = inflight ? `Plan v${GR.sent.ver} in progress` : `Publish plan v${$("#gr-test").value === "repeated" ? GR.applied : GR.ver + 1}` (${GR.draft.length} changes)`;
+  if (UX.consent.tasks) { tpl.append(el("h5", { class: "mono muted", style: "margin:14px 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase", text: "Crew's own tasks (shared)" })); if (!GR.snapCrew.length) tpl.append(el("div", { class: "muted", style: "font-size:13px", text: "None." })); GR.snapCrew.forEach(c => tpl.append(el("div", { class: "kv", style: "padding:4px 0" }, el("span", { text: c.title }), el("span", { class: "mono", style: "font-size:12.5px", text: c.st })))); }
+  else tpl.append(el("div", { class: "muted", style: "font-size:13px;margin-top:12px", text: "The crew does not share its own tasks." }));
+  // ship side
   const sh = $("#gr-ship"); sh.textContent = "";
   const cnt = o => taskItems(evalState(UX)).filter(i => i.origin === o).length;
-  sh.append(el("h3", { style: "margin-bottom:4px", text: "Lo que ve la nave" }), el("div", { class: "banner", style: "margin:8px 0", text: GR.banner + (UX.link ? "" : " · sin enlace: sigue el último plan") }),
-    el("div", { class: "kv" }, el("span", { text: "Tareas de Tierra" }), el("b", { class: "mono", text: cnt("TIERRA") })), el("div", { class: "kv" }, el("span", { text: "Tareas del sistema" }), el("b", { class: "mono", text: cnt("SISTEMA") })), el("div", { class: "kv" }, el("span", { text: "Tareas propias" }), el("b", { class: "mono", text: cnt("TRIPULACION") })),
-    el("div", { class: "kv" }, el("span", { text: "Bloqueadas con motivo" }), el("b", { class: "mono", text: Object.keys(UX.block).filter(k => UX.block[k]).length })),
-    el("p", { class: "muted", style: "font-size:13px;margin-top:10px", text: "Crea o bloquea tareas en «Tareas diarias de la tripulación», en el panel de la nave, o en la pestaña Tareas del día del prototipo. Lo que cambies aparece aquí y en el panel de Tierra si el enlace está activo y el consentimiento de tareas lo permite." }));
+  sh.append(el("h3", { style: "margin-bottom:4px", text: "What the ship sees" }), el("div", { class: "banner", style: "margin:8px 0", text: GR.banner + (UX.link ? "" : " · no link: the last plan continues") }),
+    el("div", { class: "kv" }, el("span", { text: "Ground tasks" }), el("b", { class: "mono", text: cnt("GROUND") })), el("div", { class: "kv" }, el("span", { text: "System tasks" }), el("b", { class: "mono", text: cnt("SYSTEM") })), el("div", { class: "kv" }, el("span", { text: "Own tasks" }), el("b", { class: "mono", text: cnt("CREW") })),
+    el("div", { class: "kv" }, el("span", { text: "Blocked with a reason" }), el("b", { class: "mono", text: Object.keys(UX.block).filter(k => UX.block[k]).length })),
+    el("p", { class: "muted", style: "font-size:13px;margin-top:10px", text: "Create or block tasks in \"Daily crew tasks\", in the ship panel, or in the Tasks of the day tab of the prototype. What you change appears here and in the Ground panel if the link is active and the tasks consent allows it." }));
 }
 (function initGround() {
   const tools = $("#gr-tools");
   const lk = el("button", { class: "btn", id: "gr-link", "aria-pressed": "true", onclick: () => setLink(!UX.link) });
-  tools.append(el("span", { class: "muted", style: "font-size:13px", text: "Enlace:" }), lk, el("span", { class: "muted", style: "font-size:13px;margin-left:8px", text: "Demora de señal:" }),
+  tools.append(el("span", { class: "muted", style: "font-size:13px", text: "Link:" }), lk, el("span", { class: "muted", style: "font-size:13px;margin-left:8px", text: "Signal delay:" }),
     ...[2, 8, 20].map(s => el("button", { class: "chip", "data-d": s, "aria-pressed": String(s === GR.delay), onclick: e => { GR.delay = s; tools.querySelectorAll("[data-d]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.d === s))); } }, s + " s")),
-    el("span", { class: "muted", style: "font-size:12.5px", text: "Valores de demostración. La demora real a Marte no está verificada." }));
+    el("span", { class: "muted", style: "font-size:12.5px", text: "Demo values. The real delay to Mars is not verified." }));
   const form = $("#gr-form");
-  const kind = el("select", { "aria-label": "Tipo" }, el("option", { value: "SALUD", text: "Salud" }), el("option", { value: "NAVE", text: "Nave" }));
-  const zone = el("select", { "aria-label": "Zona" }, el("option", { value: "", text: "Toda la nave" }), ...ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
-  const rec = el("select", { "aria-label": "Recurrencia" }, ["Diaria", "Semanal", "Una vez"].map(r => el("option", { value: r, text: r })));
-  const title = el("input", { type: "text", placeholder: "Ej. Revisar el filtro de la cocina", "aria-label": "Título de la plantilla" });
+  const kind = el("select", { "aria-label": "Type" }, el("option", { value: "HEALTH", text: "Health" }), el("option", { value: "SHIP", text: "Ship" }));
+  const zone = el("select", { "aria-label": "Zone" }, el("option", { value: "", text: "The whole ship" }), ...ZONES.map(z => el("option", { value: z.id, text: zname(z.id) })));
+  const rec = el("select", { "aria-label": "Recurrence" }, ["Daily", "Weekly", "Once"].map(r => el("option", { value: r, text: r })));
+  const title = el("input", { type: "text", placeholder: "E.g. Check the galley filter", "aria-label": "Template title" });
   form.append(el("form", { class: "newtk", onsubmit: e => { e.preventDefault(); const t = title.value.trim(); if (!t) { title.focus(); return; } GR.draft.push({ change: "NEW", kind: kind.value, title: t, rec: rec.value, zone: zone.value || null }); title.value = ""; drawGround(); } },
-    el("h3", { text: "Nueva plantilla en el borrador" }), el("div", { class: "two" }, el("label", {}, "Tipo", kind), el("label", {}, "Recurrencia", rec)), el("label", {}, "Zona", zone), el("label", {}, "Título", title), el("button", { class: "btn", type: "submit", text: "Añadir al borrador" })),
-    el("div", { class: "newtk" }, el("label", {}, "Prueba al publicar", el("select", { id: "gr-test", onchange: () => drawGround() }, [["", "Ninguna (envío normal)"], ["corrupto", "Plan corrupto"], ["repetida", "Reenviar versión ya aplicada"], ["zona", "Un ítem con zona inexistente"]].map(([v, l]) => el("option", { value: v, text: l })))), el("button", { class: "btn pri", id: "gr-pub", onclick: () => publishPlan(), text: "Publicar" })));
+    el("h3", { text: "New template in the draft" }), el("div", { class: "two" }, el("label", {}, "Type", kind), el("label", {}, "Recurrence", rec)), el("label", {}, "Zone", zone), el("label", {}, "Title", title), el("button", { class: "btn", type: "submit", text: "Add to draft" })),
+    el("div", { class: "newtk" }, el("label", {}, "Test on publish", el("select", { id: "gr-test", onchange: () => drawGround() }, [["", "None (normal send)"], ["corrupt", "Corrupt plan"], ["repeated", "Resend an already applied version"], ["zone", "An item with a nonexistent zone"]].map(([v, l]) => el("option", { value: v, text: l })))), el("button", { class: "btn pri", id: "gr-pub", onclick: () => publishPlan(), text: "Publish" })));
   const rules = $("#gr-rules");
-  rules.append(el("h3", { style: "margin-bottom:8px", text: "Reglas de conflicto" }), el("ul", { class: "rellist", style: "display:grid;gap:8px;font:13.5px/1.5 var(--font-body);color:var(--ink)" }, [
-    ["Plan nuevo (v12 sobre v11)", "Se aplica en una transacción. Lo completado hoy no se toca."],
-    ["Versión menor o repetida", "Se ignora. Es idempotente."],
-    ["Plan corrupto", "Se rechaza completo con motivo y se conserva el anterior."],
-    ["Un ítem inválido", "Se rechaza solo ese ítem. El resto se aplica."],
-    ["Tierra cancela algo ya completado", "Queda completado. La cancelación rige para el futuro."],
-    ["La tripulación no puede cumplir una tarea de Tierra", "La bloquea con motivo. No se borra. Tierra se entera al reconectar."],
-    ["Sin enlace", "Sigue el último plan. Las tareas propias siguen creándose."],
-    ["Tareas de incidente", "Son locales y siempre prevalecen. Tierra no las borra."],
+  rules.append(el("h3", { style: "margin-bottom:8px", text: "Conflict rules" }), el("ul", { class: "rellist", style: "display:grid;gap:8px;font:13.5px/1.5 var(--font-body);color:var(--ink)" }, [
+    ["New plan (v12 over v11)", "Applied in one transaction. What was completed today is not touched."],
+    ["Lower or repeated version", "Ignored. It is idempotent."],
+    ["Corrupt plan", "Rejected entirely with a reason and the previous one is kept."],
+    ["An invalid item", "Only that item is rejected. The rest is applied."],
+    ["Ground cancels something already completed", "It stays completed. The cancellation applies to the future."],
+    ["The crew cannot do a Ground task", "They block it with a reason. It is not deleted. Ground finds out on reconnect."],
+    ["No link", "The last plan continues. Own tasks keep being created."],
+    ["Incident tasks", "They are local and always prevail. Ground does not delete them."],
   ].map(([a, b]) => el("li", {}, el("b", { text: a + ". " }), b))));
   snapshot(); drawCatalog(); drawGround();
-  grLog("Plan v11 aplicado. Tierra y la nave están sincronizadas.", "l-ok");
+  grLog("Plan v11 applied. Ground and the ship are in sync.", "l-ok");
   $("#ship-tasks-form").append(newTaskForm());
   setInterval(groundTick, 1000);
 })();
@@ -1685,7 +1685,7 @@ const RM = store("rm-v1") || {};
 const rmf = { P0: true, P1: true, P2: true };
 const rmt = $("#rm-tools");
 const pbar = el("div", { class: "bar" }, el("i")), pn = el("span", { class: "count" });
-rmt.append(el("span", { class: "muted", style: "font-size:13px", text: "Mostrar:" }), ...["P0", "P1", "P2"].map(p => el("button", { class: "chip", "aria-pressed": "true", onclick: e => { rmf[p] = !rmf[p]; e.currentTarget.setAttribute("aria-pressed", String(rmf[p])); drawRM(); } }, p)), pbar, pn);
+rmt.append(el("span", { class: "muted", style: "font-size:13px", text: "Show:" }), ...["P0", "P1", "P2"].map(p => el("button", { class: "chip", "aria-pressed": "true", onclick: e => { rmf[p] = !rmf[p]; e.currentTarget.setAttribute("aria-pressed", String(rmf[p])); drawRM(); } }, p)), pbar, pn);
 function drawRM() {
   const box = $("#rm"); box.textContent = "";
   let tot = 0, dn = 0, hs = 0;
@@ -1696,15 +1696,15 @@ function drawRM() {
     box.append(ph);
   });
   pbar.firstChild.style.width = (tot ? dn / tot * 100 : 0) + "%";
-  pn.textContent = `${dn} de ${tot} entregables · ${hs} h`;
+  pn.textContent = `${dn} of ${tot} deliverables · ${hs} h`;
 }
 drawRM();
 const rk = $("#risks");
-rk.append(el("tr", {}, ["Riesgo", "Probabilidad", "Mitigación"].map(h => el("th", { text: h }))));
+rk.append(el("tr", {}, ["Risk", "Probability", "Mitigation"].map(h => el("th", { text: h }))));
 D.risks.forEach(r => rk.append(el("tr", {}, el("td", { text: r.r }), el("td", { text: r.p }), el("td", { text: r.m }))));
 D.open.forEach((o, i) => $("#open").append(el("li", {}, el("span", { class: "n", text: String(i + 1).padStart(2, "0") }), el("div", {}, el("b", { text: o.t }), el("span", { text: o.d })))));
 
-/* ---------- reparto entre dos desarrolladores ---------- */
+/* ---------- split between two developers ---------- */
 const DEVC = { A: "var(--dev-a)", B: "var(--dev-b)" };
 const SPL = { sel: "F7", lane: "B", dim: false, rag: false };
 const sumH = (dev, pred) => D.roadmap.filter(pred).reduce((a, p) => a + p[dev === "A" ? "a" : "b"], 0);
@@ -1714,24 +1714,24 @@ function drawMeters() {
   ["A", "B"].forEach(dv => {
     const tot = sumH(dv, () => true), p0 = sumH(dv, p => p.prio === "P0");
     box.append(el("div", { class: "meter" }, el("div", {}, devTag(dv), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: D.devs[dv].split(" · ")[1] })),
-      el("div", {}, el("b", { text: tot }), el("span", { class: "muted", text: " h en total" })),
-      el("div", { class: "mbar", role: "img", "aria-label": `${dv}: ${p0} h en P0 de ${tot} h` }, el("i", { style: `width:${tot / maxT * 100}%;background:color-mix(in srgb, ${DEVC[dv]} 35%, transparent)` }), el("i", { style: `width:${p0 / maxT * 100}%;background:${DEVC[dv]}` })),
-      el("span", { class: "muted", style: "font-size:12.5px", text: `${p0} h en el corte P0 · ${tot - p0} h en P1 y P2` })));
+      el("div", {}, el("b", { text: tot }), el("span", { class: "muted", text: " h in total" })),
+      el("div", { class: "mbar", role: "img", "aria-label": `${dv}: ${p0} h in P0 of ${tot} h` }, el("i", { style: `width:${tot / maxT * 100}%;background:color-mix(in srgb, ${DEVC[dv]} 35%, transparent)` }), el("i", { style: `width:${p0 / maxT * 100}%;background:${DEVC[dv]}` })),
+      el("span", { class: "muted", style: "font-size:12.5px", text: `${p0} h in the P0 cut · ${tot - p0} h in P1 and P2` })));
   });
   const rag = D.roadmap.filter(p => p.rag).reduce((a, p) => a + p.b, 0);
-  box.append(el("div", { class: "meter" }, el("div", {}, el("span", { class: "tag", text: "RAG" }), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: "todo en Dev B" })), el("div", {}, el("b", { text: rag }), el("span", { class: "muted", text: " h en " + D.roadmap.filter(p => p.rag).length + " fases" })), el("span", { class: "muted", style: "font-size:12.5px", text: D.roadmap.filter(p => p.rag).map(p => p.id).join(" · ") + ". Cabe en la holgura de B antes de la entrega." })));
+  box.append(el("div", { class: "meter" }, el("div", {}, el("span", { class: "tag", text: "RAG" }), el("span", { class: "muted", style: "font-size:12.5px;margin-left:8px", text: "all in Dev B" })), el("div", {}, el("b", { text: rag }), el("span", { class: "muted", text: " h in " + D.roadmap.filter(p => p.rag).length + " phases" })), el("span", { class: "muted", style: "font-size:12.5px", text: D.roadmap.filter(p => p.rag).map(p => p.id).join(" · ") + ". Fits in B's slack before delivery." })));
 }
 function drawTimeline() {
   const sc = D.schedule, all = [...sc.blocks.A, ...sc.blocks.B], maxH = Math.max(...all.map(b => b.end), ...sc.milestones.map(m => m.at));
   const px = 30, padL = 74, W = padL + maxH * px + 24, laneH = 70, laneY = { A: 64, B: 64 + laneH + 18 }, H = laneY.B + laneH + 30;
-  const svg = sv("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Línea de tiempo de Dev A y Dev B con los hitos de integración" });
+  const svg = sv("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Timeline of Dev A and Dev B with the integration milestones" });
   svg.append(sv("defs", {}, sv("pattern", { id: "ragpat", width: 8, height: 8, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, sv("line", { x1: 0, y1: 0, x2: 0, y2: 8, stroke: "var(--ink)", "stroke-width": 1.6, opacity: 0.35 }))));
   for (let h = 0; h <= maxH + 0.01; h += 4) { const x = padL + h * px; svg.append(sv("line", { x1: x, y1: 40, x2: x, y2: H - 22, stroke: "var(--line)" }), sv("text", { x, y: H - 6, "text-anchor": "middle", style: "font:11px var(--font-mono);fill:var(--muted)", text: h + " h" })); }
   ["A", "B"].forEach(dv => svg.append(sv("rect", { x: 0, y: laneY[dv], width: padL - 8, height: laneH, rx: 6, fill: `color-mix(in srgb, ${DEVC[dv]} 22%, var(--surface))`, stroke: DEVC[dv] }), sv("text", { x: (padL - 8) / 2, y: laneY[dv] + laneH / 2 + 5, "text-anchor": "middle", "font-weight": 700, text: "Dev " + dv })));
   all.forEach(b => {
     const x = padL + b.start * px, w = b.h * px - 3, y = laneY[b.lane], col = DEVC[b.lane], p1 = b.prio !== "P0";
     const dim = (SPL.dim && p1) || (SPL.rag && !b.rag);
-    const g = sv("g", { class: "blk" + (SPL.sel === b.f && SPL.lane === b.lane ? " sel" : ""), tabindex: 0, role: "button", "aria-label": `${b.f} ${b.name}, Dev ${b.lane}, ${b.h} horas`, opacity: dim ? 0.25 : 1, onclick: () => { SPL.sel = b.f; SPL.lane = b.lane; drawTimeline(); drawSplitDetail(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); SPL.sel = b.f; SPL.lane = b.lane; drawTimeline(); drawSplitDetail(); } } });
+    const g = sv("g", { class: "blk" + (SPL.sel === b.f && SPL.lane === b.lane ? " sel" : ""), tabindex: 0, role: "button", "aria-label": `${b.f} ${b.name}, Dev ${b.lane}, ${b.h} hours`, opacity: dim ? 0.25 : 1, onclick: () => { SPL.sel = b.f; SPL.lane = b.lane; drawTimeline(); drawSplitDetail(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); SPL.sel = b.f; SPL.lane = b.lane; drawTimeline(); drawSplitDetail(); } } });
     g.append(sv("rect", { class: "bx", x, y, width: w, height: laneH, rx: 6, fill: `color-mix(in srgb, ${col} ${p1 ? 14 : 30}%, var(--surface))`, stroke: col, "stroke-width": b.rag ? 3 : 1.6, "stroke-dasharray": p1 ? "5 3" : null }));
     if (b.rag) g.append(sv("rect", { x, y, width: w, height: laneH, rx: 6, fill: "url(#ragpat)", "pointer-events": "none" }));
     g.append(sv("text", { x: x + 7, y: y + 20, "font-size": 13, "font-weight": 700, text: b.f }));
@@ -1747,38 +1747,38 @@ function drawSplitDetail() {
   const b = [...D.schedule.blocks.A, ...D.schedule.blocks.B].find(x => x.f === SPL.sel && x.lane === SPL.lane), box = $("#sp-detail"); box.textContent = "";
   if (!b) return;
   const other = [...D.schedule.blocks.A, ...D.schedule.blocks.B].find(x => x.f === b.f && x.lane !== b.lane), ms = D.schedule.milestones.filter(m => m.phase === b.f), deps = D.depends[b.f] || [];
-  box.append(el("div", { class: "zhead" }, el("div", {}, el("h3", { text: `${b.f} · ${b.name}` }), el("span", { class: "muted", style: "font-size:13px", text: `Horas ${b.start} a ${b.end} de su carril · ${b.h} h` })), el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, devTag(b.lane), el("span", { class: "prio prio-" + b.prio, text: b.prio }), b.rag ? el("span", { class: "tag", text: "RAG" }) : null, other ? el("span", { class: "tag", text: `La otra parte la hace Dev ${other.lane} (${other.h} h)` }) : null)));
+  box.append(el("div", { class: "zhead" }, el("div", {}, el("h3", { text: `${b.f} · ${b.name}` }), el("span", { class: "muted", style: "font-size:13px", text: `Hours ${b.start} to ${b.end} of its lane · ${b.h} h` })), el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" }, devTag(b.lane), el("span", { class: "prio prio-" + b.prio, text: b.prio }), b.rag ? el("span", { class: "tag", text: "RAG" }) : null, other ? el("span", { class: "tag", text: `Dev ${other.lane} does the other part (${other.h} h)` }) : null)));
   box.append(el("div", { class: "jinfo", style: "grid-template-columns:repeat(auto-fit,minmax(240px,1fr))" },
-    el("div", {}, el("h4", { text: "Entregables de la fase" }), el("ul", { style: "margin:0;padding-left:18px;font-size:14px;display:grid;gap:3px" }, b.tasks.map(t => el("li", { text: t })))),
-    el("div", {}, el("h4", { text: "Se apoya en" }), el("p", { text: b.mock || (deps.length ? "Las fases " + deps.join(", ") + " del plan." : "Nada externo.") }), deps.length ? el("p", { class: "muted", style: "font-size:13px;margin-top:4px", text: "Depende de: " + deps.join(", ") }) : null),
-    el("div", {}, el("h4", { text: "Hito que cierra" }), ms.length ? ms.map(m => el("p", {}, el("b", { text: m.id + " · " + m.name + ". " }), m.what)) : el("p", { class: "muted", text: "Ninguno." }))));
+    el("div", {}, el("h4", { text: "Phase deliverables" }), el("ul", { style: "margin:0;padding-left:18px;font-size:14px;display:grid;gap:3px" }, b.tasks.map(t => el("li", { text: t })))),
+    el("div", {}, el("h4", { text: "Relies on" }), el("p", { text: b.mock || (deps.length ? "Phases " + deps.join(", ") + " of the plan." : "Nothing external.") }), deps.length ? el("p", { class: "muted", style: "font-size:13px;margin-top:4px", text: "Depends on: " + deps.join(", ") }) : null),
+    el("div", {}, el("h4", { text: "Milestone it closes" }), ms.length ? ms.map(m => el("p", {}, el("b", { text: m.id + " · " + m.name + ". " }), m.what)) : el("p", { class: "muted", text: "None." }))));
 }
 (function initSplit() {
   drawMeters();
   const tools = $("#sp-tools");
-  tools.append(el("label", { class: "chk2" }, el("input", { type: "checkbox", onchange: e => { SPL.dim = e.target.checked; drawTimeline(); } }), "Atenuar P1 y P2"), el("label", { class: "chk2" }, el("input", { type: "checkbox", onchange: e => { SPL.rag = e.target.checked; drawTimeline(); } }), "Resaltar el RAG"),
-    el("span", { class: "count", text: "Rayado = RAG · borde punteado = P1 o P2 · líneas = hitos de integración" }));
+  tools.append(el("label", { class: "chk2" }, el("input", { type: "checkbox", onchange: e => { SPL.dim = e.target.checked; drawTimeline(); } }), "Dim P1 and P2"), el("label", { class: "chk2" }, el("input", { type: "checkbox", onchange: e => { SPL.rag = e.target.checked; drawTimeline(); } }), "Highlight the RAG"),
+    el("span", { class: "count", text: "Hatched = RAG · dotted border = P1 or P2 · lines = integration milestones" }));
   drawTimeline(); drawSplitDetail();
   const og = $("#sp-own");
   D.modules.forEach(m => og.append(el("div", { class: "ownitem", style: `--oc:${DEVC[D.owner[m.key]]}` }, el("span", { text: m.name }), devTag(D.owner[m.key]))));
-  og.append(el("div", { class: "ownitem", style: `--oc:${DEVC.B}` }, el("span", { text: "Interfaz (SPA React)" }), devTag("B")));
+  og.append(el("div", { class: "ownitem", style: `--oc:${DEVC.B}` }, el("span", { text: "Interface (React SPA)" }), devTag("B")));
   const own = D.owner, cx = $("#sp-cross");
   const evx = D.rows.filter(r => r.ch === "EVT").map(r => ({ r, rec: r.to.filter(x => own[x] !== own[r.from_]) })).filter(x => x.rec.length);
   const rdx = D.sync.filter(r => own[r.a] !== own[r.b]);
   const tb = (heads, rows) => el("div", { class: "panel scroll", style: "padding:0" }, el("table", { class: "rk" }, el("tr", {}, heads.map(h => el("th", { text: h }))), rows));
-  cx.append(el("div", {}, el("h4", { style: "margin:0 0 6px;font:500 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)", text: "Eventos que cruzan de un desarrollador al otro" }),
-    tb(["Evento", "Emisor", "Receptores del otro"], evx.map(x => el("tr", {}, el("td", { class: "mono", text: x.r.route }), el("td", {}, devTag(own[x.r.from_]), " " + NAME[x.r.from_]), el("td", {}, x.rec.map(k => el("span", { style: "display:inline-flex;gap:4px;align-items:center;margin-right:10px" }, devTag(own[k]), NAME[k]))))))),
-    el("div", {}, el("h4", { style: "margin:14px 0 6px;font:500 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)", text: "Lecturas síncronas entre desarrolladores" }),
-      tb(["Quien lee", "De quién", "Fachada", "Para qué"], rdx.map(r => el("tr", {}, el("td", {}, devTag(own[r.a]), " " + NAME[r.a]), el("td", {}, devTag(own[r.b]), " " + NAME[r.b]), el("td", { class: "mono", text: r.port }), el("td", { text: r.what }))))));
+  cx.append(el("div", {}, el("h4", { style: "margin:0 0 6px;font:500 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)", text: "Events that cross from one developer to the other" }),
+    tb(["Event", "Emitter", "Receivers on the other side"], evx.map(x => el("tr", {}, el("td", { class: "mono", text: x.r.route }), el("td", {}, devTag(own[x.r.from_]), " " + NAME[x.r.from_]), el("td", {}, x.rec.map(k => el("span", { style: "display:inline-flex;gap:4px;align-items:center;margin-right:10px" }, devTag(own[k]), NAME[k]))))))),
+    el("div", {}, el("h4", { style: "margin:14px 0 6px;font:500 11px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)", text: "Synchronous reads between developers" }),
+      tb(["Reader", "From whom", "Facade", "What for"], rdx.map(r => el("tr", {}, el("td", {}, devTag(own[r.a]), " " + NAME[r.a]), el("td", {}, devTag(own[r.b]), " " + NAME[r.b]), el("td", { class: "mono", text: r.port }), el("td", { text: r.what }))))));
   const api = { REST: 0, GQL: 0, WS: 0 }; D.rows.forEach(r => { if (api[r.ch] !== undefined && own[r.mod] === "A" && (r.from_ === "ui" || r.to.includes("ui"))) api[r.ch]++; });
-  cx.append(el("p", { class: "muted", style: "font-size:13.5px", text: `La interfaz de B consume del núcleo de A: ${api.GQL} operaciones GraphQL, ${api.WS} mensajes WebSocket y ${api.REST} rutas REST. Se congelan en el hito I0 como esquema y se usan con tipos generados.` }));
+  cx.append(el("p", { class: "muted", style: "font-size:13.5px", text: `B's interface consumes from A's core: ${api.GQL} GraphQL operations, ${api.WS} WebSocket messages and ${api.REST} REST routes. They are frozen at milestone I0 as a schema and used with generated types.` }));
   D.splitRules.forEach((r, i) => $("#sp-rules").append(el("li", {}, el("span", { class: "n", text: String(i + 1).padStart(2, "0") }), el("div", {}, el("b", { text: r.t }), el("span", { text: r.d })))));
   const rg = $("#sp-rag");
   rg.append(el("ul", { style: "margin:0 0 12px;padding-left:18px;font-size:14px;display:grid;gap:4px" }, D.ragScope.map(t => el("li", { text: t.replace(/`/g, "") }))),
-    el("p", { style: "font-size:14px;margin-bottom:6px" }, el("b", { text: "Qué necesita de A: " }), "el evento alert_raised y la fachada RuleQuery, el bus de eventos (en memoria al principio) y el gateway para registrar sus resolvers."),
-    el("p", { style: "font-size:14px;margin-bottom:6px" }, el("b", { text: "Qué entrega a A: " }), "el evento recommendation_ready y la fachada ActionCatalogQuery."),
-    el("p", { class: "muted", style: "font-size:13.5px", text: "Si B se atrasa, el adaptador demo de Conocimiento sigue funcionando y el resto no se detiene. Siguen pendientes las decisiones del RAG: solo pasajes con cita o también redacción con Ollama, y si n8n sigue." }));
-  const rk = $("#sp-risks"); rk.append(el("tr", {}, ["Riesgo", "Probabilidad", "Mitigación"].map(h => el("th", { text: h }))));
+    el("p", { style: "font-size:14px;margin-bottom:6px" }, el("b", { text: "What it needs from A: " }), "the alert_raised event and the RuleQuery facade, the event bus (in memory at first) and the gateway to register its resolvers."),
+    el("p", { style: "font-size:14px;margin-bottom:6px" }, el("b", { text: "What it delivers to A: " }), "the recommendation_ready event and the ActionCatalogQuery facade."),
+    el("p", { class: "muted", style: "font-size:13.5px", text: "If B falls behind, the demo Knowledge adapter keeps working and the rest does not stop. The RAG decisions are still pending: citable passages only or also drafting with Ollama, and whether n8n stays." }));
+  const rk = $("#sp-risks"); rk.append(el("tr", {}, ["Risk", "Probability", "Mitigation"].map(h => el("th", { text: h }))));
   D.splitRisks.forEach(r => rk.append(el("tr", {}, el("td", { text: r.r }), el("td", { text: r.p }), el("td", { text: r.m }))));
 })();
 </script>

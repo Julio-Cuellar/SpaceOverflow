@@ -1,7 +1,7 @@
 import { graphql, HttpResponse } from 'msw'
 import { dashboardFixture } from './fixtures'
 
-/** Handlers MSW para las operaciones GraphQL que la interfaz usa sin backend. */
+/** MSW handlers for the GraphQL operations the interface uses without a backend. */
 export const handlers = [
   graphql.query('Dashboard', () =>
     HttpResponse.json({ data: { dashboard: dashboardFixture('normal') } }),

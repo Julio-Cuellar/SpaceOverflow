@@ -1,4 +1,4 @@
-"""Consultas de solo lectura de Nave e incidencias (para la interfaz y otros módulos)."""
+"""Read-only queries of Facility (for the interface and other modules)."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from spaceapp.modules.facility.domain.incidents import incident_code
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,11 @@ class IncidentView:
     acknowledged_at: datetime | None
     resolved_at: datetime | None
     values_normal_at: datetime | None
+    number: int
+
+    @property
+    def code(self) -> str:
+        return incident_code(self.number)
 
 
 @dataclass(frozen=True)
@@ -52,13 +59,13 @@ class IncidentUpdateView:
 
 _INCIDENT = (
     "SELECT id, habitat_id, zone_id, type_key, source, source_alert_id, title, description, "
-    "severity, status, opened_at, acknowledged_at, resolved_at, values_normal_at "
+    "severity, status, opened_at, acknowledged_at, resolved_at, values_normal_at, number "
     "FROM facility.incident"
 )
 
 
 class ShipQuery:
-    """Zonas del hábitat con su color y sus tickets abiertos."""
+    """Habitat zones with their color and their open tickets."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory
@@ -67,7 +74,7 @@ class ShipQuery:
         sql = (
             "SELECT z.id, z.code, z.name, z.kind, z.deck, z.layout, z.status, "
             "(SELECT count(*) FROM facility.incident i WHERE i.zone_id = z.id "
-            " AND i.status <> 'resuelta') FROM facility.zone z WHERE z.habitat_id = :h "
+            " AND i.status <> 'resolved') FROM facility.zone z WHERE z.habitat_id = :h "
             "ORDER BY z.deck, (z.layout->>'x')::numeric, z.code"
         )
         async with self._sf() as session:
@@ -88,7 +95,7 @@ class ShipQuery:
 
 
 class IncidentQuery:
-    """Tickets de la más nueva a la más vieja, con paginación por llave."""
+    """Tickets from newest to oldest, with keyset pagination."""
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._sf = session_factory

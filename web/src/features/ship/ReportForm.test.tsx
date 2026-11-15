@@ -5,8 +5,8 @@ import { incidentTypesFixture } from '../../data/mocks/incidentTypes'
 import { ReportForm } from './ReportForm'
 
 const zones = [
-  { id: 'z-cocina', name: 'Cocina y comedor' },
-  { id: 'z-lab', name: 'Laboratorio' },
+  { id: 'z-galley', name: 'Galley and mess' },
+  { id: 'z-lab', name: 'Laboratory' },
 ]
 
 function renderForm(onReport = vi.fn()) {
@@ -18,48 +18,48 @@ describe('ReportForm', () => {
   it('offers only the types of the chosen category', async () => {
     renderForm()
 
-    await userEvent.selectOptions(screen.getByLabelText('Categoría'), 'Fuego y humo')
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Fire and smoke')
 
-    const options = within(screen.getByLabelText('Tipo'))
+    const options = within(screen.getByLabelText('Type'))
       .getAllByRole('option')
       .map((o) => o.textContent)
-    expect(options).toEqual(['Elegir tipo', 'Humo o incendio', 'Olor a quemado o sobrecalentamiento'])
+    expect(options).toEqual(['Choose type', 'Smoke or fire', 'Burning smell or overheating'])
   })
 
   it('proposes the default severity of the chosen type', async () => {
     renderForm()
 
-    await userEvent.selectOptions(screen.getByLabelText('Categoría'), 'Fuego y humo')
-    await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'Humo o incendio')
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Fire and smoke')
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'Smoke or fire')
 
-    expect(screen.getByLabelText('Severidad')).toHaveValue('CRITICO')
+    expect(screen.getByLabelText('Severity')).toHaveValue('CRITICAL')
   })
 
   it('does not allow sending until a type and a zone are chosen', async () => {
     renderForm()
 
-    expect(screen.getByRole('button', { name: 'Enviar reporte' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Submit report' })).toBeDisabled()
 
-    await userEvent.selectOptions(screen.getByLabelText('Categoría'), 'Fuego y humo')
-    await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'Humo o incendio')
-    await userEvent.selectOptions(screen.getByLabelText('Zona'), 'Cocina y comedor')
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Fire and smoke')
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'Smoke or fire')
+    await userEvent.selectOptions(screen.getByLabelText('Zone'), 'Galley and mess')
 
-    expect(screen.getByRole('button', { name: 'Enviar reporte' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Submit report' })).toBeEnabled()
   })
 
   it('uses the type name as title when the crew leaves the title empty', async () => {
     const onReport = renderForm()
 
-    await userEvent.selectOptions(screen.getByLabelText('Categoría'), 'Fuego y humo')
-    await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'Humo o incendio')
-    await userEvent.selectOptions(screen.getByLabelText('Zona'), 'Cocina y comedor')
-    await userEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Fire and smoke')
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'Smoke or fire')
+    await userEvent.selectOptions(screen.getByLabelText('Zone'), 'Galley and mess')
+    await userEvent.click(screen.getByRole('button', { name: 'Submit report' }))
 
     expect(onReport).toHaveBeenCalledWith({
       typeKey: 'smoke_fire',
-      zoneId: 'z-cocina',
-      severity: 'CRITICO',
-      title: 'Humo o incendio',
+      zoneId: 'z-galley',
+      severity: 'CRITICAL',
+      title: 'Smoke or fire',
       description: '',
     })
   })
@@ -67,18 +67,18 @@ describe('ReportForm', () => {
   it('sends the title and description the crew wrote', async () => {
     const onReport = renderForm()
 
-    await userEvent.selectOptions(screen.getByLabelText('Categoría'), 'Fuego y humo')
-    await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'Olor a quemado o sobrecalentamiento')
-    await userEvent.selectOptions(screen.getByLabelText('Zona'), 'Laboratorio')
-    await userEvent.type(screen.getByLabelText('Título'), 'Olor en el panel')
-    await userEvent.type(screen.getByLabelText('Descripción'), 'Huele a plástico caliente')
-    await userEvent.click(screen.getByRole('button', { name: 'Enviar reporte' }))
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Fire and smoke')
+    await userEvent.selectOptions(screen.getByLabelText('Type'), 'Burning smell or overheating')
+    await userEvent.selectOptions(screen.getByLabelText('Zone'), 'Laboratory')
+    await userEvent.type(screen.getByLabelText('Title'), 'Smell near the panel')
+    await userEvent.type(screen.getByLabelText('Description'), 'Smells like hot plastic')
+    await userEvent.click(screen.getByRole('button', { name: 'Submit report' }))
 
     expect(onReport).toHaveBeenCalledWith(
       expect.objectContaining({
         typeKey: 'burning_smell',
-        title: 'Olor en el panel',
-        description: 'Huele a plástico caliente',
+        title: 'Smell near the panel',
+        description: 'Smells like hot plastic',
       }),
     )
   })
@@ -93,8 +93,8 @@ describe('ReportForm', () => {
       />,
     )
 
-    expect(screen.getByLabelText('Categoría')).toHaveValue('Atmósfera y soporte vital')
-    expect(screen.getByLabelText('Tipo')).toHaveValue('hypoxia')
-    expect(screen.getByLabelText('Severidad')).toHaveValue('CRITICO')
+    expect(screen.getByLabelText('Category')).toHaveValue('Atmosphere and life support')
+    expect(screen.getByLabelText('Type')).toHaveValue('hypoxia')
+    expect(screen.getByLabelText('Severity')).toHaveValue('CRITICAL')
   })
 })

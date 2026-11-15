@@ -1,4 +1,4 @@
-"""Operación del outbox (F5, tarea 5.4): reencolar un evento muerto (R8) y limpiar los `done` viejos."""
+"""Outbox operations (F5, task 5.4): requeue a dead event (R8) and purge old `done` events."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ pytestmark = pytest.mark.integration
 
 
 async def _kill(sf: Any) -> int:
-    """Deja un evento en `dead` y devuelve su id."""
+    """Leaves an event in `dead` and returns its id."""
     await publish(sf, ev(1))
     async with sf() as s, s.begin():
         await s.execute(
@@ -69,7 +69,7 @@ async def test_done_events_older_than_the_retention_are_purged(session_factory: 
     async with session_factory() as s, s.begin():
         assert await purge_done(s, timedelta(hours=24)) == 1
     left = [(r["id"], r["status"]) for r in await rows(session_factory)]
-    assert left == [(2, "dead"), (3, "pending")], "los muertos y los pendientes no se borran"
+    assert left == [(2, "dead"), (3, "pending")], "dead and pending events are not deleted"
 
 
 def test_the_replay_route_exists_only_in_development_profiles() -> None:
@@ -78,7 +78,7 @@ def test_the_replay_route_exists_only_in_development_profiles() -> None:
 
     route = "/api/v1/admin/outbox/{event_id}:replay"
     assert route in paths(Profile.DEV1) and route in paths(Profile.DEV2)
-    assert route not in paths(Profile.JURADO)
+    assert route not in paths(Profile.JURY)
 
 
 async def test_the_replay_route_answers_with_the_outcome(
@@ -102,7 +102,7 @@ async def test_outbox_stats_are_exposed_by_graphql_only_in_development(
     query = {"query": "{ outboxStats { pending dead oldestPendingAgeS } }"}
     for profile, expected in (
         (Profile.DEV1, {"pending": 0, "dead": 1, "oldestPendingAgeS": None}),
-        (Profile.JURADO, None),
+        (Profile.JURY, None),
     ):
         settings = Settings(profile=profile, database_url=async_url)
         with TestClient(create_app(settings)) as client:

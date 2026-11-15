@@ -1,10 +1,11 @@
-"""Repositorio en memoria de conversaciones. Sirve para pruebas y para la demo sin base de datos."""
+"""In-memory repository of conversations. Used for tests and for the demo without a database."""
 
 from __future__ import annotations
 
 from uuid import UUID, uuid4
 
 from spaceapp.modules.assistant.contracts import AnswerReady
+from spaceapp.modules.assistant.domain.voice import UnknownUtteranceError, Utterance
 from spaceapp.modules.assistant.ports import StoredMessage
 from spaceapp.modules.knowledge.contracts import CitationDTO
 
@@ -33,10 +34,31 @@ class InMemoryConversations:
 
 
 class ListPublisher:
-    """Publicador en memoria: guarda los eventos. En I1 lo reemplaza el outbox real."""
+    """In-memory publisher: it stores the events. In I1 the real outbox replaces it."""
 
     def __init__(self) -> None:
         self.events: list[AnswerReady] = []
 
     def publish(self, event: AnswerReady) -> None:
         self.events.append(event)
+
+
+class InMemoryUtterances:
+    def __init__(self) -> None:
+        self._items: dict[UUID, Utterance] = {}
+
+    def add(self, utterance: Utterance) -> None:
+        self._items[utterance.id] = utterance
+
+    def get(self, utterance_id: UUID) -> Utterance:
+        try:
+            return self._items[utterance_id]
+        except KeyError:
+            raise UnknownUtteranceError(str(utterance_id)) from None
+
+    def update(self, utterance: Utterance) -> None:
+        self.get(utterance.id)
+        self._items[utterance.id] = utterance
+
+    def all(self) -> list[Utterance]:
+        return list(self._items.values())

@@ -1,4 +1,4 @@
-"""Signos vitales de la cabina: valor, severidad y zona a partir de lecturas y alertas activas."""
+"""Cabin vital signs: value, severity and zone from readings and active alerts."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ LAB, ENG = UUID(int=1), UUID(int=2)
 
 
 def reading(zone: UUID, metric: str, value: float, unit: str = "u") -> LatestReadingView:
-    return LatestReadingView(zone, metric, unit, "cabina", "SIMULATED", value, T)
+    return LatestReadingView(zone, metric, unit, "cabin", "SIMULATED", value, T)
 
 
 def cabin(zone: UUID, co2: float = 0.7) -> list[LatestReadingView]:
@@ -29,17 +29,31 @@ def cabin(zone: UUID, co2: float = 0.7) -> list[LatestReadingView]:
     ]
 
 
-def rule(key: str, parameter: str, severity: str, evidence: str = "VERIFICADO") -> RuleView:
-    return RuleView(key, parameter, severity, "req", "doc", evidence, "act", "hrp")
+def rule(key: str, parameter: str, severity: str, evidence: str = "VERIFIED") -> RuleView:
+    return RuleView(
+        key,
+        parameter,
+        severity,
+        "req",
+        "doc",
+        evidence,
+        "act",
+        "hrp",
+        "threshold",
+        ">",
+        1.0,
+        "u",
+        0,
+    )
 
 
 RULES = {
     r.key: r
     for r in (
-        rule("env-co2-1h", "ppco2", "alerta"),
-        rule("env-co2-crit", "ppco2", "critico"),
-        rule("env-trend-t", "temperature_c", "atencion", "DEMO"),
-        rule("env-n2", "n2_pct", "alerta", "TB"),
+        rule("env-co2-1h", "ppco2", "alert"),
+        rule("env-co2-crit", "ppco2", "critical"),
+        rule("env-trend-t", "temperature_c", "attention", "DEMO"),
+        rule("env-n2", "n2_pct", "alert", "TB"),
     )
 }
 
@@ -77,24 +91,24 @@ def test_pio2_is_derived_from_pressure_and_oxygen() -> None:
 
 
 def test_the_worst_alert_sets_severity_zone_value_and_evidence_of_its_vital() -> None:
-    alerts = [active("env-co2-1h", ENG, "alerta"), active("env-co2-crit", LAB, "critico")]
+    alerts = [active("env-co2-1h", ENG, "alert"), active("env-co2-crit", LAB, "critical")]
     severity, vitals = build_dashboard(cabin(LAB, co2=4.2) + cabin(ENG, co2=3.1), alerts, RULES)
     co2 = next(v for v in vitals if v.key == "co2_mmhg")
-    assert (co2.severity, co2.zone_id, co2.value) == ("critico", LAB, 4.2)
-    assert co2.evidence_state == "VERIFICADO"
-    assert severity == "critico"
+    assert (co2.severity, co2.zone_id, co2.value) == ("critical", LAB, 4.2)
+    assert co2.evidence_state == "VERIFIED"
+    assert severity == "critical"
     assert next(v for v in vitals if v.key == "humidity_pct").severity == "normal"
 
 
 def test_an_alert_on_a_parameter_without_vital_still_counts_for_the_global_state() -> None:
-    severity, vitals = build_dashboard(cabin(LAB), [active("env-n2", LAB, "alerta")], RULES)
-    assert severity == "alerta"
+    severity, vitals = build_dashboard(cabin(LAB), [active("env-n2", LAB, "alert")], RULES)
+    assert severity == "alert"
     assert all(v.severity == "normal" for v in vitals)
 
 
 def test_a_vital_without_alert_takes_the_strongest_evidence_of_its_rules() -> None:
     _, vitals = build_dashboard(cabin(LAB), [], RULES)
     by_key = {v.key: v for v in vitals}
-    assert by_key["co2_mmhg"].evidence_state == "VERIFICADO"
+    assert by_key["co2_mmhg"].evidence_state == "VERIFIED"
     assert by_key["temperature_c"].evidence_state == "DEMO"
-    assert by_key["humidity_pct"].evidence_state == "DEMO"  # sin reglas: dato de demostración
+    assert by_key["humidity_pct"].evidence_state == "DEMO"  # no rules: demo data

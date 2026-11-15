@@ -31,7 +31,7 @@ async def count(sf, table: str) -> int:  # type: ignore[no-untyped-def]
 async def test_state_and_event_are_committed_together(session_factory):
     e = ev(7)
     async with UnitOfWork(session_factory) as uow:
-        await uow.session.execute(text("INSERT INTO public.demo_state VALUES ('hola')"))
+        await uow.session.execute(text("INSERT INTO public.demo_state VALUES ('hello')"))
         await uow.publish(e)
     assert await count(session_factory, "public.demo_state") == 1
     async with session_factory() as s:
@@ -61,7 +61,7 @@ async def test_if_the_use_case_fails_neither_state_nor_event_are_saved(session_f
         async with UnitOfWork(session_factory) as uow:
             await uow.session.execute(text("INSERT INTO public.demo_state VALUES ('x')"))
             await uow.publish(ev())
-            raise RuntimeError("falló el caso de uso")
+            raise RuntimeError("the use case failed")
     assert await count(session_factory, "public.demo_state") == 0
     assert await count(session_factory, "platform.outbox_event") == 0
 

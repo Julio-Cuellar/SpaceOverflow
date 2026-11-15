@@ -1,4 +1,4 @@
-"""Detector de anomalías de tendencia. Regla de demostración (`DEMO`), determinista."""
+"""Trend anomaly detector. Demo rule (`DEMO`), deterministic."""
 
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -29,10 +29,10 @@ def detect_trend(
     min_baseline_points: int = 20,
     min_recent_points: int = 3,
 ) -> TrendResult | None:
-    """Compara la media reciente con la de una línea base anterior.
+    """Compares the recent mean with that of an earlier baseline.
 
-    Hay anomalía si el cambio supera el mayor entre `k` desviaciones y `min_delta`.
-    Sin historia suficiente no se decide nada.
+    There is an anomaly if the change exceeds the larger of `k` deviations and `min_delta`.
+    Without enough history nothing is decided.
     """
     base = within(
         samples, now - timedelta(seconds=baseline_from_s), now - timedelta(seconds=baseline_to_s)

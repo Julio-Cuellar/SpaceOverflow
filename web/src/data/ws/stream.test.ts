@@ -40,20 +40,20 @@ describe('createStream', () => {
   it('coalesces telemetry ticks to the latest value per zone and metric', () => {
     const stream = createStream()
 
-    stream.push(tick('cabina', 'ppco2_1h', 1.1))
-    stream.push(tick('cabina', 'ppco2_1h', 1.4))
+    stream.push(tick('cabin', 'ppco2_1h', 1.1))
+    stream.push(tick('cabin', 'ppco2_1h', 1.4))
 
     const drained = stream.drain()
     expect(drained).toHaveLength(1)
-    expect(drained[0].data).toEqual({ zone_id: 'cabina', metric: 'ppco2_1h', value: 1.4 })
+    expect(drained[0].data).toEqual({ zone_id: 'cabin', metric: 'ppco2_1h', value: 1.4 })
   })
 
   it('drops telemetry ticks first under pressure, and never drops alerts', () => {
     const stream = createStream({ maxPending: 2 })
 
-    stream.push(tick('cabina', 'pio2', 150))
+    stream.push(tick('cabin', 'pio2', 150))
     stream.push(event(7, 'alert.raised'))
-    stream.push(tick('cabina', 'ppco2_1h', 1.2))
+    stream.push(tick('cabin', 'ppco2_1h', 1.2))
 
     const types = stream.drain().map((m) => m.type)
     expect(types).toContain('alert.raised')

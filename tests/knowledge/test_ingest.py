@@ -21,7 +21,7 @@ def entry(code: str, filename: str, *, read: bool = True, optional: bool = False
         title=code,
         url=f"https://example.org/{filename}",
         kind="norma",
-        evidence_state="VERIFICADO",
+        evidence_state="VERIFIED",
         license_status="no_verificada",
         packageable=False,
         read=read,
@@ -44,12 +44,12 @@ class TestStore:
 
     def test_the_file_store_keeps_the_chunks_between_runs(self, tmp_path: Path) -> None:
         path = tmp_path / "index" / "chunks.jsonl"
-        JsonlChunkStore(path).add(chunk_page("D", 1, TEXT, "VERIFICADO"))
+        JsonlChunkStore(path).add(chunk_page("D", 1, TEXT, "VERIFIED"))
 
         reloaded = JsonlChunkStore(path)
 
         assert [c.requirement_ref for c in reloaded.all()] == ["V2 6004"]
-        assert reloaded.add(chunk_page("D", 1, TEXT, "VERIFICADO")) == 0
+        assert reloaded.add(chunk_page("D", 1, TEXT, "VERIFIED")) == 0
 
 
 class TestIngestPdf:
@@ -63,7 +63,7 @@ class TestIngestPdf:
         assert result.added == len(stored) > 0
         refs = {(c.page, c.requirement_ref) for c in stored}
         assert (2, "V2 6004") in refs
-        assert all(c.document_code == "DOC" and c.evidence_state == "VERIFICADO" for c in stored)
+        assert all(c.document_code == "DOC" and c.evidence_state == "VERIFIED" for c in stored)
 
     def test_running_it_twice_does_not_duplicate_anything(self, tmp_path: Path) -> None:
         write_pdf(tmp_path, "doc.pdf", [TEXT])
@@ -137,7 +137,7 @@ class TestCommand:
                             "title": "GOOD",
                             "url": "https://example.org/good.pdf",
                             "kind": "norma",
-                            "evidence_state": "VERIFICADO",
+                            "evidence_state": "VERIFIED",
                             "license_status": "no_verificada",
                             "packageable": False,
                             "read": True,
@@ -183,7 +183,7 @@ class TestCommand:
                             "title": "X",
                             "url": "https://example.org/x.pdf",
                             "kind": "norma",
-                            "evidence_state": "VERIFICADO",
+                            "evidence_state": "VERIFIED",
                             "license_status": "no_verificada",
                             "packageable": True,
                             "read": True,
@@ -198,7 +198,7 @@ class TestCommand:
         code = main(["--manifest", str(tmp_path / "manifest.json"), "--pdf-dir", str(tmp_path)])
 
         assert code == 2
-        assert "licencia" in capsys.readouterr().err
+        assert "license" in capsys.readouterr().err
 
     def run(self, tmp_path: Path, *extra: str) -> Path:
         self.write_manifest(tmp_path / "manifest.json")
@@ -226,7 +226,7 @@ class TestCommand:
         assert {c.document_code for c in JsonlChunkStore(out).all()} == {"STALE", "GOOD"}
 
     def test_rebuild_drops_the_chunks_of_a_previous_run(self, tmp_path: Path) -> None:
-        # Si cambian las reglas de corte, los ids cambian y los fragmentos viejos quedarían huérfanos.
+        # If the cutting rules change, the ids change and the old fragments would be left orphaned.
         out = tmp_path / "chunks.jsonl"
         JsonlChunkStore(out).add(chunk_page("STALE", 1, "obsolete text from an old run", "TB"))
 
@@ -237,7 +237,8 @@ class TestCommand:
     def test_a_rebuild_that_indexes_nothing_does_not_destroy_the_existing_index(
         self, tmp_path: Path
     ) -> None:
-        # Sin PDFs en la carpeta, reconstruir dejaría el índice vacío: se conserva el anterior.
+        # With no PDFs in the folder, rebuilding would leave the index empty: the previous one is
+        # kept.
         self.write_manifest(tmp_path / "manifest.json")
         out = tmp_path / "chunks.jsonl"
         JsonlChunkStore(out).add(

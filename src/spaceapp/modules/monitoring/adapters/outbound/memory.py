@@ -1,4 +1,4 @@
-"""Repositorio de alertas en memoria, para pruebas y desarrollo sin base de datos."""
+"""In-memory alert repository, for tests and development without a database."""
 
 from datetime import datetime
 from typing import Any

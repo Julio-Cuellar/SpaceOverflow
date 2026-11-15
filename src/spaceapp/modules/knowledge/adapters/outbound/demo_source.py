@@ -1,4 +1,4 @@
-"""Adaptador de demostración: lee el catálogo JSON versionado. Toda salida se etiqueta DEMO."""
+"""Demo adapter: reads the versioned JSON catalog. All output is labeled DEMO."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from spaceapp.modules.knowledge.domain.model import (
 )
 from spaceapp.modules.knowledge.domain.search import Indexed, normalize, rank
 
-DEMO_NOTICE = "Esta recomendación usa un dato de demostración, no de NASA."
+DEMO_NOTICE = "This recommendation uses demo data, not NASA data."
 
 
 class DemoKnowledgeSource:
@@ -75,5 +75,5 @@ class DemoKnowledgeSource:
         return action.title if action else None
 
     def search(self, text: str, k: int) -> list[Citation]:
-        """Pasajes citables que responden a la pregunta. Vacío si ninguno es relevante."""
+        """Citable passages that answer the question. Empty if none is relevant."""
         return rank(text, self._passages, k)

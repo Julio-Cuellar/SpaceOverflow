@@ -1,4 +1,4 @@
-"""Sensores, lecturas particionadas por día, rollup por minuto y escenarios simulados.
+"""Sensors, readings partitioned by day, per-minute rollup and simulated scenarios.
 
 Revision ID: 0001
 Revises:
@@ -26,7 +26,7 @@ def upgrade() -> None:
           unit            text    NOT NULL,
           sample_period_s int     NOT NULL,
           origin          text    NOT NULL,
-          CONSTRAINT sensor_domain_chk CHECK (domain IN ('cuerpo', 'cabina', 'radiacion')),
+          CONSTRAINT sensor_domain_chk CHECK (domain IN ('body', 'cabin', 'radiation')),
           CONSTRAINT sensor_origin_chk CHECK (origin IN ('SIMULATED', 'REPLAY', 'REAL'))
         )
         """

@@ -36,13 +36,11 @@ class SensorInfo:
 
 def validate_batch(readings: Sequence[ReadingIn]) -> None:
     if not readings:
-        raise InvalidBatch("el lote está vacío")
+        raise InvalidBatch("the batch is empty")
     if len(readings) > MAX_BATCH:
-        raise InvalidBatch(
-            f"un lote admite como máximo {MAX_BATCH} lecturas, llegaron {len(readings)}"
-        )
+        raise InvalidBatch(f"a batch admits at most {MAX_BATCH} readings, received {len(readings)}")
     for r in readings:
         if r.ts.tzinfo is None or r.ts.utcoffset() is None:
-            raise InvalidBatch(f"marca de tiempo sin zona horaria: {r.ts.isoformat()}")
+            raise InvalidBatch(f"timestamp without timezone: {r.ts.isoformat()}")
         if not math.isfinite(r.value):
-            raise InvalidBatch(f"el valor debe ser un número finito: {r.value}")
+            raise InvalidBatch(f"the value must be a finite number: {r.value}")

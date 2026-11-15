@@ -1,4 +1,4 @@
-"""Puertos del gateway en tiempo real."""
+"""Realtime gateway ports."""
 
 from __future__ import annotations
 
@@ -9,6 +9,6 @@ from spaceapp.modules.realtime.domain.messages import WsMessage
 
 
 class OutboxReplay(Protocol):
-    """Mensajes ya emitidos con `seq` mayor que `after_id`, en orden (retención de 24 h)."""
+    """Messages already emitted with `seq` greater than `after_id`, in order (24 h retention)."""
 
     async def after(self, after_id: int, limit: int) -> Sequence[WsMessage]: ...

@@ -1,4 +1,4 @@
-"""Servicio del simulador: registra sensores, genera lecturas por zona y controla escenarios."""
+"""Simulator service: registers sensors, generates readings per zone and controls scenarios."""
 
 from __future__ import annotations
 
@@ -43,7 +43,7 @@ class SimulationService:
                 self._layout.habitat_id,
                 self._layout.zone_id(z.code),
                 None,
-                "cabina",
+                "cabin",
                 metric,
                 unit,
                 period,
@@ -103,7 +103,7 @@ class SimulationService:
         )
 
     async def run_forever(self, stop: asyncio.Event, period_s: float = 1.0) -> None:
-        """Una vuelta por segundo con el reloj real."""
+        """One tick per second on the real clock."""
         while not stop.is_set():
             await self.tick(datetime.now(UTC))
             with contextlib.suppress(TimeoutError):

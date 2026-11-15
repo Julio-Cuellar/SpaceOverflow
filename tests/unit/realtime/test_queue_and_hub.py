@@ -1,4 +1,4 @@
-"""Cola por cliente con presión inversa (500 mensajes) y reparto por topics."""
+"""Per-client queue with backpressure (500 messages) and distribution by topics."""
 
 from __future__ import annotations
 
@@ -94,4 +94,4 @@ def test_unknown_topics_are_rejected() -> None:
     except ValueError as exc:
         assert "nope" in str(exc)
     else:  # pragma: no cover
-        raise AssertionError("debía rechazar el topic")
+        raise AssertionError("it should have rejected the topic")

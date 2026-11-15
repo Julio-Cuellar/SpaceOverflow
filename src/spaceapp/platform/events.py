@@ -1,4 +1,4 @@
-"""Sobre del evento y base de los payload de cada módulo."""
+"""Event envelope and base of each module's payloads."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ EVENT_TYPE_RE = re.compile(r"^[a-z]+\.[a-z_]+$")
 
 
 class EventPayload(BaseModel):
-    """Base de los contratos. Cada subclase declara su `event_type` (modulo.hecho)."""
+    """Base of the contracts. Each subclass declares its `event_type` (module.fact)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
     event_type: ClassVar[str]
@@ -39,7 +39,7 @@ class EventEnvelope(BaseModel):
     @classmethod
     def _type_is_module_dot_fact(cls, v: str) -> str:
         if not EVENT_TYPE_RE.fullmatch(v):
-            raise ValueError(f"el tipo de evento debe ser modulo.hecho en snake_case: {v!r}")
+            raise ValueError(f"the event type must be module.fact in snake_case: {v!r}")
         return v
 
     @classmethod
@@ -65,5 +65,5 @@ class EventEnvelope(BaseModel):
 
     def payload_as(self, model: builtins.type[P]) -> P:
         if model.event_type != self.type:
-            raise ValueError(f"el evento es {self.type!r}, no {model.event_type!r}")
+            raise ValueError(f"the event is {self.type!r}, not {model.event_type!r}")
         return model.model_validate(self.payload)

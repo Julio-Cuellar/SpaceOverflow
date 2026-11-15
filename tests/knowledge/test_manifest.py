@@ -17,23 +17,23 @@ def test_lists_the_seven_documents_read_for_the_plan() -> None:
         "NASA-STD-3001 Vol. 1 Rev C",
         "NASA-STD-3001 Vol. 2 Rev F",
         "OCHMO-TB-002 ECLSS",
-        "OCHMO-TB-003 atmósfera habitable",
+        "OCHMO-TB-003 Habitable Atmosphere",
         "OCHMO-TB-004 CO₂",
-        "OCHMO-TB-044 operaciones médicas",
-        "Checklist del botiquín médico",
+        "OCHMO-TB-044 Medical Operations",
+        "Medical Kit Checklist",
     }
 
 
 def test_standards_are_verified_and_technical_briefs_are_tb() -> None:
     by_code = {d.code: d for d in load_manifest(MANIFEST)}
 
-    assert by_code["NASA-STD-3001 Vol. 2 Rev F"].evidence_state == "VERIFICADO"
+    assert by_code["NASA-STD-3001 Vol. 2 Rev F"].evidence_state == "VERIFIED"
     assert by_code["OCHMO-TB-004 CO₂"].evidence_state == "TB"
 
 
 def test_no_document_is_packageable_until_its_license_is_confirmed() -> None:
     for document in load_manifest(MANIFEST):
-        assert not document.packageable or document.license_status == "confirmada", document.code
+        assert not document.packageable or document.license_status == "confirmed", document.code
 
 
 def test_unopened_documents_are_optional_and_not_indexed_by_default() -> None:
@@ -63,9 +63,9 @@ def test_rejects_a_manifest_that_packages_a_document_with_an_unconfirmed_license
                         "code": "X",
                         "title": "X",
                         "url": "https://example.org/x.pdf",
-                        "kind": "norma",
-                        "evidence_state": "VERIFICADO",
-                        "license_status": "no_verificada",
+                        "kind": "standard",
+                        "evidence_state": "VERIFIED",
+                        "license_status": "unverified",
                         "packageable": True,
                         "read": True,
                         "optional": False,

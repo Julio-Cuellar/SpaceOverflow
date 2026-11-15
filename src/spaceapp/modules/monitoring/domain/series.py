@@ -10,7 +10,7 @@ class Sample:
 
 
 def within(samples: Sequence[Sample], start: datetime, end: datetime) -> list[Sample]:
-    """Muestras con start <= ts <= end, en orden cronológico."""
+    """Samples with start <= ts <= end, in chronological order."""
     return sorted((s for s in samples if start <= s.ts <= end), key=lambda s: s.ts)
 
 

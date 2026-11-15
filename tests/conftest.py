@@ -1,4 +1,4 @@
-"""Fixtures comunes. Las de integración levantan PostgreSQL real con testcontainers."""
+"""Common fixtures. The integration ones start a real PostgreSQL with testcontainers."""
 
 from __future__ import annotations
 
@@ -14,7 +14,15 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 
 ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_SOCK = Path.home() / ".docker" / "desktop" / "docker.sock"
-MIGRATED_MODULES = ["platform", "monitoring", "telemetry", "facility"]
+MIGRATED_MODULES = [
+    "platform",
+    "monitoring",
+    "telemetry",
+    "facility",
+    "engagement",
+    "groundlink",
+    "crew",
+]
 CLEAN_TABLES = [
     "platform.outbox_event",
     "platform.inbox_processed",
@@ -30,6 +38,14 @@ CLEAN_TABLES = [
     "facility.zone_alert",
     "facility.zone",
     "facility.habitat",
+    "engagement.applied_plan",
+    "engagement.task",
+    "engagement.task_template",
+    "groundlink.ground_item",
+    "groundlink.ground_plan",
+    "groundlink.inbound_plan",
+    "groundlink.link_state",
+    "crew.member",
 ]
 
 
@@ -51,7 +67,7 @@ def alembic_config(module: str, url: str) -> Config:
 def pg_sync_url() -> Iterator[str]:
     try:
         from testcontainers.community.postgres import PostgresContainer
-    except ImportError:  # versiones anteriores de testcontainers
+    except ImportError:  # earlier versions of testcontainers
         from testcontainers.postgres import PostgresContainer
 
     _point_docker_to_desktop_socket()

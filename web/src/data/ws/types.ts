@@ -1,6 +1,6 @@
-/** Mensaje del servidor en `/ws`. Ver contracts/ws-messages.schema.json. */
+/** Server message on `/ws`. See contracts/ws-messages.schema.json. */
 export interface WsMessage {
-  /** Id del outbox cuando el mensaje nace de un evento; null en los ticks. */
+  /** Outbox id when the message originates from an event; null on ticks. */
   seq: number | null
   topic: string
   type: string

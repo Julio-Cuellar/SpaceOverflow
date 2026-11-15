@@ -1,0 +1,7 @@
+# Fast assistant variant on qwen2.5:1.5b. It downloads nothing: it starts from the model already pulled.
+# Measured here: about 14 to 16 tok/s with 4 to 6 threads, twice llama3.2:3b (see README).
+FROM qwen2.5:1.5b
+PARAMETER num_thread 4
+PARAMETER num_predict 150
+PARAMETER num_ctx 2048
+PARAMETER temperature 0.2

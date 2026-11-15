@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { EvidenceBadge } from '../../shared/ui/EvidenceBadge'
 import type { AssistantAnswer } from './mockAnswer'
+import { VoiceInput, type Recording } from './VoiceInput'
 
 interface Message {
   id: number
@@ -10,39 +11,74 @@ interface Message {
 }
 
 interface AssistantPanelProps {
-  /** Responde una pregunta. Hoy es una simulación; en I2 será `askAssistant` por GraphQL. */
-  answerFor: (question: string) => AssistantAnswer
-  /** Adaptador de redacción: Ollama local o nube. */
-  mode: 'local' | 'nube'
+  /** Answers a question: the local simulation (synchronous) or the real assistant (slow). */
+  answerFor: (question: string) => AssistantAnswer | Promise<AssistantAnswer>
+  /** Writing adapter: local Ollama or cloud. */
+  mode: 'local' | 'cloud'
+  /** Voice input. Without it there is only text, which is always available. */
+  voice?: {
+    startRecording: () => Promise<Recording>
+    transcribe: (audio: Blob) => Promise<{ text: string } | null>
+    notice?: string
+  }
+  /** Reads an answer aloud. Without it there is no "Listen" button: the answer is text only. */
+  speak?: (text: string) => Promise<void>
 }
 
-const EXAMPLES = ['¿Por qué me duele la cabeza?', '¿Cuánto dura el mareo espacial?']
+const EXAMPLES = ['Why do I have a headache?', 'How long does space motion sickness last?']
 
-/** Chat de texto. Cada respuesta cita sus fuentes; sin pasaje, dice que no tiene información. */
-export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
+/** Text chat. Each answer cites its sources; without a passage, it says it has no information. */
+export function AssistantPanel({ answerFor, mode, voice, speak }: AssistantPanelProps) {
   const inputId = useId()
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [pending, setPending] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [readAloud, setReadAloud] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
+  const [speechFailed, setSpeechFailed] = useState(false)
 
-  const send = (raw: string) => {
+  const read = async (text: string) => {
+    if (!speak) return
+    setSpeechFailed(false)
+    setSpeaking(true)
+    try {
+      await speak(text)
+    } catch {
+      setSpeechFailed(true)
+    } finally {
+      setSpeaking(false)
+    }
+  }
+
+  const send = async (raw: string) => {
     const question = raw.trim()
-    if (question === '') return
-    const answer = answerFor(question)
-    setMessages((current) => [
-      ...current,
-      { id: current.length, role: 'crew', text: question },
-      { id: current.length + 1, role: 'assistant', text: answer.text, answer },
-    ])
+    if (question === '' || pending) return
+    setMessages((current) => [...current, { id: current.length, role: 'crew', text: question }])
     setDraft('')
+    setFailed(false)
+    setPending(true)
+    try {
+      const answer = await answerFor(question)
+      setMessages((current) => [
+        ...current,
+        { id: current.length, role: 'assistant', text: answer.text, answer },
+      ])
+      if (readAloud) void read(answer.text)
+    } catch {
+      setFailed(true)
+    } finally {
+      setPending(false)
+    }
   }
 
   return (
-    <section aria-label="Asistente">
+    <section aria-label="Assistant">
       <p>
-        <span className="chip">Modo {mode}</span>
+        <span className="chip">Mode {mode}</span>
       </p>
 
-      <ul aria-label="Preguntas de ejemplo">
+      <ul aria-label="Example questions">
         {EXAMPLES.map((example) => (
           <li key={example}>
             <button type="button" onClick={() => send(example)}>
@@ -52,20 +88,25 @@ export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
         ))}
       </ul>
 
-      <ol aria-label="Conversación">
+      <ol aria-label="Conversation">
         {messages.map((message) => (
           <li key={message.id}>
             {message.role === 'crew' ? (
               <p>
-                <strong>Tú:</strong> {message.text}
+                <strong>You:</strong> {message.text}
               </p>
             ) : (
               <>
                 <p className="answer-text">{message.text}</p>
+                {speak && (
+                  <button type="button" disabled={speaking} onClick={() => void read(message.text)}>
+                    Listen to the answer
+                  </button>
+                )}
                 {message.answer && message.answer.citations.length > 0 && (
-                  <ul aria-label="Fuentes">
-                    {message.answer.citations.map((c) => (
-                      <li key={c.documentCode}>
+                  <ul aria-label="Sources">
+                    {message.answer.citations.map((c, index) => (
+                      <li key={`${c.documentCode}-${index}`}>
                         <a href={`#pasaje/${encodeURIComponent(c.documentCode)}`}>
                           {c.documentCode}
                           {c.requirementRef ? ` · ${c.requirementRef}` : ''}
@@ -81,16 +122,47 @@ export function AssistantPanel({ answerFor, mode }: AssistantPanelProps) {
         ))}
       </ol>
 
+      {speak && (
+        <p>
+          <label>
+            <input
+              type="checkbox"
+              checked={readAloud}
+              onChange={(event) => setReadAloud(event.target.checked)}
+            />{' '}
+            Read answers aloud
+          </label>
+        </p>
+      )}
+      {speaking && <p role="status">Reading the answer…</p>}
+      {speechFailed && (
+        <p role="alert">Could not read it aloud: the answer stays on screen.</p>
+      )}
+
+      {pending && <p role="status">Consulting the assistant…</p>}
+      {failed && (
+        <p role="alert">Could not consult the assistant. Check the connection and try again.</p>
+      )}
+
+      {voice && (
+        <VoiceInput
+          startRecording={voice.startRecording}
+          transcribe={voice.transcribe}
+          notice={voice.notice}
+          onConfirm={send}
+        />
+      )}
+
       <form
         onSubmit={(event) => {
           event.preventDefault()
           send(draft)
         }}
       >
-        <label htmlFor={inputId}>Pregunta</label>
+        <label htmlFor={inputId}>Question</label>
         <textarea id={inputId} value={draft} onChange={(e) => setDraft(e.target.value)} />
-        <button type="submit" disabled={draft.trim() === ''}>
-          Preguntar
+        <button type="submit" disabled={draft.trim() === '' || pending}>
+          Ask
         </button>
       </form>
     </section>

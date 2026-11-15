@@ -8,18 +8,18 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
-    """Configuración. El perfil por defecto es `jurado` (propuesta pendiente de confirmar)."""
+    """Configuration. The default profile is `jury` (proposal pending confirmation)."""
 
     model_config = SettingsConfigDict(env_prefix="SPACEAPP_", env_file=".env", extra="ignore")
 
-    profile: Profile = Profile.JURADO
+    profile: Profile = Profile.JURY
     database_url: str = "postgresql+asyncpg://spaceapp:spaceapp@localhost:5433/spaceapp"
     rules_path: Path = ROOT / "rules" / "catalog" / "monitoring.json"
-    # Acorta las ventanas de las reglas (1 h real) para la demostración. 1.0 = valores de la norma.
+    # Shortens the rule windows (1 real hour) for the demo. 1.0 = the standard values.
     rule_window_scale: float = 1.0
-    # Evaluaciones limpias seguidas antes de resolver una alerta.
+    # Consecutive clean evaluations before resolving an alert.
     alert_hysteresis: int = 3
-    # El relay del outbox y el simulador arrancan con la aplicación solo si se piden.
+    # The outbox relay and the simulator start with the application only when requested.
     relay_enabled: bool = False
     simulator_autostart: bool = False
     sim_layout_path: Path = ROOT / "data" / "telemetry" / "sim_layout.json"
@@ -27,3 +27,5 @@ class Settings(BaseSettings):
     knowledge_catalog_path: Path = ROOT / "data" / "knowledge" / "demo_catalog.json"
     facility_plan_path: Path = ROOT / "data" / "facility" / "plan.json"
     incident_types_path: Path = ROOT / "data" / "facility" / "incident_types.json"
+    engagement_templates_path: Path = ROOT / "data" / "engagement" / "templates.json"
+    crew_roster_path: Path = ROOT / "data" / "crew" / "roster.json"

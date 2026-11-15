@@ -1,4 +1,4 @@
-"""Puertos de Nave e incidencias."""
+"""Facility ports."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class TicketRow:
 
 
 class ActiveAlertsSource(Protocol):
-    """Alertas activas de Monitoreo, para reconstruir el estado al arrancar."""
+    """Active Monitoring alerts, to rebuild state at startup."""
 
     async def __call__(self, habitat_id: UUID) -> Sequence[ZoneAlert]: ...
 
@@ -73,7 +73,9 @@ class FacilityRepository(Protocol):
         description: str,
         severity: str,
         at: datetime,
-    ) -> None: ...
+    ) -> int:
+        """Inserts the ticket and returns its sequential number."""
+        ...
 
     async def set_severity(self, incident_id: UUID, severity: str) -> None: ...
 

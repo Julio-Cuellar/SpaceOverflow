@@ -1,7 +1,7 @@
-"""El composition root suscribe Conocimiento (handler de Dev B) a las alertas de Monitoreo.
+"""The composition root subscribes Knowledge (Dev B's handler) to Monitoring alerts.
 
-El caso de uso y su adaptador al bus los prueba Dev B en `tests/knowledge/` y en
-`tests/integration/knowledge/`. Aquí solo se comprueba que `main.py` los conecta.
+The use case and its bus adapter are tested by Dev B in `tests/knowledge/` and in
+`tests/integration/knowledge/`. Here we only check that `main.py` wires them up.
 """
 
 from __future__ import annotations
@@ -26,9 +26,9 @@ def alert(rule_key: str = "env-co2-1h") -> EventEnvelope:
             alert_id=alert_id,
             zone_id=ZONE,
             rule_key=rule_key,
-            severity="alerta",
+            severity="alert",
             evidence={"value": 0.9},
-            cause_hint="AMBIENTE",
+            cause_hint="ENVIRONMENT",
         ),
         aggregate_type="alert",
         aggregate_id=alert_id,
@@ -60,3 +60,22 @@ async def test_every_monitoring_rule_produces_a_recommendation_through_the_wired
     assert bus.failures == []
     assert len(ready) == len(rules)
     assert all(e.payload_as(RecommendationReady).citations for e in ready)
+
+
+def test_an_alert_keeps_its_recommendation_after_a_restart() -> None:
+    # The store is in memory: a new process has none, but the rule gives the same one again.
+    wiring = build_knowledge(Settings())
+    alert_id = uuid4()
+
+    rebuilt = wiring.recommendation_for(alert_id, "env-co2-1h")
+
+    assert rebuilt is not None
+    assert rebuilt.alert_id == alert_id
+    assert rebuilt.rule_key == "env-co2-1h"
+    assert wiring.recommendation_for(alert_id, "env-co2-1h") == rebuilt
+
+
+def test_an_unknown_rule_has_no_recommendation() -> None:
+    assert (
+        build_knowledge(Settings()).recommendation_for(uuid4(), "rule-that-does-not-exist") is None
+    )

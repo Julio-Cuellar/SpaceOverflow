@@ -9,7 +9,7 @@ from spaceapp.platform.ids import habitat_id, zone_id
 
 @dataclass(frozen=True)
 class Layout:
-    """Zonas que se simulan. Los códigos coinciden con los del plano de Nave e incidencias."""
+    """Zones that are simulated. The codes match those of the Facility floor plan."""
 
     habitat_code: str
     zones: tuple[ZoneBaseline, ...]

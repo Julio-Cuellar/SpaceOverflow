@@ -69,8 +69,13 @@ enum DataOrigin {
   REPLAY
 }
 
+"""Date (isoformat)"""
+scalar Date
+
 """Date with time (isoformat)"""
 scalar DateTime
+
+union DeleteTaskResult = TaskDeleted | TaskError
 
 enum Detection {
   AUTO
@@ -78,14 +83,71 @@ enum Detection {
 }
 
 enum EvidenceState {
-  VERIFICADO
+  VERIFIED
   TB
   DEMO
-  NO_VERIFICADO
+  UNVERIFIED
+}
+
+type GroundControlView {
+  appliedVersion: Int!
+  templates: [GroundTemplate!]!
+  draft: GroundDraft
+  published: PublishedPlan
+  link: GroundLinkState!
+}
+
+type GroundDraft {
+  version: Int!
+  templates: [GroundTemplate!]!
+}
+
+type GroundError {
+  code: GroundErrorCode!
+  message: String!
+}
+
+enum GroundErrorCode {
+  NOT_FOUND
+  TITLE_REQUIRED
+  INVALID_KIND
+  NOTHING_TO_PUBLISH
+  PLAN_IN_FLIGHT
+}
+
+type GroundLinkState {
+  online: Boolean!
+  delaySeconds: Float!
+  changedAt: DateTime!
+}
+
+type GroundPlanOnBoard {
+  version: Int!
+  appliedAt: DateTime!
+  rejected: [RejectedPlanItem!]!
+}
+
+union GroundResult = GroundControlView | GroundError
+
+type GroundTemplate {
+  id: ID!
+  title: String!
+  kind: TaskKind!
+  status: GroundTemplateStatus!
+  blockedReason: String
+  cancelled: Boolean!
+}
+
+enum GroundTemplateStatus {
+  PENDING
+  APPLIED
+  COMPLETED
+  BLOCKED
 }
 
 type Incident {
   id: ID!
+  code: String!
   habitatId: ID!
   zoneId: ID!
   typeKey: String!
@@ -130,14 +192,14 @@ type IncidentPayload {
 union IncidentResult = IncidentPayload | IncidentError
 
 enum IncidentSource {
-  ALERTA
+  ALERT
   MANUAL
 }
 
 enum IncidentStatus {
-  ABIERTA
-  RECONOCIDA
-  RESUELTA
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
 }
 
 type IncidentType {
@@ -170,6 +232,16 @@ type Mutation {
   reportIncident(zoneId: ID!, typeKey: String!, description: String = null, severity: Severity = null): IncidentResult!
   acknowledgeIncident(id: ID!): IncidentResult!
   resolveIncident(id: ID!, note: String = null): IncidentResult!
+  createTask(kind: TaskKind!, title: String!, zoneId: ID = null, dueAt: DateTime = null): TaskResult!
+  updateTask(id: ID!, title: String = null, zoneId: ID = null, dueAt: DateTime = null): TaskResult!
+  deleteTask(id: ID!): DeleteTaskResult!
+  completeTask(id: ID!, effective: Boolean = null): TaskResult!
+  blockTask(id: ID!, reason: String!): TaskResult!
+  snoozeTask(id: ID!, minutes: Int! = 15): TaskResult!
+  saveGroundTemplate(title: String!, kind: TaskKind!, zoneCode: String = null, recurrence: String = null, templateId: ID = null): GroundResult!
+  cancelGroundTemplate(templateId: ID!): GroundResult!
+  publishGroundPlan: GroundResult!
+  setGroundLink(online: Boolean!, delaySeconds: Float = null): GroundControlView!
 }
 
 type OutboxStats {
@@ -181,6 +253,24 @@ type OutboxStats {
 type PageInfo {
   hasNextPage: Boolean!
   endCursor: String
+}
+
+enum PlanStage {
+  DRAFT
+  QUEUED
+  IN_TRANSIT
+  RECEIVED
+  APPLIED
+  CONFIRMED
+  REJECTED
+}
+
+type PublishedPlan {
+  version: Int!
+  stage: PlanStage!
+  reason: String
+  publishedAt: DateTime
+  ackedAt: DateTime
 }
 
 type Query {
@@ -195,6 +285,10 @@ type Query {
   incidents(first: Int! = 20, after: String = null, status: IncidentStatus = null, zoneId: ID = null): IncidentConnection!
   incident(id: ID!): Incident
   incidentTypes(category: String = null): [IncidentType!]!
+  tasks(day: Date = null, kind: TaskKind = null, status: TaskStatus = null): [Task!]!
+  streak(day: Date = null): Int!
+  groundPlan: GroundPlanOnBoard
+  groundControl: GroundControlView!
 }
 
 type ReadingPoint {
@@ -220,6 +314,11 @@ type Recommendation {
   citations: [Citation!]!
 }
 
+type RejectedPlanItem {
+  title: String!
+  reason: String!
+}
+
 enum Resolution {
   RAW
   MINUTE
@@ -234,13 +333,18 @@ type Rule {
   evidenceState: EvidenceState!
   actionKey: String!
   hrpHazard: String!
+  kind: String!
+  operator: String!
+  threshold: Float!
+  unit: String!
+  windowS: Int!
 }
 
 enum Severity {
   NORMAL
-  ATENCION
-  ALERTA
-  CRITICO
+  ATTENTION
+  ALERT
+  CRITICAL
 }
 
 type Ship {
@@ -250,6 +354,67 @@ type Ship {
   kind: String!
   canvas: JSON
   zones: [Zone!]!
+}
+
+type Task {
+  id: ID!
+  kind: TaskKind!
+  origin: TaskOrigin!
+  title: String!
+  zoneId: ID
+  status: TaskStatus!
+  dueAt: DateTime!
+  blockedReason: String
+  effective: Boolean
+  sourceAlertId: ID
+  incidentId: ID
+  templateId: ID
+  completedAt: DateTime
+}
+
+type TaskDeleted {
+  id: ID!
+}
+
+type TaskError {
+  code: TaskErrorCode!
+  message: String!
+}
+
+enum TaskErrorCode {
+  NOT_FOUND
+  NOT_EDITABLE
+  NOT_DELETABLE
+  INVALID_KIND
+  TITLE_REQUIRED
+  REASON_REQUIRED
+  ALREADY_COMPLETED
+  INVALID_MINUTES
+}
+
+enum TaskKind {
+  HEALTH
+  SHIP
+  INCIDENT
+}
+
+enum TaskOrigin {
+  GROUND
+  SYSTEM
+  CREW
+}
+
+type TaskPayload {
+  task: Task!
+  alreadyDone: Boolean!
+}
+
+union TaskResult = TaskPayload | TaskError
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+  BLOCKED
 }
 
 type Vital {

@@ -1,8 +1,8 @@
-import { passagesFixture, type PassageFixture } from '../../data/mocks/passages'
+import { passagesFixture } from '../../data/mocks/passages'
 import type { EvidenceState } from '../../shared/lib/evidence'
 
-export const NO_INFO_TEXT = 'No tengo esa información en las fuentes cargadas.'
-const ALERT_NOTE = 'Esta respuesta no cambia la alerta.'
+export const NO_INFO_TEXT = "I don't have that information in the loaded sources."
+const ALERT_NOTE = 'This answer does not change the alert.'
 const TOP_K = 3
 const MIN_TERM_LENGTH = 4
 
@@ -14,12 +14,14 @@ export interface AssistantCitation {
 }
 
 export interface AssistantAnswer {
+  degraded?: boolean
+  composedBy?: string
   outcome: 'ANSWERED' | 'NO_INFO'
   text: string
   citations: AssistantCitation[]
 }
 
-/** Minúsculas y sin acentos. «CO₂» queda como «co2» (igual que la búsqueda del backend). */
+/** Lowercase and without accents. 'CO₂' becomes 'co2' (same as the backend search). */
 function normalize(text: string): string {
   return text
     .toLowerCase()
@@ -32,14 +34,9 @@ function terms(text: string): Set<string> {
   return new Set(words.filter((w) => w.length >= MIN_TERM_LENGTH))
 }
 
-function sourceLabel(p: PassageFixture): string {
-  const requirement = p.requirementRef ? ` · ${p.requirementRef}` : ''
-  return `${p.documentCode}${requirement} · ${p.evidenceState}`
-}
-
 /**
- * Misma política que el caso de uso del backend: solo pasajes recuperados, con cita; sin pasaje,
- * «No tengo esa información»; una alerta activa se nombra pero nunca se cambia.
+ * Same policy as the backend use case: only retrieved passages, with a citation; without a passage,
+ * "I don't have that information"; an active alert is named but never changed.
  */
 export function mockAnswer(question: string, activeAlerts: string[]): AssistantAnswer {
   const query = terms(question)
@@ -58,9 +55,9 @@ export function mockAnswer(question: string, activeAlerts: string[]): AssistantA
   }
 
   const lines = [
-    'Según las fuentes cargadas:',
-    ...found.map((p) => `- ${p.excerpt} (${sourceLabel(p)})`),
-    ...activeAlerts.map((title) => `Alerta activa: ${title}. ${ALERT_NOTE}`),
+    'According to the loaded sources:',
+    ...found.map((p) => `- ${p.excerpt}`),
+    ...activeAlerts.map((title) => `Active alert: ${title}. ${ALERT_NOTE}`),
   ]
   return {
     outcome: 'ANSWERED',

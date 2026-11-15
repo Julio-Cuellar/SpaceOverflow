@@ -49,7 +49,7 @@ def relay(sf, registry, **kw):  # type: ignore[no-untyped-def]
     return OutboxRelay(sf, registry, **kw)
 
 
-# ---- entrega básica -------------------------------------------------------------------
+# ---- basic delivery -------------------------------------------------------------------
 
 
 async def test_delivers_a_pending_event_and_marks_it_done(session_factory):
@@ -94,7 +94,7 @@ async def test_a_run_handles_at_most_batch_size_events(session_factory):
     assert await r.run_once() == 0
 
 
-# ---- fallos, reintentos y eventos muertos -----------------------------------------------
+# ---- failures, retries and dead events --------------------------------------------------
 
 
 def test_backoff_doubles_from_one_second_up_to_sixty():
@@ -135,11 +135,11 @@ async def test_a_failed_event_is_not_retried_before_its_time(session_factory):
     await publish(session_factory, ev())
     r = relay(session_factory, reg)
     await r.run_once()
-    await make_due(session_factory)  # simula que pasó el tiempo
+    await make_due(session_factory)  # simulates that time has passed
     await r.run_once()
     assert len(calls) == 2
     assert (await rows(session_factory))[0]["attempts"] == 2
-    assert await r.run_once() == 0  # el segundo backoff (2 s) todavía no venció
+    assert await r.run_once() == 0  # the second backoff (2 s) has not yet elapsed
     assert len(calls) == 2
 
 
@@ -148,7 +148,7 @@ async def test_a_handler_that_recovers_completes_the_event(session_factory):
 
     async def flaky(e: EventEnvelope, ctx: HandlerContext) -> None:
         if state["fail"]:
-            raise RuntimeError("todavía no")
+            raise RuntimeError("not yet")
 
     reg.subscribe("demo.pinged", "flaky", flaky)
     await publish(session_factory, ev())
@@ -166,7 +166,7 @@ async def test_after_max_attempts_the_event_is_dead_and_left_alone(session_facto
 
     async def bad(e: EventEnvelope, ctx: HandlerContext) -> None:
         calls.append(1)
-        raise RuntimeError("siempre falla")
+        raise RuntimeError("always fails")
 
     reg.subscribe("demo.pinged", "bad", bad)
     await publish(session_factory, ev())
@@ -176,7 +176,7 @@ async def test_after_max_attempts_the_event_is_dead_and_left_alone(session_facto
         await r.run_once()
     row = (await rows(session_factory))[0]
     assert row["status"] == "dead" and row["attempts"] == 3
-    assert "siempre falla" in row["last_error"]
+    assert "always fails" in row["last_error"]
     await make_due(session_factory)
     assert await r.run_once() == 0
     assert len(calls) == 3
@@ -186,7 +186,7 @@ async def test_default_max_attempts_is_eight(session_factory):
     assert relay(session_factory, SubscriptionRegistry()).max_attempts == 8
 
 
-# ---- inbox: idempotencia y aislamiento --------------------------------------------------
+# ---- inbox: idempotency and isolation ---------------------------------------------------
 
 
 async def test_a_failing_consumer_does_not_block_the_others_nor_rerun_them(session_factory):
@@ -206,7 +206,7 @@ async def test_a_failing_consumer_does_not_block_the_others_nor_rerun_them(sessi
     await r.run_once()
     await make_due(session_factory)
     await r.run_once()
-    assert calls == {"good": 1, "bad": 2}  # good no se repite: el inbox lo omite
+    assert calls == {"good": 1, "bad": 2}  # good is not repeated: the inbox skips it
 
 
 async def test_an_event_already_in_the_inbox_is_not_handled_again(session_factory):
@@ -233,7 +233,7 @@ async def test_handler_writes_and_inbox_mark_commit_together(session_factory):
 
     async def writes(e: EventEnvelope, ctx: HandlerContext) -> None:
         assert ctx.session is not None
-        await ctx.session.execute(text("INSERT INTO public.demo_state VALUES ('hecho')"))
+        await ctx.session.execute(text("INSERT INTO public.demo_state VALUES ('done')"))
 
     reg.subscribe("demo.pinged", "w", writes)
     await publish(session_factory, ev())
@@ -247,7 +247,7 @@ async def test_a_failure_after_writing_rolls_back_the_handler_and_its_inbox_mark
 
     async def writes_then_fails(e: EventEnvelope, ctx: HandlerContext) -> None:
         assert ctx.session is not None
-        await ctx.session.execute(text("INSERT INTO public.demo_state VALUES ('a medias')"))
+        await ctx.session.execute(text("INSERT INTO public.demo_state VALUES ('halfway')"))
         raise RuntimeError("boom")
 
     reg.subscribe("demo.pinged", "w", writes_then_fails)
@@ -293,7 +293,7 @@ async def test_a_follow_up_event_is_discarded_if_the_handler_fails(session_facto
     assert types == [{"type": "demo.pinged"}]
 
 
-# ---- concurrencia y modo continuo -------------------------------------------------------
+# ---- concurrency and continuous mode ----------------------------------------------------
 
 
 async def test_two_relays_never_handle_the_same_event_twice(session_factory):
@@ -329,7 +329,7 @@ async def test_run_forever_wakes_up_on_notify_without_waiting_for_the_poll(
     r = relay(session_factory, reg, poll_interval=30, listen_dsn=listen_dsn)
     stop, task = await _run_in_background(r)
     try:
-        await asyncio.sleep(0.3)  # deja que el relay empiece a escuchar
+        await asyncio.sleep(0.3)  # lets the relay start listening
         await publish(session_factory, ev())
         await asyncio.wait_for(got.wait(), timeout=3)
     finally:

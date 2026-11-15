@@ -89,13 +89,13 @@ def test_domain_and_origin_only_accept_the_known_values(pg_sync_url: str):
         c.execute(
             text(
                 "INSERT INTO telemetry.sensor (id, habitat_id, domain, metric, unit, sample_period_s, "
-                "origin) VALUES (gen_random_uuid(), gen_random_uuid(), 'cabina', 'x', 'u', 1, 'MAGIA')"
+                "origin) VALUES (gen_random_uuid(), gen_random_uuid(), 'cabin', 'x', 'u', 1, 'MAGIC')"
             )
         )
     with pytest.raises(IntegrityError), eng.begin() as c:
         c.execute(
             text(
                 "INSERT INTO telemetry.sensor (id, habitat_id, domain, metric, unit, sample_period_s, "
-                "origin) VALUES (gen_random_uuid(), gen_random_uuid(), 'otro', 'x', 'u', 1, 'SIMULATED')"
+                "origin) VALUES (gen_random_uuid(), gen_random_uuid(), 'other', 'x', 'u', 1, 'SIMULATED')"
             )
         )

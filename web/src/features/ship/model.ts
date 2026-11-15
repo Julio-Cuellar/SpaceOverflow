@@ -7,7 +7,7 @@ export interface ZoneLayout {
   h: number
 }
 
-/** Zona física de la nave. El plano sale de `layout` (dato, no código). */
+/** Physical zone of the ship. The floor plan comes from `layout` (data, not code). */
 export interface Zone {
   id: string
   name: string
@@ -15,7 +15,7 @@ export interface Zone {
   status: Severity
 }
 
-export type TicketStatus = 'ABIERTO' | 'RECONOCIDO' | 'RESUELTO'
+export type TicketStatus = 'OPEN' | 'ACKNOWLEDGED' | 'RESOLVED'
 
 export interface Ticket {
   id: string
@@ -24,18 +24,18 @@ export interface Ticket {
   severity: Severity
   status: TicketStatus
   zoneId: string
-  /** ALERTA: abierto por una regla. MANUAL: reportado por la tripulación. */
-  source: 'ALERTA' | 'MANUAL'
+  /** ALERT: opened by a rule. MANUAL: reported by the crew. */
+  source: 'ALERT' | 'MANUAL'
   openedAt: string
-  /** Si los valores que abrieron el ticket vuelven a estar en rango. */
+  /** Whether the values that opened the ticket are back in range. */
   valuesInRange: boolean
 }
 
-/** Orden: severidad más alta primero, y dentro de cada nivel el más antiguo. Resueltos al final. */
+/** Order: highest severity first, and within each level the oldest. Resolved last. */
 export function sortTickets(tickets: readonly Ticket[]): Ticket[] {
   return [...tickets].sort((a, b) => {
-    const aResolved = a.status === 'RESUELTO' ? 1 : 0
-    const bResolved = b.status === 'RESUELTO' ? 1 : 0
+    const aResolved = a.status === 'RESOLVED' ? 1 : 0
+    const bResolved = b.status === 'RESOLVED' ? 1 : 0
     if (aResolved !== bResolved) return aResolved - bResolved
 
     const bySeverity = severityMeta(b.severity).rank - severityMeta(a.severity).rank
@@ -45,7 +45,7 @@ export function sortTickets(tickets: readonly Ticket[]): Ticket[] {
   })
 }
 
-/** Un ticket automático no se resuelve mientras sus valores sigan fuera de rango. */
+/** An automatic ticket cannot be resolved while its values are still out of range. */
 export function canResolve(ticket: Ticket): boolean {
-  return ticket.source !== 'ALERTA' || ticket.valuesInRange
+  return ticket.source !== 'ALERT' || ticket.valuesInRange
 }

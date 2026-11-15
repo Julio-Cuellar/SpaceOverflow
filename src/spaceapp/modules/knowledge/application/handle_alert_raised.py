@@ -1,8 +1,8 @@
-"""Caso de uso: una alerta llega y se guarda una recomendación de plantilla con citas.
+"""Use case: an alert arrives and a template recommendation with citations is stored.
 
-No espera a ningún modelo de lenguaje. Es idempotente por (consumidor, event_id): el bus y el
-outbox de la plataforma ya entregan cada evento una vez por consumidor, y este caso de uso lo
-refuerza porque una regla desconocida debe dejar el evento sin marcar para que se reintente.
+It waits for no language model. It is idempotent per (consumer, event_id): the platform's bus and
+outbox already deliver each event once per consumer, and this use case reinforces it because an
+unknown rule must leave the event unmarked so that it is retried.
 """
 
 from __future__ import annotations
@@ -20,6 +20,25 @@ from spaceapp.platform.vocab import Citation
 
 CONSUMER = "knowledge.on_alert_raised"
 _NAMESPACE = uuid.NAMESPACE_URL
+
+
+def build_recommendation(
+    source: KnowledgeSource, alert_id: uuid.UUID, rule_key: str
+) -> Recommendation:
+    """The recommendation of an alert. It is a pure function of the alert and the rule.
+
+    The id is deterministic, so it can be rebuilt after a restart without storing it.
+    """
+    guidance = source.guidance_for(rule_key)
+    return Recommendation(
+        id=uuid.uuid5(_NAMESPACE, f"{alert_id}:{rule_key}"),
+        alert_id=alert_id,
+        rule_key=rule_key,
+        source_kind=guidance.source_kind,
+        body=guidance.body,
+        actions=guidance.actions,
+        citations=guidance.citations,
+    )
 
 
 class HandleResult(Enum):
@@ -43,27 +62,18 @@ class HandleAlertRaised:
         return self._inbox.is_marked(CONSUMER, event_id)
 
     async def handle(self, event: EventEnvelope, ctx: HandlerContext) -> None:
-        """Firma que exige el bus: no devuelve nada."""
+        """Signature required by the bus: it returns nothing."""
         await self.process(event, ctx)
 
     async def process(self, event: EventEnvelope, ctx: HandlerContext) -> HandleResult:
         alert = event.payload_as(AlertRaised)
-        # Primero la guía: si la regla no existe se lanza el error y el evento queda sin marcar.
-        guidance = self._source.guidance_for(alert.rule_key)
+        # The guidance first: if the rule does not exist the error is raised and the event stays
+        # unmarked.
+        recommendation = build_recommendation(self._source, alert.alert_id, alert.rule_key)
 
         if not self._inbox.mark_once(CONSUMER, event.event_id):
             return HandleResult.DUPLICATE
 
-        recommendation = Recommendation(
-            # Id determinista: la misma alerta y regla produce siempre el mismo id.
-            id=uuid.uuid5(_NAMESPACE, f"{alert.alert_id}:{alert.rule_key}"),
-            alert_id=alert.alert_id,
-            rule_key=alert.rule_key,
-            source_kind=guidance.source_kind,
-            body=guidance.body,
-            actions=guidance.actions,
-            citations=guidance.citations,
-        )
         self._recommendations.save(recommendation)
         await ctx.publish(
             EventEnvelope.from_payload(
@@ -84,7 +94,7 @@ class HandleAlertRaised:
                 ),
                 aggregate_type="recommendation",
                 aggregate_id=recommendation.id,
-                # Misma partición que la alerta, así la recomendación llega después de ella.
+                # Same partition as the alert, so the recommendation arrives after it.
                 partition_key=event.partition_key,
                 correlation_id=event.correlation_id or event.event_id,
                 causation_id=event.event_id,

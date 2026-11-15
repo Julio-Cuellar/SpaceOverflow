@@ -1,7 +1,7 @@
 [project]
 name = "spaceapp"
 version = "0.1.0"
-description = "Monitor de salud para astronautas (NASA Space Apps 2026). Prototipo de apoyo a la decisión, no es un dispositivo médico."
+description = "Health monitor for astronauts (NASA Space Apps 2026). Decision-support prototype. Not a medical device."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -14,7 +14,7 @@ dependencies = [
   "pydantic>=2.9",
   "pydantic-settings>=2.6",
   "httpx>=0.27",
-  # Conocimiento (dev B): extracción de texto de los PDFs de NASA.
+  # Knowledge (dev B): text extraction from the NASA PDFs.
   "pypdf>=5",
   "strawberry-graphql>=0.341.2",
 ]
@@ -44,7 +44,7 @@ asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
 markers = [
-  "integration: necesita PostgreSQL real (testcontainers)",
+  "integration: needs a real PostgreSQL (testcontainers)",
 ]
 
 [tool.coverage.run]
@@ -65,9 +65,9 @@ extend-exclude = ["tools"]
 select = ["E", "F", "I", "UP", "B", "ASYNC", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-# Las consultas SQL largas se leen mejor en una línea por cláusula.
+# Long SQL queries read better with one line per clause.
 "src/**/adapters/outbound/sql.py" = ["E501"]
-# Las pruebas llevan consultas y datos largos que se leen mejor en una línea.
+# Tests carry long queries and data that read better on a single line.
 "tests/**" = ["E501"]
 
 [tool.mypy]
@@ -80,12 +80,17 @@ plugins = ["pydantic.mypy"]
 module = ["asyncpg", "asyncpg.*"]
 ignore_missing_imports = true
 
+# Voz local (Dev B): se instala solo donde hay Whisper o Kokoro; sin ellas usa el adaptador nulo.
+[[tool.mypy.overrides]]
+module = ["faster_whisper", "faster_whisper.*", "kokoro_onnx", "kokoro_onnx.*"]
+ignore_missing_imports = true
+
 [tool.importlinter]
 root_package = "spaceapp"
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
-name = "Los módulos son independientes entre sí (solo se importan contracts y facade)"
+name = "Modules are independent of each other (only contracts and facade are imported)"
 type = "independence"
 modules = ["spaceapp.modules.telemetry", "spaceapp.modules.monitoring", "spaceapp.modules.knowledge", "spaceapp.modules.assistant", "spaceapp.modules.crew", "spaceapp.modules.facility", "spaceapp.modules.engagement", "spaceapp.modules.groundlink", "spaceapp.modules.realtime"]
 ignore_imports = [
@@ -95,19 +100,19 @@ ignore_imports = [
 unmatched_ignore_imports_alerting = "none"
 
 [[tool.importlinter.contracts]]
-name = "La plataforma no depende de los módulos"
+name = "The platform does not depend on the modules"
 type = "forbidden"
 source_modules = ["spaceapp.platform"]
 forbidden_modules = ["spaceapp.modules"]
 
 [[tool.importlinter.contracts]]
-name = "El dominio no depende de infraestructura"
+name = "The domain does not depend on infrastructure"
 type = "forbidden"
 source_modules = ["spaceapp.modules.*.domain"]
 forbidden_modules = ["sqlalchemy", "fastapi", "strawberry", "asyncpg", "alembic", "httpx"]
 
 [[tool.importlinter.contracts]]
-name = "Capas dentro de cada módulo: adapters > application > ports > domain"
+name = "Layers within each module: adapters > application > ports > domain"
 type = "layers"
 containers = ["spaceapp.modules.telemetry", "spaceapp.modules.monitoring", "spaceapp.modules.knowledge", "spaceapp.modules.assistant", "spaceapp.modules.crew", "spaceapp.modules.facility", "spaceapp.modules.engagement", "spaceapp.modules.groundlink", "spaceapp.modules.realtime"]
 layers = ["adapters", "application", "ports", "domain"]

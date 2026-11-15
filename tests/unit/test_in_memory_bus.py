@@ -118,5 +118,5 @@ async def test_a_consumer_cannot_subscribe_twice_to_the_same_event():
         return None
 
     bus.subscribe("demo.pinged", "c1", handler)
-    with pytest.raises(ValueError, match="ya está suscrito"):
+    with pytest.raises(ValueError, match="is already subscribed"):
         bus.subscribe("demo.pinged", "c1", handler)

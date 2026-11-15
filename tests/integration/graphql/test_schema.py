@@ -1,4 +1,4 @@
-"""GraphQL sobre PostgreSQL real, con los datos que deja una simulación."""
+"""GraphQL on a real PostgreSQL, with the data a simulation leaves behind."""
 
 from __future__ import annotations
 
@@ -70,18 +70,18 @@ query($h: ID!) { dashboard(habitatId: $h) {
 
 
 async def test_an_empty_habitat_is_normal_with_no_vitals(world: World) -> None:
-    data = await world.gql(DASHBOARD, h="nave-transito")
+    data = await world.gql(DASHBOARD, h="transit-ship")
     assert data["dashboard"]["globalSeverity"] == "NORMAL"
     assert data["dashboard"]["vitals"] == []
 
 
 async def test_a_normal_run_shows_every_vital_as_normal_and_simulated(world: World) -> None:
     await world.run(None, "lab", -1, 30)
-    d = (await world.gql(DASHBOARD, h="nave-transito"))["dashboard"]
+    d = (await world.gql(DASHBOARD, h="transit-ship"))["dashboard"]
     assert d["globalSeverity"] == "NORMAL"
     keys = {v["key"] for v in d["vitals"]}
     assert keys == {"pressure_kpa", "o2_pct", "co2_mmhg", "temperature_c", "humidity_pct", "pio2"}
-    assert all(v["severity"] == "NORMAL" and v["domain"] == "cabina" for v in d["vitals"])
+    assert all(v["severity"] == "NORMAL" and v["domain"] == "cabin" for v in d["vitals"])
     assert {v["origin"] for v in d["vitals"] if v["key"] != "pio2"} == {"SIMULATED"}
     pio2 = next(v for v in d["vitals"] if v["key"] == "pio2")
     assert pio2["unit"] == "mmHg" and 140 < pio2["value"] < 170
@@ -89,17 +89,17 @@ async def test_a_normal_run_shows_every_vital_as_normal_and_simulated(world: Wor
 
 async def test_the_habitat_can_be_given_as_its_uuid_or_its_code(world: World) -> None:
     await world.run(None, "lab", -1, 10)
-    by_code = await world.gql(DASHBOARD, h="nave-transito")
+    by_code = await world.gql(DASHBOARD, h="transit-ship")
     by_uuid = await world.gql(DASHBOARD, h=by_code["dashboard"]["habitatId"])
     assert by_code == by_uuid
 
 
 async def test_an_active_alert_colors_its_vital_and_the_global_state(world: World) -> None:
     await world.run("co2_slow", "lab", 150, 330)
-    d = (await world.gql(DASHBOARD, h="nave-transito"))["dashboard"]
-    assert d["globalSeverity"] == "ALERTA"
+    d = (await world.gql(DASHBOARD, h="transit-ship"))["dashboard"]
+    assert d["globalSeverity"] == "ALERT"
     co2 = next(v for v in d["vitals"] if v["key"] == "co2_mmhg")
-    assert co2["severity"] == "ALERTA" and co2["evidenceState"] == "VERIFICADO"
+    assert co2["severity"] == "ALERT" and co2["evidenceState"] == "VERIFIED"
     assert co2["zoneId"] is not None
     assert next(v for v in d["vitals"] if v["key"] == "temperature_c")["severity"] == "NORMAL"
 
@@ -123,7 +123,7 @@ async def test_alerts_are_paginated_by_cursor_and_filterable(world: World) -> No
     assert len(ids) == len(set(ids)) >= 3 and page2["pageInfo"]["hasNextPage"] is False
     raised = (await world.gql(ALERTS, first=10, status="RAISED"))["alerts"]["nodes"]
     assert raised and all(n["status"] == "RAISED" for n in raised)
-    # La pre-alerta (Atención) se resuelve al quedar reemplazada por la alerta (`supersedes`).
+    # The pre-alert (Attention) resolves when it is replaced by the alert (`supersedes`).
     resolved = (await world.gql(ALERTS, first=10, status="RESOLVED"))["alerts"]["nodes"]
     assert resolved and all(n["status"] == "RESOLVED" for n in resolved)
     assert {n["ruleKey"] for n in resolved}.isdisjoint({n["ruleKey"] for n in raised})
@@ -146,9 +146,9 @@ async def test_an_alert_comes_with_its_rule_and_the_recommendation_with_citation
     target = next(n for n in nodes if n["ruleKey"] == "env-co2-1h")
     a = (await world.gql(DETAIL, id=target["id"]))["alert"]
     assert a["rule"]["key"] == "env-co2-1h" and a["rule"]["sourceDocument"]
-    assert a["causeHint"] == "AMBIENTE" and a["evidence"]["value"] > 0
+    assert a["causeHint"] == "ENVIRONMENT" and a["evidence"]["value"] > 0
     rec = a["recommendation"]
-    assert rec is not None and rec["citations"], "toda recomendación lleva citas"
+    assert rec is not None and rec["citations"], "every recommendation carries citations"
     assert rec["sourceKind"] == "DEMO"
 
 
@@ -156,12 +156,27 @@ async def test_an_unknown_alert_is_null(world: World) -> None:
     assert (await world.gql(DETAIL, id=str(uuid4())))["alert"] is None
 
 
+async def test_the_rule_catalog_exposes_the_limit_to_draw_it(world: World) -> None:
+    rules = (await world.gql("{ rules { key kind operator threshold unit windowS } }"))["rules"]
+    by_key = {r["key"]: r for r in rules}
+    assert by_key["env-co2-1h"] == {
+        "key": "env-co2-1h",
+        "kind": "threshold",
+        "operator": ">",
+        "threshold": 3.0,
+        "unit": "mmHg",
+        "windowS": 3600,
+    }
+    assert by_key["env-trend-co2"]["kind"] == "trend"
+    assert all(r["operator"] in ("<", "<=", ">", ">=") and r["unit"] for r in rules)
+
+
 async def test_the_rule_catalog_exposes_source_and_evidence_state(world: World) -> None:
     rules = (
         await world.gql("{ rules { key severity evidenceState sourceRequirement actionKey } }")
     )["rules"]
     assert len(rules) == 25
-    assert {r["evidenceState"] for r in rules} <= {"VERIFICADO", "TB", "DEMO"}
+    assert {r["evidenceState"] for r in rules} <= {"VERIFIED", "TB", "DEMO"}
     assert all(r["sourceRequirement"] for r in rules)
 
 
@@ -189,7 +204,7 @@ async def test_zone_readings_can_return_raw_samples(world: World) -> None:
     pts = (await world.gql(q, z=zone, a=T0.isoformat(), b=(T0 + timedelta(minutes=1)).isoformat()))[
         "zoneReadings"
     ][0]["points"]
-    # Una muestra por tick: la prueba avanza la simulación de 5 en 5 s (0, 5, …, 30).
+    # One sample per tick: the test advances the simulation in 5 s steps (0, 5, …, 30).
     assert [p["ts"][11:19] for p in pts] == [f"12:00:{s:02d}" for s in range(0, 31, 5)]
     assert all(isinstance(p["avg"], float) for p in pts)
 
@@ -197,7 +212,7 @@ async def test_zone_readings_can_return_raw_samples(world: World) -> None:
 async def test_knowledge_search_returns_cited_passages(world: World) -> None:
     got = (
         await world.gql(
-            """{ knowledgeSearch(query: "dióxido de carbono", k: 3) {
+            """{ knowledgeSearch(query: "carbon dioxide", k: 3) {
                  documentCode excerpt evidenceState } }"""
         )
     )["knowledgeSearch"]

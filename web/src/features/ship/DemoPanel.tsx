@@ -1,14 +1,14 @@
 import { useId, useState } from 'react'
 
-/** Perfiles donde el modo demo se ve: desarrollo y jurado (plan, sección 7.7). */
-const DEMO_PROFILES = ['dev1', 'dev2', 'jurado']
+/** Profiles where demo mode is visible: development and jury (architecture plan, section 7.7). */
+const DEMO_PROFILES = ['dev1', 'dev2', 'jury']
 
 const SCENARIOS = [
-  { key: 'fuga-presion', name: 'Fuga de presión' },
-  { key: 'co2-alto', name: 'CO₂ alto' },
-  { key: 'humedad', name: 'Humedad' },
-  { key: 'fallo-o2', name: 'Fallo de O₂' },
-  { key: 'calor', name: 'Calor' },
+  { key: 'pressure_leak', name: 'Pressure leak' },
+  { key: 'co2_slow', name: 'High CO₂' },
+  { key: 'humidity_high', name: 'Humidity' },
+  { key: 'o2_failure', name: 'O₂ failure' },
+  { key: 'heat', name: 'Heat' },
 ] as const
 
 interface DemoPanelProps {
@@ -18,7 +18,7 @@ interface DemoPanelProps {
   onNormalize: () => void
 }
 
-/** Botones para provocar escenarios por zona y normalizar la nave. Solo en perfiles de demo. */
+/** Buttons to trigger scenarios per zone and normalize the ship. Only in demo profiles. */
 export function DemoPanel({ profile, zones, onStart, onNormalize }: DemoPanelProps) {
   const zoneId = useId()
   const [zone, setZone] = useState('')
@@ -26,10 +26,10 @@ export function DemoPanel({ profile, zones, onStart, onNormalize }: DemoPanelPro
   if (!DEMO_PROFILES.includes(profile)) return null
 
   return (
-    <section aria-label="Modo demo">
-      <label htmlFor={zoneId}>Zona del escenario</label>
+    <section aria-label="Demo mode">
+      <label htmlFor={zoneId}>Scenario zone</label>
       <select id={zoneId} value={zone} onChange={(e) => setZone(e.target.value)}>
-        <option value="">Elegir zona</option>
+        <option value="">Choose zone</option>
         {zones.map((z) => (
           <option key={z.id} value={z.id}>
             {z.name}
@@ -45,13 +45,13 @@ export function DemoPanel({ profile, zones, onStart, onNormalize }: DemoPanelPro
             disabled={zone === ''}
             onClick={() => onStart(s.key, zone)}
           >
-            Provocar: {s.name}
+            Trigger: {s.name}
           </button>
         ))}
       </div>
 
       <button type="button" onClick={onNormalize}>
-        Normalizar todo
+        Normalize all
       </button>
     </section>
   )

@@ -1,19 +1,19 @@
-# BORRADOR de Dev B (F0). Pendiente de revisión de Dev A antes de congelar en I0.
-# Subconjunto de la sección 10.2 del plan: solo lo que consume la interfaz de F0.
-# Un cambio de contrato exige revisión del otro desarrollador.
+# DRAFT by Dev B (F0). Pending Dev A review before freezing at I0.
+# Subset of section 10.2 of the architecture plan: only what the F0 interface consumes.
+# A contract change requires review by the other developer.
 
 enum Severity {
   NORMAL
-  ATENCION
-  ALERTA
-  CRITICO
+  ATTENTION
+  ALERT
+  CRITICAL
 }
 
 enum EvidenceState {
-  VERIFICADO
+  VERIFIED
   TB
   DEMO
-  NO_VERIFICADO
+  UNVERIFIED
 }
 
 enum DataOrigin {
@@ -27,7 +27,7 @@ type Vital {
   label: String!
   value: Float!
   unit: String!
-  # "cabina" o "cuerpo". Texto libre hasta que A fije el catálogo de dominios.
+  # "cabin" or "body". Free text until A fixes the domain catalog.
   domain: String!
   severity: Severity!
   evidenceState: EvidenceState!

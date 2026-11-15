@@ -4,12 +4,12 @@ import { describe, expect, it } from 'vitest'
 import { BodyMap, type BodyIndicator } from './BodyMap'
 
 const indicators: BodyIndicator[] = [
-  { key: 'cabeza', label: 'Cabeza', value: 'Cefalea leve', severity: 'ATENCION', hazard: 'entorno', evidenceState: 'DEMO' },
-  { key: 'pulmones', label: 'Pulmones', value: 'SpO₂ 98 %', severity: 'NORMAL', hazard: 'entorno', evidenceState: 'DEMO' },
-  { key: 'corazon', label: 'Corazón', value: '72 lpm', severity: 'NORMAL', hazard: 'gravedad', evidenceState: 'DEMO' },
-  { key: 'sangre', label: 'Sangre y órganos', value: 'Radiación acumulada baja', severity: 'NORMAL', hazard: 'radiacion', evidenceState: 'DEMO' },
-  { key: 'temperatura', label: 'Temperatura', value: '36.6 °C', severity: 'NORMAL', hazard: 'entorno', evidenceState: 'DEMO' },
-  { key: 'huesos', label: 'Huesos y músculo', value: 'Línea base al 95 %', severity: 'NORMAL', hazard: 'gravedad', evidenceState: 'DEMO' },
+  { key: 'head', label: 'Head', value: 'Mild headache', severity: 'ATTENTION', hazard: 'environment', evidenceState: 'DEMO' },
+  { key: 'lungs', label: 'Lungs', value: 'SpO₂ 98 %', severity: 'NORMAL', hazard: 'environment', evidenceState: 'DEMO' },
+  { key: 'heart', label: 'Heart', value: '72 bpm', severity: 'NORMAL', hazard: 'gravity', evidenceState: 'DEMO' },
+  { key: 'blood', label: 'Blood and organs', value: 'Low accumulated radiation', severity: 'NORMAL', hazard: 'radiation', evidenceState: 'DEMO' },
+  { key: 'temperature', label: 'Temperature', value: '36.6 °C', severity: 'NORMAL', hazard: 'environment', evidenceState: 'DEMO' },
+  { key: 'bones', label: 'Bones and muscle', value: 'Baseline at 95 %', severity: 'NORMAL', hazard: 'gravity', evidenceState: 'DEMO' },
 ]
 
 describe('BodyMap', () => {
@@ -22,30 +22,30 @@ describe('BodyMap', () => {
   it('names each indicator with its status as text, not only with its color', () => {
     render(<BodyMap indicators={indicators} />)
 
-    expect(screen.getByRole('button', { name: 'Corazón, Normal' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cabeza, Atención' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Heart, Normal' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Head, Attention' })).toBeInTheDocument()
   })
 
   it('shows the value, the NASA hazard and the evidence of a tapped indicator', async () => {
     render(<BodyMap indicators={indicators} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Corazón, Normal' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Heart, Normal' }))
 
-    const detail = screen.getByRole('region', { name: 'Detalle' })
-    expect(within(detail).getByText('72 lpm')).toBeInTheDocument()
-    expect(within(detail).getByText('Peligro del programa de NASA: Campos gravitacionales')).toBeInTheDocument()
+    const detail = screen.getByRole('region', { name: 'Detail' })
+    expect(within(detail).getByText('72 bpm')).toBeInTheDocument()
+    expect(within(detail).getByText('NASA program hazard: Gravity fields')).toBeInTheDocument()
     expect(within(detail).getByText('DEMO')).toBeInTheDocument()
   })
 
   it('says the body values are simulated, for demonstration only', () => {
     render(<BodyMap indicators={indicators} />)
 
-    expect(screen.getByText(/Valores simulados, de demostración/)).toBeInTheDocument()
+    expect(screen.getByText(/Simulated values, for demonstration/)).toBeInTheDocument()
   })
 
   it('shows no detail until an indicator is tapped', () => {
     render(<BodyMap indicators={indicators} />)
 
-    expect(screen.queryByRole('region', { name: 'Detalle' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Detail' })).not.toBeInTheDocument()
   })
 })

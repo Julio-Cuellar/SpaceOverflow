@@ -1,7 +1,7 @@
-"""Puertos del bus de eventos y su adaptador en memoria.
+"""Event bus ports and their in-memory adapter.
 
-Los handlers se escriben una vez y corren igual sobre el bus en memoria (desarrollo y
-pruebas) o sobre el outbox real: reciben el evento y un `HandlerContext`.
+Handlers are written once and run the same way on the in-memory bus (development and
+tests) or on the real outbox: they receive the event and a `HandlerContext`.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ PublishFn = Callable[[EventEnvelope], Awaitable[None]]
 
 @dataclass(frozen=True)
 class HandlerContext:
-    """Lo que un handler puede usar. `session` es None en el bus en memoria."""
+    """What a handler can use. `session` is None on the in-memory bus."""
 
     publish: PublishFn
     session: AsyncSession | None = None
@@ -49,7 +49,7 @@ class SubscriptionRegistry:
 
     def subscribe(self, event_type: str, consumer: str, handler: Handler) -> None:
         if any(s.consumer == consumer for s in self._subs[event_type]):
-            raise ValueError(f"{consumer!r} ya está suscrito a {event_type!r}")
+            raise ValueError(f"{consumer!r} is already subscribed to {event_type!r}")
         self._subs[event_type].append(Subscription(consumer, handler))
 
     def subscribers_for(self, event_type: str) -> list[Subscription]:
@@ -57,11 +57,11 @@ class SubscriptionRegistry:
 
 
 class InMemoryEventBus(SubscriptionRegistry):
-    """Entrega inmediata, idempotente por (consumidor, evento) y en orden FIFO.
+    """Immediate delivery, idempotent per (consumer, event) and in FIFO order.
 
-    Un evento publicado desde un handler se entrega cuando el handler termina, igual
-    que con el outbox. Un handler que falla no detiene a los demás: el error se guarda
-    en `failures` y se relanza al final.
+    An event published from a handler is delivered when the handler finishes, just
+    like with the outbox. A failing handler does not stop the others: the error is
+    kept in `failures` and re-raised at the end.
     """
 
     def __init__(self) -> None:

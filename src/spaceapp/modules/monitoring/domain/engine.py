@@ -1,4 +1,4 @@
-"""Motor de reglas: determinista, sin E/S. El modelo de lenguaje nunca decide aquí."""
+"""Rule engine: deterministic, no I/O. The language model never decides here."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from spaceapp.modules.monitoring.domain.trend import detect_trend
 from spaceapp.modules.monitoring.domain.units import kpa_to_mmhg, kpa_to_psi
 
 _OPS = {"<": op.lt, "<=": op.le, ">": op.gt, ">=": op.ge}
-_SEV_ORDER = {"critico": 0, "alerta": 1, "atencion": 2}
+_SEV_ORDER = {"critical": 0, "alert": 1, "attention": 2}
 
 
 @dataclass(frozen=True)
@@ -44,7 +44,7 @@ class RuleHit:
     action_key: str
 
     def as_evidence(self) -> dict[str, Any]:
-        """Lo que se muestra para auditar la alerta: valor, regla, fuente y estado."""
+        """What is shown to audit the alert: value, rule, source and state."""
         return {
             "parameter": self.parameter,
             "value": round(self.value, 4),
@@ -69,13 +69,13 @@ class EvaluationResult:
 
 
 def _at(series: Sequence[Sample], ts: datetime) -> float | None:
-    """Último valor conocido en `ts` (la serie debe estar ordenada)."""
+    """Last known value at `ts` (the series must be sorted)."""
     idx = bisect_right([s.ts for s in series], ts)
     return series[idx - 1].value if idx else None
 
 
 def derive_series(raw: Mapping[str, Sequence[Sample]]) -> dict[str, list[Sample]]:
-    """Agrega las magnitudes derivadas: ppCO2, PIO2 y porcentaje de nitrógeno."""
+    """Adds the derived quantities: ppCO2, PIO2 and nitrogen percentage."""
     out = {k: sorted(v, key=lambda s: s.ts) for k, v in raw.items()}
     if "co2_mmhg" in out:
         out["ppco2"] = out["co2_mmhg"]
@@ -100,7 +100,7 @@ def derive_series(raw: Mapping[str, Sequence[Sample]]) -> dict[str, list[Sample]
 
 
 def _band(rule: Rule, value: float) -> str:
-    words = {"<": "bajo", "<=": "en o bajo", ">": "sobre", ">=": "desde"}
+    words = {"<": "below", "<=": "at or below", ">": "above", ">=": "at or above"}
     return f"{words[rule.operator]} {rule.threshold:g} {rule.unit}"
 
 
@@ -134,7 +134,7 @@ def _hit(
 def _windowed_value(
     rule: Rule, series: Sequence[Sample], now: datetime, scale: float
 ) -> float | None:
-    """Valor a comparar: el último dato, o el promedio de la ventana si ésta quedó cubierta."""
+    """Value to compare: the latest reading, or the window average once covered."""
     if rule.window_s == 0:
         recent = within(
             series, now - timedelta(seconds=int(rule.params.get("max_age_s", 120))), now
@@ -172,7 +172,7 @@ def evaluate(
     *,
     window_scale: float = 1.0,
 ) -> EvaluationResult:
-    """Evalúa una zona. `window_scale` acorta las ventanas para la demostración."""
+    """Evaluates a zone. `window_scale` shortens the windows for the demo."""
     series = derive_series(raw)
     by_key = {r.key: r for r in rules}
     threshold_hits: list[RuleHit] = []
@@ -180,7 +180,7 @@ def evaluate(
     for rule in rules:
         if not rule.active:
             continue
-        if rule.kind == "tendencia":
+        if rule.kind == "trend":
             data = series.get(rule.parameter)
             if not data:
                 continue
@@ -202,7 +202,7 @@ def evaluate(
                         zone_id,
                         res.recent_mean,
                         threshold=res.threshold,
-                        band=f"cambio de {res.delta:+.2f} {rule.unit} frente a los 40 s previos",
+                        band=f"change of {res.delta:+.2f} {rule.unit} versus the previous 40 s",
                     )
                 )
             continue

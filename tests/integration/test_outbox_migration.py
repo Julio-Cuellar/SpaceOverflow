@@ -103,5 +103,5 @@ def test_the_migration_command_applies_pending_migrations(
     monkeypatch.setenv("SPACEAPP_DATABASE_URL", async_url)
     monkeypatch.setattr("sys.argv", ["migrate", "platform"])
     migrate.main()
-    assert "aplicadas" in capsys.readouterr().out
+    assert "applied" in capsys.readouterr().out
     assert inspect(create_engine(pg_sync_url)).has_table("outbox_event", schema="platform")

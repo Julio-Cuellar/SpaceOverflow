@@ -1,4 +1,4 @@
-"""El esquema publicado de /ws (contracts/ws-messages.schema.json) coincide con lo que se envía."""
+"""The published /ws schema (contracts/ws-messages.schema.json) matches what is sent."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ SAMPLES: dict[str, dict[str, Any]] = {
         "latest": [{"zone_id": None, "sensor_id": "s", "metric": "co2_mmhg", "value": 1.0}],
     },
     "telemetry.scenario_changed": {"key": "co2_slow", "state": "started"},
-    "monitoring.alert_raised": {"alert_id": "a", "rule_key": "r", "severity": "alerta"},
+    "monitoring.alert_raised": {"alert_id": "a", "rule_key": "r", "severity": "alert"},
     "monitoring.alert_acknowledged": {"alert_id": "a", "crew_member_id": "c", "at": T},
     "monitoring.alert_resolved": {"alert_id": "a", "resolved_at": T, "duration_s": 3},
     "knowledge.recommendation_ready": {
@@ -37,14 +37,34 @@ SAMPLES: dict[str, dict[str, Any]] = {
     "facility.incident_opened": {
         "incident_id": "i",
         "zone_id": "z",
-        "severity": "alerta",
-        "title": "CO₂ alto",
+        "severity": "alert",
+        "title": "High CO₂",
         "description": "d",
-        "source": "ALERTA",
+        "source": "ALERT",
+        "code": "INC-0001",
     },
-    "facility.incident_updated": {"incident_id": "i", "severity": "critico", "status": "abierta"},
+    "facility.incident_updated": {"incident_id": "i", "severity": "critical", "status": "open"},
     "facility.incident_resolved": {"incident_id": "i", "zone_id": "z", "resolved_at": T},
-    "facility.zone_status_changed": {"zone_id": "z", "status": "alerta", "open_incidents": 1},
+    "facility.zone_status_changed": {"zone_id": "z", "status": "alert", "open_incidents": 1},
+    "engagement.task_assigned": {
+        "task_id": "t",
+        "crew_member_id": "c",
+        "kind": "HEALTH",
+        "origin": "SYSTEM",
+        "due_at": T,
+    },
+    "engagement.task_created": {
+        "task_id": "t",
+        "kind": "SHIP",
+        "title": "x",
+        "origin": "CREW",
+    },
+    "engagement.task_completed": {"task_id": "t", "effective": True},
+    "engagement.task_blocked": {"task_id": "t", "origin": "GROUND", "reason": "r"},
+    "engagement.ground_plan_applied": {"plan_version": 2, "applied": [], "rejected": []},
+    "groundlink.ground_plan_received": {"batch_id": "b", "plan_version": 2, "changes": []},
+    "groundlink.batch_acknowledged": {"batch_id": "b", "items": 1, "acked_at": T},
+    "groundlink.link_state_changed": {"state": "DOWN", "since": T, "queued": 1},
 }
 
 

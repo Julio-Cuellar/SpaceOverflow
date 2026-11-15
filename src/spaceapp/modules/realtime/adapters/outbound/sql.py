@@ -1,4 +1,4 @@
-"""Lectura del outbox para numerar los mensajes y reenviarlos con `resume`."""
+"""Outbox read used to number messages and resend them with `resume`."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from spaceapp.modules.realtime.domain.messages import REPLAYABLE_TYPES, WsMessage, translate
 from spaceapp.platform.events import EventEnvelope
 
-# Los eventos `done` se conservan 24 h (plan, sección 7).
+# `done` events are kept for 24 h (architecture plan, section 7).
 _AFTER = text(
     """
     SELECT id, event_id, type, version, aggregate_type, aggregate_id, partition_key,
@@ -27,7 +27,7 @@ _AFTER = text(
 
 
 async def seq_of(session: AsyncSession | None, event_id: UUID) -> int | None:
-    """Id del outbox del evento. Sin sesión (bus en memoria) no hay numeración."""
+    """Outbox id of the event. Without a session (in-memory bus) there is no numbering."""
     if session is None:
         return None
     value = (

@@ -1,7 +1,7 @@
-"""Almacén de fragmentos. En memoria para pruebas y en archivo JSONL para la ingesta local.
+"""Fragment store. In memory for tests and in a JSONL file for the local ingestion.
 
-Cuando haya PostgreSQL (dev A, I1), el esquema `knowledge` (`document`, `chunk`) reemplaza al
-archivo: este puerto es el punto de cambio.
+When PostgreSQL exists (dev A, I1), the `knowledge` schema (`document`, `chunk`) replaces the
+file: this port is the point of change.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from spaceapp.modules.knowledge.ingest.chunking import Chunk
 
 class ChunkStore(Protocol):
     def add(self, chunks: list[Chunk]) -> int:
-        """Guarda los fragmentos nuevos y devuelve cuántos eran nuevos (ingesta idempotente)."""
+        """Stores the new fragments and returns how many were new (idempotent ingestion)."""
         ...
 
     def all(self) -> list[Chunk]: ...
@@ -37,7 +37,7 @@ class InMemoryChunkStore:
 
 
 class JsonlChunkStore(InMemoryChunkStore):
-    """Igual que el de memoria, pero conserva los fragmentos en un archivo entre ejecuciones."""
+    """Same as the in-memory one, but it keeps the fragments in a file between runs."""
 
     def __init__(self, path: Path) -> None:
         super().__init__()

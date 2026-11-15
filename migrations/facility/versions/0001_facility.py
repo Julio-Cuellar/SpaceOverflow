@@ -1,4 +1,4 @@
-"""Plano, zonas, alertas activas por zona, incidencias y su historial.
+"""Floor plan, zones, active alerts per zone, incidents and their history.
 
 Revision ID: 0001
 Revises:
@@ -38,11 +38,11 @@ def upgrade() -> None:
           status            text        NOT NULL DEFAULT 'normal',
           status_changed_at timestamptz NOT NULL DEFAULT now(),
           UNIQUE (habitat_id, code),
-          CONSTRAINT zone_status_chk CHECK (status IN ('normal', 'atencion', 'alerta', 'critico'))
+          CONSTRAINT zone_status_chk CHECK (status IN ('normal', 'attention', 'alert', 'critical'))
         )
         """
     )
-    # Proyección de las alertas activas de Monitoreo por zona (sin clave foránea entre esquemas).
+    # Projection of the active Monitoring alerts per zone (no foreign key across schemas).
     op.execute(
         """
         CREATE TABLE facility.zone_alert (
@@ -67,21 +67,21 @@ def upgrade() -> None:
           title            text        NOT NULL,
           description      text        NOT NULL,
           severity         text        NOT NULL,
-          status           text        NOT NULL DEFAULT 'abierta',
+          status           text        NOT NULL DEFAULT 'open',
           opened_at        timestamptz NOT NULL,
           acknowledged_at  timestamptz,
           resolved_at      timestamptz,
           values_normal_at timestamptz,
-          CONSTRAINT incident_source_chk CHECK (source IN ('ALERTA', 'MANUAL')),
-          CONSTRAINT incident_status_chk CHECK (status IN ('abierta', 'reconocida', 'resuelta')),
-          CONSTRAINT incident_severity_chk CHECK (severity IN ('atencion', 'alerta', 'critico'))
+          CONSTRAINT incident_source_chk CHECK (source IN ('ALERT', 'MANUAL')),
+          CONSTRAINT incident_status_chk CHECK (status IN ('open', 'acknowledged', 'resolved')),
+          CONSTRAINT incident_severity_chk CHECK (severity IN ('attention', 'alert', 'critical'))
         )
         """
     )
-    # Un solo ticket automático abierto por zona.
+    # A single open automatic ticket per zone.
     op.execute(
         "CREATE UNIQUE INDEX incident_one_open_auto_per_zone ON facility.incident (zone_id) "
-        "WHERE source = 'ALERTA' AND status <> 'resuelta'"
+        "WHERE source = 'ALERT' AND status <> 'resolved'"
     )
     op.execute("CREATE INDEX incident_opened_idx ON facility.incident (opened_at DESC, id DESC)")
     op.execute(

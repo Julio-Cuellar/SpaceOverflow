@@ -1,4 +1,4 @@
-"""El gateway se suscribe al bus y reparte lo que traduce."""
+"""The gateway subscribes to the bus and distributes what it translates."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from spaceapp.platform.events import EventEnvelope
 def alert_event() -> EventEnvelope:
     aid = uuid4()
     return EventEnvelope.from_payload(
-        AlertRaised(alert_id=aid, zone_id=None, rule_key="r", severity="alerta", evidence={}),
+        AlertRaised(alert_id=aid, zone_id=None, rule_key="r", severity="alert", evidence={}),
         aggregate_type="alert",
         aggregate_id=aid,
         partition_key="p",
@@ -44,7 +44,7 @@ async def test_an_alert_reaches_the_clients_with_the_outbox_id_as_seq() -> None:
 
 async def test_ticks_have_no_seq_and_do_not_query_the_outbox() -> None:
     async def seq_of(session: AsyncSession | None, event_id: UUID) -> int | None:
-        raise AssertionError("los ticks no consultan el outbox")
+        raise AssertionError("ticks do not query the outbox")
 
     hub, bus = Hub(), InMemoryEventBus()
     register_realtime(bus, RealtimeEvents(hub, seq_of))

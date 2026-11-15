@@ -1,4 +1,4 @@
-"""Ciclo de vida de la alerta: levantar, mantener, resolver con histéresis y reconocer."""
+"""Alert lifecycle: raise, keep, resolve with hysteresis and acknowledge."""
 
 from __future__ import annotations
 
@@ -43,12 +43,12 @@ def reconcile(
     superseded: Collection[str],
     hysteresis: int,
 ) -> Decision:
-    """Compara las alertas activas de una zona con lo que acaba de evaluarse.
+    """Compares a zone's active alerts with what was just evaluated.
 
-    - Un impacto sin alerta activa levanta una (deduplicación por regla y zona).
-    - Un impacto con alerta activa la mantiene y reinicia la cuenta de limpieza.
-    - Sin impacto, la alerta se resuelve tras `hysteresis` evaluaciones limpias seguidas.
-    - Una regla reemplazada por otra más grave se resuelve de inmediato.
+    - A hit with no active alert raises one (deduplicated by rule and zone).
+    - A hit with an active alert keeps it and resets the clean-evaluation count.
+    - With no hit, the alert resolves after `hysteresis` consecutive clean evaluations.
+    - A rule superseded by a more severe one resolves immediately.
     """
     hit_by = {(h.rule_key, h.zone_id): h for h in hits}
     active_keys = {(a.rule_key, a.zone_id) for a in active}

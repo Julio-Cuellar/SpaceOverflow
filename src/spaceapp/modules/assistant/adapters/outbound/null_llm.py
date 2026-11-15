@@ -1,4 +1,4 @@
-"""Adaptador nulo: sin modelo. El caso de uso responde con los pasajes sin redactar."""
+"""Null adapter: no model. The use case answers with the passages, unwritten."""
 
 from __future__ import annotations
 

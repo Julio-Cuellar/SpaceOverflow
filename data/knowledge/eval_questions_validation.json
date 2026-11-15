@@ -1,15 +1,15 @@
 {
-  "_nota": "Conjunto de VALIDACIÓN del RAG, aparte del conjunto principal. No se usa para ajustar el buscador ni el glosario: sirve para saber si lo ajustado con el conjunto principal generaliza. Cada anclaje se buscó directamente en el texto extraído de los PDFs (14 nov 2026). Uso: python -m spaceapp.modules.knowledge.evaluate --questions data/knowledge/eval_questions_validation.json",
+  "_note": "VALIDATION set of the RAG, separate from the main set. It is not used to tune the search engine: it shows whether what was tuned with the main set generalizes. Each anchor was looked up directly in the text extracted from the PDFs (14 Nov 2026). Usage: python -m spaceapp.modules.knowledge.evaluate --questions data/knowledge/eval_questions_validation.json",
   "cases": [
-    { "question": "¿Cuánta energía diaria necesita un astronauta?", "expected_contains": ["3,035 kcal"] },
-    { "question": "¿Cuánta vitamina D se necesita al día?", "expected_contains": ["25 µg"] },
-    { "question": "¿Cuál es el límite de ruido de una alarma?", "expected_contains": ["<95 dBA"] },
-    { "question": "¿Cuánto tiempo puede exponerse a oxígeno puro?", "expected_contains": ["791"] },
-    { "question": "¿Cuál es el límite de CO₂ promedio de una semana?", "expected_contains": ["below 2.5 mmHg"] },
-    { "question": "¿Cuál es el límite de dosis por evento de partículas solares?", "expected_contains": ["250 mSv"] },
-    { "question": "¿Qué porcentaje mínimo de gas diluyente se exige?", "expected_contains": ["at least 30% diluent gas"] },
-    { "question": "¿Cuántas calorías extra por hora de actividad extravehicular?", "expected_contains": ["200 kcal"] },
-    { "question": "¿Qué fuerza muscular debe mantenerse durante la misión?", "expected_contains": ["at or above 80% of baseline"] },
-    { "question": "¿Cuál es la receta de la paella?", "out_of_scope": true }
+    { "question": "How much daily energy does an astronaut need?", "expected_contains": ["3,035 kcal"] },
+    { "question": "How much vitamin D is needed per day?", "expected_contains": ["25 µg"] },
+    { "question": "What is the noise limit for an alarm?", "expected_contains": ["<95 dBA"] },
+    { "question": "How long can a crew member be exposed to pure oxygen?", "expected_contains": ["791"] },
+    { "question": "What is the average 7-day CO2 limit?", "expected_contains": ["below 2.5 mmHg"] },
+    { "question": "What is the dose limit for a solar particle event?", "expected_contains": ["250 mSv"] },
+    { "question": "What minimum percentage of diluent gas is required?", "expected_contains": ["at least 30% diluent gas"] },
+    { "question": "How many extra calories per EVA hour?", "expected_contains": ["200 kcal"] },
+    { "question": "What muscle strength must be maintained during the mission?", "expected_contains": ["at or above 80% of baseline"] },
+    { "question": "What is the paella recipe?", "out_of_scope": true }
   ]
 }

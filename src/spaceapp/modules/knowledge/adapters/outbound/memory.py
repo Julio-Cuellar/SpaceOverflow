@@ -1,4 +1,4 @@
-"""Adaptadores en memoria para pruebas y para el perfil sin base de datos (adaptador nulo)."""
+"""In-memory adapters for tests and for the profile without a database (null adapter)."""
 
 from __future__ import annotations
 

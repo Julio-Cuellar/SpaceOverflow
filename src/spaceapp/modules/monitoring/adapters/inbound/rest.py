@@ -1,4 +1,4 @@
-"""GET /api/v1/rules/catalog.json: el catálogo con su fuente, versionado por ETag."""
+"""GET /api/v1/rules/catalog.json: the catalog with its source, versioned by ETag."""
 
 import json
 from dataclasses import asdict

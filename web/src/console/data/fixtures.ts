@@ -1,0 +1,286 @@
+import type { Snapshot, CrewMember, Vital, Severity } from "../model";
+const at = new Date().toISOString();
+const scheduled = (hour: number) => {
+  const d = new Date();
+  d.setUTCHours(hour, 0, 0, 0);
+  return d.toISOString();
+};
+const vital = (key: string, value: number, unit: string): Vital => ({
+  key,
+  label: key,
+  value,
+  unit,
+  severity: "NORMAL",
+  evidenceState: "DEMO",
+  origin: "SIMULATED",
+  zoneId: null,
+});
+export const crew: CrewMember[] = [
+  "A. Garcia",
+  "L. Chen",
+  "M. Rossi",
+  "D. Kim",
+].map((name, i) => ({
+  id: `demo-crew-${i + 1}`,
+  name,
+  role: ["Commander", "Pilot", "Engineer", "Specialist"][i],
+  portrait: i + 1,
+  bloodPressure: {
+    systolic: [118, 120, 126, 116][i],
+    diastolic: [76, 78, 82, 74][i],
+    unit: "mmHg",
+    origin: "SIMULATED",
+    evidenceState: "DEMO",
+  },
+  state: (i === 2 ? "ATTENTION" : "NORMAL") as Severity,
+  vitals: [
+    vital("heart_rate", [72, 78, 90, 70][i], "bpm"),
+    vital("spo2", [97, 96, 95, 98][i], "%"),
+    vital("body_temperature", [36.6, 36.8, 37.1, 36.5][i], "°C"),
+    vital("radiation", [0.18, 0.21, 0.26, 0.16][i], "mSv"),
+  ],
+}));
+export function seed(): Snapshot {
+  const tasks: Snapshot["tasks"] = [
+    {
+      id: "demo-task-1",
+      kind: "HEALTH",
+      origin: "SYSTEM",
+      title: "Mobility and stretching",
+      zoneId: "demo-gym",
+      status: "PENDING",
+      dueAt: scheduled(9),
+      blockedReason: null,
+      effective: null,
+      sourceAlertId: null,
+      incidentId: null,
+      templateId: "daily-mobility",
+    },
+    {
+      id: "demo-task-2",
+      kind: "SHIP",
+      origin: "GROUND",
+      title: "Inspect habitat air filters",
+      zoneId: "demo-lab",
+      status: "PENDING",
+      dueAt: scheduled(10),
+      blockedReason: null,
+      effective: null,
+      sourceAlertId: null,
+      incidentId: null,
+      templateId: "ground-filters",
+    },
+    {
+      id: "demo-task-3",
+      kind: "HEALTH",
+      origin: "CREW",
+      title: "Complete personal wellness log",
+      zoneId: null,
+      status: "PENDING",
+      dueAt: scheduled(15),
+      blockedReason: null,
+      effective: null,
+      sourceAlertId: null,
+      incidentId: null,
+      templateId: null,
+    },
+    {
+      id: "demo-task-4",
+      kind: "HEALTH",
+      origin: "SYSTEM",
+      title: "Morning check-in",
+      zoneId: "demo-living",
+      status: "COMPLETED",
+      dueAt: scheduled(8),
+      blockedReason: null,
+      effective: null,
+      sourceAlertId: null,
+      incidentId: null,
+      templateId: "daily-check",
+    },
+  ];
+  const incidents: Snapshot["incidents"] = [
+    {
+      id: "demo-incident-1",
+      code: "INC-0008",
+      title: "Elevated CO₂ trend",
+      description:
+        "Fictional laboratory trend for interface review. No operational procedure is loaded.",
+      severity: "ALERT",
+      status: "OPEN",
+      source: "ALERT",
+      zoneId: "demo-lab",
+      openedAt: at,
+      valuesNormal: false,
+      sourceAlertId: "demo-alert",
+      updates: [
+        { kind: "OPENED", note: "Opened from a simulated zone alert.", at },
+      ],
+    },
+    {
+      id: "demo-incident-2",
+      code: "INC-0010",
+      title: "Equipment locker latch inspection",
+      description:
+        "Inspect the locker latch using the applicable mission procedure.",
+      severity: "ATTENTION",
+      status: "ACKNOWLEDGED",
+      source: "MANUAL",
+      zoneId: "demo-living",
+      openedAt: at,
+      valuesNormal: false,
+      sourceAlertId: null,
+      updates: [],
+    },
+  ];
+  const templates: import("../model").Template[] = [
+    {
+      id: "demo-template-1",
+      title: "Daily mobility routine",
+      kind: "HEALTH",
+      status: "APPLIED",
+      blockedReason: null,
+      cancelled: false,
+    },
+    {
+      id: "demo-template-2",
+      title: "Inspect habitat air filters",
+      kind: "SHIP",
+      status: "APPLIED",
+      blockedReason: null,
+      cancelled: false,
+    },
+  ];
+  const data: Snapshot = {
+    dashboard: {
+      habitatId: "transit-ship",
+      globalSeverity: "ALERT",
+      vitals: [
+        vital("pressure_kpa", 101.3, "kPa"),
+        vital("o2_pct", 20.8, "%"),
+        {
+          ...vital("co2_mmhg", 3.4, "mmHg"),
+          severity: "ALERT",
+          zoneId: "demo-lab",
+        },
+        vital("temperature_c", 22.4, "°C"),
+        vital("humidity_pct", 48, "%"),
+        vital("pio2", 149.7, "mmHg"),
+      ],
+    },
+    ship: {
+      id: "transit-ship",
+      name: "Ares habitat · Mars surface concept",
+      canvas: { width: 760, height: 380 },
+      zones: [
+        ["eng", "Engineering"],
+        ["life", "Life support"],
+        ["lab", "Laboratory"],
+        ["med", "Medical bay"],
+        ["bridge", "Bridge"],
+        ["airlock", "Airlock"],
+        ["store", "Storage"],
+        ["gym", "Wellness area"],
+        ["kitchen", "Galley"],
+        ["living", "Living area"],
+      ].map(([code, name], i) => ({
+        id: `demo-${code}`,
+        code,
+        name,
+        kind: "MODULE",
+        deck: "01",
+        layout: {
+          x: 20 + (i % 5) * 147,
+          y: 45 + Math.floor(i / 5) * 155,
+          w: 130,
+          h: 115,
+        },
+        status: i === 2 ? "ALERT" : "NORMAL",
+        openIncidents: i === 2 ? 1 : i === 9 ? 1 : 0,
+      })),
+    },
+    alerts: [
+      {
+        id: "demo-alert",
+        ruleKey: "demo-co2_slow",
+        zoneId: "demo-lab",
+        severity: "ALERT",
+        status: "RAISED",
+        causeHint: "Environment",
+        raisedAt: at,
+        rule: {
+          parameter: "ppco2",
+          sourceDocument: "LOCAL-UX-FIXTURE",
+          sourceRequirement: "Demonstration only",
+          evidenceState: "DEMO",
+        },
+        recommendation: {
+          body: "Review the incident and consult the applicable mission source. This fixture contains no operational instructions.",
+          sourceKind: "DEMO",
+          composedBy: "template",
+          actions: [],
+          citations: [
+            {
+              documentCode: "LOCAL-UX-FIXTURE",
+              requirementRef: null,
+              excerpt:
+                "Fictional content used to demonstrate cited incident information.",
+              evidenceState: "DEMO",
+            },
+          ],
+        },
+      },
+    ],
+    incidents,
+    incidentTypes: [
+      {
+        key: "equipment_fault",
+        name: "Equipment malfunction",
+        category: "equipment",
+        categoryName: "Equipment",
+        detection: "MANUAL",
+        defaultSeverity: "ATTENTION",
+        evidenceState: "DEMO",
+        typicalZones: ["*"],
+        suggestedActions: [],
+      },
+      {
+        key: "observation",
+        name: "Workspace observation",
+        category: "environment",
+        categoryName: "Environment",
+        detection: "MANUAL",
+        defaultSeverity: "ATTENTION",
+        evidenceState: "DEMO",
+        typicalZones: ["*"],
+        suggestedActions: [],
+      },
+    ],
+    tasks,
+    ground: {
+      appliedVersion: 3,
+      templates,
+      draft: null,
+      published: {
+        version: 3,
+        stage: "CONFIRMED",
+        reason: null,
+        publishedAt: at,
+        ackedAt: at,
+      },
+      link: { online: true, delaySeconds: 2, changedAt: at },
+    },
+    groundPlan: { version: 3, appliedAt: at, rejected: [] },
+    rules: [],
+    crew,
+    session: {
+      crewMember: crew[0],
+      zoneId: "demo-living",
+      tasks,
+      incidents: [incidents[1]],
+      sharedTasks: true,
+    },
+    streak: 1,
+  };
+  return structuredClone(data);
+}

@@ -19,12 +19,12 @@ def test_extracts_the_text_of_each_page_in_order(tmp_path: Path) -> None:
 
 def test_a_missing_file_raises_a_clear_error(tmp_path: Path) -> None:
     with pytest.raises(PdfReadError):
-        extract_pages(tmp_path / "no-existe.pdf")
+        extract_pages(tmp_path / "missing.pdf")
 
 
 def test_a_file_that_is_not_a_pdf_raises_a_clear_error(tmp_path: Path) -> None:
     broken = tmp_path / "broken.pdf"
-    broken.write_bytes(b"esto no es un pdf")
+    broken.write_bytes(b"this is not a pdf")
 
     with pytest.raises(PdfReadError):
         extract_pages(broken)

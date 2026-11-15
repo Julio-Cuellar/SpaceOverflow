@@ -1,4 +1,4 @@
-"""Puertos de salida de Monitoreo."""
+"""Monitoring outbound ports."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from spaceapp.modules.monitoring.domain.series import Sample
 
 
 class ReadingQuery(Protocol):
-    """Lecturas por zona. Las entrega Telemetría por su fachada."""
+    """Readings per zone. Telemetry delivers them through its facade."""
 
     async def series(
         self, zone_id: UUID, metrics: Sequence[str], since: datetime, until: datetime

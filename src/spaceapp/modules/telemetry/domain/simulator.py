@@ -1,4 +1,4 @@
-"""Simulador de zonas de la nave. Determinista para una semilla; origen siempre SIMULATED."""
+"""Ship zone simulator. Deterministic for a given seed; origin is always SIMULATED."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 
-# (métrica, unidad, periodo de muestreo en s) según V2 6001, Tabla 6.1-1:
-# atmósfera cada 5 s, presión cada 1 s, temperatura y humedad cada 1 min.
+# (metric, unit, sampling period in s) per V2 6001, Table 6.1-1:
+# atmosphere every 5 s, pressure every 1 s, temperature and humidity every 1 min.
 SENSOR_SPECS: tuple[tuple[str, str, int], ...] = (
     ("pressure_kpa", "kPa", 1),
     ("o2_pct", "%", 5),
@@ -25,7 +25,7 @@ NOISE = {
     "humidity_pct": 0.3,
 }
 NOMINAL = {"pressure_kpa": 101.3, "o2_pct": 21.0}
-# escenario -> (metas por métrica, tasa de aproximación por segundo)
+# scenario -> (targets per metric, approach rate per second)
 SCENARIOS: dict[str, tuple[dict[str, float], float]] = {
     "co2_slow": ({"co2_mmhg": 3.6}, 0.1),
     "pressure_leak": ({"pressure_kpa": 55.0}, 0.05),
@@ -73,7 +73,7 @@ class _Zone:
     baseline: ZoneBaseline
     rng: random.Random
     values: dict[str, float]
-    scenarios: dict[str, float] = field(default_factory=dict)  # clave -> velocidad
+    scenarios: dict[str, float] = field(default_factory=dict)  # key -> speed
 
 
 class Simulator:
@@ -83,7 +83,7 @@ class Simulator:
         self._last_tick: datetime | None = None
         self._last_emit: dict[tuple[str, str], datetime] = {}
 
-    # --- control de escenarios -------------------------------------------------------------
+    # --- scenario control ------------------------------------------------------------------
     def start(self, key: str, zone: str | None, *, speed: float = 1.0) -> None:
         if key == "normal":
             for z in self._zones.values():
@@ -92,7 +92,7 @@ class Simulator:
         if key not in SCENARIOS:
             raise UnknownScenario(key)
         if zone is None:
-            raise ValueError("este escenario necesita una zona")
+            raise ValueError("this scenario needs a zone")
         if zone not in self._zones:
             raise UnknownZone(zone)
         self._zones[zone].scenarios[key] = speed
@@ -107,7 +107,7 @@ class Simulator:
     def active(self) -> dict[str, dict[str, float]]:
         return {c: dict(z.scenarios) for c, z in self._zones.items() if z.scenarios}
 
-    # --- avance del tiempo -------------------------------------------------------------------
+    # --- time advance ------------------------------------------------------------------------
     def _targets(self, zone: _Zone) -> dict[str, tuple[float, float]]:
         out = {m: (v, RETURN_RATE) for m, v in zone.baseline.base().items()}
         for key, speed in zone.scenarios.items():
@@ -121,11 +121,11 @@ class Simulator:
             return
         for z in self._zones.values():
             for metric, (goal, rate) in self._targets(z).items():
-                # Aproximación exponencial exacta: no depende del tamaño del paso.
+                # Exact exponential approach: independent of the step size.
                 z.values[metric] += (goal - z.values[metric]) * (1 - math.exp(-rate * dt))
 
     def tick(self, now: datetime) -> list[SimReading]:
-        """Avanza hasta `now` y devuelve las lecturas cuyo periodo de muestreo venció."""
+        """Advances to `now` and returns the readings whose sampling period has elapsed."""
         if self._last_tick is not None:
             self._advance((now - self._last_tick).total_seconds())
         self._last_tick = now

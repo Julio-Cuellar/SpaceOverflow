@@ -59,13 +59,13 @@ async def test_recomputing_is_idempotent_and_picks_up_late_readings(session_fact
     relay = make_relay(session_factory)
     await ingest(session_factory, [ReadingIn(CO2, at(10), 1.0)])
     await relay.run_once()
-    async with session_factory() as s, s.begin():  # entrega repetida del mismo evento
+    async with session_factory() as s, s.begin():  # repeated delivery of the same event
         await s.execute(text("UPDATE platform.outbox_event SET status='pending'"))
     await relay.run_once()
     assert (await rollup(session_factory))[(CO2, at(0))] == (1.0, 1.0, 1.0, 1)
     await ingest(
         session_factory, [ReadingIn(CO2, at(50), 3.0)]
-    )  # llega otra lectura del mismo minuto
+    )  # another reading of the same minute arrives
     await relay.run_once()
     assert (await rollup(session_factory))[(CO2, at(0))] == (2.0, 1.0, 3.0, 2)
 

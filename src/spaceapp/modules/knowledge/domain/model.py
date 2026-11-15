@@ -1,4 +1,4 @@
-"""Entidades y valores del módulo knowledge. Sin dependencias externas."""
+"""Entities and values of the knowledge module. No external dependencies."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from uuid import UUID
 
 
 class EvidenceState(StrEnum):
-    VERIFICADO = "VERIFICADO"
+    VERIFIED = "VERIFIED"
     TB = "TB"
     DEMO = "DEMO"
-    NO_VERIFICADO = "NO_VERIFICADO"
+    UNVERIFIED = "UNVERIFIED"
 
 
 class UnknownRuleError(LookupError):
-    """La alerta trae una regla que el catálogo no conoce. No se marca el evento como procesado."""
+    """The alert carries a rule the catalog does not know. The event is not marked as processed."""
 
 
 @dataclass(frozen=True)
@@ -36,7 +36,7 @@ class Citation:
 
 @dataclass(frozen=True)
 class Guidance:
-    """Lo que el catálogo dice sobre una regla: texto, acciones y citas."""
+    """What the catalog says about a rule: text, actions and citations."""
 
     rule_key: str
     source_kind: str

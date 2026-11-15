@@ -5,12 +5,12 @@ from spaceapp.platform.config import Settings
 from spaceapp.platform.profiles import Profile, adapters_for
 
 
-def test_default_profile_is_jurado(monkeypatch: pytest.MonkeyPatch):
+def test_default_profile_is_jury(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("SPACEAPP_PROFILE", raising=False)
-    assert Settings(_env_file=None).profile is Profile.JURADO
+    assert Settings(_env_file=None).profile is Profile.JURY
 
 
-@pytest.mark.parametrize("value", ["dev1", "dev2", "jurado"])
+@pytest.mark.parametrize("value", ["dev1", "dev2", "jury"])
 def test_profile_is_read_from_the_environment(monkeypatch: pytest.MonkeyPatch, value: str):
     monkeypatch.setenv("SPACEAPP_PROFILE", value)
     assert Settings(_env_file=None).profile.value == value
@@ -37,8 +37,8 @@ def test_dev2_uses_alexa_for_voice_and_it_is_not_autonomous():
     assert a.autonomous_voice is False
 
 
-def test_jurado_uses_whisper_and_falls_back_when_something_is_missing():
-    a = adapters_for(Profile.JURADO)
+def test_jury_uses_whisper_and_falls_back_when_something_is_missing():
+    a = adapters_for(Profile.JURY)
     assert a.speech_to_text == "whisper"
     assert a.knowledge_source == "rag_fallback_demo"
     assert a.text_composer == "ollama_fallback_template"
