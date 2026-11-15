@@ -6,7 +6,7 @@ import { defineConfig } from "vitest/config";
 // Proxy targets can come from the process environment or from `.env.<mode>` (`--mode backend`).
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiTarget = env.SPACEAPP_API_PROXY || "http://127.0.0.1:8000";
+  const apiTarget = env.SPACEAPP_API_PROXY || "http://127.0.0.1:8002";
   const assistantTarget =
     env.SPACEAPP_ASSISTANT_PROXY || "http://127.0.0.1:8000";
   return {
