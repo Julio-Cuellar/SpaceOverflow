@@ -12,6 +12,8 @@ interface BackendCitation {
 }
 
 interface BackendAnswer {
+  degraded?: boolean
+  composed_by?: string
   outcome: 'ANSWERED' | 'NO_INFO'
   text: string
   citations: BackendCitation[]
@@ -23,7 +25,7 @@ function isEvidenceState(value: string): value is EvidenceState {
 
 function toCitation(citation: BackendCitation): AssistantCitation {
   if (!isEvidenceState(citation.evidence_state)) {
-    throw new Error(`Estado de evidencia desconocido: ${citation.evidence_state}`)
+    throw new Error(`Unknown evidence state: ${citation.evidence_state}`)
   }
   return {
     documentCode: citation.document_code,
@@ -49,6 +51,8 @@ export function askBackend(url: string, fetchImpl: typeof fetch = fetch) {
     const body = (await response.json()) as BackendAnswer
     return {
       outcome: body.outcome,
+      degraded: body.degraded,
+      composedBy: body.composed_by,
       text: body.text,
       citations: body.citations.map(toCitation),
     }

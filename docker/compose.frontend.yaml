@@ -1,0 +1,16 @@
+# Optional standalone frontend, forwarding to APIs running on the host.
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        VITE_DATA_MODE: ${VITE_DATA_MODE:-demo}
+        VITE_SESSION_URL: ${VITE_SESSION_URL:-}
+    ports:
+      - "127.0.0.1:${SPACEAPP_WEB_PORT:-8080}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://host.docker.internal:8000}
+      ASSISTANT_UPSTREAM: ${ASSISTANT_UPSTREAM:-http://host.docker.internal:8000}

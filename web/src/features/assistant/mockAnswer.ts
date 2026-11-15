@@ -14,6 +14,8 @@ export interface AssistantCitation {
 }
 
 export interface AssistantAnswer {
+  degraded?: boolean
+  composedBy?: string
   outcome: 'ANSWERED' | 'NO_INFO'
   text: string
   citations: AssistantCitation[]
