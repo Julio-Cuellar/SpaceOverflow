@@ -456,7 +456,7 @@ El umbral del plan (80 %) **no se cumple** y el comando de evaluación sale con 
 
 **Lectura honesta de los números**
 
-1. **Cero respuestas sin fuente:** ninguna pregunta fuera de alcance recibió pasaje (0 de 6). Es el criterio que más importa para no inventar protocolos, y se cumple.
+1. **Cero respuestas sin fuente:** ninguna pregunta fuera de alcance recibió pasaje (0 de 6 entre los tres conjuntos: 2, 1 y 3 casos fuera de alcance). Es el criterio que más importa para no inventar protocolos, y se cumple.
 2. **La recuperación es débil.** El conjunto en inglés también falla en la mitad: el problema no es solo el idioma. Es búsqueda léxica sobre un documento de ~300 páginas con vocabulario técnico: una paráfrasis («energía diaria» frente a *energy requirements*) o una cifra en una tabla no se encuentran por coincidencia de palabras.
 3. **La brecha entre 56 % y 11 %** es el sobreajuste esperado: el glosario (40 entradas) se afinó mirando el conjunto principal. El conjunto retenido muestra el rendimiento sin ese ajuste, y ese es el número que hay que creer.
 4. **Fallos concretos** (posición del pasaje correcto en el ranking, en una medición intermedia): dolor de cabeza, puesto 21; síntomas del CO₂, 27; presión mínima de cabina, 19; botiquín, 26.
@@ -481,3 +481,15 @@ El umbral del plan (80 %) **no se cumple** y el comando de evaluación sale con 
 **Estado:** F12 PARCIAL. Ingesta y evaluación reales hechas; el umbral de recuperación del plan (80 %) no se cumple.
 
 **Verificación al cierre:** 120 pruebas de Python pasan; `ruff check`, `ruff format --check` y `mypy` estrictos limpios.
+
+## E11 · Human Integration Design Handbook (15 nov 2026)
+
+**Qué se hizo:** con permiso explícito del usuario se descargó el Handbook (rev. 1, 25,3 MB, `nasa.gov`, PDF válido) a `data/knowledge/pdfs/`, ignorado por git. Se indexó con `--include-optional` (el manifiesto lo marca opcional, `NO_VERIFICADO`, licencia `no_verificada`; no se modificó).
+
+**Resultado:** aporta 3 261 fragmentos (5 347 en total) y **empeora** la recuperación: principal 9→8 de 16, validación 1 de 9 sin cambio, EN 13→12 de 25. Sin respuestas a preguntas fuera de alcance en ningún conjunto.
+
+**Causa:** el Handbook pesa más que el resto junto y sus pasajes parecidos a los de la norma desplazan al correcto de los 3 primeros. Es el mismo límite de la búsqueda léxica, no un fallo del PDF. No se revisó la calidad de su texto (tablas, columnas).
+
+**Decisión:** el índice queda **sin** el Handbook (2 086 fragmentos). Incluirlo es opt-in. Reevaluar cuando haya embeddings, o ponderar por documento.
+
+**Corrección:** en el informe anterior las preguntas fuera de alcance se dieron como «0 de 6» por conjunto; son 2, 1 y 3 casos (6 entre los tres). README y bitácora corregidos.

@@ -39,13 +39,13 @@ El comando indexa los PDFs que haya en `data/knowledge/pdfs/` según `data/knowl
 
 ## Evaluación (métrica estricta, k=3)
 
-Un acierto exige que el texto esperado aparezca en el extracto de los 3 primeros pasajes. Mínimo del plan: 80 %.
+Un acierto exige que el texto esperado aparezca en el extracto de los 3 primeros pasajes. Mínimo del plan: 80 %. Con el Handbook de diseño indexado (`--include-optional`) baja a 8/16, 1/9 y 12/25, por eso no se indexa por defecto.
 
 | Conjunto | Aciertos | Fuera de alcance respondidas |
 |---|---|---|
-| Principal (ES) | 9 de 16 (56 %) | 0 de 6 |
-| Validación (ES, no se afinó con él) | 1 de 9 (11 %) | 0 de 6 |
-| Diagnóstico (EN) | 13 de 25 (52 %) | 0 de 6 |
+| Principal (ES) | 9 de 16 (56 %) | 0 de 2 |
+| Validación (ES, no se afinó con él) | 1 de 9 (11 %) | 0 de 1 |
+| Diagnóstico (EN) | 13 de 25 (52 %) | 0 de 3 |
 
 **No se alcanza el 80 %.** Nunca se responde fuera de alcance, pero la búsqueda léxica falla con paráfrasis y con cifras de tablas.
 
