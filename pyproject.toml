@@ -3,9 +3,9 @@ name = "spaceapp"
 version = "0.1.0"
 description = "Monitor de salud para astronautas (prototipo de apoyo a la decisión, no es un dispositivo médico)"
 requires-python = ">=3.12"
-dependencies = ["pydantic>=2"]
+dependencies = ["pydantic>=2", "pypdf>=5"]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
 
 [build-system]

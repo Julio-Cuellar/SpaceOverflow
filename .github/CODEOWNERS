@@ -1,0 +1,16 @@
+# Responsables por carpeta (plan de Dev B, sección 2.5). GitHub pide revisión a quien aparece aquí.
+
+# Dev B: interfaz, conocimiento y asistente
+/web/                                  @Julio-Cuellar
+/src/spaceapp/modules/knowledge/       @Julio-Cuellar
+/src/spaceapp/modules/assistant/       @Julio-Cuellar
+/migrations/knowledge/                 @Julio-Cuellar
+/migrations/assistant/                 @Julio-Cuellar
+/tests/knowledge/                      @Julio-Cuellar
+/tests/assistant/                      @Julio-Cuellar
+/data/knowledge/                       @Julio-Cuellar
+/bitacora-dev-b.md                     @Julio-Cuellar
+
+# Dev A: plataforma, telemetría, monitoreo, nave, tripulación, misiones y enlace con Tierra.
+# Pendiente: añadir aquí el usuario de GitHub de Dev A y las carpetas que le corresponden.
+# El CI y los contratos (contracts/) son de los dos: cambiarlos requiere revisión del otro.

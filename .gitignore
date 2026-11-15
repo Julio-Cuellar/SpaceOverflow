@@ -12,6 +12,10 @@ web/src/data/graphql/generated/
 __pycache__/
 *.egg-info/
 
+# PDFs de NASA y su índice: la licencia de redistribución no está confirmada (ver manifest.json)
+data/knowledge/pdfs/
+data/knowledge/index/
+
 # Editor y sistema
 .DS_Store
 .idea/

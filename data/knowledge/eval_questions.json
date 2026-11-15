@@ -1,0 +1,23 @@
+{
+  "_nota": "Preguntas de evaluación del RAG (F12.5). Los documentos esperados son HIPÓTESIS a partir del documento de contexto, no resultados comprobados contra los PDFs reales: revisar y afinar tras la primera ingesta real. Las dos últimas deben quedar sin respuesta.",
+  "cases": [
+    { "question": "¿Cuál es el límite de CO₂ promedio de una hora?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F", "OCHMO-TB-004 CO₂"] },
+    { "question": "¿Por qué me duele la cabeza?", "expected_documents": ["OCHMO-TB-004 CO₂", "OCHMO-TB-003 atmósfera habitable"] },
+    { "question": "¿Qué síntomas produce el CO₂?", "expected_documents": ["OCHMO-TB-004 CO₂"] },
+    { "question": "¿Qué síntomas tiene la hipoxia?", "expected_documents": ["OCHMO-TB-003 atmósfera habitable"] },
+    { "question": "¿Cuál es el rango normal de presión parcial de oxígeno?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F", "OCHMO-TB-003 atmósfera habitable"] },
+    { "question": "¿Cuál es la presión mínima de la cabina?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F", "OCHMO-TB-002 ECLSS"] },
+    { "question": "¿Qué velocidad de cambio de presión se permite?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F"] },
+    { "question": "¿Qué temperatura y humedad debe tener la cabina?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F"] },
+    { "question": "¿Cuál es el límite de ruido en los dormitorios?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F"] },
+    { "question": "¿Cuánto debe vibrar la nave durante el sueño?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F"] },
+    { "question": "¿Cuánto dura el mareo espacial?", "expected_documents": ["OCHMO-TB-044 operaciones médicas"] },
+    { "question": "¿Cuál es el límite de dosis de radiación?", "expected_documents": ["NASA-STD-3001 Vol. 1 Rev C", "NASA-STD-3001 Vol. 2 Rev F"] },
+    { "question": "¿Qué capacidad aeróbica se exige durante la misión?", "expected_documents": ["NASA-STD-3001 Vol. 1 Rev C"] },
+    { "question": "¿Qué densidad ósea debe conservar un astronauta?", "expected_documents": ["NASA-STD-3001 Vol. 1 Rev C"] },
+    { "question": "¿Qué contiene el botiquín médico?", "expected_documents": ["Checklist del botiquín médico"] },
+    { "question": "¿Cuánta agua potable necesita cada tripulante al día?", "expected_documents": ["NASA-STD-3001 Vol. 2 Rev F", "OCHMO-TB-002 ECLSS"] },
+    { "question": "¿Cuál es la capital de Francia?", "out_of_scope": true },
+    { "question": "¿Quién ganó el último mundial de fútbol?", "out_of_scope": true }
+  ]
+}

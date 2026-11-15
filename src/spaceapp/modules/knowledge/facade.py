@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from spaceapp.modules.knowledge.contracts import CitationDTO
 from spaceapp.modules.knowledge.domain.model import Action
-from spaceapp.modules.knowledge.ports import KnowledgeSource
+from spaceapp.modules.knowledge.ports import KnowledgeSource, PassageSource
 
 
 class ActionCatalogQuery:
@@ -20,7 +20,7 @@ class ActionCatalogQuery:
 class KnowledgeQuery:
     """Pasajes citables para responder preguntas. La usa el asistente (dentro de este mismo módulo)."""
 
-    def __init__(self, source: KnowledgeSource) -> None:
+    def __init__(self, source: PassageSource) -> None:
         self._source = source
 
     def search(self, text: str, k: int) -> list[CitationDTO]:

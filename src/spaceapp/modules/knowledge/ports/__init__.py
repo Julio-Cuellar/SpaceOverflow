@@ -9,6 +9,12 @@ from spaceapp.modules.knowledge.contracts import RecommendationReady
 from spaceapp.modules.knowledge.domain.model import Action, Citation, Guidance, Recommendation
 
 
+class PassageSource(Protocol):
+    """Lo mínimo para responder preguntas: pasajes citables, o vacío si ninguno es relevante."""
+
+    def search(self, text: str, k: int) -> list[Citation]: ...
+
+
 class KnowledgeSource(Protocol):
     def guidance_for(self, rule_key: str) -> Guidance: ...
 
